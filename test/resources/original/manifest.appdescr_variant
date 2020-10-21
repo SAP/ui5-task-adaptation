@@ -1,0 +1,45 @@
+{
+    "fileName": "manifest",
+    "layer": "CUSTOMER_BASE",
+    "fileType": "appdescr_variant",
+    "reference": "sap.ui.rta.test.variantManagement.business.service",
+    "id": "customer.sap.ui.rta.test.variantManagement.business.service",
+    "namespace": "apps/sap.ui.rta.test.variantManagement.business.service/appVariants/customer.sap.ui.rta.test.variantManagement.business.service/",
+    "content": [
+        {
+            "changeType": "appdescr_app_setTitle",
+            "content": {},
+            "texts": {
+                "i18n": "i18n/i18n.properties"
+            }
+        },
+        {
+            "changeType": "appdescr_ui5_addNewModelEnhanceWith",
+            "content": {
+                "modelId": "i18n|sap.suite.ui.generic.template.ListReport|SEPMRA_C_PD_Product"
+            },
+            "texts": {
+                "i18n": "i18n/ListReport/SEPMRA_C_PD_Product/i18n.properties"
+            }
+        },
+        {
+            "changeType": "appdescr_ui5_addNewModelEnhanceWith",
+            "content": {
+                "modelId": "i18n|sap.suite.ui.generic.template.ObjectPage|SEPMRA_C_PD_Product"
+            },
+            "texts": {
+                "i18n": "i18n/ObjectPage/SEPMRA_C_PD_Product/i18n.properties"
+            }
+        },
+        {
+            "changeType": "appdescr_ui5_addLibraries",
+            "content": {
+                "libraries": {
+                    "sap.m": {
+                        "minVersion": "1.73"
+                    }
+                }
+            }
+        }
+    ]
+}

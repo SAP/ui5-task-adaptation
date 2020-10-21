@@ -1,0 +1,8 @@
+---
+specVersion: '2.2'
+kind: extension
+type: task
+metadata:
+    name: app-variant-bundler-build
+task:
+    path: lib/appVariantBundler.js

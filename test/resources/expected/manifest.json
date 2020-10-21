@@ -1,0 +1,87 @@
+{
+    "_version": "1.8.0",
+    "sap.app": {
+        "ach": "CA-UI5-FL-RTA",
+        "applicationVersion": {
+            "version": "1.0.0"
+        },
+        "description": "{{appDescription}}",
+        "i18n": {
+            "bundleUrl": "i18n/i18n.properties",
+            "enhanceWith": [
+                {
+                    "bundleName": "customer.sap.ui.rta.test.variantManagement.business.service.appvariant-a6eed165.i18n.i18n"
+                }
+            ]
+        },
+        "id": "customer.sap.ui.rta.test.variantManagement.business.service",
+        "title": "{{customer.sap.ui.rta.test.variantManagement.business.service_sap.app.title}}",
+        "type": "application"
+    },
+    "sap.ui5": {
+        "appVariantIdHierarchy": {
+            "appVariantId": "sap.ui.rta.test.variantManagement.business.service",
+            "version": "1.0.0"
+        },
+        "dependencies": {
+            "libs": {
+                "sap.m": {
+                    "minVersion": "1.73"
+                },
+                "sap.ui.core": {},
+                "sap.ui.dt": {},
+                "sap.ui.rta": {}
+            },
+            "minUI5Version": "1.60.2"
+        },
+        "models": {
+            "i18n": {
+                "type": "sap.ui.model.resource.ResourceModel",
+                "uri": "i18n/i18n.properties"
+            },
+            "i18n|sap.suite.ui.generic.template.ListReport|SEPMRA_C_PD_Product": {
+                "settings": {
+                    "enhanceWith": [
+                        {
+                            "bundleName": "customer.sap.ui.rta.test.variantManagement.business.service.appvariant-a6eed165.i18n.ListReport.SEPMRA_C_PD_Product.i18n"
+                        }
+                    ]
+                },
+                "type": "sap.ui.model.resource.ResourceModel",
+                "uri": "i18n/ListReport/SEPMRA_C_PD_Product/i18n.properties"
+            },
+            "i18n|sap.suite.ui.generic.template.ObjectPage|SEPMRA_C_PD_Product": {
+                "settings": {
+                    "enhanceWith": [
+                        {
+                            "bundleName": "customer.sap.ui.rta.test.variantManagement.business.service.appvariant-a6eed165.i18n.ObjectPage.SEPMRA_C_PD_Product.i18n"
+                        }
+                    ]
+                },
+                "type": "sap.ui.model.resource.ResourceModel",
+                "uri": "i18n/ObjectPage/SEPMRA_C_PD_Product/i18n.properties"
+            }
+        },
+        "rootView": {
+            "async": true,
+            "id": "app",
+            "type": "XML",
+            "viewName": "customer.sap.ui.rta.test.variantManagement.business.service.view.Root"
+        },
+        "routing": {
+            "config": {
+                "async": true,
+                "bypassed": {
+                    "target": [
+                        "main"
+                    ]
+                },
+                "controlAggregation": "pages",
+                "controlId": "app",
+                "routerClass": "sap.m.routing.Router",
+                "viewPath": "customer.sap.ui.rta.test.variantManagement.business.service.view",
+                "viewType": "XML"
+            }
+        }
+    }
+}
