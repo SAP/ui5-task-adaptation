@@ -1,7 +1,7 @@
 {
-    "name": "@sap/ui5-builder-adaptation-extension",
+    "name": "@sap/ui5-task-adaptation",
     "version": "1.0.11",
-    "description": "UI5 Builder custom task for adaptation",
+    "description": "Custom task for ui5-builder which allows building UI5 Flexibility Adaptation Projects for SAP Cloud Platform Cloud Foundry Environment",
     "main": "index.js",
     "scripts": {
         "test": "mocha",
@@ -9,7 +9,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "https://github.wdf.sap.corp/UI-related-Cloud-Services/ui5-task-adaptation.git"
+        "url": "https://github.com/sap/ui5-task-adaptation.git"
     },
     "keywords": [
         "adaptation",
@@ -20,8 +20,8 @@
         "application",
         "studio"
     ],
-    "author": "UITech Gravity Team",
-    "license": "ISC",
+    "author": "SAP SE",
+    "license": "Apache-2.0",
     "dependencies": {
         "@openui5/sap.ui.fl": "^1.81.0",
         "@sap/cf-tools": "^0.1.6",
