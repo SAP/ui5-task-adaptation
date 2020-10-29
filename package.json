@@ -30,11 +30,11 @@
         "adm-zip": "^0.4.14",
         "crc": "^3.8.0",
         "get-installed-path": "^4.0.8",
-        "nyc": "^15.1.0",
         "request": "^2.88.2",
         "xmlhttprequest": "^1.8.0"
     },
     "devDependencies": {
+        "nyc": "^15.1.0",
         "js-yaml": "^3.14.0",
         "mocha": "^8.1.1",
         "mock-require": "^3.0.3"
