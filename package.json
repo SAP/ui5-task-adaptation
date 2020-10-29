@@ -1,0 +1,82 @@
+{
+    "name": "@sap/ui5-task-adaptation",
+    "version": "1.0.11",
+    "description": "Custom task for ui5-builder which allows building UI5 Flexibility Adaptation Projects for SAP Cloud Platform Cloud Foundry Environment",
+    "main": "index.js",
+    "scripts": {
+        "test": "mocha",
+        "coverage": "nyc node_modules/.bin/mocha"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/sap/ui5-task-adaptation.git"
+    },
+    "keywords": [
+        "adaptation",
+        "ui5",
+        "builder",
+        "tools",
+        "business",
+        "application",
+        "studio"
+    ],
+    "author": "SAP SE",
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@openui5/sap.ui.fl": "^1.81.0",
+        "@sap/cf-tools": "^0.1.6",
+        "@ui5/fs": "^2.0.3",
+        "@ui5/logger": "^2.0.0",
+        "adm-zip": "^0.4.14",
+        "crc": "^3.8.0",
+        "get-installed-path": "^4.0.8",
+        "request": "^2.88.2",
+        "xmlhttprequest": "^1.8.0"
+    },
+    "devDependencies": {
+        "nyc": "^15.1.0",
+        "js-yaml": "^3.14.0",
+        "mocha": "^8.1.1",
+        "mock-require": "^3.0.3"
+    },
+    "nyc": {
+        "reporter": [
+            "lcov",
+            "text",
+            "text-summary"
+        ],
+        "exclude": [
+            ".eslintrc.js",
+            "docs/**",
+            "jsdocs/**",
+            "coverage/**",
+            "test/**",
+            "lib/processors/jsdoc/lib/**"
+        ],
+        "check-coverage": true,
+        "statements": 85,
+        "branches": 70,
+        "functions": 90,
+        "lines": 85,
+        "watermarks": {
+            "statements": [
+                70,
+                90
+            ],
+            "branches": [
+                70,
+                90
+            ],
+            "functions": [
+                70,
+                90
+            ],
+            "lines": [
+                70,
+                90
+            ]
+        },
+        "cache": true,
+        "all": true
+    }
+}
