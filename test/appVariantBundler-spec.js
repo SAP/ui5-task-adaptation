@@ -127,7 +127,7 @@ describe("appVariantBundler", () => {
                 }
             });
             const manifestContent = await results[0].getBuffer().then(JSON.parse);
-            assert.deepEqual(manifestContent, JSON.parse(readFile("/expected/manifest_no_change_texts.json")));
+            assert.deepStrictEqual(manifestContent, JSON.parse(readFile("/expected/manifest_no_change_texts.json")));
         });
     });
 
@@ -338,7 +338,7 @@ describe("appVariantBundler", () => {
                 "/resources/customer/sap/ui/rta/test/variantManagement/business/service/manifest.json",
                 "/resources/customer/sap/ui/rta/test/variantManagement/business/service/appvariant-a6eed165/i18n/i18n.properties"
             ]);
-            assert.deepEqual(manifestContent, JSON.parse(readFile("/expected/manifest.json")));
+            assert.deepStrictEqual(manifestContent, JSON.parse(readFile("/expected/manifest.json")));
         });
     });
 });

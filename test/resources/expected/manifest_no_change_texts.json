@@ -12,10 +12,10 @@
         "type": "application"
     },
     "sap.ui5": {
-        "appVariantIdHierarchy": {
+        "appVariantIdHierarchy": [{
             "appVariantId": "sap.ui.rta.test.variantManagement.business.service",
             "version": "1.0.0"
-        },
+        }],
         "dependencies": {
             "libs": {
                 "sap.m": {},
