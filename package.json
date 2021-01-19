@@ -1,6 +1,6 @@
 {
     "name": "@ui5/task-adaptation",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Custom task for ui5-builder which allows building UI5 Flexibility Adaptation Projects for SAP Cloud Platform Cloud Foundry Environment",
     "main": "index.js",
     "scripts": {
@@ -9,7 +9,9 @@
         "preversion": "npm test",
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",
         "postversion": "git push --follow-tags",
-        "release-note": "git-chglog -c .chglog/release-config.yml v$npm_package_version"
+        "release-note": "git-chglog -c .chglog/release-config.yml v$npm_package_version",
+        "build": "rollup -c rollup.config.js",
+        "test-build": "rollup -c ./test/rollup.config.js"
     },
     "repository": {
         "type": "git",
@@ -27,21 +29,26 @@
     "author": "SAP SE",
     "license": "Apache-2.0",
     "dependencies": {
-        "@openui5/sap.ui.fl": "^1.81.0",
-        "@sap/cf-tools": "^0.6.8",
-        "@ui5/fs": "^2.0.3",
-        "@ui5/logger": "^2.0.0",
-        "adm-zip": "^0.4.14",
+        "@buxlabs/amd-to-es6": "^0.16.0",
+        "@rollup/plugin-node-resolve": "^11.1.0",
+        "@sap/cf-tools": "^0.8.0",
+        "@ui5/cli": "^2.8.0",
+        "@ui5/fs": "^2.0.6",
+        "@ui5/logger": "^2.0.1",
+        "@ui5/project": "^2.2.4",
+        "adm-zip": "^0.5.1",
+        "amdextract": "^3.0.0",
+        "builtin-modules": "^3.2.0",
         "crc": "^3.8.0",
-        "get-installed-path": "^4.0.8",
         "request": "^2.88.2",
-        "xmlhttprequest": "^1.8.0"
+        "rollup": "^2.36.2",
+        "rollup-plugin-terser": "^7.0.2"
     },
     "devDependencies": {
-        "nyc": "^15.1.0",
-        "js-yaml": "^3.14.0",
-        "mocha": "^8.1.1",
-        "mock-require": "^3.0.3"
+        "js-yaml": "^4.0.0",
+        "mocha": "^8.2.1",
+        "mock-require": "^3.0.3",
+        "nyc": "^15.1.0"
     },
     "nyc": {
         "reporter": [
@@ -55,7 +62,8 @@
             "jsdocs/**",
             "coverage/**",
             "test/**",
-            "lib/processors/jsdoc/lib/**"
+            "lib/processors/jsdoc/lib/**",
+            "dist/**"
         ],
         "check-coverage": true,
         "statements": 85,
