@@ -126,7 +126,7 @@ describe("appVariantBundler", () => {
                     downloadZip: () => fs.promises.readFile(__dirname + "/resources/original/baseapp.zip"),
                 }
             });
-            const manifestContent = await results[0].getBuffer().then(JSON.parse);
+            const manifestContent = await results.find(res => res.getPath().endsWith("manifest.json")).getBuffer().then(JSON.parse);
             assert.deepStrictEqual(manifestContent, JSON.parse(readFile("/expected/manifest_no_change_texts.json")));
         });
     });
@@ -195,13 +195,13 @@ describe("appVariantBundler", () => {
                         __dirname + "/resources/original/baseapp.zip"),
                 }
             });
-            const manifestContent = await results[0].getBuffer().then(JSON.parse);
+            const manifestContent = await results.find(res => res.getPath().endsWith("manifest.json")).getBuffer().then(JSON.parse);
             assert.deepEqual(results.length, 6);
             assertPaths(results, [
                 "/resources/customer/sap/ui/rta/test/variantManagement/business/service/manifest.json",
                 "/resources/customer/sap/ui/rta/test/variantManagement/business/service/appvariant-a6eed165/i18n/i18n.properties"
             ]);
-            assert.deepEqual(manifestContent, JSON.parse(readFile("/expected/manifest.json")));
+            assert.deepEqual(manifestContent, JSON.parse(readFile("/expected/manifest_no_sap_cloud.json")));
         });
     });
 
@@ -211,7 +211,8 @@ describe("appVariantBundler", () => {
             configuration: {
                 appHostId: "appHostId",
                 appName: "appName",
-                appVersion: "appVersion"
+                appVersion: "appVersion",
+                sapCloudService: "grc.risk"
             }
         };
         const results = [];
@@ -309,7 +310,8 @@ describe("appVariantBundler", () => {
             configuration: {
                 appHostId: "appHostId",
                 appName: "appName",
-                appVersion: "appVersion"
+                appVersion: "appVersion",
+                sapCloudService: "grc.risk"
             }
         };
         const results = [];

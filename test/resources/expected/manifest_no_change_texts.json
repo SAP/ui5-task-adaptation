@@ -12,10 +12,12 @@
         "type": "application"
     },
     "sap.ui5": {
-        "appVariantIdHierarchy": [{
-            "appVariantId": "sap.ui.rta.test.variantManagement.business.service",
-            "version": "1.0.0"
-        }],
+        "appVariantIdHierarchy": [
+            {
+                "appVariantId": "sap.ui.rta.test.variantManagement.business.service",
+                "version": "1.0.0"
+            }
+        ],
         "dependencies": {
             "libs": {
                 "sap.m": {},
@@ -67,5 +69,11 @@
                 "viewType": "XML"
             }
         }
+    },
+    "sap.platform.cf": {
+        "oAuthScopes": [
+            "$XSAPPNAME('com.sap.ui.flex.business.service').view_rfw_config",
+            "$XSAPPNAME('com.sap.ui.flex.business.service').view_rfw_personal_data"
+        ]
     }
 }
