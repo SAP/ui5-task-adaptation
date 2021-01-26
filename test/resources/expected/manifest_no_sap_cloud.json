@@ -86,10 +86,6 @@
             }
         }
     },
-    "sap.cloud": {
-        "public": true,
-        "service": "grc.risk"
-    },
     "sap.platform.cf": {
         "oAuthScopes": [
             "$XSAPPNAME('com.sap.ui.flex.business.service').view_rfw_config",
