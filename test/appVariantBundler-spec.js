@@ -126,7 +126,7 @@ describe("appVariantBundler", () => {
                     downloadZip: () => fs.promises.readFile(__dirname + "/resources/original/baseapp.zip"),
                 }
             });
-            const manifestContent = await results.find(res => res.getPath().endsWith("manifest.json")).getBuffer().then(JSON.parse);
+            const manifestContent = await getManifestContent(results);
             assert.deepStrictEqual(manifestContent, JSON.parse(readFile("/expected/manifest_no_change_texts.json")));
         });
     });
@@ -195,7 +195,7 @@ describe("appVariantBundler", () => {
                         __dirname + "/resources/original/baseapp.zip"),
                 }
             });
-            const manifestContent = await results.find(res => res.getPath().endsWith("manifest.json")).getBuffer().then(JSON.parse);
+            const manifestContent = await getManifestContent(results);
             assert.deepEqual(results.length, 6);
             assertPaths(results, [
                 "/resources/customer/sap/ui/rta/test/variantManagement/business/service/manifest.json",
@@ -235,7 +235,7 @@ describe("appVariantBundler", () => {
                         __dirname + "/resources/original/baseapp-existingmodule.zip"),
                 }
             });
-            const manifestContent = await results.find(r => r.getPath().endsWith("manifest.json")).getBuffer().then(JSON.parse);
+            const manifestContent = await getManifestContent(results);
             assert.deepEqual(results.length, 8);
             assertPaths(results, [
                 "/resources/customer/sap/ui/rta/test/variantManagement/business/service/manifest.json",
@@ -334,7 +334,7 @@ describe("appVariantBundler", () => {
                         __dirname + "/resources/original/baseapp-existingmodule.zip"),
                 }
             });
-            const manifestContent = await results.find(r => r.getPath().endsWith("manifest.json")).getBuffer().then(JSON.parse);
+            const manifestContent = await getManifestContent(results);
             assert.deepEqual(results.length, 8);
             assertPaths(results, [
                 "/resources/customer/sap/ui/rta/test/variantManagement/business/service/manifest.json",
@@ -344,6 +344,10 @@ describe("appVariantBundler", () => {
         });
     });
 });
+
+async function getManifestContent(results) {
+    return results.find(result => result.getPath().endsWith("manifest.json")).getBuffer().then(JSON.parse);
+}
 
 function createResource(resource, namespace) {
     const clone = Object.assign({}, resource);
