@@ -12,7 +12,7 @@ class ConfigBuilder {
                     assets: [
                         "/resources/sap/ui/fl/**"
                     ],
-                    exclude: [
+                    skipTransformation: [
                         "./rollup/bundle-def.js",
                         "sap/ui/thirdparty/URI"
                     ],

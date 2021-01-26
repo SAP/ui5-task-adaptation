@@ -5,18 +5,15 @@ const { promisify } = require("util");
 const pipe = promisify(stream.pipeline);
 
 const convertAMDtoES6 = require("@buxlabs/amd-to-es6");
-const amdextract = require("amdextract");
 
-const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve");
+const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-adaptation");
 const normalizer = require("@ui5/project").normalizer;
 const resourceFactory = require("@ui5/fs").resourceFactory;
 
 
 module.exports = (options) => {
 
-    log.verbose(JSON.stringify(options, undefined, 2));
-
-    const filter = (id) => !options.exclude.includes(id);
+    const skipTransformation = (id) => !options.skipTransformation.includes(id);
 
     return {
 
@@ -28,8 +25,8 @@ module.exports = (options) => {
             });
             this.dependencies = resourceFactory.createCollectionsForTree(project, {}).dependencies;
 
-            const resources = await this.dependencies.byGlob("/resources/sap/ui/fl/**");
-            const writePromises = resources.map(resource => {
+            const resources = await Promise.all(options.assets.map(asset => this.dependencies.byGlob(asset)));
+            const writePromises = [].concat(...resources).map(resource => {
                 const file = `./dist${resource.getPath()}`;
                 const folder = path.dirname(file);
                 if (!fs.existsSync(folder)) {
@@ -44,14 +41,11 @@ module.exports = (options) => {
         },
 
 
-        // Right before writting result to dist
+        /*
+         * Right before writing result to dist
+         */
         renderChunk: async (code) => {
-            return "global.window = {};" + code;
-        },
-
-
-        buildEnd: async (error) => {
-            log.verbose("buildEnd", error);
+            return "var window = {};" + code;
         },
 
 
@@ -90,7 +84,7 @@ module.exports = (options) => {
 
 
         transform: (code, id) => {
-            const skipped = !filter(id);
+            const skipped = !skipTransformation(id);
             log.verbose(`transform: ${id} ${skipped ? "skipped" : ""}`);
             if (skipped) {
                 return;
@@ -99,19 +93,7 @@ module.exports = (options) => {
                 .replace(/sap\.ui\.define/g, "define")
                 .replace(/\, \/\* bExport\= \*\/ true\)/g, ")")
                 .replace(/}, true\);$/g, "});");
-
-            if (code) {
-                try {
-                    const result = amdextract.parse(code);
-                    if (result.results.length > 0 && result.results[0].unusedPaths.length > 0) {
-                        log.error(`Module "${id}" has unused paths: ${result.results[0].unusedPaths}`);
-                    }
-                } catch (e) {
-                    log.error(`Failed to check module "${id}": ${e.message}`);
-                }
-                code = convertAMDtoES6(code);
-            }
-            return code;
+            return convertAMDtoES6(code);
         }
 
     };
