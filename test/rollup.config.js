@@ -1,1 +1,0 @@
-module.exports = require("../rollup/configBuilder").build(`${__dirname}/resources/project`);
