@@ -1,11 +1,5 @@
 const assert = require("assert");
-const Change = require("../lib/change");
-
-global.sap = {
-    ui: {
-        define: () => { }
-    }
-};
+const { Change } = require("../dist/bundle");
 
 describe("change", () => {
     const change = new Change({

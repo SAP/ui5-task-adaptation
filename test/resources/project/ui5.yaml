@@ -1,0 +1,10 @@
+---
+specVersion: '2.2'
+type: application
+metadata:
+  name: HTML5Module
+framework:
+  name: OpenUI5
+  version: "1.85.2"
+  libraries:
+    - name: sap.ui.fl
