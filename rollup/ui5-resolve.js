@@ -3,6 +3,8 @@ const fs = require("fs");
 const stream = require("stream");
 const { promisify } = require("util");
 const pipe = promisify(stream.pipeline);
+const yaml = require("js-yaml");
+const semver = require("semver")
 
 const convertAMDtoES6 = require("@buxlabs/amd-to-es6");
 
@@ -15,14 +17,38 @@ module.exports = (options) => {
 
     const skipTransformation = (id) => !options.skipTransformation.includes(id);
 
+    async function getProject(projectPaths) {
+        for (const cwd of projectPaths) {
+            try {
+                const project = await normalizer.generateProjectTree({ cwd });
+                validateProjectSettings(cwd);
+                return project;
+            } catch (error) {
+                log.info(`${error.message} - fallback to latest OpenUI5 version`);
+            }
+        }
+    }
+
+    function validateProjectSettings(projectPath) {
+        const FRAMEWORK_TYPES = ["OpenUI5", "SAPUI5"];
+        const content = fs.readFileSync(path.join(projectPath, "ui5.yaml"));
+        const framework = yaml.load(content).framework;
+        if (!FRAMEWORK_TYPES.includes(framework.name)) {
+            throw new Error(`UI5 framework name is incorrect, possible values: ${FRAMEWORK_TYPES.join(" or ")}`);
+        }
+        if (!semver.valid(framework.version)) {
+            throw new Error(`UI5 framework version should correspond semantic version standard, e.g: 1.85.2`);
+        }
+    }
+
+
     return {
 
         name: "ui5-resolve",
 
         buildStart: async (buildOptions) => {
-            const project = await normalizer.generateProjectTree({
-                cwd: options.projectPath
-            });
+
+            const project = await getProject(options.projectPaths);
             this.dependencies = resourceFactory.createCollectionsForTree(project, {}).dependencies;
 
             const resources = await Promise.all(options.assets.map(asset => this.dependencies.byGlob(asset)));

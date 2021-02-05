@@ -16,7 +16,10 @@ module.exports = {
                 "./rollup/bundle-def.js",
                 "sap/ui/thirdparty/URI"
             ],
-            projectPath: "./rollup/project"
+            projectPaths: [
+                path.resolve(__dirname, "..", "..", ".."),
+                path.resolve(__dirname, "rollup", "project")
+            ]
         }),
         nodeResolve({
             preferBuiltins: true
