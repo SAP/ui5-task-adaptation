@@ -10,8 +10,7 @@
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",
         "postversion": "git push --follow-tags",
         "release-note": "git-chglog -c .chglog/release-config.yml v$npm_package_version",
-        "build": "rollup -c rollup.config.js",
-        "test-build": "rollup -c ./test/rollup.config.js"
+        "postinstall": "rollup -c rollup.config.js"
     },
     "repository": {
         "type": "git",
@@ -29,25 +28,25 @@
     "author": "SAP SE",
     "license": "Apache-2.0",
     "dependencies": {
+        "@buxlabs/amd-to-es6": "^0.16.0",
+        "@rollup/plugin-node-resolve": "^11.1.1",
         "@sap/cf-tools": "^0.8.0",
         "@ui5/fs": "^2.0.6",
         "@ui5/logger": "^2.0.1",
-        "adm-zip": "^0.5.2",
-        "crc": "^3.8.0",
-        "request": "^2.88.2"
-    },
-    "devDependencies": {
-        "@buxlabs/amd-to-es6": "^0.16.0",
-        "@rollup/plugin-node-resolve": "^11.1.1",
         "@ui5/project": "^2.2.6",
+        "adm-zip": "^0.5.2",
         "amdextract": "^3.0.0",
         "builtin-modules": "^3.2.0",
-        "js-yaml": "^4.0.0",
+        "crc": "^3.8.0",
+        "request": "^2.88.2",
+        "rollup": "^2.38.4",
+        "rollup-plugin-terser": "^7.0.2",
+        "js-yaml": "^4.0.0"
+    },
+    "devDependencies": {
         "mocha": "^8.2.1",
         "mock-require": "^3.0.3",
-        "nyc": "^15.1.0",
-        "rollup": "^2.38.4",
-        "rollup-plugin-terser": "^7.0.2"
+        "nyc": "^15.1.0"
     },
     "nyc": {
         "reporter": [
