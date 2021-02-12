@@ -24,7 +24,7 @@ module.exports = (options) => {
                 validateProjectSettings(cwd);
                 return project;
             } catch (error) {
-                log.info(`${error.message} - fallback to latest OpenUI5 version`);
+                log.info(`${error.message}`);
             }
         }
     }
