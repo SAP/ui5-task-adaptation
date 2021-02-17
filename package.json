@@ -4,13 +4,13 @@
     "description": "Custom task for ui5-builder which allows building UI5 Flexibility Adaptation Projects for SAP BTP, Cloud Foundry environment",
     "main": "index.js",
     "scripts": {
-        "test": "mocha",
+        "test": "npm run build && mocha",
         "coverage": "nyc node_modules/.bin/mocha",
         "preversion": "npm test",
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",
         "postversion": "git push --follow-tags",
         "release-note": "git-chglog -c .chglog/release-config.yml v$npm_package_version",
-        "postinstall": "rollup -c rollup.config.js"
+        "build": "rollup -c rollup.config.js"
     },
     "repository": {
         "type": "git",
@@ -41,8 +41,7 @@
         "crc": "^3.8.0",
         "js-yaml": "^4.0.0",
         "request": "^2.88.2",
-        "rollup": "^2.39.0",
-        "rollup-plugin-terser": "^7.0.2"
+        "rollup": "^2.39.0"
     },
     "devDependencies": {
         "mocha": "^8.3.0",
