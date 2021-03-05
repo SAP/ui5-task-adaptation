@@ -45,9 +45,12 @@
         "rollup-plugin-terser": "^7.0.2"
     },
     "devDependencies": {
+        "@types/adm-zip": "^0.4.33",
+        "@types/request": "^2.48.5",
         "mocha": "^8.2.1",
         "mock-require": "^3.0.3",
-        "nyc": "^15.1.0"
+        "nyc": "^15.1.0",
+        "typescript": "^4.1.5"
     },
     "nyc": {
         "reporter": [
