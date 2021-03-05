@@ -25,7 +25,7 @@ export default class AppVariantManager {
         return appVariantInfo;
     }
 
-    static getAppVariantResources(workspace: DuplexCollection) {
+    static getAppVariantResources(workspace: DuplexCollection): Promise<Resource[]> {
         return workspace.byGlob(`/**/*.{${EXTENSIONS}}`);
     }
 

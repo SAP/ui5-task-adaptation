@@ -11,10 +11,10 @@ import HTML5RepoManager from "./html5RepoManager";
 module.exports = ({ workspace, options, taskUtil }: ITaskParameters) => {
 
     async function process(workspace: DuplexCollection, taskUtil: TaskUtil) {
-        const baseAppFilesPromise = HTML5RepoManager.getBaseAppFiles(options);
+        const baseAppFiles = HTML5RepoManager.getBaseAppFiles(options);
         const appVariantResources = await AppVariantManager.getAppVariantResources(workspace);
-        const appVariantInfo = await AppVariantManager.process(appVariantResources, options.projectNamespace, taskUtil);
-        const baseAppResources = await BaseAppManager.process(await baseAppFilesPromise, appVariantInfo, options);
+        const appVariantInfo = AppVariantManager.process(appVariantResources, options.projectNamespace, taskUtil);
+        const baseAppResources = await BaseAppManager.process(await baseAppFiles, await appVariantInfo, options);
         return appVariantResources.concat(baseAppResources);
     }
 

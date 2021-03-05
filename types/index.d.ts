@@ -5,7 +5,7 @@ declare module "@ui5/fs/lib" {
         getBuffer(): Promise<Buffer>;
     }
     export interface DuplexCollection {
-        byGlob(virPattern: string, options?: IByGlobOptions): Resource[];
+        byGlob(virPattern: string, options?: IByGlobOptions): Promise<Resource[]>;
         write(resource: Resource): Promise<void>;
     }
     export interface IByGlobOptions {

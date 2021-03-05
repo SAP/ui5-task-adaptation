@@ -30,18 +30,18 @@
     "dependencies": {
         "@buxlabs/amd-to-es6": "^0.16.0",
         "@rollup/plugin-node-resolve": "^11.2.0",
-        "@sap/cf-tools": "^0.8.0",
-        "@ui5/cli": "^2.10.0",
+        "@sap/cf-tools": "^1.0.1",
+        "@ui5/cli": "^2.10.1",
         "@ui5/fs": "^2.0.6",
         "@ui5/logger": "^2.0.1",
-        "@ui5/project": "^2.3.0",
-        "adm-zip": "^0.5.2",
+        "@ui5/project": "^2.3.1",
+        "adm-zip": "^0.5.3",
         "amdextract": "^3.0.0",
         "builtin-modules": "^3.2.0",
         "crc": "^3.8.0",
         "js-yaml": "^4.0.0",
         "request": "^2.88.2",
-        "rollup": "^2.39.0"
+        "rollup": "^2.40.0"
     },
     "devDependencies": {
         "@types/adm-zip": "^0.4.33",
@@ -49,7 +49,7 @@
         "mocha": "^8.3.0",
         "mock-require": "^3.0.3",
         "nyc": "^15.1.0",
-        "typescript": "^4.1.5"
+        "typescript": "^4.2.3"
     },
     "nyc": {
         "reporter": [
