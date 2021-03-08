@@ -1,35 +1,22 @@
-import cfLocal = require("@sap/cf-tools/out/src/cf-local");
 import CFUtil from "./util/cfUtil";
 import { IConfiguration, ICreateServiceInstanceParams, ICredentials, IGetServiceInstanceParams, IProjectOptions } from "./model/types";
 import * as request from "request";
 import * as AdmZip from "adm-zip";
 import * as path from "path";
-import ResourceUtil from "./util/resourceUtil";
 import Logger from "@ui5/logger";
 const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::HTML5RepoManager");
 
 export default class HTML5RepoManager {
 
     static async getBaseAppFiles(options: IProjectOptions): Promise<Map<string, string>> {
-        const spaceGuid = await this.getSpace(options.configuration);
+        const spaceGuid = await CFUtil.getSpace(options.configuration);
         const credentials = await this.getHTML5Credentials(spaceGuid);
         const token = await this.getToken(credentials);
         const entries = await this.getBaseAppZipEntries(options.configuration, credentials, token);
-        return this.filterAndMapEntries(options.projectNamespace, entries);
+        return this.filterAndMapEntries(entries);
     }
 
-    private static async getSpace(options: IConfiguration) {
-        let spaceGuid = options?.spaceGuid;
-        if (spaceGuid == null) {
-            spaceGuid = (await cfLocal.cfGetConfigFileField("SpaceFields"))?.GUID;
-        }
-        if (spaceGuid == null) {
-            throw new Error("Please login to Cloud Foundry with 'cf login' and try again");
-        }
-        return spaceGuid;
-    }
-
-    private static async getHTML5Credentials(spaceGuid: string) {
+    private static async getHTML5Credentials(spaceGuid: string): Promise<ICredentials> {
         log.verbose("Getting HTML5 Repo Runtime credentials from space " + spaceGuid);
         const SERVIE_INSTANCE_NAME = "html5-apps-repo-runtime";
         const PLAN_NAME = "app-runtime";
@@ -48,7 +35,7 @@ export default class HTML5RepoManager {
         if (serviceKeys == null) {
             throw new Error("Failed to get credentials of HTML5 Repository Runtime service");
         }
-        return serviceKeys.credentials[0];
+        return serviceKeys.credentials;
     }
 
     private static async getToken({ uaa }: ICredentials) {
@@ -77,19 +64,14 @@ export default class HTML5RepoManager {
         return admZip.getEntries();
     }
 
-    private static filterAndMapEntries(projectNamespace: string, entries: AdmZip.IZipEntry[]): Map<string, string> {
+    private static filterAndMapEntries(entries: AdmZip.IZipEntry[]): Map<string, string> {
         const IGNORE_FILES = [
             path.sep + "manifest-bundle.zip",
             path.sep + "Component-preload.js",
             path.sep + "sap-ui-cachebuster-info.json"
         ];
-        const getPath = (entry: AdmZip.IZipEntry) => {
-            const paths = ResourceUtil.filepathToResources(projectNamespace);
-            paths.push(entry.entryName);
-            return path.resolve(path.sep + path.join(...paths));
-        };
-        const filteredEntries = entries.filter(entry => !IGNORE_FILES.includes(entry.entryName) && path.extname(getPath(entry)) != "");
-        return new Map(filteredEntries.map(entry => [getPath(entry), entry.getData().toString("utf8")]));
+        const filteredEntries = entries.filter(entry => !IGNORE_FILES.includes(entry.entryName) && path.extname(entry.entryName) != "");
+        return new Map(filteredEntries.map(entry => [entry.entryName, entry.getData().toString("utf8")]));
     }
 }
 

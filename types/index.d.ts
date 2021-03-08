@@ -15,17 +15,14 @@ declare module "@ui5/fs/lib" {
 
 declare module "@ui5/fs/lib/resourceFactory" {
     import { Resource } from "@ui5/fs/lib";
-    const resourceFactory: {
-        createResource({
-            path,
-            string
-        }: IResourceParams): Resource;
-    }
+    export function createResource({
+        path,
+        string
+    }: IResourceParams): Resource;
     export interface IResourceParams {
         path: string;
         string: string;
     }
-    export default resourceFactory
 }
 
 declare module "@ui5/builder/lib/tasks/TaskUtil" {

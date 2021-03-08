@@ -1,4 +1,4 @@
-import { ApplyUtil, RegistrationBuild } from "../types/bundle";
+import { ApplyUtil, RegistrationBuild } from "../dist/bundle";
 import { IBaseAppManifest, IChangeText } from "./model/types";
 
 export default class BuildStrategy {

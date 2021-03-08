@@ -41,7 +41,7 @@ export interface IResource {
 }
 
 export interface IServiceKeys {
-    credentials: ICredentials[];
+    credentials: ICredentials;
     serviceInstance: IServiceInstance;
 }
 

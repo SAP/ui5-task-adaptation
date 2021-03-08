@@ -1,13 +1,13 @@
 /// <reference path="../types/index.d.ts"/>
 import { IAppVariantInfo, IBaseAppInfo, IBaseAppManifest, IChange, IConfiguration, IProjectOptions } from "./model/types";
 import BuildStrategy from "./buildStrategy";
-import { RegistrationBuild, Change, Applier, ApplyUtil } from "../types/bundle";
-import Logger from "@ui5/logger";
+import { RegistrationBuild, Change, Applier, ApplyUtil } from "../dist/bundle";
 import AppVariantManager from "./appVariantManager";
 import * as path from "path";
 import ResourceUtil from "./util/resourceUtil";
 import { Resource } from "@ui5/fs/lib";
-import resourceFactory from "@ui5/fs/lib/resourceFactory";
+import * as resourceFactory from "@ui5/fs/lib/resourceFactory";
+import Logger from "@ui5/logger";
 const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManager");
 
 export class BaseAppManager {
@@ -90,8 +90,10 @@ export class BaseAppManager {
     static async applyDescriptorChanges(baseAppManifest: IBaseAppManifest, changes: IChange[], i18nBundleName: string) {
         log.verbose("Applying appVariant changes");
         const strategy = new BuildStrategy(RegistrationBuild, ApplyUtil, i18nBundleName);
-        const changesProxy = changes.map((change: IChange) => new Change(change));
-        return Applier.applyChanges(baseAppManifest, changesProxy, strategy);
+        const changesContent = changes?.map((change: IChange) => new Change(change));
+        if (changesContent) {
+            await Applier.applyChanges(baseAppManifest, changesContent, strategy);
+        }
     }
 
     static writeToWorkspace(baseAppFiles: Map<string, string>, projectNamespace: string) {

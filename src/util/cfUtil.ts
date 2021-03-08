@@ -3,8 +3,9 @@ import CFToolsCli = require("@sap/cf-tools/out/src/cli");
 import { eFilters } from "@sap/cf-tools/out/src/types";
 import { CliResult } from "@sap/cf-tools/out/src/types";
 import { Messages } from "../i18n/messages";
-import { IGetServiceInstanceParams, IServiceKeys, IServiceInstance, IResource, ICreateServiceInstanceParams } from "../model/types";
-const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::CFUtil");
+import { IGetServiceInstanceParams, IServiceKeys, IServiceInstance, IResource, ICreateServiceInstanceParams, IConfiguration } from "../model/types";
+import Logger from "@ui5/logger";
+const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::CFUtil");
 
 export default class CFUtil {
 
@@ -12,7 +13,7 @@ export default class CFUtil {
         const resources = await this.requestCfApi(`/v3/service_offerings?per_page=1000&space_guids=${spaceGuid}`);
         let html5AppsRepoRt = resources.find((resource: any) => resource.tags && tags.every(tag => resource.tags.includes(tag)));
         if (html5AppsRepoRt) {
-            log(`Creating service instance '${name}' of service '${html5AppsRepoRt.name}' with '${planName}' plan`);
+            log.info(`Creating service instance '${name}' of service '${html5AppsRepoRt.name}' with '${planName}' plan`);
             try {
                 await this.cfExecute(["create-service", html5AppsRepoRt.name, planName, name]);
             } catch (error) {
@@ -30,28 +31,32 @@ export default class CFUtil {
      * @returns {Promise<string[]>} credentials json object
      */
     public static async getServiceInstanceKeys(getServiceInstanceParams: IGetServiceInstanceParams,
-        createServiceInstanceParams?: ICreateServiceInstanceParams): Promise<IServiceKeys | undefined> {
+        createServiceInstanceParams?: ICreateServiceInstanceParams): Promise<IServiceKeys> {
         let serviceInstances = await this.getServiceInstance(getServiceInstanceParams);
         if (!(serviceInstances?.length > 0) && createServiceInstanceParams) {
             await this.createService(createServiceInstanceParams);
             serviceInstances = await this.getServiceInstance(getServiceInstanceParams);
         }
         if (!(serviceInstances?.length > 0)) {
-            throw new Error("Cannot find HTML5 Repo Runtime service in current space: " + getServiceInstanceParams.spaceGuids);
+            throw new Error(`Cannot find ${getServiceInstanceParams.names} service in current space: ${getServiceInstanceParams.spaceGuids}`);
         }
         // we can use any instance in the list to connect to HTML5 Repo
-        log.debug(`Use '${serviceInstances[0].name}' HTML5 Repo Runtime service instance`);
+        log.verbose(`Use '${serviceInstances[0].name}' HTML5 Repo Runtime service instance`);
+        const serviceKeys = await this.getOrCreateServiceKeys(serviceInstances[0]);
+        if (!(serviceKeys?.length > 0)) {
+            throw new Error(`Cannot get service keys for ${getServiceInstanceParams.names} service in current space: ${getServiceInstanceParams.spaceGuids}`);
+        }
         return {
-            credentials: await this.getOrCreateServiceKeys(serviceInstances[0]),
+            credentials: serviceKeys[0].credentials,
             serviceInstance: serviceInstances[0]
         }
     }
 
-    private static async getOrCreateServiceKeys(serviceInstance: IServiceInstance) {
+    private static async getOrCreateServiceKeys(serviceInstance: IServiceInstance): Promise<IServiceKeys[]> {
         const credentials = await this.getServiceKeys(serviceInstance.guid);
         if (credentials.length === 0) {
             const serviceKeyName = serviceInstance.name + "_key";
-            log(`Creating service key '${serviceKeyName}' for service instance '${serviceInstance.name}'`);
+            log.info(`Creating service key '${serviceKeyName}' for service instance '${serviceInstance.name}'`);
             await this.createServiceKey(serviceInstance.name, serviceKeyName);
         } else {
             return credentials;
@@ -63,7 +68,7 @@ export default class CFUtil {
         return CFLocal.cfGetInstanceCredentials({
             filters: [{
                 value: serviceInstanceGuid,
-                key: eFilters.service_instance_guid
+                key: eFilters.service_instance_guids
             }]
         });
     }
@@ -145,5 +150,23 @@ export default class CFUtil {
         } catch (error) {
             throw new Error(Messages.FAILED_TO_PARSE_RESPONSE_FROM_CF(error.message));
         }
+    }
+
+    static async getSpace(options: IConfiguration) {
+        let spaceGuid: string | undefined = options?.spaceGuid;
+        if (spaceGuid == null) {
+            const spaceName = (await CFLocal.cfGetTarget())?.space;
+            if (spaceName) {
+                const resources = await this.requestCfApi(`/v3/spaces?names=${spaceName}`);
+                for (const resource of resources) {
+                    spaceGuid = resource.guid;
+                    break;
+                }
+            }
+        }
+        if (spaceGuid == null) {
+            throw new Error("Please login to Cloud Foundry with 'cf login' and try again");
+        }
+        return spaceGuid;
     }
 }
