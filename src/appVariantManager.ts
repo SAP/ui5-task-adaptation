@@ -7,8 +7,8 @@ import ResourceUtil from "./util/resourceUtil";
 import Logger from "@ui5/logger";
 const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::AppVariantManager");
 
-const IGNORE_OMIT_FILES = ["manifest.json"];
-const IGNORE_OMIT_FOLDERS = ["changes/fragments"];
+const OMIT_FILES: string[] = ["manifest.appdescr_variant"];
+const OMIT_FOLDERS: string[] = [];
 const EXTENSIONS = "js,json,xml,html,properties,change,appdescr_variant";
 const MANIFEST_APP_VARIANT = "manifest.appdescr_variant";
 
@@ -54,14 +54,14 @@ export default class AppVariantManager {
     private static omitFiles(resource: Resource, taskUtil: TaskUtil) {
         const dirname = path.dirname(resource.getPath());
         const filename = path.basename(resource.getPath());
-        if (!IGNORE_OMIT_FILES.includes(filename) &&
-            !IGNORE_OMIT_FOLDERS.every(folder => dirname.endsWith(folder))) {
+        if (OMIT_FILES.includes(filename) ||
+            OMIT_FOLDERS.some(folder => dirname.endsWith(folder))) {
             taskUtil.setTag(resource, taskUtil.STANDARD_TAGS.OmitFromBuildResult, true);
         }
     }
 
     static getI18nBundleName(appVariantId: string) {
-        return appVariantId.replace(/\./g, " ");
+        return appVariantId.replace(/\./g, "_");
     }
 
     private static adjustAddNewModelEnhanceWith(changes: IChange[], i18nBundleName: string) {

@@ -30,7 +30,7 @@ export default class BuildStrategy {
         }
         const bundleName = this.applyUtil.formatBundleName(manifest["sap.app"].id + "." + this.i18nBundleName, changeTexts.i18n);
         const doubles = manifest["sap.app"].i18n.enhanceWith.some(entry => entry.bundleName === bundleName);
-        if (doubles == null) {
+        if (!doubles) {
             manifest["sap.app"].i18n.enhanceWith.push({ bundleName: bundleName });
         }
         return manifest;

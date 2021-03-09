@@ -64,7 +64,7 @@ export default class CFUtil {
         return this.getServiceKeys(serviceInstance.guid);
     }
 
-    private static async getServiceKeys(serviceInstanceGuid: string): Promise<any> {
+    private static getServiceKeys(serviceInstanceGuid: string): Promise<any> {
         return CFLocal.cfGetInstanceCredentials({
             filters: [{
                 value: serviceInstanceGuid,
