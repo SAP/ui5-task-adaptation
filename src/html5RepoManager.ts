@@ -2,7 +2,6 @@ import CFUtil from "./util/cfUtil";
 import { IConfiguration, ICreateServiceInstanceParams, ICredentials, IGetServiceInstanceParams, IProjectOptions } from "./model/types";
 import * as request from "request";
 import * as AdmZip from "adm-zip";
-import * as path from "path";
 import Logger from "@ui5/logger";
 const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::HTML5RepoManager");
 
@@ -13,7 +12,7 @@ export default class HTML5RepoManager {
         const credentials = await this.getHTML5Credentials(spaceGuid);
         const token = await this.getToken(credentials);
         const entries = await this.getBaseAppZipEntries(options.configuration, credentials, token);
-        return this.filterAndMapEntries(entries);
+        return this.mapEntries(entries);
     }
 
     private static async getHTML5Credentials(spaceGuid: string): Promise<ICredentials> {
@@ -64,14 +63,8 @@ export default class HTML5RepoManager {
         return admZip.getEntries();
     }
 
-    private static filterAndMapEntries(entries: AdmZip.IZipEntry[]): Map<string, string> {
-        const IGNORE_FILES = [
-            path.sep + "manifest-bundle.zip",
-            path.sep + "Component-preload.js",
-            path.sep + "sap-ui-cachebuster-info.json"
-        ];
-        const filteredEntries = entries.filter(entry => !IGNORE_FILES.includes(entry.entryName) && path.extname(entry.entryName) != "");
-        return new Map(filteredEntries.map(entry => [entry.entryName, entry.getData().toString("utf8")]));
+    private static mapEntries(entries: AdmZip.IZipEntry[]): Map<string, string> {
+        return new Map(entries.map(entry => [entry.entryName, entry.getData().toString("utf8")]));
     }
 }
 

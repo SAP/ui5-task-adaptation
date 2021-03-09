@@ -47,7 +47,7 @@ export default class AppVariantManager {
             const rootFolder = path.join(...paths);
             paths.push(i18nBundleName);
             paths.push(resource.getPath().substring(rootFolder.length));
-            resource.setPath(path.resolve(path.join(...paths)));
+            resource.setPath(path.join(...paths));
         }
     }
 

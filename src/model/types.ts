@@ -38,6 +38,7 @@ export interface IServiceInstance {
 export interface IResource {
     name: string;
     guid: string;
+    tags: string[];
 }
 
 export interface IServiceKeys {

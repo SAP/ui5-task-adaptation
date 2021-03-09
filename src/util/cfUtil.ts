@@ -2,7 +2,6 @@ import CFLocal = require("@sap/cf-tools/out/src/cf-local");
 import CFToolsCli = require("@sap/cf-tools/out/src/cli");
 import { eFilters } from "@sap/cf-tools/out/src/types";
 import { CliResult } from "@sap/cf-tools/out/src/types";
-import { Messages } from "../i18n/messages";
 import { IGetServiceInstanceParams, IServiceKeys, IServiceInstance, IResource, ICreateServiceInstanceParams, IConfiguration } from "../model/types";
 import Logger from "@ui5/logger";
 const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::CFUtil");
@@ -11,16 +10,16 @@ export default class CFUtil {
 
     private static async createService({ spaceGuid, planName, name, tags }: ICreateServiceInstanceParams) {
         const resources = await this.requestCfApi(`/v3/service_offerings?per_page=1000&space_guids=${spaceGuid}`);
-        let html5AppsRepoRt = resources.find((resource: any) => resource.tags && tags.every(tag => resource.tags.includes(tag)));
+        let html5AppsRepoRt = resources.find(resource => resource.tags && tags.every(tag => resource.tags.includes(tag)));
         if (html5AppsRepoRt) {
             log.info(`Creating service instance '${name}' of service '${html5AppsRepoRt.name}' with '${planName}' plan`);
             try {
                 await this.cfExecute(["create-service", html5AppsRepoRt.name, planName, name]);
             } catch (error) {
-                throw new Error(Messages.FAILED_TO_CREATE_SERVICE_INSTANCE(name, spaceGuid, error.message));
+                throw new Error(`Cannot create a service instance '${name}' in space '${spaceGuid}': ${error.message}`);
             }
         } else {
-            throw new Error(Messages.HTML5_REPO_RUNTIME_NOT_FOUND);
+            throw new Error("HTML5 Repository Runtime service cannot be found, please check your organization entitlements");
         }
     }
 
@@ -73,10 +72,10 @@ export default class CFUtil {
         });
     }
 
-    private static async createServiceKey(serviceInstanceName: string, serviceKeyName: any) {
+    private static async createServiceKey(serviceInstanceName: string, serviceKeyName: string) {
         const cliResult = await this.cfExecute(["create-service-key", serviceInstanceName, serviceKeyName]);
         if (cliResult.exitCode !== 0) {
-            throw new Error(Messages.COULD_NOT_CREATE_SERVICE_KEY_ERR_MSG(serviceInstanceName));
+            throw new Error(`Couldn't create a service key for instance: ${serviceInstanceName}`);
         }
     }
 
@@ -97,7 +96,7 @@ export default class CFUtil {
             .map(([key, value]) => `${PARAM_MAP.get(key)}=${value.join(",")}`);
         const uri = `/v3/service_instances` + (parameters.length > 0 ? `?${parameters.join("&")}` : "");
         const resources = await this.requestCfApi(uri);
-        return resources.map((service: any) => ({
+        return resources.map((service: IServiceInstance) => ({
             name: service.name,
             guid: service.guid
         }));
@@ -106,7 +105,7 @@ export default class CFUtil {
     private static async requestCfApi(url: string): Promise<IResource[]> {
         const response = await this.cfExecute(["curl", url]);
         const json = this.parseJson(response);
-        const resources: any[] = json?.resources;
+        const resources: IResource[] = json?.resources;
         const totalPages = json?.pagination?.total_pages;
         if (totalPages > 1) {
             const pages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
@@ -137,18 +136,20 @@ export default class CFUtil {
                 errors.add(error.message);
             }
         }
-        throw new Error(Messages.RETRY_MESSAGE(params) + ": " + this.errorsToString([...errors.values()]));
+        throw new Error(`Failed to send request with parameters '${JSON.stringify(params)}': ${this.errorsToString([...errors.values()])}`);
     }
 
     private static errorsToString(errors: string[]) {
-        return errors.length > 1 ? errors.map(Messages.RETRY_ATTEMPT).join("; ") : errors.map(error => error);
+        return errors.length > 1
+            ? errors.map((error, attempt) => `${attempt + 1} attempt: ${error}`).join("; ")
+            : errors.map(error => error);
     }
 
     private static parseJson(response: CliResult) {
         try {
             return JSON.parse(response.stdout);
         } catch (error) {
-            throw new Error(Messages.FAILED_TO_PARSE_RESPONSE_FROM_CF(error.message));
+            throw new Error(`Failed parse response from request CF API: ${error.message}`);
         }
     }
 

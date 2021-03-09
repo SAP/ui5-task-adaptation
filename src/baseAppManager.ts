@@ -97,15 +97,15 @@ export class BaseAppManager {
     }
 
     static writeToWorkspace(baseAppFiles: Map<string, string>, projectNamespace: string) {
-        const ignoreFiles = [
-            path.sep + "manifest-bundle.zip",
-            path.sep + "Component-preload.js",
-            path.sep + "sap-ui-cachebuster-info.json"
+        const IGNORE_FILES = [
+            "/manifest-bundle.zip",
+            "/Component-preload.js",
+            "/sap-ui-cachebuster-info.json"
         ];
         const resources = [];
         for (let filename of baseAppFiles.keys()) {
             const filepath = getPath(filename, projectNamespace);
-            if (!ignoreFiles.includes(filepath) && path.extname(filepath) !== "") {
+            if (!IGNORE_FILES.includes(filepath) && path.extname(filepath) !== "") {
                 const resource = resourceFactory.createResource({
                     path: filepath,
                     string: baseAppFiles.get(filename)!
@@ -121,5 +121,5 @@ export class BaseAppManager {
 const getPath = (filename: string, projectNamespace: string) => {
     const paths = ResourceUtil.filepathToResources(projectNamespace);
     paths.push(filename);
-    return path.resolve(path.sep + path.join(...paths));
+    return path.resolve("/" + path.join(...paths));
 };
