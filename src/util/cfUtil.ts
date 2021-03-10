@@ -1,27 +1,13 @@
+/// <reference path="../../types/index.d.ts"/>
 import CFLocal = require("@sap/cf-tools/out/src/cf-local");
 import CFToolsCli = require("@sap/cf-tools/out/src/cli");
 import { eFilters } from "@sap/cf-tools/out/src/types";
 import { CliResult } from "@sap/cf-tools/out/src/types";
-import { IGetServiceInstanceParams, IServiceKeys, IServiceInstance, IResource, ICreateServiceInstanceParams, IConfiguration } from "../model/types";
+import { IGetServiceInstanceParams, IServiceKeys, IServiceInstance, IResource, ICreateServiceInstanceParams, IConfiguration, KeyedMap } from "../model/types";
 import Logger from "@ui5/logger";
 const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::CFUtil");
 
 export default class CFUtil {
-
-    private static async createService({ spaceGuid, planName, name, tags }: ICreateServiceInstanceParams) {
-        const resources = await this.requestCfApi(`/v3/service_offerings?per_page=1000&space_guids=${spaceGuid}`);
-        let html5AppsRepoRt = resources.find(resource => resource.tags && tags.every(tag => resource.tags.includes(tag)));
-        if (html5AppsRepoRt) {
-            log.info(`Creating service instance '${name}' of service '${html5AppsRepoRt.name}' with '${planName}' plan`);
-            try {
-                await this.cfExecute(["create-service", html5AppsRepoRt.name, planName, name]);
-            } catch (error) {
-                throw new Error(`Cannot create a service instance '${name}' in space '${spaceGuid}': ${error.message}`);
-            }
-        } else {
-            throw new Error("HTML5 Repository Runtime service cannot be found, please check your organization entitlements");
-        }
-    }
 
     /**
      * Get or create service keys for service instance found by query
@@ -29,7 +15,7 @@ export default class CFUtil {
      * @param {CFUtil} cfUtil utility to communicate with CF
      * @returns {Promise<string[]>} credentials json object
      */
-    public static async getServiceInstanceKeys(getServiceInstanceParams: IGetServiceInstanceParams,
+    static async getServiceInstanceKeys(getServiceInstanceParams: IGetServiceInstanceParams,
         createServiceInstanceParams?: ICreateServiceInstanceParams): Promise<IServiceKeys> {
         let serviceInstances = await this.getServiceInstance(getServiceInstanceParams);
         if (!(serviceInstances?.length > 0) && createServiceInstanceParams) {
@@ -37,19 +23,35 @@ export default class CFUtil {
             serviceInstances = await this.getServiceInstance(getServiceInstanceParams);
         }
         if (!(serviceInstances?.length > 0)) {
-            throw new Error(`Cannot find ${getServiceInstanceParams.names} service in current space: ${getServiceInstanceParams.spaceGuids}`);
+            throw new Error(`Cannot find '${getServiceInstanceParams.names?.join(", ")}' service in current space: ${getServiceInstanceParams.spaceGuids?.join(", ")}`);
         }
         // we can use any instance in the list to connect to HTML5 Repo
         log.verbose(`Use '${serviceInstances[0].name}' HTML5 Repo Runtime service instance`);
         const serviceKeys = await this.getOrCreateServiceKeys(serviceInstances[0]);
         if (!(serviceKeys?.length > 0)) {
-            throw new Error(`Cannot get service keys for ${getServiceInstanceParams.names} service in current space: ${getServiceInstanceParams.spaceGuids}`);
+            throw new Error(`Cannot get service keys for '${getServiceInstanceParams.names?.join(", ")}' service in current space: ${getServiceInstanceParams.spaceGuids?.join(", ")}`);
         }
         return {
             credentials: serviceKeys[0].credentials,
             serviceInstance: serviceInstances[0]
         }
     }
+
+
+    private static async createService(params: ICreateServiceInstanceParams) {
+        log.verbose(`Creating a service instance with parameters: ${JSON.stringify(params)}`);
+        const resources = await this.requestCfApi(`/v3/service_plans?names=${params.planName}&space_guids=${params.spaceGuid}`);
+        const publicPlan = resources.find(resource => resource.visibility_type === "public");
+        if (!publicPlan) {
+            throw new Error(`Cannot find a public plan by name '${params.name}' in space '${params.spaceGuid}'`);
+        }
+        try {
+            await CFLocal.cfCreateService(publicPlan.guid, params.name, null, params.tags);
+        } catch (error) {
+            throw new Error(`Cannot create a service instance '${params.name}' in space '${params.spaceGuid}': ${error.message}`);
+        }
+    }
+
 
     private static async getOrCreateServiceKeys(serviceInstance: IServiceInstance): Promise<IServiceKeys[]> {
         const credentials = await this.getServiceKeys(serviceInstance.guid);
@@ -63,6 +65,7 @@ export default class CFUtil {
         return this.getServiceKeys(serviceInstance.guid);
     }
 
+
     private static getServiceKeys(serviceInstanceGuid: string): Promise<any> {
         return CFLocal.cfGetInstanceCredentials({
             filters: [{
@@ -72,12 +75,14 @@ export default class CFUtil {
         });
     }
 
+
     private static async createServiceKey(serviceInstanceName: string, serviceKeyName: string) {
         const cliResult = await this.cfExecute(["create-service-key", serviceInstanceName, serviceKeyName]);
         if (cliResult.exitCode !== 0) {
             throw new Error(`Couldn't create a service key for instance: ${serviceInstanceName}`);
         }
     }
+
 
     /**
      * Get service instance by space and plan guids
@@ -90,10 +95,14 @@ export default class CFUtil {
      * @memberof CFUtil
      */
     private static async getServiceInstance(params: IGetServiceInstanceParams): Promise<IServiceInstance[]> {
-        const PARAM_MAP: Map<string, string> = new Map([["spaceGuids", "space_guids"], ["planNames", "service_plan_names"], ["names", "names"]]);
+        const PARAM_MAP: KeyedMap<IGetServiceInstanceParams, keyof IGetServiceInstanceParams, string> = {
+            spaceGuids: "space_guids",
+            planNames: "service_plan_names",
+            names: "names"
+        };
         const parameters = Object.entries(params)
-            .filter(([_, value]) => value?.length > 0)
-            .map(([key, value]) => `${PARAM_MAP.get(key)}=${value.join(",")}`);
+            .filter(([_, value]) => value?.length && value?.length > 0)
+            .map(([key, value]) => `${PARAM_MAP[key]}=${value?.join(",")}`);
         const uri = `/v3/service_instances` + (parameters.length > 0 ? `?${parameters.join("&")}` : "");
         const resources = await this.requestCfApi(uri);
         return resources.map((service: IServiceInstance) => ({
@@ -102,7 +111,8 @@ export default class CFUtil {
         }));
     }
 
-    private static async requestCfApi(url: string): Promise<IResource[]> {
+
+    static async requestCfApi(url: string): Promise<IResource[]> {
         const response = await this.cfExecute(["curl", url]);
         const json = this.parseJson(response);
         const resources: IResource[] = json?.resources;
@@ -117,6 +127,7 @@ export default class CFUtil {
         }
         return resources;
     }
+
 
     private static async cfExecute(params: string[]) {
         const MAX_ATTEMPTS = 3;
@@ -139,11 +150,13 @@ export default class CFUtil {
         throw new Error(`Failed to send request with parameters '${JSON.stringify(params)}': ${this.errorsToString([...errors.values()])}`);
     }
 
+
     private static errorsToString(errors: string[]) {
         return errors.length > 1
             ? errors.map((error, attempt) => `${attempt + 1} attempt: ${error}`).join("; ")
             : errors.map(error => error);
     }
+
 
     private static parseJson(response: CliResult) {
         try {
@@ -152,6 +165,7 @@ export default class CFUtil {
             throw new Error(`Failed parse response from request CF API: ${error.message}`);
         }
     }
+
 
     static async getSpace(options: IConfiguration) {
         let spaceGuid: string | undefined = options?.spaceGuid;

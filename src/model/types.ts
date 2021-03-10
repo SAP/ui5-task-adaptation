@@ -25,6 +25,7 @@ export interface ICreateServiceInstanceParams {
 }
 
 export interface IGetServiceInstanceParams {
+    [key: string]: string[] | undefined;
     spaceGuids?: string[];
     planNames?: string[];
     names: string[];
@@ -39,6 +40,7 @@ export interface IResource {
     name: string;
     guid: string;
     tags: string[];
+    visibility_type: string;
 }
 
 export interface IServiceKeys {
@@ -117,3 +119,5 @@ export type IBaseAppManifest = {
         }[]
     }
 };
+
+export type KeyedMap<T, K extends keyof T, V> = { [k in K]: V };

@@ -4,8 +4,9 @@
     "description": "Custom task for ui5-builder which allows building UI5 Flexibility Adaptation Projects for SAP BTP, Cloud Foundry environment",
     "main": "index.js",
     "scripts": {
-        "test": "npm run build && mocha",
-        "coverage": "nyc node_modules/.bin/mocha",
+        "test": "npm run build && npm run dev",
+        "dev": "mocha --no-timeouts -r ts-node/register 'test/**/*.spec.ts'",
+        "coverage": "nyc node_modules/.bin/mocha -r ts-node/register 'test/**/*.spec.ts'",
         "preversion": "npm test",
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",
         "postversion": "git push --follow-tags",
@@ -45,11 +46,19 @@
         "rollup-plugin-copy": "^3.4.0"
     },
     "devDependencies": {
+        "@istanbuljs/nyc-config-typescript": "^1.0.1",
         "@types/adm-zip": "^0.4.33",
+        "@types/chai": "^4.2.15",
+        "@types/mocha": "^8.2.1",
         "@types/request": "^2.48.5",
+        "@types/sinon": "^9.0.11",
+        "chai": "^4.3.3",
         "mocha": "^8.3.0",
         "mock-require": "^3.0.3",
         "nyc": "^15.1.0",
+        "sinon": "^9.2.4",
+        "source-map-support": "^0.5.19",
+        "ts-node": "^9.1.1",
         "typescript": "^4.2.3"
     },
     "nyc": {
@@ -65,7 +74,9 @@
             "coverage/**",
             "test/**",
             "lib/processors/jsdoc/lib/**",
-            "dist/**"
+            "dist/**",
+            "rollup.config.js",
+            "rollup/**"
         ],
         "check-coverage": true,
         "statements": 85,

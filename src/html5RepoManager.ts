@@ -17,8 +17,8 @@ export default class HTML5RepoManager {
 
     private static async getHTML5Credentials(spaceGuid: string): Promise<ICredentials> {
         log.verbose("Getting HTML5 Repo Runtime credentials from space " + spaceGuid);
-        const SERVIE_INSTANCE_NAME = "html5-apps-repo-runtime";
         const PLAN_NAME = "app-runtime";
+        const SERVIE_INSTANCE_NAME = "html5-apps-repo-runtime";
         const getParams: IGetServiceInstanceParams = {
             spaceGuids: [spaceGuid],
             planNames: [PLAN_NAME],
@@ -30,8 +30,8 @@ export default class HTML5RepoManager {
             name: SERVIE_INSTANCE_NAME,
             tags: ["html5-apps-repo-rt"]
         };
-        let serviceKeys = await CFUtil.getServiceInstanceKeys(getParams, createParams);
-        if (serviceKeys == null) {
+        const serviceKeys = await CFUtil.getServiceInstanceKeys(getParams, createParams);
+        if (!serviceKeys) {
             throw new Error("Failed to get credentials of HTML5 Repository Runtime service");
         }
         return serviceKeys.credentials;
