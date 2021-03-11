@@ -167,8 +167,8 @@ export default class CFUtil {
     }
 
 
-    static async getSpace(options: IConfiguration) {
-        let spaceGuid: string | undefined = options?.spaceGuid;
+    static async getSpaceGuid(options: IConfiguration) {
+        let spaceGuid = options.spaceGuid;
         if (spaceGuid == null) {
             const spaceName = (await CFLocal.cfGetTarget())?.space;
             if (spaceName) {

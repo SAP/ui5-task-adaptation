@@ -8,7 +8,7 @@ const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::HTML
 export default class HTML5RepoManager {
 
     static async getBaseAppFiles(options: IProjectOptions): Promise<Map<string, string>> {
-        const spaceGuid = await CFUtil.getSpace(options.configuration);
+        const spaceGuid = await CFUtil.getSpaceGuid(options.configuration);
         const credentials = await this.getHTML5Credentials(spaceGuid);
         const token = await this.getToken(credentials);
         const entries = await this.getBaseAppZipEntries(options.configuration, credentials, token);
@@ -50,10 +50,19 @@ export default class HTML5RepoManager {
         return getToken(uri, options);
     }
 
+    private static validateOptions(options: IConfiguration, properties: Array<keyof IConfiguration>) {
+        for (const property of properties) {
+            if (!options[property]) {
+                throw new Error(`${property} should be specified in ui5.yaml configuration`);
+            }
+        }
+    }
+
     private static async getBaseAppZipEntries(options: IConfiguration, htmlRepoCredentials: ICredentials, token: string): Promise<AdmZip.IZipEntry[]> {
+        this.validateOptions(options, ["appHostId", "appName", "appVersion"]);
         const { appHostId, appName, appVersion } = options;
         const uri = `${(await htmlRepoCredentials).uri}/applications/content/${appName}-${appVersion}/`;
-        const zip = await downloadZip(await token, appHostId, uri);
+        const zip = await downloadZip(await token, appHostId!, uri);
         let admZip;
         try {
             admZip = new AdmZip(zip);

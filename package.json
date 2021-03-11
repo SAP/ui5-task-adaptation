@@ -7,6 +7,7 @@
         "test": "npm run build && npm run dev",
         "dev": "mocha --no-timeouts -r ts-node/register 'test/**/*.spec.ts'",
         "coverage": "nyc node_modules/.bin/mocha -r ts-node/register 'test/**/*.spec.ts'",
+        "coverage-verbose": "nyc --reporter=html --reporter=text node_modules/.bin/mocha -r ts-node/register 'test/**/*.spec.ts'",
         "preversion": "npm test",
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",
         "postversion": "git push --follow-tags",
@@ -76,7 +77,8 @@
             "lib/processors/jsdoc/lib/**",
             "dist/**",
             "rollup.config.js",
-            "rollup/**"
+            "rollup/**",
+            "src/model/types.ts"
         ],
         "check-coverage": true,
         "statements": 85,

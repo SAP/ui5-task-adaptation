@@ -2,14 +2,14 @@ import TaskUtil from "@ui5/builder/lib/tasks/TaskUtil";
 import { DuplexCollection } from "@ui5/fs/lib";
 
 export interface IConfiguration {
-    appHostId: string;
-    appId: string;
-    appName: string;
-    appVersion: string;
-    spaceGuid: string;
-    orgGuid: string;
-    html5RepoRuntimeGuid: string;
-    sapCloudService: string;
+    appHostId?: string;
+    appId?: string;
+    appName?: string;
+    appVersion?: string;
+    spaceGuid?: string;
+    orgGuid?: string;
+    html5RepoRuntimeGuid?: string;
+    sapCloudService?: string;
 }
 
 export interface IProjectOptions {
