@@ -43,11 +43,12 @@ export default class AppVariantManager {
 
     static writeI18nToModule(resource: Resource, projectNamespace: string, i18nBundleName: string) {
         if (path.extname(resource.getPath()) === ".properties") {
-            const paths = ResourceUtil.filepathToResources(projectNamespace);
-            const rootFolder = path.join(...paths);
-            paths.push(i18nBundleName);
-            paths.push(resource.getPath().substring(rootFolder.length));
-            resource.setPath(path.join(...paths));
+            let rootFolder = ResourceUtil.getRootFolder(projectNamespace);
+            if (resource.getPath().startsWith(rootFolder)) {
+                resource.setPath(path.join(rootFolder, i18nBundleName, resource.getPath().substring(rootFolder.length)));
+            } else {
+                resource.setPath(path.join("/", i18nBundleName, resource.getPath()));
+            }
         }
     }
 

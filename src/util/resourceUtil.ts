@@ -1,11 +1,13 @@
+import * as path from "path";
+
 export default class ResourceUtil {
 
-    static filepathToResources(projectNamespace?: string) {
+    static getRootFolder(projectNamespace?: string) {
         const newPath = ["/resources"];
         if (projectNamespace) {
             newPath.push(projectNamespace);
         }
-        return newPath;
+        return path.join(...newPath);
     }
 
 }

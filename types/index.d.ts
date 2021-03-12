@@ -14,7 +14,7 @@ declare module "@ui5/fs/lib" {
 }
 
 declare module "@ui5/fs/lib/resourceFactory" {
-    import { Resource } from "@ui5/fs/lib";
+    import { DuplexCollection, Resource } from "@ui5/fs/lib";
     export function createResource({
         path,
         string
@@ -23,6 +23,12 @@ declare module "@ui5/fs/lib/resourceFactory" {
         path: string;
         string: string;
     }
+    export function createCollectionsForTree(tree: any, { getProjectExcludes, getVirtualBasePathPrefix, virtualReaders }?: {
+        getProjectExcludes?: any;
+        getVirtualBasePathPrefix?: any;
+        virtualReaders?: any;
+    }): any;
+    export function createWorkspace(options: any): DuplexCollection;
 }
 
 declare module "@ui5/builder/lib/tasks/TaskUtil" {
@@ -46,4 +52,10 @@ declare module "@ui5/logger" {
         error(...messages: string[]): void;
         getLogger(moduleName: string): Logger;
     }
+}
+
+declare module "@ui5/project" {
+    export const normalizer: {
+        generateProjectTree: (options: any) => {}
+    };
 }

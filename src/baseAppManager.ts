@@ -119,7 +119,6 @@ export class BaseAppManager {
 }
 
 const getPath = (filename: string, projectNamespace: string) => {
-    const paths = ResourceUtil.filepathToResources(projectNamespace);
-    paths.push(filename);
-    return path.resolve("/" + path.join(...paths));
+    const rootFolder = ResourceUtil.getRootFolder(projectNamespace);
+    return path.resolve(path.join(rootFolder, filename));
 };
