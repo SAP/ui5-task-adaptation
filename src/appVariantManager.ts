@@ -16,7 +16,7 @@ export default class AppVariantManager {
 
     static async process(appVariantResources: Resource[], projectNamespace: string, taskUtil: TaskUtil): Promise<IAppVariantInfo> {
         const appVariantInfo = await this.getAppVariantInfo(appVariantResources);
-        const i18nBundleName = this.getI18nBundleName(appVariantInfo.id);
+        const i18nBundleName = ResourceUtil.normalizeId(appVariantInfo.id);
         for (const resource of appVariantResources) {
             this.writeI18nToModule(resource, projectNamespace, i18nBundleName);
             this.omitFiles(resource, taskUtil);
@@ -59,10 +59,6 @@ export default class AppVariantManager {
             OMIT_FOLDERS.some(folder => dirname.endsWith(folder))) {
             taskUtil.setTag(resource, taskUtil.STANDARD_TAGS.OmitFromBuildResult, true);
         }
-    }
-
-    static getI18nBundleName(appVariantId: string) {
-        return appVariantId.replace(/\./g, "_");
     }
 
     private static adjustAddNewModelEnhanceWith(changes: IChange[], i18nBundleName: string) {

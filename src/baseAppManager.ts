@@ -2,7 +2,6 @@
 import { IAppVariantInfo, IBaseAppInfo, IBaseAppManifest, IChange, IConfiguration, IProjectOptions } from "./model/types";
 import BuildStrategy from "./buildStrategy";
 import { RegistrationBuild, Change, Applier, ApplyUtil } from "../dist/bundle";
-import AppVariantManager from "./appVariantManager";
 import * as path from "path";
 import ResourceUtil from "./util/resourceUtil";
 import { Resource } from "@ui5/fs/lib";
@@ -10,15 +9,15 @@ import * as resourceFactory from "@ui5/fs/lib/resourceFactory";
 import Logger from "@ui5/logger";
 const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManager");
 
-export class BaseAppManager {
+export default class BaseAppManager {
 
     static async process(baseAppFiles: Map<string, string>, appVariantInfo: IAppVariantInfo, options: IProjectOptions): Promise<Resource[]> {
+        const { filepath, content } = this.getBaseAppManifest(baseAppFiles);
         this.renameBaseApp(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
-        const baseAppInfo = this.getBaseAppManifest(baseAppFiles);
-        this.updateCloudPlatform(baseAppInfo.content, options.configuration);
-        const i18nBundleName = AppVariantManager.getI18nBundleName(appVariantInfo.id);
-        await this.applyDescriptorChanges(baseAppInfo.content, appVariantInfo.manifest.content, i18nBundleName);
-        baseAppFiles.set(baseAppInfo.filepath, JSON.stringify(baseAppInfo.content));
+        this.updateCloudPlatform(content, options.configuration);
+        const i18nBundleName = ResourceUtil.normalizeId(appVariantInfo.id);
+        await this.applyDescriptorChanges(content, appVariantInfo.manifest.content, i18nBundleName);
+        baseAppFiles.set(filepath, JSON.stringify(content));
         return this.writeToWorkspace(baseAppFiles, options.projectNamespace);
     }
 
@@ -45,7 +44,7 @@ export class BaseAppManager {
         let filepath = [...baseAppFiles.keys()].find(filepath => filepath.endsWith("manifest.json"));
         if (filepath) {
             return {
-                content: JSON.parse(baseAppFiles.get(filepath)!), // "!" means that I'm sure that baseAppFiles.get(manifestPath) won't return undefined
+                content: JSON.parse(baseAppFiles.get(filepath)!),
                 filepath
             }
         }

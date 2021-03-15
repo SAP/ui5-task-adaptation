@@ -1,9 +1,10 @@
 import TaskUtil from "@ui5/builder/lib/tasks/TaskUtil";
 import { DuplexCollection } from "@ui5/fs/lib";
-import { BaseAppManager } from "./baseAppManager";
 import { ITaskParameters } from "./model/types";
+import BaseAppManager from "./baseAppManager";
 import AppVariantManager from "./appVariantManager";
 import HTML5RepoManager from "./html5RepoManager";
+import ResourceUtil from "./util/resourceUtil";
 
 /**
  * Creates an appVariant bundle from the provided resources.
@@ -11,12 +12,21 @@ import HTML5RepoManager from "./html5RepoManager";
 module.exports = ({ workspace, options, taskUtil }: ITaskParameters) => {
 
     async function process(workspace: DuplexCollection, taskUtil: TaskUtil) {
-        const baseAppFiles = HTML5RepoManager.getBaseAppFiles(options);
         const appVariantResources = await AppVariantManager.getAppVariantResources(workspace);
-        const appVariantInfo = AppVariantManager.process(appVariantResources, options.projectNamespace, taskUtil);
-        const baseAppResources = await BaseAppManager.process(await baseAppFiles, await appVariantInfo, options);
+        const appVariantInfo = await AppVariantManager.process(appVariantResources, options.projectNamespace, taskUtil);
+        const baseAppFiles = await getBaseAppFiles(appVariantInfo.reference);
+        const baseAppResources = await BaseAppManager.process(baseAppFiles, appVariantInfo, options);
         const resources = appVariantResources.concat(baseAppResources);
         await Promise.all(resources.concat(baseAppResources).map(resource => workspace.write(resource)));
+    }
+
+    async function getBaseAppFiles(baseAppId: string) {
+        let baseAppFiles = await ResourceUtil.readTemp(baseAppId);
+        if (baseAppFiles.size === 0) {
+            baseAppFiles = await HTML5RepoManager.getBaseAppFiles(options);
+            ResourceUtil.writeTemp(baseAppFiles, baseAppId);
+        }
+        return baseAppFiles;
     }
 
     return process(workspace, taskUtil);

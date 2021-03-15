@@ -7,11 +7,11 @@ const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::HTML
 
 export default class HTML5RepoManager {
 
-    static async getBaseAppFiles(options: IProjectOptions): Promise<Map<string, string>> {
-        const spaceGuid = await CFUtil.getSpaceGuid(options.configuration);
+    static async getBaseAppFiles({ configuration }: IProjectOptions): Promise<Map<string, string>> {
+        const spaceGuid = await CFUtil.getSpaceGuid(configuration);
         const credentials = await this.getHTML5Credentials(spaceGuid);
         const token = await this.getToken(credentials);
-        const entries = await this.getBaseAppZipEntries(options.configuration, credentials, token);
+        const entries = await this.getBaseAppZipEntries(configuration, credentials, token);
         return this.mapEntries(entries);
     }
 
@@ -73,7 +73,7 @@ export default class HTML5RepoManager {
     }
 
     private static mapEntries(entries: AdmZip.IZipEntry[]): Map<string, string> {
-        return new Map(entries.map(entry => [entry.entryName, entry.getData().toString("utf8")]));
+        return new Map(entries.filter(entry => !entry.isDirectory).map(entry => [entry.entryName, entry.getData().toString("utf8")]));
     }
 }
 

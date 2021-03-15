@@ -4,15 +4,10 @@ import * as sinon from "sinon";
 import * as chai from "chai";
 import * as path from "path";
 import AppVariantManager from "../src/appVariantManager";
-import { normalizer } from "@ui5/project";
-import * as resourceFactory from "@ui5/fs/lib/resourceFactory";
 import TestUtil from "./util/testUtil";
 import { IAppVariantInfo, IAppVariantManifest, IChange } from "../src/model/types";
-const { expect } = chai;
-
 const Resource = require("@ui5/fs/lib/Resource");
-const TaskUtil = require("@ui5/builder/lib/tasks/TaskUtil");
-const BuildContext = require("@ui5/builder/lib/builder/BuildContext");
+const { expect } = chai;
 
 describe("AppVariantManager", () => {
     let sandbox: SinonSandbox;
@@ -25,23 +20,9 @@ describe("AppVariantManager", () => {
     afterEach(() => sandbox.restore());
 
     before(async () => {
-        const project = await normalizer.generateProjectTree({ cwd: path.join(process.cwd(), "test", "resources", "appVariant1") });
-        const buildContext = new BuildContext({ rootProject: project });
-        const resourceCollections = resourceFactory.createCollectionsForTree(project, {});
-        workspace = resourceFactory.createWorkspace({
-            virBasePath: "/",
-            reader: resourceCollections.source,
-            name: "projectName1"
-        });
-        taskUtil = new TaskUtil({
-            projectBuildContext: buildContext.createProjectContext({
-                project, // TODO 2.0: Add project facade object/instance here
-                resources: {
-                    workspace,
-                    dependencies: resourceCollections.dependencies
-                }
-            })
-        });
+        const projectMeta = await TestUtil.getWorkspace("appVariant1");
+        workspace = projectMeta.workspace;
+        taskUtil = projectMeta.taskUtil;
         manifest = JSON.parse(TestUtil.getResource("appVariant1/webapp/manifest.appdescr_variant"));
         manifest.content.filter((change: IChange) => change.changeType === "appdescr_ui5_addNewModelEnhanceWith").forEach((change: IChange) => {
             change.texts.i18n = "customer_sap_ui_rta_test_variantManagement_business_service/" + change.texts.i18n;
