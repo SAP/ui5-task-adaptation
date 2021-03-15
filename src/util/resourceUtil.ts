@@ -16,7 +16,7 @@ export default class ResourceUtil {
 
 
     static writeTemp(files: Map<string, string>, baseAppId: string): Promise<void[]> {
-        const distTempFolder = path.join(tempFolder, this.normalizeId(baseAppId));
+        const distTempFolder = this.getBaseAppTempFolder(baseAppId);
         rimraf.sync(distTempFolder);
         const fsTarget = resourceFactory.createAdapter({
             fsBasePath: distTempFolder,
@@ -32,7 +32,7 @@ export default class ResourceUtil {
 
 
     static async readTemp(baseAppId: string): Promise<Map<string, string>> {
-        const baseAppTempFolder = path.join(tempFolder, this.normalizeId(baseAppId));
+        const baseAppTempFolder = this.getBaseAppTempFolder(baseAppId);
         const baseAppFiles = new Map<string, string>();
         if (fs.existsSync(baseAppTempFolder)) {
             this.fetchFiles(baseAppTempFolder, baseAppTempFolder, baseAppFiles);
@@ -40,14 +40,18 @@ export default class ResourceUtil {
         return baseAppFiles;
     }
 
-
-    static deleteTemp(baseAppId: string): void {
-        rimraf.sync(path.join(tempFolder, this.normalizeId(baseAppId)));
+    private static getBaseAppTempFolder(baseAppId: string) {
+        return path.join(tempFolder, "baseapp_" + this.normalizeId(baseAppId));
     }
 
 
-    static normalizeId(id: string) {
-        return id.replace(/\./g, "_");
+    static deleteTemp(baseAppId: string): void {
+        rimraf.sync(this.getBaseAppTempFolder(baseAppId));
+    }
+
+
+    private static normalizeId(id: string) {
+        return id.replace(/\/\\/g, "_");
     }
 
 

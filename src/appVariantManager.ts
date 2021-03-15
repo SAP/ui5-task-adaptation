@@ -5,6 +5,7 @@ import TaskUtil from "@ui5/builder/lib/tasks/TaskUtil";
 import { IAppVariantInfo, IChange } from "./model/types";
 import ResourceUtil from "./util/resourceUtil";
 import Logger from "@ui5/logger";
+import { replaceDots } from "./util/commonUtil";
 const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::AppVariantManager");
 
 const OMIT_FILES: string[] = ["manifest.appdescr_variant"];
@@ -16,7 +17,7 @@ export default class AppVariantManager {
 
     static async process(appVariantResources: Resource[], projectNamespace: string, taskUtil: TaskUtil): Promise<IAppVariantInfo> {
         const appVariantInfo = await this.getAppVariantInfo(appVariantResources);
-        const i18nBundleName = ResourceUtil.normalizeId(appVariantInfo.id);
+        const i18nBundleName = replaceDots(appVariantInfo.id);
         for (const resource of appVariantResources) {
             this.writeI18nToModule(resource, projectNamespace, i18nBundleName);
             this.omitFiles(resource, taskUtil);
@@ -25,9 +26,11 @@ export default class AppVariantManager {
         return appVariantInfo;
     }
 
+
     static getAppVariantResources(workspace: DuplexCollection): Promise<Resource[]> {
         return workspace.byGlob(`/**/*.{${EXTENSIONS}}`);
     }
+
 
     static async getAppVariantInfo(appVariantResources: Resource[]): Promise<IAppVariantInfo> {
         for (const resource of appVariantResources) {
@@ -41,6 +44,7 @@ export default class AppVariantManager {
         throw new Error("Application variant should contain manifest.appdescr_variant");
     }
 
+
     static writeI18nToModule(resource: Resource, projectNamespace: string, i18nBundleName: string) {
         if (path.extname(resource.getPath()) === ".properties") {
             let rootFolder = ResourceUtil.getRootFolder(projectNamespace);
@@ -52,6 +56,7 @@ export default class AppVariantManager {
         }
     }
 
+
     private static omitFiles(resource: Resource, taskUtil: TaskUtil) {
         const dirname = path.dirname(resource.getPath());
         const filename = path.basename(resource.getPath());
@@ -60,6 +65,7 @@ export default class AppVariantManager {
             taskUtil.setTag(resource, taskUtil.STANDARD_TAGS.OmitFromBuildResult, true);
         }
     }
+
 
     private static adjustAddNewModelEnhanceWith(changes: IChange[], i18nBundleName: string) {
         log.verbose("Adjusting appdescr_ui5_addNewModelEnhanceWith with module");

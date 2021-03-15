@@ -7,6 +7,7 @@ import ResourceUtil from "./util/resourceUtil";
 import { Resource } from "@ui5/fs/lib";
 import * as resourceFactory from "@ui5/fs/lib/resourceFactory";
 import Logger from "@ui5/logger";
+import { replaceDots } from "./util/commonUtil";
 const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManager");
 
 export default class BaseAppManager {
@@ -15,7 +16,8 @@ export default class BaseAppManager {
         const { filepath, content } = this.getBaseAppManifest(baseAppFiles);
         this.renameBaseApp(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
         this.updateCloudPlatform(content, options.configuration);
-        const i18nBundleName = ResourceUtil.normalizeId(appVariantInfo.id);
+        this.fillAppVariantIdHierarchy(content);
+        const i18nBundleName = replaceDots(appVariantInfo.id);
         await this.applyDescriptorChanges(content, appVariantInfo.manifest.content, i18nBundleName);
         baseAppFiles.set(filepath, JSON.stringify(content));
         return this.writeToWorkspace(baseAppFiles, options.projectNamespace);
@@ -41,7 +43,7 @@ export default class BaseAppManager {
     }
 
     private static getBaseAppManifest(baseAppFiles: Map<string, string>): IBaseAppInfo {
-        let filepath = [...baseAppFiles.keys()].find(filepath => filepath.endsWith("manifest.json"));
+        let filepath = [...baseAppFiles.keys()].find(filepath => filepath.endsWith("/manifest.json"));
         if (filepath) {
             return {
                 content: JSON.parse(baseAppFiles.get(filepath)!),
@@ -51,7 +53,7 @@ export default class BaseAppManager {
         throw new Error("Original application should have manifest.json in root folder");
     }
 
-    static updateCloudPlatform(baseAppManifest: IBaseAppManifest, configuration: IConfiguration) {
+    private static updateCloudPlatform(baseAppManifest: IBaseAppManifest, configuration: IConfiguration) {
         let sapCloudService = baseAppManifest["sap.cloud"]?.service;
         let sapPlatformCf = baseAppManifest["sap.platform.cf"];
         if (sapPlatformCf && sapCloudService) {
@@ -68,7 +70,7 @@ export default class BaseAppManager {
         }
     }
 
-    static fillAppVariantIdHierarchy(baseAppManifest: IBaseAppManifest) {
+    private static fillAppVariantIdHierarchy(baseAppManifest: IBaseAppManifest) {
         log.info("Filling up app variant hierarchy in manifest.json");
         const id = baseAppManifest["sap.app"]?.id;
         const version = baseAppManifest["sap.app"]?.applicationVersion?.version;

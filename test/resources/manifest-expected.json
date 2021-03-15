@@ -1,0 +1,556 @@
+{
+    "_version": "1.12.0",
+    "sap.app": {
+        "id": "com.sap.manifest.sample",
+        "type": "application",
+        "i18n": {
+            "bundleUrl": "i18n/i18n.properties",
+            "enhanceWith": [
+                {
+                    "bundleName": "com.sap.manifest.sample.customer_sap_ui_rta_test_variantManagement_business_service.i18n.i18n"
+                }
+            ]
+        },
+        "applicationVersion": {
+            "version": "1.0.0"
+        },
+        "title": "{{com.sap.manifest.sample_sap.app.title}}",
+        "description": "{{appDescription}}",
+        "resources": "resources.json",
+        "ach": "MAN-IFE-ST-SAM-PLE",
+        "dataSources": {
+            "manifestConfigService": {
+                "uri": "odata/v2/ManifestConfigurationService",
+                "type": "OData",
+                "settings": {
+                    "localUri": "localService/ManifestConfigurationService.xml"
+                }
+            },
+            "manifestDataService": {
+                "uri": "odata/v2/ManifestDataService",
+                "type": "OData",
+                "settings": {
+                    "localUri": "localService/ManifestDataService.xml"
+                }
+            },
+            "featureFlagService": {
+                "uri": "api/v1/flags",
+                "type": "JSON",
+                "settings": {
+                    "localUri": "localService/"
+                }
+            },
+            "manifestInfoService": {
+                "uri": "odata/v2/ManifestInfoService",
+                "type": "OData",
+                "settings": {
+                    "localUri": "localService/ManifestInfoService.xml"
+                }
+            }
+        },
+        "sourceTemplate": {
+            "id": "html5moduletemplates.basicSAPUI5ApplicationProjectModule",
+            "version": "1.40.12"
+        },
+        "offline": false,
+        "crossNavigation": {
+            "inbounds": {
+                "manifest-configure": {
+                    "semanticObject": "Manifest",
+                    "action": "configure",
+                    "icon": "sap-icon://settings",
+                    "title": "{{appTitle}}",
+                    "subTitle": "{{subTitle}}",
+                    "deviceTypes": {
+                        "desktop": true,
+                        "tablet": true,
+                        "phone": true
+                    },
+                    "signature": {
+                        "parameters": {},
+                        "additionalParameters": "allowed"
+                    }
+                }
+            }
+        }
+    },
+    "sap.cloud": {
+        "public": true,
+        "service": "sapCloudService"
+    },
+    "sap.ui": {
+        "technology": "UI5",
+        "icons": {
+            "icon": "",
+            "favIcon": "",
+            "phone": "",
+            "phone@2": "",
+            "tablet": "",
+            "tablet@2": ""
+        },
+        "deviceTypes": {
+            "desktop": true,
+            "tablet": true,
+            "phone": true
+        },
+        "supportedThemes": [
+            "sap_hcb",
+            "sap_bluecrystal",
+            "sap_belize",
+            "sap_fiori_3"
+        ]
+    },
+    "sap.ui5": {
+        "config": {
+            "fullWidth": true
+        },
+        "rootView": {
+            "id": "rootView",
+            "viewName": "com.sap.manifest.sample.view.App",
+            "type": "XML"
+        },
+        "dependencies": {
+            "minUI5Version": "1.65.6",
+            "libs": {
+                "sap.ui.core": {},
+                "sap.m": {
+                    "minVersion": "1.73"
+                },
+                "sap.ui.layout": {},
+                "sap.ushell": {},
+                "sap.collaboration": {},
+                "sap.ui.comp": {},
+                "sap.uxap": {}
+            }
+        },
+        "contentDensities": {
+            "compact": true,
+            "cozy": true
+        },
+        "models": {
+            "i18n": {
+                "type": "sap.ui.model.resource.ResourceModel",
+                "settings": {
+                    "bundleName": "com.sap.manifest.sample.i18n.i18n"
+                }
+            },
+            "fcl": {
+                "type": "sap.ui.model.json.JSONModel"
+            },
+            "ui": {
+                "type": "sap.ui.model.json.JSONModel",
+                "settings": {
+                    "masterComponent": {}
+                }
+            },
+            "": {
+                "dataSource": "manifestConfigService",
+                "settings": {
+                    "useBatch": true,
+                    "defaultBindingMode": "TwoWay"
+                }
+            },
+            "AnalysisTypeModel": {
+                "dataSource": "manifestConfigService",
+                "settings": {
+                    "useBatch": true,
+                    "defaultBindingMode": "TwoWay"
+                }
+            },
+            "GuideModel": {
+                "dataSource": "manifestConfigService",
+                "settings": {
+                    "useBatch": true,
+                    "defaultBindingMode": "TwoWay"
+                }
+            },
+            "TypeModel": {
+                "dataSource": "manifestConfigService",
+                "settings": {
+                    "useBatch": true,
+                    "defaultBindingMode": "TwoWay"
+                }
+            },
+            "FieldModel": {
+                "dataSource": "manifestConfigService",
+                "settings": {
+                    "useBatch": true,
+                    "defaultBindingMode": "TwoWay"
+                }
+            },
+            "CreateFieldModel": {
+                "type": "sap.ui.model.json.JSONModel"
+            },
+            "ImpactModel": {
+                "dataSource": "manifestConfigService",
+                "settings": {
+                    "useBatch": true,
+                    "defaultBindingMode": "TwoWay"
+                }
+            },
+            "CreateImpactModel": {
+                "type": "sap.ui.model.json.JSONModel"
+            },
+            "AnalysisMethodModel": {
+                "dataSource": "manifestConfigService",
+                "settings": {
+                    "useBatch": true,
+                    "defaultBindingMode": "TwoWay"
+                }
+            },
+            "CreateAnalysisMethodModel": {
+                "type": "sap.ui.model.json.JSONModel"
+            },
+            "CreateTypeModel": {
+                "type": "sap.ui.model.json.JSONModel"
+            },
+            "ManifestDataServiceModel": {
+                "dataSource": "ManifestDataService",
+                "settings": {
+                    "useBatch": false,
+                    "defaultBindingMode": "TwoWay"
+                }
+            },
+            "ManifestDataModel": {
+                "type": "sap.ui.model.json.JSONModel"
+            },
+            "CatalogTreeModel": {
+                "type": "sap.ui.model.json.JSONModel",
+                "uri": "model/CatalogTree.json"
+            },
+            "userInfoODataModel": {
+                "dataSource": "ManifestInfoService",
+                "settings": {
+                    "useBatch": false
+                }
+            },
+            "userInfo": {
+                "type": "sap.ui.model.json.JSONModel",
+                "settings": {
+                    "canViewConfigurationData": false,
+                    "canEditConfigurationData": false,
+                    "canViewManifestData": false,
+                    "canDeleteManifestData": false
+                }
+            }
+        },
+        "resources": {
+            "css": [
+                {
+                    "uri": "css/style.css"
+                }
+            ]
+        },
+        "routing": {
+            "config": {
+                "routerClass": "sap.f.routing.Router",
+                "viewType": "XML",
+                "async": true,
+                "viewPath": "com.sap.manifest.sample.view",
+                "controlId": "fcl",
+                "bypassed": {
+                    "target": "notFound"
+                },
+                "transition": "fade"
+            },
+            "routes": [
+                {
+                    "name": "Initial",
+                    "pattern": ":layout:",
+                    "target": [
+                        "catalog"
+                    ]
+                },
+                {
+                    "name": "NotFoundFullScreen",
+                    "pattern": "NotFound/{layout}",
+                    "target": [
+                        "notFoundScreen"
+                    ],
+                    "layout": "OneColumn"
+                },
+                {
+                    "name": "AnalysisMethods",
+                    "pattern": "AnalysisMethods/{layout}",
+                    "target": [
+                        "catalog",
+                        "analysisMethods"
+                    ],
+                    "featureFlag": "manifest_configuration_analysis_methods"
+                },
+                {
+                    "name": "AnalysisMethodDetail",
+                    "pattern": "AnalysisMethod/{analysisMethodId}/{layout}",
+                    "target": [
+                        "catalog",
+                        "analysisMethods",
+                        "analysisMethodDetail"
+                    ],
+                    "featureFlag": "manifest_configuration_analysis_methods"
+                },
+                {
+                    "name": "CreateAnalysisMethod",
+                    "pattern": "CreateAnalysisMethod/{layout}",
+                    "target": [
+                        "catalog",
+                        "analysisMethods",
+                        "createAnalysisMethod"
+                    ],
+                    "featureFlag": "manifest_configuration_analysis_methods",
+                    "layout": "ThreeColumnsEndExpanded"
+                },
+                {
+                    "name": "AnalysisTypes",
+                    "pattern": "AnalysisType/{layout}",
+                    "target": [
+                        "catalog",
+                        "analysisType"
+                    ],
+                    "featureFlag": "manifest_configuration_analysis_types"
+                },
+                {
+                    "name": "Fields",
+                    "pattern": "Fields/{layout}",
+                    "target": [
+                        "catalog",
+                        "fields"
+                    ],
+                    "featureFlag": "manifest_configuration_fields"
+                },
+                {
+                    "name": "FieldDetail",
+                    "pattern": "Fields/{fieldId}/{layout}",
+                    "target": [
+                        "catalog",
+                        "fields",
+                        "fieldDetail"
+                    ],
+                    "featureFlag": "manifest_configuration_fields"
+                },
+                {
+                    "name": "CreateField",
+                    "pattern": "CreateField/{layout}",
+                    "target": [
+                        "catalog",
+                        "fields",
+                        "createField"
+                    ],
+                    "featureFlag": "manifest_configuration_fields",
+                    "layout": "ThreeColumnsEndExpanded"
+                },
+                {
+                    "name": "Guides",
+                    "pattern": "Guides/{layout}",
+                    "target": [
+                        "catalog",
+                        "guides"
+                    ]
+                },
+                {
+                    "name": "Impacts",
+                    "pattern": "Impacts/{layout}",
+                    "target": [
+                        "catalog",
+                        "impacts"
+                    ],
+                    "featureFlag": "manifest_configuration_impacts"
+                },
+                {
+                    "name": "ImpactDetail",
+                    "pattern": "Impacts/{impactId}/{layout}",
+                    "target": [
+                        "catalog",
+                        "impacts",
+                        "impactDetail"
+                    ],
+                    "featureFlag": "manifest_configuration_impacts"
+                },
+                {
+                    "name": "CreateImpact",
+                    "pattern": "CreateImpact/{layout}",
+                    "target": [
+                        "catalog",
+                        "impacts",
+                        "createImpact"
+                    ],
+                    "featureFlag": "manifest_configuration_impacts",
+                    "layout": "ThreeColumnsEndExpanded"
+                },
+                {
+                    "name": "Sources",
+                    "pattern": "Sources/{layout}",
+                    "target": [
+                        "catalog",
+                        "sources"
+                    ],
+                    "featureFlag": "manifest_configuration_sources"
+                },
+                {
+                    "name": "SourceDetail",
+                    "pattern": "Sources/{sourceId}/{layout}",
+                    "target": [
+                        "catalog",
+                        "sources",
+                        "sourceDetail"
+                    ],
+                    "featureFlag": "manifest_configuration_sources"
+                },
+                {
+                    "name": "Types",
+                    "pattern": "Types/{layout}",
+                    "target": [
+                        "catalog",
+                        "types"
+                    ],
+                    "featureFlag": "manifest_configuration_types"
+                },
+                {
+                    "name": "TypeDetail",
+                    "pattern": "TypeDetail/{typeDetailId}/{layout}",
+                    "target": [
+                        "catalog",
+                        "types",
+                        "typeDetail"
+                    ],
+                    "featureFlag": "manifest_configuration_types"
+                },
+                {
+                    "name": "CreateType",
+                    "pattern": "CreateType/{layout}",
+                    "target": [
+                        "catalog",
+                        "types",
+                        "createType"
+                    ],
+                    "featureFlag": "manifest_configuration_types",
+                    "layout": "ThreeColumnsEndExpanded"
+                },
+                {
+                    "name": "ManifestData",
+                    "pattern": "ManifestData/{layout}",
+                    "target": [
+                        "catalog",
+                        "manifestData"
+                    ],
+                    "featureFlag": "manifest_configuration_personal_data"
+                }
+            ],
+            "targets": {
+                "catalog": {
+                    "viewId": "catalog",
+                    "viewName": "Catalog",
+                    "controlAggregation": "beginColumnPages"
+                },
+                "analysisMethods": {
+                    "viewId": "analysisMethods",
+                    "viewName": "AnalysisMethods",
+                    "controlAggregation": "midColumnPages"
+                },
+                "analysisMethodDetail": {
+                    "viewId": "analysisMethodDetail",
+                    "viewName": "AnalysisMethodDetail",
+                    "controlAggregation": "endColumnPages"
+                },
+                "createAnalysisMethod": {
+                    "viewId": "createAnalysisMethod",
+                    "viewName": "AnalysisMethodCreate",
+                    "controlAggregation": "endColumnPages"
+                },
+                "analysisType": {
+                    "viewId": "analysisType",
+                    "viewName": "AnalysisType",
+                    "controlAggregation": "midColumnPages"
+                },
+                "guides": {
+                    "viewId": "guides",
+                    "viewName": "Guides",
+                    "controlAggregation": "midColumnPages"
+                },
+                "fields": {
+                    "viewId": "fields",
+                    "viewName": "Fields",
+                    "controlAggregation": "midColumnPages"
+                },
+                "fieldDetail": {
+                    "viewId": "fieldDetail",
+                    "viewName": "FieldDetail",
+                    "controlAggregation": "endColumnPages"
+                },
+                "createField": {
+                    "viewId": "createField",
+                    "viewName": "FieldCreate",
+                    "controlAggregation": "endColumnPages"
+                },
+                "impacts": {
+                    "viewId": "impacts",
+                    "viewName": "Impacts",
+                    "controlAggregation": "midColumnPages"
+                },
+                "impactDetail": {
+                    "viewId": "impactDetail",
+                    "viewName": "ImpactDetail",
+                    "controlAggregation": "endColumnPages"
+                },
+                "createImpact": {
+                    "viewId": "createImpact",
+                    "viewName": "ImpactDetailCreate",
+                    "controlAggregation": "endColumnPages"
+                },
+                "sources": {
+                    "viewId": "sources",
+                    "viewName": "Sources",
+                    "controlAggregation": "midColumnPages"
+                },
+                "sourceDetail": {
+                    "viewId": "sourceDetail",
+                    "viewName": "SourceDetail",
+                    "controlAggregation": "endColumnPages"
+                },
+                "types": {
+                    "viewId": "types",
+                    "viewName": "Types",
+                    "controlAggregation": "midColumnPages"
+                },
+                "typeDetail": {
+                    "viewId": "typeDetail",
+                    "viewName": "TypeDetail",
+                    "controlAggregation": "endColumnPages"
+                },
+                "createType": {
+                    "viewId": "createType",
+                    "viewName": "TypeDetailCreate",
+                    "controlAggregation": "endColumnPages"
+                },
+                "manifestData": {
+                    "viewId": "manifestData",
+                    "viewName": "ManifestData",
+                    "controlAggregation": "midColumnPages"
+                },
+                "notFound": {
+                    "viewId": "notFound",
+                    "viewName": "NotFound",
+                    "transition": "show",
+                    "controlAggregation": "endColumnPages"
+                },
+                "notFoundScreen": {
+                    "viewId": "notFound",
+                    "viewName": "NotFound",
+                    "transition": "show",
+                    "controlAggregation": "beginColumnPages"
+                }
+            }
+        },
+        "appVariantIdHierarchy": [
+            {
+                "appVariantId": "com.sap.manifest.sample",
+                "version": "1.0.0"
+            }
+        ]
+    },
+    "sap.platform.cf": {
+        "oAuthScopes": [
+            "$XSAPPNAME('com.sap.manifest.default.service').view_manifest_config",
+            "$XSAPPNAME('com.sap.manifest.default.service').view_manifest_personal_data"
+        ]
+    }
+}
