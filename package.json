@@ -81,7 +81,8 @@
             "dist/**",
             "rollup.config.js",
             "rollup/**",
-            "src/model/types.ts"
+            "src/model/types.ts",
+            "src/util/requestUtil.ts"
         ],
         "check-coverage": true,
         "statements": 85,

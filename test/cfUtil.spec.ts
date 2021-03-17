@@ -7,7 +7,6 @@ import { eFilters } from "@sap/cf-tools/out/src/types";
 import CFUtil from "../src/util/cfUtil";
 import { IGetServiceInstanceParams } from "../src/model/types";
 import TestUtil from "./util/testUtil";
-const ENV = { env: { "CF_COLOR": "false" } };
 const { assert, expect } = chai;
 
 describe("CFUtil", () => {
@@ -20,8 +19,8 @@ describe("CFUtil", () => {
 
         it("should take resources multiple pages request with parameter", async () => {
             sandbox.stub(CFToolsCli.Cli, "execute")
-                .withArgs(["curl", "/v3/service_instances?per_page=200"], ENV)
-                .callsFake(() => getStdOut({
+                .withArgs(["curl", "/v3/service_instances?per_page=200"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut({
                     "pagination": {
                         "total_results": 585,
                         "total_pages": 3,
@@ -32,8 +31,8 @@ describe("CFUtil", () => {
                     },
                     "resources": [{ "name": "service-page-1" }]
                 }))
-                .withArgs(["curl", "/v3/service_instances?per_page=200&page=2"], ENV)
-                .callsFake(() => getStdOut({
+                .withArgs(["curl", "/v3/service_instances?per_page=200&page=2"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut({
                     "pagination": {
                         "total_results": 585,
                         "total_pages": 3,
@@ -44,8 +43,8 @@ describe("CFUtil", () => {
                     },
                     "resources": [{ "name": "service-page-2" }]
                 }))
-                .withArgs(["curl", "/v3/service_instances?per_page=200&page=3"], ENV)
-                .callsFake(() => getStdOut({
+                .withArgs(["curl", "/v3/service_instances?per_page=200&page=3"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut({
                     "pagination": {
                         "total_results": 585,
                         "total_pages": 3,
@@ -62,8 +61,8 @@ describe("CFUtil", () => {
 
         it("should take resources multiple pages request without parameter", async () => {
             sandbox.stub(CFToolsCli.Cli, "execute")
-                .withArgs(["curl", "/v3/service_instances"], ENV)
-                .callsFake(() => getStdOut({
+                .withArgs(["curl", "/v3/service_instances"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut({
                     "pagination": {
                         "total_results": 585,
                         "total_pages": 2,
@@ -74,8 +73,8 @@ describe("CFUtil", () => {
                     },
                     "resources": [{ "name": "service-page-1" }]
                 }))
-                .withArgs(["curl", "/v3/service_instances?page=2"], ENV)
-                .callsFake(() => getStdOut({
+                .withArgs(["curl", "/v3/service_instances?page=2"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut({
                     "pagination": {
                         "total_results": 585,
                         "total_pages": 2,
@@ -92,8 +91,8 @@ describe("CFUtil", () => {
 
         it("should take resources from 1 page", async () => {
             sandbox.stub(CFToolsCli.Cli, "execute")
-                .withArgs(["curl", "/v3/service_instances?per_page=200"], ENV)
-                .callsFake(() => getStdOut({
+                .withArgs(["curl", "/v3/service_instances?per_page=200"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut({
                     "pagination": {
                         "total_results": 585,
                         "total_pages": 1,
@@ -110,10 +109,10 @@ describe("CFUtil", () => {
 
         it("should take throw exception on first page", async () => {
             sandbox.stub(CFToolsCli.Cli, "execute")
-                .withArgs(["curl", "/v3/service_instances?per_page=200"], ENV)
-                .callsFake(() => getStdOut({}, 1, "Error from 1 page"))
-                .withArgs(["curl", "/v3/service_instances?per_page=200&page=2"], ENV)
-                .callsFake(() => getStdOut({}, 1, "Error from 2 page"));
+                .withArgs(["curl", "/v3/service_instances?per_page=200"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut({}, 1, "Error from 1 page"))
+                .withArgs(["curl", "/v3/service_instances?per_page=200&page=2"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut({}, 1, "Error from 2 page"));
             try {
                 await CFUtil.requestCfApi("/v3/service_instances?per_page=200");
                 assert.fail(true, false, "Exception not thrown");
@@ -124,8 +123,8 @@ describe("CFUtil", () => {
 
         it("should throw exception on second page", async () => {
             sandbox.stub(CFToolsCli.Cli, "execute")
-                .withArgs(["curl", "/v3/service_instances?per_page=200"], ENV)
-                .callsFake(() => getStdOut({
+                .withArgs(["curl", "/v3/service_instances?per_page=200"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut({
                     "pagination": {
                         "total_results": 585,
                         "total_pages": 3,
@@ -136,12 +135,12 @@ describe("CFUtil", () => {
                     },
                     "resources": [{ "name": "service-page-1" }]
                 }))
-                .withArgs(["curl", "/v3/service_instances?per_page=200&page=2"], ENV)
-                .onFirstCall().callsFake(() => getStdOut({}, 1, "Error from 2 page 1 call"))
-                .onSecondCall().callsFake(() => getStdOut({}, 1, "Error from 2 page 2 call"))
-                .onThirdCall().callsFake(() => getStdOut({}, 1, "Error from 2 page 3 call"))
-                .withArgs(["curl", "/v3/service_instances?per_page=200&page=3"], ENV)
-                .callsFake(() => getStdOut({}, 1, "Error from 3 page"));;
+                .withArgs(["curl", "/v3/service_instances?per_page=200&page=2"], TestUtil.ENV)
+                .onFirstCall().callsFake(() => TestUtil.getStdOut({}, 1, "Error from 2 page 1 call"))
+                .onSecondCall().callsFake(() => TestUtil.getStdOut({}, 1, "Error from 2 page 2 call"))
+                .onThirdCall().callsFake(() => TestUtil.getStdOut({}, 1, "Error from 2 page 3 call"))
+                .withArgs(["curl", "/v3/service_instances?per_page=200&page=3"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut({}, 1, "Error from 3 page"));;
             try {
                 await CFUtil.requestCfApi("/v3/service_instances?per_page=200");
                 assert.fail(true, false, "Exception not thrown");
@@ -156,10 +155,10 @@ describe("CFUtil", () => {
         it("should succesfully create and return service keys and serviceInstance info", async () => {
             const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
             sandbox.stub(CFToolsCli.Cli, "execute")
-                .withArgs(["curl", "/v3/service_instances?space_guids=spaceGuid1&names=serviceInstance1"], ENV)
-                .callsFake(() => getStdOut(TestUtil.getResource("service_instances_bs.json")))
-                .withArgs(["create-service-key", "serviceInstance1", "serviceInstance1_key"], ENV)
-                .callsFake(() => getStdOut(""));
+                .withArgs(["curl", "/v3/service_instances?space_guids=spaceGuid1&names=serviceInstance1"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut(TestUtil.getResource("service_instances_bs.json")))
+                .withArgs(["create-service-key", "serviceInstance1", "serviceInstance1_key"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut(""));
             sandbox.stub(CFLocal, "cfGetInstanceCredentials")
                 .withArgs({
                     filters: [{
@@ -168,7 +167,7 @@ describe("CFUtil", () => {
                     }]
                 })
                 .onFirstCall().callsFake(() => Promise.resolve([]))
-                .onSecondCall().callsFake(() => credentialsJson);
+                .onSecondCall().callsFake(() => Promise.resolve(credentialsJson));
             const result = await CFUtil.getServiceInstanceKeys({
                 spaceGuids: ["spaceGuid1"],
                 names: ["serviceInstance1"]
@@ -184,10 +183,10 @@ describe("CFUtil", () => {
 
         it("should throw an exception when after creating service keys are not found", async () => {
             sandbox.stub(CFToolsCli.Cli, "execute")
-                .withArgs(["curl", "/v3/service_instances?space_guids=spaceGuid1&names=serviceInstance1"], ENV)
-                .callsFake(() => getStdOut(TestUtil.getResource("service_instances_bs.json")))
-                .withArgs(["create-service-key", "serviceInstance1", "serviceInstance1_key"], ENV)
-                .callsFake(() => getStdOut(""));
+                .withArgs(["curl", "/v3/service_instances?space_guids=spaceGuid1&names=serviceInstance1"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut(TestUtil.getResource("service_instances_bs.json")))
+                .withArgs(["create-service-key", "serviceInstance1", "serviceInstance1_key"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut(""));
             sandbox.stub(CFLocal, "cfGetInstanceCredentials")
                 .withArgs({
                     filters: [{
@@ -210,8 +209,8 @@ describe("CFUtil", () => {
 
         it("should throw exception if service instance not found", async () => {
             sandbox.stub(CFToolsCli.Cli, "execute")
-                .withArgs(["curl", "/v3/service_instances?space_guids=spaceGuid1&names=serviceInstance1"], ENV)
-                .callsFake(() => getStdOut(TestUtil.getResource("service_instances_empty_bs.json")));
+                .withArgs(["curl", "/v3/service_instances?space_guids=spaceGuid1&names=serviceInstance1"], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut(TestUtil.getResource("service_instances_empty_bs.json")));
             try {
                 await CFUtil.getServiceInstanceKeys({
                     spaceGuids: ["spaceGuid1"],
@@ -257,11 +256,11 @@ describe("CFUtil", () => {
         it("should create a service with parameters", async () => {
             const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
             sandbox.stub(CFToolsCli.Cli, "execute")
-                .withArgs(["curl", `/v3/service_instances?space_guids=${SPACE_GUID}&names=${NON_EXISTING_SERVICE_INSTANCE}`], ENV)
-                .onFirstCall().callsFake(() => getStdOut(TestUtil.getResource("service_instances_empty_bs.json")))
-                .onSecondCall().callsFake(() => getStdOut(TestUtil.getResource("service_instances_bs.json")))
-                .withArgs(["curl", `/v3/service_plans?names=${PLAN}&space_guids=${SPACE_GUID}`], ENV)
-                .callsFake(() => getStdOut(TestUtil.getResource("service_plans.json")));
+                .withArgs(["curl", `/v3/service_instances?space_guids=${SPACE_GUID}&names=${NON_EXISTING_SERVICE_INSTANCE}`], TestUtil.ENV)
+                .onFirstCall().callsFake(() => TestUtil.getStdOut(TestUtil.getResource("service_instances_empty_bs.json")))
+                .onSecondCall().callsFake(() => TestUtil.getStdOut(TestUtil.getResource("service_instances_bs.json")))
+                .withArgs(["curl", `/v3/service_plans?names=${PLAN}&space_guids=${SPACE_GUID}`], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut(TestUtil.getResource("service_plans.json")));
             sandbox.stub(CFLocal, "cfCreateService");
             sandbox.stub(CFLocal, "cfGetInstanceCredentials")
                 .withArgs({
@@ -270,7 +269,7 @@ describe("CFUtil", () => {
                         key: eFilters.service_instance_guids
                     }]
                 })
-                .callsFake(() => credentialsJson);
+                .callsFake(() => Promise.resolve(credentialsJson));
             const result = await CFUtil.getServiceInstanceKeys({
                 spaceGuids: [SPACE_GUID],
                 names: [NON_EXISTING_SERVICE_INSTANCE]
@@ -297,8 +296,8 @@ describe("CFUtil", () => {
             sandbox.stub(CFLocal, "cfGetTarget")
                 .callsFake(() => Promise.resolve({ space: SPACE_NAME, "api endpoint": "apiEndpoint", "api version": "apiVersion", user: "user" }));
             sandbox.stub(CFToolsCli.Cli, "execute")
-                .withArgs(["curl", `/v3/spaces?names=${SPACE_NAME}`], ENV)
-                .callsFake(() => getStdOut(TestUtil.getResource("spaces.json")));
+                .withArgs(["curl", `/v3/spaces?names=${SPACE_NAME}`], TestUtil.ENV)
+                .callsFake(() => TestUtil.getStdOut(TestUtil.getResource("spaces.json")));
             const spaceGuid = await CFUtil.getSpaceGuid({});
             expect(spaceGuid).to.equal("spaceGuid1");
         });
@@ -312,7 +311,7 @@ describe("CFUtil", () => {
 
 const spyCFToolsCliCliExecute = async (sandbox: SinonSandbox, params: IGetServiceInstanceParams, expected: string) => {
     const stub = sandbox.stub(CFToolsCli.Cli, "execute");
-    stub.callsFake(() => getStdOut(TestUtil.getResource("service_instances_empty_bs.json")));
+    stub.callsFake(() => TestUtil.getStdOut(TestUtil.getResource("service_instances_empty_bs.json")));
     try {
         await CFUtil.getServiceInstanceKeys(params);
     } catch (error) {
@@ -320,9 +319,3 @@ const spyCFToolsCliCliExecute = async (sandbox: SinonSandbox, params: IGetServic
     }
     expect(stub.getCall(0).args[0]).to.eql(["curl", expected]);
 }
-
-const getStdOut = (stdout: any, exitCode: number = 0, stderr: string = "") => Promise.resolve({
-    stdout: typeof stdout === "string" ? stdout : JSON.stringify(stdout),
-    stderr,
-    exitCode
-});

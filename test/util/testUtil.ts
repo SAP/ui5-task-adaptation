@@ -7,8 +7,19 @@ const TaskUtil = require("@ui5/builder/lib/tasks/TaskUtil");
 const BuildContext = require("@ui5/builder/lib/builder/BuildContext");
 
 export default class TestUtil {
+
+    static ENV = { env: { "CF_COLOR": "false" } };
+
     static getResource(filename: string): string {
-        return fs.readFileSync(path.join(process.cwd(), "test", "resources", filename), { encoding: "utf-8" });
+        return fs.readFileSync(this.getResourcePath(filename), { encoding: "utf-8" });
+    }
+
+    static getResourceBuffer(filename: string): Buffer {
+        return fs.readFileSync(this.getResourcePath(filename));
+    }
+
+    private static getResourcePath(filename: string): string {
+        return path.join(process.cwd(), "test", "resources", filename);
     }
 
     static async getWorkspace(projectName: string) {
@@ -36,5 +47,15 @@ export default class TestUtil {
         const projectMeta = await TestUtil.getWorkspace(projectName);
         const appVariantResources = await AppVariantManager.getAppVariantResources(projectMeta.workspace);
         return AppVariantManager.getAppVariantInfo(appVariantResources);
+    }
+
+
+
+    static getStdOut(stdout: any, exitCode: number = 0, stderr: string = "") {
+        return Promise.resolve({
+            stdout: typeof stdout === "string" ? stdout : JSON.stringify(stdout),
+            stderr,
+            exitCode
+        });
     }
 }

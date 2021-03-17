@@ -7,7 +7,7 @@
             "bundleUrl": "i18n/i18n.properties",
             "enhanceWith": [
                 {
-                    "bundleName": "com.sap.manifest.sample.customer_sap_ui_rta_test_variantManagement_business_service.i18n.i18n"
+                    "bundleName": "com.sap.manifest.sample.customer_com_sap_application_variant_id.i18n.i18n"
                 }
             ]
         },

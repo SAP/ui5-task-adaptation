@@ -32,7 +32,7 @@ describe("BaseAppManager", () => {
     });
 
     it("should update base app manifest", async () => {
-        const baseAppFiles = new Map([["/manifest.json", TestUtil.getResource("manifest.json")]]);
+        const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const resources = await BaseAppManager.process(baseAppFiles, appVariantInfo, options);
         const actual = await resources[0].getBuffer().then((buffer: Buffer) => JSON.parse(buffer.toString()));
         expect(actual).to.eql(JSON.parse(TestUtil.getResource("manifest-expected.json")));

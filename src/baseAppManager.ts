@@ -43,7 +43,7 @@ export default class BaseAppManager {
     }
 
     private static getBaseAppManifest(baseAppFiles: Map<string, string>): IBaseAppInfo {
-        let filepath = [...baseAppFiles.keys()].find(filepath => filepath.endsWith("/manifest.json"));
+        let filepath = [...baseAppFiles.keys()].find(filepath => filepath.endsWith("manifest.json"));
         if (filepath) {
             return {
                 content: JSON.parse(baseAppFiles.get(filepath)!),

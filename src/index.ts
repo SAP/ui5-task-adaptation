@@ -16,15 +16,14 @@ module.exports = ({ workspace, options, taskUtil }: ITaskParameters) => {
         const appVariantInfo = await AppVariantManager.process(appVariantResources, options.projectNamespace, taskUtil);
         const baseAppFiles = await getBaseAppFiles(appVariantInfo.reference);
         const baseAppResources = await BaseAppManager.process(baseAppFiles, appVariantInfo, options);
-        const resources = appVariantResources.concat(baseAppResources);
-        await Promise.all(resources.concat(baseAppResources).map(resource => workspace.write(resource)));
+        await Promise.all(appVariantResources.concat(baseAppResources).map(resource => workspace.write(resource)));
     }
 
     async function getBaseAppFiles(baseAppId: string) {
         let baseAppFiles = await ResourceUtil.readTemp(baseAppId);
         if (baseAppFiles.size === 0) {
-            baseAppFiles = await HTML5RepoManager.getBaseAppFiles(options);
-            ResourceUtil.writeTemp(baseAppFiles, baseAppId);
+            baseAppFiles = await HTML5RepoManager.getBaseAppFiles(options.configuration);
+            await ResourceUtil.writeTemp(baseAppId, baseAppFiles);
         }
         return baseAppFiles;
     }

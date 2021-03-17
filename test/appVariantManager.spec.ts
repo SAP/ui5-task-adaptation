@@ -25,7 +25,7 @@ describe("AppVariantManager", () => {
         taskUtil = projectMeta.taskUtil;
         manifest = JSON.parse(TestUtil.getResource("appVariant1/webapp/manifest.appdescr_variant"));
         manifest.content.filter((change: IChange) => change.changeType === "appdescr_ui5_addNewModelEnhanceWith").forEach((change: IChange) => {
-            change.texts.i18n = "customer_sap_ui_rta_test_variantManagement_business_service/" + change.texts.i18n;
+            change.texts.i18n = "customer_com_sap_application_variant_id/" + change.texts.i18n;
         });
     });
 
@@ -40,8 +40,8 @@ describe("AppVariantManager", () => {
 
         it("should get appVariant info and adjsted manifest", () => {
             expect(appVariantInfo).to.eql({
-                id: "customer.sap.ui.rta.test.variantManagement.business.service",
-                reference: "sap.ui.rta.test.variantManagement.business.service",
+                id: "customer.com.sap.application.variant.id",
+                reference: "com.sap.base.app.id",
                 manifest
             });
         });
@@ -49,7 +49,7 @@ describe("AppVariantManager", () => {
         it("should adjust .properties path", () => {
             expect(appVariantResources.map(resource => resource.getPath())).to.have.members([
                 "/manifest.appdescr_variant", // we don't adjust the path since we omit it anyway
-                "/customer_sap_ui_rta_test_variantManagement_business_service/i18n/i18n.properties"
+                "/customer_com_sap_application_variant_id/i18n/i18n.properties"
             ]);
         });
 
@@ -74,7 +74,7 @@ describe("AppVariantManager", () => {
         it("should adjust .properties path", () => {
             expect(clones.map(resource => resource.getPath())).to.have.members([
                 "/resources/ns/manifest.appdescr_variant", // we don't adjust the path since we omit it anyway
-                "/resources/ns/customer_sap_ui_rta_test_variantManagement_business_service/i18n/i18n.properties"
+                "/resources/ns/customer_com_sap_application_variant_id/i18n/i18n.properties"
             ]);
         });
     });

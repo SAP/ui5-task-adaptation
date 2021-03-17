@@ -15,7 +15,7 @@ export default class ResourceUtil {
     }
 
 
-    static writeTemp(files: Map<string, string>, baseAppId: string): Promise<void[]> {
+    static writeTemp(baseAppId: string, files: Map<string, string>): Promise<void[]> {
         const distTempFolder = this.getBaseAppTempFolder(baseAppId);
         rimraf.sync(distTempFolder);
         const fsTarget = resourceFactory.createAdapter({
