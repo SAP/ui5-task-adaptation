@@ -1,13 +1,16 @@
+import * as path from "path";
+import * as resourceFactory from "@ui5/fs/lib/resourceFactory";
+
+import { Applier, ApplyUtil, Change, RegistrationBuild } from "../dist/bundle";
 /// <reference path="../types/index.d.ts"/>
 import { IAppVariantInfo, IBaseAppInfo, IBaseAppManifest, IChange, IConfiguration, IProjectOptions } from "./model/types";
+
 import BuildStrategy from "./buildStrategy";
-import { RegistrationBuild, Change, Applier, ApplyUtil } from "../dist/bundle";
-import * as path from "path";
-import ResourceUtil from "./util/resourceUtil";
-import { Resource } from "@ui5/fs/lib";
-import * as resourceFactory from "@ui5/fs/lib/resourceFactory";
 import Logger from "@ui5/logger";
+import { Resource } from "@ui5/fs/lib";
+import ResourceUtil from "./util/resourceUtil";
 import { replaceDots } from "./util/commonUtil";
+
 const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManager");
 
 export default class BaseAppManager {
@@ -76,6 +79,9 @@ export default class BaseAppManager {
         const version = baseAppManifest["sap.app"]?.applicationVersion?.version;
         this.validateProperty(id, "sap.app/id");
         this.validateProperty(version, "sap.app/applicationVersion/version");
+        if (baseAppManifest["sap.ui5"] == null) {
+            baseAppManifest["sap.ui5"] = {};
+        }
         baseAppManifest["sap.ui5"].appVariantIdHierarchy = [{
             appVariantId: id,
             version

@@ -1,4 +1,5 @@
 import * as chai from "chai";
+
 import ResourceUtil from "../src/util/resourceUtil";
 const { expect } = chai;
 

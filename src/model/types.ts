@@ -1,5 +1,5 @@
-import TaskUtil from "@ui5/builder/lib/tasks/TaskUtil";
 import { DuplexCollection } from "@ui5/fs/lib";
+import TaskUtil from "@ui5/builder/lib/tasks/TaskUtil";
 
 export interface IConfiguration {
     appHostId?: string;
@@ -94,7 +94,7 @@ export interface IBaseAppInfo {
 }
 
 export type IBaseAppManifest = {
-    ["sap.platform.cf"]: {
+    ["sap.platform.cf"]?: {
         oAuthScopes: string[]
     };
     ["sap.cloud"]?: {
@@ -107,13 +107,13 @@ export type IBaseAppManifest = {
             enhanceWith?: {
                 bundleName: string
             }[]
-        },
+        } | string,
         applicationVersion: {
             version: string;
         }
     };
-    ["sap.ui5"]: {
-        appVariantIdHierarchy: {
+    ["sap.ui5"]?: {
+        appVariantIdHierarchy?: {
             appVariantId: string;
             version: string;
         }[]
