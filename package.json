@@ -4,7 +4,7 @@
     "description": "Custom task for ui5-builder which allows building UI5 Flexibility Adaptation Projects for SAP BTP, Cloud Foundry environment",
     "main": "index.js",
     "scripts": {
-        "test": "npm run build && npm run dev",
+        "test": "npm run build && npm run coverage",
         "dev": "mocha --no-timeouts -r ts-node/register 'test/**/*.spec.ts'",
         "coverage": "nyc node_modules/.bin/mocha -r ts-node/register 'test/**/*.spec.ts'",
         "coverage-verbose": "nyc --reporter=html --reporter=text node_modules/.bin/mocha -r ts-node/register 'test/**/*.spec.ts'",
