@@ -133,7 +133,7 @@ export default class CFUtil {
                 if (response.exitCode === 0) {
                     const errorValues = [...errors.values()];
                     if (errorValues?.length > 0) {
-                        console.debug(this.errorsToString(errorValues));
+                        log.verbose(this.errorsToString(errorValues));
                     }
                     return response;
                 }
