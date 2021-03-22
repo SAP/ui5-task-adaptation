@@ -23,6 +23,7 @@ export default class BaseAppManager {
         return this.writeToWorkspace(baseAppFiles, options.projectNamespace);
     }
 
+
     static renameBaseApp(baseAppFiles: Map<string, string>, search: string, replacement: string) {
         log.verbose("Renaming base app resources to appVariant id");
         const dotToSlash = (update: string) => update.split(".").join("\/");
@@ -42,6 +43,7 @@ export default class BaseAppManager {
         });
     }
 
+
     private static getBaseAppManifest(baseAppFiles: Map<string, string>): IBaseAppInfo {
         let filepath = [...baseAppFiles.keys()].find(filepath => filepath.endsWith("manifest.json"));
         if (filepath) {
@@ -53,9 +55,10 @@ export default class BaseAppManager {
         throw new Error("Original application should have manifest.json in root folder");
     }
 
+
     private static updateCloudPlatform(baseAppManifest: any, configuration: IConfiguration) {
-        let sapCloudService = baseAppManifest["sap.cloud"]?.service;
-        let sapPlatformCf = baseAppManifest["sap.platform.cf"];
+        const sapCloudService = baseAppManifest["sap.cloud"]?.service;
+        const sapPlatformCf = baseAppManifest["sap.platform.cf"];
         if (sapPlatformCf && sapCloudService) {
             sapPlatformCf.oAuthScopes = sapPlatformCf.oAuthScopes.map((scope: string) =>
                 scope.replace(`$XSAPPNAME.`, `$XSAPPNAME('${sapCloudService}').`));
@@ -69,6 +72,7 @@ export default class BaseAppManager {
             delete baseAppManifest["sap.cloud"];
         }
     }
+
 
     private static fillAppVariantIdHierarchy(baseAppManifest: any) {
         log.info("Filling up app variant hierarchy in manifest.json");
@@ -85,11 +89,13 @@ export default class BaseAppManager {
         }];
     }
 
+
     private static validateProperty(value: string, property: string) {
         if (!value) {
             throw new Error(`Original application manifest should have ${property}`);
         }
     }
+
 
     static async applyDescriptorChanges(baseAppManifest: any, changes: IChange[], i18nBundleName: string) {
         log.verbose("Applying appVariant changes");
@@ -99,6 +105,7 @@ export default class BaseAppManager {
             await Applier.applyChanges(baseAppManifest, changesContent, strategy);
         }
     }
+
 
     static writeToWorkspace(baseAppFiles: Map<string, string>, projectNamespace: string) {
         const IGNORE_FILES = [
@@ -119,7 +126,6 @@ export default class BaseAppManager {
         }
         return resources;
     }
-
 }
 
 const getPath = (filename: string, projectNamespace: string) => {

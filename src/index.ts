@@ -17,6 +17,7 @@ module.exports = ({ workspace, options, taskUtil }: ITaskParameters) => {
         await Promise.all(appVariantResources.concat(baseAppResources).map(resource => workspace.write(resource)));
     }
 
+
     async function getBaseAppFiles(baseAppId: string) {
         let baseAppFiles = await ResourceUtil.readTemp(baseAppId);
         if (baseAppFiles.size === 0) {
@@ -25,6 +26,7 @@ module.exports = ({ workspace, options, taskUtil }: ITaskParameters) => {
         }
         return baseAppFiles;
     }
+
 
     return process(workspace, taskUtil);
 

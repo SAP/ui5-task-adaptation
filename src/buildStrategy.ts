@@ -6,19 +6,23 @@ export default class BuildStrategy {
     private applyUtil: any;
     private i18nBundleName: string;
 
+
     constructor(registrationBuild: any, applyUtil: any, i18nBundleName: string) {
         this.registrationBuild = registrationBuild;
         this.applyUtil = applyUtil;
         this.i18nBundleName = i18nBundleName;
     }
 
+
     registry() {
         return Promise.resolve(this.registrationBuild);
     }
 
+
     handleError(error: any) {
         throw error;
     }
+
 
     processTexts(manifest: any, changeTexts: IChangeText) {
         if (typeof manifest["sap.app"].i18n === "string") {
