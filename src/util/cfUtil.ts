@@ -5,15 +5,18 @@ import { IConfiguration, ICreateServiceInstanceParams, IGetServiceInstanceParams
 
 import { CliResult } from "@sap/cf-tools/out/src/types";
 import { eFilters } from "@sap/cf-tools/out/src/types";
+
 const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::CFUtil");
 
 export default class CFUtil {
 
     /**
      * Get or create service keys for service instance found by query
-     * @param {object} getServiceInstanceParams space guid
-     * @param {CFUtil} cfUtil utility to communicate with CF
-     * @returns {Promise<string[]>} credentials json object
+     * @static
+     * @param {IGetServiceInstanceParams} getServiceInstanceParams query parameters to find a service instance by
+     * @param {ICreateServiceInstanceParams} [createServiceInstanceParams] parameters to create a service instance
+     * @return {Promise<IServiceKeys>} promise with service keys
+     * @memberof CFUtil
      */
     static async getServiceInstanceKeys(getServiceInstanceParams: IGetServiceInstanceParams,
         createServiceInstanceParams?: ICreateServiceInstanceParams): Promise<IServiceKeys> {
@@ -86,16 +89,6 @@ export default class CFUtil {
     }
 
 
-    /**
-     * Get service instance by space and plan guids
-     *
-     * @param {object} parameters
-     * @param {string[]} [parameters.spaceGuids] space guids
-     * @param {string[]} [parameters.planNames] plan names
-     * @param {string[]} [parameters.names] service instance names
-     * @returns {Promise<{name:string, guid: string}[]>} service key
-     * @memberof CFUtil
-     */
     private static async getServiceInstance(params: IGetServiceInstanceParams): Promise<IServiceInstance[]> {
         const PARAM_MAP: KeyedMap<IGetServiceInstanceParams, keyof IGetServiceInstanceParams, string> = {
             spaceGuids: "space_guids",
@@ -114,7 +107,7 @@ export default class CFUtil {
     }
 
 
-    static async requestCfApi(url: string): Promise<IResource[]> {
+    private static async requestCfApi(url: string): Promise<IResource[]> {
         const response = await this.cfExecute(["curl", url]);
         const json = this.parseJson(response);
         const resources: IResource[] = json?.resources;
@@ -169,7 +162,15 @@ export default class CFUtil {
     }
 
 
-    static async getSpaceGuid(options: IConfiguration) {
+
+    /**
+     * Get space guid from configuration or local CF fodler
+     * @static
+     * @param {IConfiguration} options ui5.yaml options
+     * @return {Promise<string>} promise with space guid
+     * @memberof CFUtil
+     */
+    static async getSpaceGuid(options: IConfiguration): Promise<string> {
         let spaceGuid = options.spaceGuid;
         if (spaceGuid == null) {
             const spaceName = (await CFLocal.cfGetTarget())?.space;
