@@ -1,8 +1,9 @@
 import * as fs from "fs";
 import * as path from "path";
-import { normalizer } from "@ui5/project";
-import * as resourceFactory from "@ui5/fs/lib/resourceFactory";
+
 import AppVariantManager from "../../src/appVariantManager";
+const normalizer = require("@ui5/project").normalizer;
+const resourceFactory = require("@ui5/fs").resourceFactory;
 const TaskUtil = require("@ui5/builder/lib/tasks/TaskUtil");
 const BuildContext = require("@ui5/builder/lib/builder/BuildContext");
 

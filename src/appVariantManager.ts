@@ -1,12 +1,11 @@
-/// <reference path="../types/index.d.ts"/>
 import * as path from "path";
-import { DuplexCollection, Resource } from "@ui5/fs/lib";
-import TaskUtil from "@ui5/builder/lib/tasks/TaskUtil";
+
 import { IAppVariantInfo, IChange } from "./model/types";
+
 import ResourceUtil from "./util/resourceUtil";
-import Logger from "@ui5/logger";
 import { replaceDots } from "./util/commonUtil";
-const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::AppVariantManager");
+
+const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::AppVariantManager");
 
 const OMIT_FILES: string[] = ["manifest.appdescr_variant"];
 const OMIT_FOLDERS: string[] = [];
@@ -15,7 +14,7 @@ const MANIFEST_APP_VARIANT = "manifest.appdescr_variant";
 
 export default class AppVariantManager {
 
-    static async process(appVariantResources: Resource[], projectNamespace: string, taskUtil: TaskUtil): Promise<IAppVariantInfo> {
+    static async process(appVariantResources: any[], projectNamespace: string, taskUtil: any): Promise<IAppVariantInfo> {
         const appVariantInfo = await this.getAppVariantInfo(appVariantResources);
         const i18nBundleName = replaceDots(appVariantInfo.id);
         for (const resource of appVariantResources) {
@@ -27,16 +26,16 @@ export default class AppVariantManager {
     }
 
 
-    static getAppVariantResources(workspace: DuplexCollection): Promise<Resource[]> {
+    static getAppVariantResources(workspace: any): Promise<any[]> {
         return workspace.byGlob(`/**/*.{${EXTENSIONS}}`);
     }
 
 
-    static async getAppVariantInfo(appVariantResources: Resource[]): Promise<IAppVariantInfo> {
+    static async getAppVariantInfo(appVariantResources: any[]): Promise<IAppVariantInfo> {
         for (const resource of appVariantResources) {
             const basename = path.basename(resource.getPath());
             if (basename === MANIFEST_APP_VARIANT) {
-                const manifest = await resource.getBuffer().then(buffer => buffer.toString("utf8")).then(JSON.parse);
+                const manifest = await resource.getBuffer().then((buffer: Buffer) => buffer.toString("utf8")).then(JSON.parse);
                 const { id, reference } = manifest;
                 return { id, reference, manifest };
             }
@@ -45,7 +44,7 @@ export default class AppVariantManager {
     }
 
 
-    static writeI18nToModule(resource: Resource, projectNamespace: string, i18nBundleName: string) {
+    static writeI18nToModule(resource: any, projectNamespace: string, i18nBundleName: string) {
         if (path.extname(resource.getPath()) === ".properties") {
             let rootFolder = ResourceUtil.getRootFolder(projectNamespace);
             if (resource.getPath().startsWith(rootFolder)) {
@@ -57,7 +56,7 @@ export default class AppVariantManager {
     }
 
 
-    private static omitFiles(resource: Resource, taskUtil: TaskUtil) {
+    private static omitFiles(resource: any, taskUtil: any) {
         const dirname = path.dirname(resource.getPath());
         const filename = path.basename(resource.getPath());
         if (OMIT_FILES.includes(filename) ||

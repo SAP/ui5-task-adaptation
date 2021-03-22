@@ -1,6 +1,3 @@
-import { DuplexCollection } from "@ui5/fs/lib";
-import TaskUtil from "@ui5/builder/lib/tasks/TaskUtil";
-
 export interface IConfiguration {
     appHostId?: string;
     appId?: string;
@@ -83,41 +80,14 @@ export interface IChangeText {
 }
 
 export interface ITaskParameters {
-    workspace: DuplexCollection;
+    workspace: any;
     options: IProjectOptions;
-    taskUtil: TaskUtil;
+    taskUtil: any;
 }
 
 export interface IBaseAppInfo {
     filepath: string;
-    content: IBaseAppManifest;
+    content: any;
 }
-
-export type IBaseAppManifest = {
-    ["sap.platform.cf"]?: {
-        oAuthScopes: string[]
-    };
-    ["sap.cloud"]?: {
-        service?: string
-    };
-    ["sap.app"]: {
-        id: string;
-        i18n: {
-            bundleUrl: string;
-            enhanceWith?: {
-                bundleName: string
-            }[]
-        } | string,
-        applicationVersion: {
-            version: string;
-        }
-    };
-    ["sap.ui5"]?: {
-        appVariantIdHierarchy?: {
-            appVariantId: string;
-            version: string;
-        }[]
-    }
-};
 
 export type KeyedMap<T, K extends keyof T, V> = { [k in K]: V };

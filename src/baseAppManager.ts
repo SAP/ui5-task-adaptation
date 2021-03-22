@@ -1,21 +1,18 @@
 import * as path from "path";
-import * as resourceFactory from "@ui5/fs/lib/resourceFactory";
 
 import { Applier, ApplyUtil, Change, RegistrationBuild } from "../dist/bundle";
-/// <reference path="../types/index.d.ts"/>
-import { IAppVariantInfo, IBaseAppInfo, IBaseAppManifest, IChange, IConfiguration, IProjectOptions } from "./model/types";
+import { IAppVariantInfo, IBaseAppInfo, IChange, IConfiguration, IProjectOptions } from "./model/types";
 
 import BuildStrategy from "./buildStrategy";
-import Logger from "@ui5/logger";
-import { Resource } from "@ui5/fs/lib";
 import ResourceUtil from "./util/resourceUtil";
 import { replaceDots } from "./util/commonUtil";
 
-const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManager");
+const resourceFactory = require("@ui5/fs/lib/resourceFactory");
+const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManager");
 
 export default class BaseAppManager {
 
-    static async process(baseAppFiles: Map<string, string>, appVariantInfo: IAppVariantInfo, options: IProjectOptions): Promise<Resource[]> {
+    static async process(baseAppFiles: Map<string, string>, appVariantInfo: IAppVariantInfo, options: IProjectOptions): Promise<any[]> {
         const { filepath, content } = this.getBaseAppManifest(baseAppFiles);
         this.renameBaseApp(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
         this.updateCloudPlatform(content, options.configuration);
@@ -56,11 +53,11 @@ export default class BaseAppManager {
         throw new Error("Original application should have manifest.json in root folder");
     }
 
-    private static updateCloudPlatform(baseAppManifest: IBaseAppManifest, configuration: IConfiguration) {
+    private static updateCloudPlatform(baseAppManifest: any, configuration: IConfiguration) {
         let sapCloudService = baseAppManifest["sap.cloud"]?.service;
         let sapPlatformCf = baseAppManifest["sap.platform.cf"];
         if (sapPlatformCf && sapCloudService) {
-            sapPlatformCf.oAuthScopes = sapPlatformCf.oAuthScopes.map(scope =>
+            sapPlatformCf.oAuthScopes = sapPlatformCf.oAuthScopes.map((scope: string) =>
                 scope.replace(`$XSAPPNAME.`, `$XSAPPNAME('${sapCloudService}').`));
         }
         if (configuration.sapCloudService) {
@@ -73,7 +70,7 @@ export default class BaseAppManager {
         }
     }
 
-    private static fillAppVariantIdHierarchy(baseAppManifest: IBaseAppManifest) {
+    private static fillAppVariantIdHierarchy(baseAppManifest: any) {
         log.info("Filling up app variant hierarchy in manifest.json");
         const id = baseAppManifest["sap.app"]?.id;
         const version = baseAppManifest["sap.app"]?.applicationVersion?.version;
@@ -94,7 +91,7 @@ export default class BaseAppManager {
         }
     }
 
-    static async applyDescriptorChanges(baseAppManifest: IBaseAppManifest, changes: IChange[], i18nBundleName: string) {
+    static async applyDescriptorChanges(baseAppManifest: any, changes: IChange[], i18nBundleName: string) {
         log.verbose("Applying appVariant changes");
         const strategy = new BuildStrategy(RegistrationBuild, ApplyUtil, i18nBundleName);
         const changesContent = changes?.map((change: IChange) => new Change(change));

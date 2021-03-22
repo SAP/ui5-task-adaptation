@@ -1,14 +1,16 @@
-/// <reference path="../types/index.d.ts"/>
-import { SinonSandbox } from "sinon";
+import * as chai from "chai";
 import * as sinon from "sinon";
-import CFLocal = require("@sap/cf-tools/out/src/cf-local");
-import { IProjectOptions } from "../src/model/types";
+
 import Html5RepoManager from "../src/html5RepoManager";
-import { expect, assert } from "chai";
-import CFToolsCli = require("@sap/cf-tools/out/src/cli");
+import { IProjectOptions } from "../src/model/types";
+import RequestUtil from "../src/util/requestUtil";
+import { SinonSandbox } from "sinon";
 import TestUtil from "./util/testUtil";
 import { eFilters } from "@sap/cf-tools";
-import RequestUtil from "../src/util/requestUtil";
+
+import CFLocal = require("@sap/cf-tools/out/src/cf-local");
+import CFToolsCli = require("@sap/cf-tools/out/src/cli");
+const { assert, expect } = chai;
 
 describe("Html5RepoManager", () => {
     let sandbox: SinonSandbox;

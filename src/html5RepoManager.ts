@@ -3,11 +3,10 @@ import * as AdmZip from "adm-zip";
 import { IConfiguration, ICreateServiceInstanceParams, ICredentials, IGetServiceInstanceParams } from "./model/types";
 
 import CFUtil from "./util/cfUtil";
-import Logger from "@ui5/logger";
 import RequestUtil from "./util/requestUtil";
 import { validateObject } from "./util/commonUtil";
 
-const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::HTML5RepoManager");
+const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::HTML5RepoManager");
 
 export default class HTML5RepoManager {
 

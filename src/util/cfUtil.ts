@@ -1,11 +1,11 @@
-/// <reference path="../../types/index.d.ts"/>
 import CFLocal = require("@sap/cf-tools/out/src/cf-local");
 import CFToolsCli = require("@sap/cf-tools/out/src/cli");
-import { eFilters } from "@sap/cf-tools/out/src/types";
+
+import { IConfiguration, ICreateServiceInstanceParams, IGetServiceInstanceParams, IResource, IServiceInstance, IServiceKeys, KeyedMap } from "../model/types";
+
 import { CliResult } from "@sap/cf-tools/out/src/types";
-import { IGetServiceInstanceParams, IServiceKeys, IServiceInstance, IResource, ICreateServiceInstanceParams, IConfiguration, KeyedMap } from "../model/types";
-import Logger from "@ui5/logger";
-const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::CFUtil");
+import { eFilters } from "@sap/cf-tools/out/src/types";
+const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::CFUtil");
 
 export default class CFUtil {
 

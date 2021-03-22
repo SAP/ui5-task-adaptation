@@ -1,5 +1,6 @@
 import { ApplyUtil, RegistrationBuild } from "../dist/bundle";
-import { IBaseAppManifest, IChangeText } from "./model/types";
+
+import { IChangeText } from "./model/types";
 
 export default class BuildStrategy {
 
@@ -21,7 +22,7 @@ export default class BuildStrategy {
         throw error;
     }
 
-    processTexts(manifest: IBaseAppManifest, changeTexts: IChangeText) {
+    processTexts(manifest: any, changeTexts: IChangeText) {
         if (typeof manifest["sap.app"].i18n === "string") {
             manifest["sap.app"].i18n = { bundleUrl: manifest["sap.app"].i18n };
         }
@@ -29,7 +30,7 @@ export default class BuildStrategy {
             manifest["sap.app"].i18n.enhanceWith = [];
         }
         const bundleName = this.applyUtil.formatBundleName(manifest["sap.app"].id + "." + this.i18nBundleName, changeTexts.i18n);
-        const doubles = manifest["sap.app"].i18n.enhanceWith.some(entry => entry.bundleName === bundleName);
+        const doubles = manifest["sap.app"].i18n.enhanceWith.some((entry: any) => entry.bundleName === bundleName);
         if (!doubles) {
             manifest["sap.app"].i18n.enhanceWith.push({ bundleName: bundleName });
         }

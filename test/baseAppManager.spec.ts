@@ -1,10 +1,11 @@
-/// <reference path="../types/index.d.ts"/>
-import { SinonSandbox } from "sinon";
-import * as sinon from "sinon";
 import * as chai from "chai";
-import TestUtil from "./util/testUtil";
+import * as sinon from "sinon";
+
 import { IAppVariantInfo, IProjectOptions } from "../src/model/types";
+
 import BaseAppManager from "../src/baseAppManager";
+import { SinonSandbox } from "sinon";
+import TestUtil from "./util/testUtil";
 const { expect, assert } = chai;
 
 describe("BaseAppManager", () => {

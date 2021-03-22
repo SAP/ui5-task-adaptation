@@ -1,11 +1,12 @@
-/// <reference path="../types/index.d.ts"/>
-import { SinonSandbox } from "sinon";
-import * as sinon from "sinon";
 import * as chai from "chai";
 import * as path from "path";
-import AppVariantManager from "../src/appVariantManager";
-import TestUtil from "./util/testUtil";
+import * as sinon from "sinon";
+
 import { IAppVariantInfo, IAppVariantManifest, IChange } from "../src/model/types";
+
+import AppVariantManager from "../src/appVariantManager";
+import { SinonSandbox } from "sinon";
+import TestUtil from "./util/testUtil";
 const Resource = require("@ui5/fs/lib/Resource");
 const { expect } = chai;
 

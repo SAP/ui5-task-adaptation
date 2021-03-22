@@ -1,9 +1,7 @@
-import TaskUtil from "@ui5/builder/lib/tasks/TaskUtil";
-import { DuplexCollection } from "@ui5/fs/lib";
-import { ITaskParameters } from "./model/types";
-import BaseAppManager from "./baseAppManager";
 import AppVariantManager from "./appVariantManager";
+import BaseAppManager from "./baseAppManager";
 import HTML5RepoManager from "./html5RepoManager";
+import { ITaskParameters } from "./model/types";
 import ResourceUtil from "./util/resourceUtil";
 
 /**
@@ -11,7 +9,7 @@ import ResourceUtil from "./util/resourceUtil";
  */
 module.exports = ({ workspace, options, taskUtil }: ITaskParameters) => {
 
-    async function process(workspace: DuplexCollection, taskUtil: TaskUtil) {
+    async function process(workspace: any, taskUtil: any) {
         const appVariantResources = await AppVariantManager.getAppVariantResources(workspace);
         const appVariantInfo = await AppVariantManager.process(appVariantResources, options.projectNamespace, taskUtil);
         const baseAppFiles = await getBaseAppFiles(appVariantInfo.reference);
