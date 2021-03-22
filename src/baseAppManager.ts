@@ -1,12 +1,12 @@
 import * as path from "path";
 
-import { Applier, ApplyUtil, Change, RegistrationBuild } from "../dist/bundle";
 import { IAppVariantInfo, IBaseAppInfo, IChange, IConfiguration, IProjectOptions } from "./model/types";
 
 import BuildStrategy from "./buildStrategy";
 import ResourceUtil from "./util/resourceUtil";
 import { replaceDots } from "./util/commonUtil";
 
+const { RegistrationBuild, ApplyUtil, Applier, Change } = require("../dist/bundle");
 const resourceFactory = require("@ui5/fs/lib/resourceFactory");
 const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManager");
 

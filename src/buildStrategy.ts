@@ -1,14 +1,12 @@
-import { ApplyUtil, RegistrationBuild } from "../dist/bundle";
-
 import { IChangeText } from "./model/types";
 
 export default class BuildStrategy {
 
-    private registrationBuild: typeof RegistrationBuild;
-    private applyUtil: typeof ApplyUtil;
+    private registrationBuild: any;
+    private applyUtil: any;
     private i18nBundleName: string;
 
-    constructor(registrationBuild: typeof RegistrationBuild, applyUtil: typeof ApplyUtil, i18nBundleName: string) {
+    constructor(registrationBuild: any, applyUtil: any, i18nBundleName: string) {
         this.registrationBuild = registrationBuild;
         this.applyUtil = applyUtil;
         this.i18nBundleName = i18nBundleName;
