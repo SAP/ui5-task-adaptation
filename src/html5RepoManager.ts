@@ -1,9 +1,12 @@
-import CFUtil from "./util/cfUtil";
-import { IConfiguration, ICreateServiceInstanceParams, ICredentials, IGetServiceInstanceParams } from "./model/types";
 import * as AdmZip from "adm-zip";
+
+import { IConfiguration, ICreateServiceInstanceParams, ICredentials, IGetServiceInstanceParams } from "./model/types";
+
+import CFUtil from "./util/cfUtil";
 import Logger from "@ui5/logger";
 import RequestUtil from "./util/requestUtil";
-import { validateOptions } from "./util/commonUtil";
+import { validateObject } from "./util/commonUtil";
+
 const log: Logger = require("@ui5/logger").getLogger("@ui5/task-adaptation::HTML5RepoManager");
 
 export default class HTML5RepoManager {
@@ -52,7 +55,7 @@ export default class HTML5RepoManager {
 
 
     private static async getBaseAppZipEntries(options: IConfiguration, htmlRepoCredentials: ICredentials, token: string): Promise<AdmZip.IZipEntry[]> {
-        validateOptions(options, ["appHostId", "appName", "appVersion"]);
+        validateObject(options, ["appHostId", "appName", "appVersion"], "should be specified in ui5.yaml configuration");
         const { appHostId, appName, appVersion } = options;
         const uri = `${htmlRepoCredentials.uri}/applications/content/${appName}-${appVersion}/`;
         const zip = await RequestUtil.download(token, appHostId!, uri);
