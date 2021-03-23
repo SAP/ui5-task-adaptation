@@ -1,6 +1,6 @@
 //@ts-check
 const path = require("path");
-const ui5 = require("./rollup/ui5-resolve");
+const { default: ui5 } = require("./rollup/dist/ui5-resolve");
 const builtins = require("builtin-modules");
 const { nodeResolve } = require("@rollup/plugin-node-resolve");
 const copy = require("rollup-plugin-copy");

@@ -12,7 +12,7 @@
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",
         "postversion": "git push --follow-tags",
         "release-note": "git-chglog -c .chglog/release-config.yml v$npm_package_version",
-        "build": "rimraf ./dist && rollup -c rollup.config.js && tsc -p ."
+        "build": "tsc -p rollup && rollup -c rollup.config.js && tsc -p ."
     },
     "repository": {
         "type": "git",
@@ -52,9 +52,11 @@
         "@istanbuljs/nyc-config-typescript": "^1.0.1",
         "@types/adm-zip": "^0.4.33",
         "@types/chai": "^4.2.15",
+        "@types/js-yaml": "^4.0.0",
         "@types/mocha": "^8.2.2",
         "@types/request": "^2.48.5",
         "@types/rimraf": "^3.0.0",
+        "@types/semver": "^7.3.4",
         "@types/sinon": "^9.0.11",
         "chai": "^4.3.4",
         "mocha": "^8.3.2",

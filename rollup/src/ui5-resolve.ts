@@ -1,25 +1,25 @@
-//@ts-check
-const path = require("path");
-const fs = require("fs");
-const stream = require("stream");
-const { promisify } = require("util");
+import * as fs from "fs";
+import * as path from "path";
+import * as semver from "semver";
+import * as stream from "stream";
+import * as yaml from "js-yaml";
+
+import CodeTransformer from "./codeTransformer";
+import { promisify } from "util";
+
 const pipe = promisify(stream.pipeline);
-const yaml = require("js-yaml");
-const semver = require("semver");
-const crypto = require("crypto");
-
 const convertAMDtoES6 = require("@buxlabs/amd-to-es6");
-
 const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-adaptation");
 const normalizer = require("@ui5/project").normalizer;
 const resourceFactory = require("@ui5/fs").resourceFactory;
 
 
-module.exports = (options) => {
+export default function (options: any) {
 
-    const skipTransformation = (id) => !options.skipTransformation.includes(id);
+    const skipTransformation = (id: string) => !options.skipTransformation.includes(id);
+    let dependencies: any;
 
-    async function getProject(projectPaths) {
+    async function getProject(projectPaths: string[]) {
         for (const cwd of projectPaths) {
             try {
                 const project = await normalizer.generateProjectTree({ cwd });
@@ -31,14 +31,14 @@ module.exports = (options) => {
         }
     }
 
-    function validateProjectSettings(projectPath) {
+    function validateProjectSettings(projectPath: string) {
         const FRAMEWORK_TYPES = ["OpenUI5", "SAPUI5"];
         const content = fs.readFileSync(path.join(projectPath, "ui5.yaml"), { encoding: "utf-8" });
-        const framework = yaml.load(content)["framework"];
-        if (!FRAMEWORK_TYPES.includes(framework.name)) {
+        const yamlJson: any = yaml.load(content);
+        if (!FRAMEWORK_TYPES.includes(yamlJson?.framework?.name)) {
             throw new Error(`UI5 framework name is incorrect, possible values: ${FRAMEWORK_TYPES.join(" or ")}`);
         }
-        if (!semver.valid(framework.version)) {
+        if (!semver.valid(yamlJson?.framework?.version)) {
             throw new Error(`UI5 framework version should correspond semantic version standard, e.g: 1.85.2`);
         }
     }
@@ -48,13 +48,13 @@ module.exports = (options) => {
 
         name: "ui5-resolve",
 
-        buildStart: async (buildOptions) => {
+        buildStart: async () => {
 
             const project = await getProject(options.projectPaths);
-            this.dependencies = resourceFactory.createCollectionsForTree(project, {}).dependencies;
+            dependencies = resourceFactory.createCollectionsForTree(project, {}).dependencies;
 
-            const resources = await Promise.all(options.assets.map(asset => this.dependencies.byGlob(asset)));
-            const writePromises = [].concat(...resources).map(resource => {
+            const resources: any[] = await Promise.all(options.assets.map((asset: string) => dependencies.byGlob(asset)));
+            const writePromises = [].concat(...resources).map((resource: any) => {
                 const file = `./dist${resource.getPath()}`;
                 const folder = path.dirname(file);
                 if (!fs.existsSync(folder)) {
@@ -72,12 +72,10 @@ module.exports = (options) => {
         /*
          * Right before writing result to dist
          */
-        renderChunk: async (code) => {
-            return "var window = {};" + code;
-        },
+        renderChunk: (code: string) => "var window = {};" + code,
 
 
-        resolveId: (source, importer) => {
+        resolveId: (source: string, importer: string) => {
             log.verbose(`resolveId: ${source} from ${importer}`);
             if (importer && source.startsWith(".")) {
                 source = path.posix.join(path.dirname(importer), source);
@@ -87,7 +85,7 @@ module.exports = (options) => {
         },
 
 
-        load: async (id) => {
+        load: async (id: string) => {
             log.verbose(`load: ${id}`);
 
             const localFile = path.join(process.cwd(), id);
@@ -98,7 +96,7 @@ module.exports = (options) => {
                 });
             }
 
-            const localOverride = path.resolve(__dirname, "overrides", id + ".js");
+            const localOverride = path.resolve(__dirname, "..", "overrides", id + ".js");
             if (fs.existsSync(localOverride)) {
                 log.info(`Using local override for "${id}"`);
                 return fs.readFileSync(localOverride, {
@@ -106,51 +104,22 @@ module.exports = (options) => {
                 });
             }
 
-            const resource = await this.dependencies.byPath(`/resources/${id}.js`);
+            const resource = await dependencies.byPath(`/resources/${id}.js`);
             return resource.getString();
         },
 
 
-        transform: (code, id) => {
+        transform: (code: string, id: string) => {
             const skipped = !skipTransformation(id);
             log.verbose(`transform: ${id} ${skipped ? "skipped" : ""}`);
             if (skipped) {
                 return;
             }
 
-            code = replaceRequireAsync(code);
+            code = CodeTransformer.transform(code);
 
-            code = code
-                .replace(/sap\.ui\.define/g, "define")
-                .replace(/\, \/\* bExport\= \*\/ true\)/g, ")")
-                .replace(/}, true\);$/g, "});");
             return convertAMDtoES6(code);
         }
 
     };
 };
-
-
-function replaceRequireAsync(code) {
-    const requireAsyncPattern = /requireAsync\("(?<url>[\/\w]*)"\)/mg;
-    let match, defineUrls = [], defineVars = [], matches = new Map();
-    while (match = requireAsyncPattern.exec(code)) {
-        const varaibleName = match.groups.url.split("/").pop() + crypto.randomBytes(16).toString("hex");
-        defineUrls.push(`"${match.groups.url}"`);
-        defineVars.push(varaibleName);
-        matches.set(match[0], varaibleName);
-    }
-    if (defineUrls.length * defineVars.length > 0) {
-        matches.forEach((value, key) => code = code.replace(key, value));
-    }
-    if (defineUrls.length > 0 && defineVars.length > 0) {
-        code = replaceRequireAsyncWith(code, `"sap/ui/fl/requireAsync"`, defineUrls);
-        code = replaceRequireAsyncWith(code, "requireAsync", defineVars);
-    }
-    return code;
-}
-
-
-function replaceRequireAsyncWith(code, requireAsyncSearchKeyword, inserts) {
-    return code.replace(requireAsyncSearchKeyword, inserts.join(",\n\t"));
-}
