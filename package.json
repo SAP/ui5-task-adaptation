@@ -12,7 +12,7 @@
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",
         "postversion": "git push --follow-tags",
         "release-note": "git-chglog -c .chglog/release-config.yml v$npm_package_version",
-        "build": "rollup -c rollup.config.js && tsc -p ."
+        "build": "rimraf ./dist && rollup -c rollup.config.js && tsc -p ."
     },
     "repository": {
         "type": "git",
