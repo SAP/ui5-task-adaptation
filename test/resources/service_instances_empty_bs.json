@@ -1,0 +1,15 @@
+{
+    "pagination": {
+        "total_results": 0,
+        "total_pages": 1,
+        "first": {
+            "href": "/v3/service_instances?names=serviceInstance1&page=1&per_page=50&space_guids=spaceGuid1"
+        },
+        "last": {
+            "href": "/v3/service_instances?names=serviceInstance1&page=1&per_page=50&space_guids=spaceGuid1"
+        },
+        "next": null,
+        "previous": null
+    },
+    "resources": []
+}

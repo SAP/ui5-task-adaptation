@@ -1,0 +1,73 @@
+{
+    "pagination": {
+        "total_results": 1,
+        "total_pages": 1,
+        "first": {
+            "href": "/v3/service_instances?names=serviceInstance1&page=1&per_page=50&space_guids=spaceGuid1"
+        },
+        "last": {
+            "href": "/v3/service_instances?names=serviceInstance1&page=1&per_page=50&space_guids=spaceGuid1"
+        },
+        "next": null,
+        "previous": null
+    },
+    "resources": [
+        {
+            "guid": "serviceInstance1Guid",
+            "created_at": "2020-07-15T11:37:04Z",
+            "updated_at": "2020-07-15T11:37:04Z",
+            "name": "serviceInstance1",
+            "tags": [],
+            "last_operation": {
+                "type": "create",
+                "state": "succeeded",
+                "description": "",
+                "updated_at": "2020-07-15T11:37:04Z",
+                "created_at": "2020-07-15T11:37:04Z"
+            },
+            "type": "managed",
+            "maintenance_info": {},
+            "upgrade_available": false,
+            "dashboard_url": null,
+            "relationships": {
+                "space": {
+                    "data": {
+                        "guid": "spaceGuid1"
+                    }
+                },
+                "service_plan": {
+                    "data": {
+                        "guid": "serviceInstance1Plan"
+                    }
+                }
+            },
+            "metadata": {
+                "labels": {},
+                "annotations": {}
+            },
+            "links": {
+                "self": {
+                    "href": "/v3/service_instances/serviceInstance1Guid"
+                },
+                "space": {
+                    "href": "/v3/spaces/spaceGuid1"
+                },
+                "service_credential_bindings": {
+                    "href": "/v3/service_credential_bindings?service_instance_guids=serviceInstance1Guid"
+                },
+                "service_route_bindings": {
+                    "href": "/v3/service_route_bindings?service_instance_guids=serviceInstance1Guid"
+                },
+                "service_plan": {
+                    "href": "/v3/service_plans/serviceInstance1Plan"
+                },
+                "parameters": {
+                    "href": "/v3/service_instances/serviceInstance1Guid/parameters"
+                },
+                "shared_spaces": {
+                    "href": "/v3/service_instances/serviceInstance1Guid/relationships/shared_spaces"
+                }
+            }
+        }
+    ]
+}
