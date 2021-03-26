@@ -4,13 +4,15 @@
     "description": "Custom task for ui5-builder which allows building UI5 Flexibility Adaptation Projects for SAP BTP, Cloud Foundry environment",
     "main": "index.js",
     "scripts": {
-        "test": "npm run build && mocha",
-        "coverage": "nyc node_modules/.bin/mocha",
+        "test": "npm run build && npm run coverage",
+        "dev": "mocha --no-timeouts -r ts-node/register 'test/**/*.spec.ts'",
+        "coverage": "nyc node_modules/.bin/mocha -r ts-node/register 'test/**/*.spec.ts'",
+        "coverage-verbose": "nyc --reporter=html --reporter=text node_modules/.bin/mocha -r ts-node/register 'test/**/*.spec.ts'",
         "preversion": "npm test",
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",
         "postversion": "git push --follow-tags",
         "release-note": "git-chglog -c .chglog/release-config.yml v$npm_package_version",
-        "build": "rollup -c rollup.config.js"
+        "build": "rollup -c rollup.config.js && tsc -p ."
     },
     "repository": {
         "type": "git",
@@ -30,23 +32,38 @@
     "dependencies": {
         "@buxlabs/amd-to-es6": "^0.16.0",
         "@rollup/plugin-node-resolve": "^11.2.0",
-        "@sap/cf-tools": "^0.8.0",
-        "@ui5/cli": "^2.10.0",
+        "@sap/cf-tools": "^1.0.2",
+        "@ui5/cli": "^2.10.2",
         "@ui5/fs": "^2.0.6",
         "@ui5/logger": "^2.0.1",
-        "@ui5/project": "^2.3.0",
-        "adm-zip": "^0.5.2",
+        "@ui5/project": "^2.3.1",
+        "adm-zip": "^0.5.4",
         "amdextract": "^3.0.0",
         "builtin-modules": "^3.2.0",
         "crc": "^3.8.0",
         "js-yaml": "^4.0.0",
         "request": "^2.88.2",
-        "rollup": "^2.39.0"
+        "rimraf": "^3.0.2",
+        "rollup": "^2.42.2",
+        "rollup-plugin-copy": "^3.4.0",
+        "temp-dir": "^2.0.0"
     },
     "devDependencies": {
-        "mocha": "^8.3.0",
+        "@istanbuljs/nyc-config-typescript": "^1.0.1",
+        "@types/adm-zip": "^0.4.33",
+        "@types/chai": "^4.2.15",
+        "@types/mocha": "^8.2.2",
+        "@types/request": "^2.48.5",
+        "@types/rimraf": "^3.0.0",
+        "@types/sinon": "^9.0.11",
+        "chai": "^4.3.4",
+        "mocha": "^8.3.2",
         "mock-require": "^3.0.3",
-        "nyc": "^15.1.0"
+        "nyc": "^15.1.0",
+        "sinon": "^9.2.4",
+        "source-map-support": "^0.5.19",
+        "ts-node": "^9.1.1",
+        "typescript": "^4.2.3"
     },
     "nyc": {
         "reporter": [
@@ -61,7 +78,11 @@
             "coverage/**",
             "test/**",
             "lib/processors/jsdoc/lib/**",
-            "dist/**"
+            "dist/**",
+            "rollup.config.js",
+            "rollup/**",
+            "src/model/types.ts",
+            "src/util/requestUtil.ts"
         ],
         "check-coverage": true,
         "statements": 85,
