@@ -107,7 +107,7 @@ export default class CFUtil {
     }
 
 
-    private static async requestCfApi(url: string): Promise<IResource[]> {
+    static async requestCfApi(url: string): Promise<IResource[]> {
         const response = await this.cfExecute(["curl", url]);
         const json = this.parseJson(response);
         const resources: IResource[] = json?.resources;
