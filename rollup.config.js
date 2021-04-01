@@ -3,7 +3,6 @@ const path = require("path");
 const ui5 = require("./rollup/ui5-resolve");
 const builtins = require("builtin-modules");
 const { nodeResolve } = require("@rollup/plugin-node-resolve");
-const copy = require("rollup-plugin-copy");
 
 module.exports = {
     input: "./rollup/bundle-def.js",
@@ -23,12 +22,6 @@ module.exports = {
         }),
         nodeResolve({
             preferBuiltins: true
-        }),
-        //@ts-ignore
-        copy({
-            targets: [
-                { src: "rollup/bundle.d.ts", dest: "dist" }
-            ]
         })
     ],
     external: builtins,
