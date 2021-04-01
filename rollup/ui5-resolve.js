@@ -11,8 +11,9 @@ const crypto = require("crypto");
 const convertAMDtoES6 = require("@buxlabs/amd-to-es6");
 
 const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-adaptation");
-const normalizer = require("@ui5/project").normalizer;
-const resourceFactory = require("@ui5/fs").resourceFactory;
+//@ts-ignore
+const { normalizer } = require("@ui5/project");
+const { resourceFactory } = require("@ui5/fs");
 
 
 module.exports = (options) => {
@@ -140,10 +141,8 @@ function replaceRequireAsync(code) {
         defineVars.push(varaibleName);
         matches.set(match[0], varaibleName);
     }
-    if (defineUrls.length * defineVars.length > 0) {
-        matches.forEach((value, key) => code = code.replace(key, value));
-    }
     if (defineUrls.length > 0 && defineVars.length > 0) {
+        matches.forEach((value, key) => code = code.replace(key, value));
         code = replaceRequireAsyncWith(code, `"sap/ui/fl/requireAsync"`, defineUrls);
         code = replaceRequireAsyncWith(code, "requireAsync", defineVars);
     }
