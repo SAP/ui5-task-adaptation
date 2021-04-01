@@ -45,7 +45,6 @@
         "request": "^2.88.2",
         "rimraf": "^3.0.2",
         "rollup": "^2.42.2",
-        "rollup-plugin-copy": "^3.4.0",
         "temp-dir": "^2.0.0"
     },
     "devDependencies": {
