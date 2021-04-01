@@ -1,16 +1,19 @@
+//@ts-check
 const path = require("path");
 const fs = require("fs");
 const stream = require("stream");
 const { promisify } = require("util");
 const pipe = promisify(stream.pipeline);
 const yaml = require("js-yaml");
-const semver = require("semver")
+const semver = require("semver");
+const crypto = require("crypto");
 
 const convertAMDtoES6 = require("@buxlabs/amd-to-es6");
 
 const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-adaptation");
-const normalizer = require("@ui5/project").normalizer;
-const resourceFactory = require("@ui5/fs").resourceFactory;
+//@ts-ignore
+const { normalizer } = require("@ui5/project");
+const { resourceFactory } = require("@ui5/fs");
 
 
 module.exports = (options) => {
@@ -31,8 +34,8 @@ module.exports = (options) => {
 
     function validateProjectSettings(projectPath) {
         const FRAMEWORK_TYPES = ["OpenUI5", "SAPUI5"];
-        const content = fs.readFileSync(path.join(projectPath, "ui5.yaml"));
-        const framework = yaml.load(content).framework;
+        const content = fs.readFileSync(path.join(projectPath, "ui5.yaml"), { encoding: "utf-8" });
+        const framework = yaml.load(content)["framework"];
         if (!FRAMEWORK_TYPES.includes(framework.name)) {
             throw new Error(`UI5 framework name is incorrect, possible values: ${FRAMEWORK_TYPES.join(" or ")}`);
         }
@@ -115,6 +118,9 @@ module.exports = (options) => {
             if (skipped) {
                 return;
             }
+
+            code = replaceRequireAsync(code);
+
             code = code
                 .replace(/sap\.ui\.define/g, "define")
                 .replace(/\, \/\* bExport\= \*\/ true\)/g, ")")
@@ -124,3 +130,26 @@ module.exports = (options) => {
 
     };
 };
+
+
+function replaceRequireAsync(code) {
+    const requireAsyncPattern = /requireAsync\("(?<url>[\/\w]*)"\)/mg;
+    let match, defineUrls = [], defineVars = [], matches = new Map();
+    while (match = requireAsyncPattern.exec(code)) {
+        const varaibleName = match.groups.url.split("/").pop() + crypto.randomBytes(16).toString("hex");
+        defineUrls.push(`"${match.groups.url}"`);
+        defineVars.push(varaibleName);
+        matches.set(match[0], varaibleName);
+    }
+    if (defineUrls.length > 0 && defineVars.length > 0) {
+        matches.forEach((value, key) => code = code.replace(key, value));
+        code = replaceRequireAsyncWith(code, `"sap/ui/fl/requireAsync"`, defineUrls);
+        code = replaceRequireAsyncWith(code, "requireAsync", defineVars);
+    }
+    return code;
+}
+
+
+function replaceRequireAsyncWith(code, requireAsyncSearchKeyword, inserts) {
+    return code.replace(requireAsyncSearchKeyword, inserts.join(",\n\t"));
+}
