@@ -1,33 +1,22 @@
 //@ts-check
 const fs = require("fs");
-const request = require("request");
+const fetch = require("node-fetch");
 const yaml = require("js-yaml");
 
-module.exports = async ({ uri, projectPath }) => {
+module.exports = ({ uri, projectPath }) => {
     return {
         name: "ui5-version",
-        buildStart: async () => {
+        options: async (options) => {
             const latestVersion = await getLatestVersion(uri);
             updateVersion(projectPath, latestVersion);
+            return options;
         }
     }
 }
 
 async function getLatestVersion(uri) {
-    const options = {
-        headers: {
-            "Content-Type": "application/json"
-        }
-    };
-    const versionJsonPromise = new Promise((resolve, reject) => {
-        request.get(uri, options, (err, _, body) => {
-            if (err) {
-                reject(err);
-            }
-            resolve(JSON.parse(body));
-        });
-    });
-    const versionJson = await versionJsonPromise;
+    //@ts-ignore
+    const versionJson = await fetch(uri).then(res => res.json());
     return versionJson.routes[0].target.version;
 }
 

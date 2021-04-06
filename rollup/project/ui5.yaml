@@ -3,7 +3,7 @@ type: application
 metadata:
   name: rollup
 framework:
-  name: SAPUI5
-  version: 1.88.1
+  name: OpenUI5
+  version: 1.88.0
   libraries:
     - name: sap.ui.fl

@@ -11,7 +11,7 @@ module.exports = {
     input: "./rollup/bundle-def.js",
     plugins: [
         updateUI5Version({
-            uri: "https://ui5.sap.com/neo-app.json",
+            uri: "https://openui5.hana.ondemand.com/neo-app.json",
             projectPath: path.join(FALLBACK_PROJECT_FOLDER, "ui5.yaml")
         }),
         ui5({
