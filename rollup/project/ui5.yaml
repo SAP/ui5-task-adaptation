@@ -1,10 +1,9 @@
----
-specVersion: "2.2"
+specVersion: '2.2'
 type: application
 metadata:
   name: rollup
 framework:
-  name: OpenUI5
-  version: 1.87.3
+  name: SAPUI5
+  version: 1.88.1
   libraries:
     - name: sap.ui.fl
