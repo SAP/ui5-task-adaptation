@@ -1,37 +1,27 @@
-import * as request from "request";
+import fetch from "node-fetch";
 
 export default class RequestUtil {
 
     static get(uri: string, options: any): Promise<any> {
-        return new Promise((resolve, reject) => {
-            request.get(uri, options, (err, _, body) => {
-                if (err) {
-                    reject(err);
-                }
-                resolve(JSON.parse(body));
-            });
-        });
+        return fetch(uri, options).then(res => res.json());
     }
 
-    static download(token: string, appHostId: string, uri: string): Promise<Buffer> {
-        const data: Buffer[] = [];
-        return new Promise((resolve, reject) => {
-            request.get(uri, {
-                gzip: true,
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": "Bearer " + token,
-                    "x-app-host-id": appHostId
-                }
-            }, (err: Error) => {
-                if (err) {
-                    reject(err);
-                }
-            }).on("data", (block: Buffer) => {
-                data.push(block);
-            }).on("end", () => {
-                resolve(Buffer.concat(data));
-            });
+    static async download(token: string, appHostId: string, uri: string): Promise<Buffer> {
+        if (!token) {
+            throw new Error("HTML5 token is undefined");
+        }
+        const response = await fetch(uri, {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token,
+                "x-app-host-id": appHostId
+            }
         });
+        return new Promise((resolve, reject) => {
+            const data: Buffer[] = [];
+            response.body.on("error", err => reject(err));
+            response.body.on("data", block => data.push(block));
+            response.body.on("end", () => resolve(Buffer.concat(data)));
+        })
     }
 }
