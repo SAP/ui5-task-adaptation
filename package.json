@@ -30,25 +30,19 @@
     "author": "SAP SE",
     "license": "Apache-2.0",
     "dependencies": {
-        "@buxlabs/amd-to-es6": "^0.16.0",
-        "@rollup/plugin-node-resolve": "^11.2.1",
         "@sap/cf-tools": "^1.1.0",
-        "@ui5/cli": "^2.10.2",
         "@ui5/fs": "^2.0.6",
         "@ui5/logger": "^2.0.1",
-        "@ui5/project": "^2.3.1",
         "adm-zip": "^0.5.5",
-        "amdextract": "^3.0.0",
-        "builtin-modules": "^3.2.0",
-        "crc": "^3.8.0",
         "js-yaml": "^4.0.0",
         "node-fetch": "^2.6.1",
         "rimraf": "^3.0.2",
-        "rollup": "^2.44.0",
         "temp-dir": "^2.0.0"
     },
     "devDependencies": {
+        "@buxlabs/amd-to-es6": "^0.16.0",
         "@istanbuljs/nyc-config-typescript": "^1.0.1",
+        "@rollup/plugin-node-resolve": "^11.2.1",
         "@types/adm-zip": "^0.4.34",
         "@types/chai": "^4.2.16",
         "@types/mocha": "^8.2.2",
@@ -56,10 +50,14 @@
         "@types/request": "^2.48.5",
         "@types/rimraf": "^3.0.0",
         "@types/sinon": "^9.0.11",
+        "@ui5/project": "^2.3.1",
+        "amdextract": "^3.0.0",
+        "builtin-modules": "^3.2.0",
         "chai": "^4.3.4",
         "mocha": "^8.3.2",
         "mock-require": "^3.0.3",
         "nyc": "^15.1.0",
+        "rollup": "^2.44.0",
         "sinon": "^10.0.0",
         "source-map-support": "^0.5.19",
         "ts-node": "^9.1.1",
@@ -109,5 +107,6 @@
         },
         "cache": true,
         "all": true
-    }
+    },
+    "types": "dist/index.d.ts"
 }
