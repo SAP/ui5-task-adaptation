@@ -1,0 +1,10 @@
+src
+coverage
+.nyc_output
+node_modules
+rollup
+test
+.chglog
+.reuse
+.nycrc
+dist/resources
