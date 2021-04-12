@@ -3,8 +3,3 @@ specVersion: "2.2"
 type: application
 metadata:
   name: rollup
-framework:
-  name: OpenUI5
-  version: 1.86.3
-  libraries:
-    - name: sap.ui.fl
