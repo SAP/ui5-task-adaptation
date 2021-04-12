@@ -23,7 +23,11 @@ module.exports = (options) => {
     async function getProject(projectPaths) {
         for (const cwd of projectPaths) {
             try {
-                const project = await normalizer.generateProjectTree({ cwd });
+                const project = await normalizer.generateProjectTree({
+                    cwd, frameworkOptions: {
+                        versionOverride: "latest"
+                    }
+                });
                 validateProjectSettings(cwd);
                 return project;
             } catch (error) {
