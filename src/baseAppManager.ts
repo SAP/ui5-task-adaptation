@@ -115,10 +115,9 @@ export default class BaseAppManager {
         ];
         const resources = [];
         for (let filename of baseAppFiles.keys()) {
-            const filepath = getPath(filename, projectNamespace);
-            if (!IGNORE_FILES.includes(filepath) && path.extname(filepath) !== "") {
+            if (!IGNORE_FILES.includes(filename)) {
                 const resource = resourceFactory.createResource({
-                    path: filepath,
+                    path: getPath(filename, projectNamespace),
                     string: baseAppFiles.get(filename)!
                 });
                 resources.push(resource);

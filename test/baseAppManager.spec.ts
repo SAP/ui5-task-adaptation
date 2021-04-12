@@ -6,6 +6,7 @@ import { IAppVariantInfo, IProjectOptions } from "../src/model/types";
 import BaseAppManager from "../src/baseAppManager";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./util/testUtil";
+
 const { expect, assert } = chai;
 
 describe("BaseAppManager", () => {
@@ -37,6 +38,17 @@ describe("BaseAppManager", () => {
         const resources = await BaseAppManager.process(baseAppFiles, appVariantInfo, options);
         const actual = await resources[0].getBuffer().then((buffer: Buffer) => JSON.parse(buffer.toString()));
         expect(actual).to.eql(JSON.parse(TestUtil.getResource("manifest-expected.json")));
+    });
+
+    it("should skip base app files", async () => {
+        const baseAppFiles = new Map([
+            ["/manifest.json", TestUtil.getResource("manifest.json")],
+            ["/manifest-bundle.zip", ""],
+            ["/Component-preload.js", ""],
+            ["/sap-ui-cachebuster-info.json", ""]
+        ]);
+        const resources = await BaseAppManager.process(baseAppFiles, appVariantInfo, options);
+        expect(resources.map(res => res.getPath())).to.have.members(["/resources/ns/manifest.json"]);
     });
 
     it("should validate sap.app/id", async () => {
