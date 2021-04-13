@@ -75,7 +75,7 @@ export default class BaseAppManager {
 
 
     private static fillAppVariantIdHierarchy(baseAppManifest: any) {
-        log.info("Filling up app variant hierarchy in manifest.json");
+        log.verbose("Filling up app variant hierarchy in manifest.json");
         const id = baseAppManifest["sap.app"]?.id;
         const version = baseAppManifest["sap.app"]?.applicationVersion?.version;
         this.validateProperty(id, "sap.app/id");
