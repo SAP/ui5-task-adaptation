@@ -7,6 +7,7 @@ export interface IConfiguration {
     orgGuid?: string;
     html5RepoRuntimeGuid?: string;
     sapCloudService?: string;
+    ignoreCache?: boolean;
 }
 
 export interface IProjectOptions {
@@ -88,6 +89,11 @@ export interface ITaskParameters {
 export interface IBaseAppInfo {
     filepath: string;
     content: any;
+}
+
+export interface IHTML5RepoInfo {
+    token: string;
+    baseUri: string;
 }
 
 export type KeyedMap<T, K extends keyof T, V> = { [k in K]: V };

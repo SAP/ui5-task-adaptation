@@ -1,6 +1,7 @@
 import * as chai from "chai";
 import * as sinon from "sinon";
 
+import CFUtil from "../src/util/cfUtil";
 import Html5RepoManager from "../src/html5RepoManager";
 import { IProjectOptions } from "../src/model/types";
 import RequestUtil from "../src/util/requestUtil";
@@ -30,9 +31,6 @@ describe("Html5RepoManager", () => {
 
     beforeEach(async () => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
-
-    before(async () => {
-    });
 
     it("should update base app manifest", async () => {
         sandbox.stub(CFToolsCli.Cli, "execute")
@@ -78,6 +76,33 @@ describe("Html5RepoManager", () => {
         } catch (error) {
             expect(error.message).to.equal("Failed to parse zip content from HTML5 Repository: Invalid CEN header (bad signature)");
         }
+    });
+
+    it("should request metadata", async () => {
+        sandbox.stub(CFToolsCli.Cli, "execute")
+            .withArgs(["curl", "/v3/service_instances?space_guids=spaceGuid1&service_plan_names=app-runtime&names=html5-apps-repo-runtime"], TestUtil.ENV)
+            .callsFake(() => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json")));
+        sandbox.stub(CFUtil, "getSpaceGuid").callsFake(() => Promise.resolve("spaceGuid1"));
+        const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
+        sandbox.stub(CFLocal, "cfGetInstanceCredentials")
+            .withArgs({
+                filters: [{
+                    value: "html5RepoGuid1",
+                    key: eFilters.service_instance_guids
+                }]
+            })
+            .callsFake(() => Promise.resolve(credentialsJson));
+        const METADATA = {
+            appHostId: options.configuration.appHostId,
+            applicationName: options.configuration.appName,
+            applicationVersion: options.configuration.appVersion,
+            changedOn: "2100.01.01"
+        };
+        sandbox.stub(RequestUtil, "get")
+            .withArgs("html5UaaUrl/oauth/token?grant_type=client_credentials", sinon.match.any).callsFake(() => Promise.resolve({ "access_token": "accessToken1" }))
+            .withArgs("html5Uri/applications/metadata/", sinon.match.any).callsFake(() => Promise.resolve([METADATA]));
+        const metadata = await Html5RepoManager.getMetadata(options.configuration);
+        expect(metadata).to.eql(METADATA);
     });
 
 });
