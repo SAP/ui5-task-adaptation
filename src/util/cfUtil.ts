@@ -173,12 +173,7 @@ export default class CFUtil {
     static async getSpaceGuid(options: IConfiguration): Promise<string> {
         let spaceGuid = options.spaceGuid;
         if (spaceGuid == null) {
-            let spaceName;
-            try {
-                spaceName = (await CFLocal.cfGetTarget())?.space;
-            } catch (error) {
-                throw new Error("Session is expired. Please re-authenticate with 'cf login'");
-            }
+            const spaceName = (await CFLocal.cfGetTarget())?.space;
             if (spaceName) {
                 const resources = await this.requestCfApi(`/v3/spaces?names=${spaceName}`);
                 for (const resource of resources) {
