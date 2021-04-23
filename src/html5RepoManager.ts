@@ -11,7 +11,7 @@ const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::HTML5RepoMan
 export default class HTML5RepoManager {
 
     static async getBaseAppFiles(configuration: IConfiguration): Promise<Map<string, string>> {
-        const spaceGuid = await CFUtil.getSpaceGuid(configuration);
+        const spaceGuid = await CFUtil.getSpaceGuid(configuration?.spaceGuid);
         const credentials = await this.getHTML5Credentials(spaceGuid);
         const token = await this.getToken(credentials);
         const entries = await this.getBaseAppZipEntries(configuration, credentials, token);
@@ -22,16 +22,16 @@ export default class HTML5RepoManager {
     private static async getHTML5Credentials(spaceGuid: string): Promise<ICredentials> {
         log.verbose("Getting HTML5 Repo Runtime credentials from space " + spaceGuid);
         const PLAN_NAME = "app-runtime";
-        const SERVIE_INSTANCE_NAME = "html5-apps-repo-runtime";
+        const SERVIСE_INSTANCE_NAME = "html5-apps-repo-runtime";
         const getParams: IGetServiceInstanceParams = {
             spaceGuids: [spaceGuid],
             planNames: [PLAN_NAME],
-            names: [SERVIE_INSTANCE_NAME]
+            names: [SERVIСE_INSTANCE_NAME]
         };
         const createParams: ICreateServiceInstanceParams = {
             spaceGuid,
             planName: PLAN_NAME,
-            name: SERVIE_INSTANCE_NAME,
+            serviceName: SERVIСE_INSTANCE_NAME,
             tags: ["html5-apps-repo-rt"]
         };
         const serviceKeys = await CFUtil.getServiceInstanceKeys(getParams, createParams);
@@ -40,7 +40,7 @@ export default class HTML5RepoManager {
 
 
     private static async getToken({ uaa }: ICredentials) {
-        log.info("Getting HTML5 Repo token");
+        log.verbose("Getting HTML5 Repo token");
         const auth = Buffer.from(uaa.clientid + ":" + uaa.clientsecret);
         const options = {
             headers: {
