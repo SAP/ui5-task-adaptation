@@ -1,10 +1,12 @@
-import { SinonSandbox } from "sinon";
-import * as sinon from "sinon";
 import * as chai from "chai";
-import TestUtil from "./util/testUtil";
-import { IProjectOptions } from "../src/model/types";
+import * as sinon from "sinon";
+
 import HTML5RepoManager from "../src/html5RepoManager";
+import { IProjectOptions } from "../src/model/types";
 import ResourceUtil from "../src/util/resourceUtil";
+import { SinonSandbox } from "sinon";
+import TestUtil from "./util/testUtil";
+
 const index = require("../src/index");
 const { expect } = chai;
 const BASE_APP_ID = "com.sap.base.app.id";
@@ -17,7 +19,6 @@ const OPTIONS: IProjectOptions = {
         appVersion: "appVersion",
         spaceGuid: "spaceGuid",
         orgGuid: "orgGuid",
-        html5RepoRuntimeGuid: "html5RepoRuntimeGuid",
         sapCloudService: "sapCloudService"
     }
 };
