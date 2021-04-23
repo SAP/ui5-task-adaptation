@@ -23,16 +23,12 @@ describe("Html5RepoManager", () => {
             appVersion: "appVersion",
             spaceGuid: "spaceGuid",
             orgGuid: "orgGuid",
-            html5RepoRuntimeGuid: "html5RepoRuntimeGuid",
             sapCloudService: "sapCloudService"
         }
     };
 
     beforeEach(async () => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
-
-    before(async () => {
-    });
 
     it("should update base app manifest", async () => {
         sandbox.stub(CFToolsCli.Cli, "execute")

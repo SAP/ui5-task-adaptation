@@ -5,7 +5,6 @@ export interface IConfiguration {
     appVersion?: string;
     spaceGuid?: string;
     orgGuid?: string;
-    html5RepoRuntimeGuid?: string;
     sapCloudService?: string;
 }
 
@@ -17,8 +16,10 @@ export interface IProjectOptions {
 export interface ICreateServiceInstanceParams {
     spaceGuid: string;
     planName: string;
-    name: string;
+    serviceName: string;
+    serviceInstanceName?: string;
     tags: string[];
+    parameters?: any;
 }
 
 export interface IGetServiceInstanceParams {

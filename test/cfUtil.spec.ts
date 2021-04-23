@@ -276,7 +276,7 @@ describe("CFUtil", () => {
                 spaceGuids: [SPACE_GUID],
                 names: [NON_EXISTING_SERVICE_INSTANCE]
             }, {
-                name: SERVICE_INSTANCE,
+                serviceName: SERVICE_INSTANCE,
                 planName: PLAN,
                 spaceGuid: SPACE_GUID,
                 tags: ["tag1"]
@@ -300,12 +300,12 @@ describe("CFUtil", () => {
             sandbox.stub(CFToolsCli.Cli, "execute")
                 .withArgs(["curl", `/v3/spaces?names=${SPACE_NAME}`], TestUtil.ENV)
                 .callsFake(() => TestUtil.getStdOut(TestUtil.getResource("spaces.json")));
-            const spaceGuid = await CFUtil.getSpaceGuid({});
+            const spaceGuid = await CFUtil.getSpaceGuid();
             expect(spaceGuid).to.equal("spaceGuid1");
         });
 
         it("should return space guid specified in options", async () => {
-            expect(await CFUtil.getSpaceGuid({ spaceGuid: "spaceGuid1" })).to.equal("spaceGuid1");
+            expect(await CFUtil.getSpaceGuid("spaceGuid1")).to.equal("spaceGuid1");
         });
     });
 
