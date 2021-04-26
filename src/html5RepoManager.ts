@@ -1,6 +1,6 @@
 import * as AdmZip from "adm-zip";
 
-import { IConfiguration, ICreateServiceInstanceParams, ICredentials, IGetServiceInstanceParams } from "./model/types";
+import { IConfiguration, ICreateServiceInstanceParams, ICredentials, IGetServiceInstanceParams, IHTML5RepoInfo } from "./model/types";
 
 import CFUtil from "./util/cfUtil";
 import RequestUtil from "./util/requestUtil";
@@ -11,11 +11,26 @@ const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::HTML5RepoMan
 export default class HTML5RepoManager {
 
     static async getBaseAppFiles(configuration: IConfiguration): Promise<Map<string, string>> {
+        const { token, baseUri } = await this.getHtml5RepoInfo(configuration);
+        const entries = await this.getBaseAppZipEntries(configuration, baseUri, token);
+        return this.mapEntries(entries);
+    }
+
+
+    static async getMetadata(configuration: IConfiguration): Promise<any> {
+        const { token, baseUri } = await this.getHtml5RepoInfo(configuration);
+        return this.requestMetadata(configuration, baseUri, token);
+    }
+
+
+    private static async getHtml5RepoInfo(configuration: IConfiguration): Promise<IHTML5RepoInfo> {
         const spaceGuid = await CFUtil.getSpaceGuid(configuration?.spaceGuid);
         const credentials = await this.getHTML5Credentials(spaceGuid);
         const token = await this.getToken(credentials);
-        const entries = await this.getBaseAppZipEntries(configuration, credentials, token);
-        return this.mapEntries(entries);
+        return {
+            token,
+            baseUri: credentials.uri
+        };
     }
 
 
@@ -53,10 +68,26 @@ export default class HTML5RepoManager {
     }
 
 
-    private static async getBaseAppZipEntries(options: IConfiguration, htmlRepoCredentials: ICredentials, token: string): Promise<AdmZip.IZipEntry[]> {
+    private static async requestMetadata(options: IConfiguration, html5RepoBaseUri: string, token: string): Promise<AdmZip.IZipEntry[]> {
         validateObject(options, ["appHostId", "appName", "appVersion"], "should be specified in ui5.yaml configuration");
         const { appHostId, appName, appVersion } = options;
-        const uri = `${htmlRepoCredentials.uri}/applications/content/${appName}-${appVersion}/`;
+        const uri = `${html5RepoBaseUri}/applications/metadata/`;
+        const requestOptions = {
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token,
+                "x-app-host-id": appHostId
+            }
+        }
+        const metadata = await RequestUtil.get(uri, requestOptions);
+        return metadata.find((item: any) => item.appHostId === appHostId && item.applicationName === appName && item.applicationVersion === appVersion);
+    }
+
+
+    private static async getBaseAppZipEntries(options: IConfiguration, html5RepoBaseUri: string, token: string): Promise<AdmZip.IZipEntry[]> {
+        validateObject(options, ["appHostId", "appName", "appVersion"], "should be specified in ui5.yaml configuration");
+        const { appHostId, appName, appVersion } = options;
+        const uri = `${html5RepoBaseUri}/applications/content/${appName}-${appVersion}/`;
         const zip = await RequestUtil.download(token, appHostId!, uri);
         let admZip;
         try {

@@ -111,7 +111,8 @@ export default class BaseAppManager {
         const IGNORE_FILES = [
             "/manifest-bundle.zip",
             "/Component-preload.js",
-            "/sap-ui-cachebuster-info.json"
+            "/sap-ui-cachebuster-info.json",
+            `/${ResourceUtil.METADATA_FILENAME}`
         ];
         const resources = [];
         for (let filename of baseAppFiles.keys()) {
