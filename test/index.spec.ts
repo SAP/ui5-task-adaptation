@@ -18,7 +18,6 @@ const OPTIONS: IProjectOptions = {
         appVersion: "appVersion",
         spaceGuid: "spaceGuid",
         orgGuid: "orgGuid",
-        html5RepoRuntimeGuid: "html5RepoRuntimeGuid",
         sapCloudService: "sapCloudService"
     }
 };

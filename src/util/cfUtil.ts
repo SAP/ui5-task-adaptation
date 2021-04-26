@@ -1,9 +1,8 @@
 import CFLocal = require("@sap/cf-tools/out/src/cf-local");
 import CFToolsCli = require("@sap/cf-tools/out/src/cli");
 
-import { IConfiguration, ICreateServiceInstanceParams, IGetServiceInstanceParams, IResource, IServiceInstance, IServiceKeys, KeyedMap } from "../model/types";
+import { ICreateServiceInstanceParams, IGetServiceInstanceParams, IResource, IServiceInstance, IServiceKeys, KeyedMap } from "../model/types";
 
-import { CliResult } from "@sap/cf-tools/out/src/types";
 import { eFilters } from "@sap/cf-tools/out/src/types";
 
 const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::CFUtil");
@@ -41,17 +40,17 @@ export default class CFUtil {
     }
 
 
-    private static async createService(params: ICreateServiceInstanceParams) {
+    static async createService(params: ICreateServiceInstanceParams) {
         log.verbose(`Creating a service instance with parameters: ${JSON.stringify(params)}`);
         const resources = await this.requestCfApi(`/v3/service_plans?names=${params.planName}&space_guids=${params.spaceGuid}`);
         const publicPlan = resources.find(resource => resource.visibility_type === "public");
         if (!publicPlan) {
-            throw new Error(`Cannot find a public plan by name '${params.name}' in space '${params.spaceGuid}'`);
+            throw new Error(`Cannot find a public plan by name '${params.serviceName}' in space '${params.spaceGuid}'`);
         }
         try {
-            await CFLocal.cfCreateService(publicPlan.guid, params.name, null, params.tags);
+            await CFLocal.cfCreateService(publicPlan.guid, params.serviceName, params.parameters, params.tags);
         } catch (error) {
-            throw new Error(`Cannot create a service instance '${params.name}' in space '${params.spaceGuid}': ${error.message}`);
+            throw new Error(`Cannot create a service instance '${params.serviceName}' in space '${params.spaceGuid}': ${error.message}`);
         }
     }
 
@@ -82,8 +81,9 @@ export default class CFUtil {
 
 
     private static async createServiceKey(serviceInstanceName: string, serviceKeyName: string) {
-        const cliResult = await this.cfExecute(["create-service-key", serviceInstanceName, serviceKeyName]);
-        if (cliResult.exitCode !== 0) {
+        try {
+            return this.cfExecute(["create-service-key", serviceInstanceName, serviceKeyName]);
+        } catch (error) {
             throw new Error(`Couldn't create a service key for instance: ${serviceInstanceName}`);
         }
     }
@@ -124,7 +124,12 @@ export default class CFUtil {
     }
 
 
-    private static async cfExecute(params: string[]) {
+    public static getOAuthToken() {
+        return this.cfExecute(["oauth-token"]);
+    }
+
+
+    private static async cfExecute(params: string[]): Promise<string> {
         const MAX_ATTEMPTS = 3;
         const errors = new Set<string>();
         for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
@@ -135,7 +140,7 @@ export default class CFUtil {
                     if (errorValues?.length > 0) {
                         log.verbose(this.errorsToString(errorValues));
                     }
-                    return response;
+                    return response.stdout;
                 }
                 errors.add(response.error || response.stderr);
             } catch (error) {
@@ -153,9 +158,9 @@ export default class CFUtil {
     }
 
 
-    private static parseJson(response: CliResult) {
+    private static parseJson(jsonString: string) {
         try {
-            return JSON.parse(response.stdout);
+            return JSON.parse(jsonString);
         } catch (error) {
             throw new Error(`Failed parse response from request CF API: ${error.message}`);
         }
@@ -166,12 +171,11 @@ export default class CFUtil {
     /**
      * Get space guid from configuration or local CF fodler
      * @static
-     * @param {IConfiguration} options ui5.yaml options
+     * @param {string} spaceGuid ui5.yaml options
      * @return {Promise<string>} promise with space guid
      * @memberof CFUtil
      */
-    static async getSpaceGuid(options: IConfiguration): Promise<string> {
-        let spaceGuid = options.spaceGuid;
+    static async getSpaceGuid(spaceGuid?: string): Promise<string> {
         if (spaceGuid == null) {
             const spaceName = (await CFLocal.cfGetTarget())?.space;
             if (spaceName) {
