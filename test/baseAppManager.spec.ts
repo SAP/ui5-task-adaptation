@@ -33,10 +33,15 @@ describe("BaseAppManager", () => {
     });
 
     it("should update base app manifest", async () => {
-        const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
+        const baseAppFiles = new Map([
+            ["manifest.json", TestUtil.getResource("manifest.json")],
+            ["component-preload.js", TestUtil.getResource("component-preload.js")]
+        ]);
         const resources = await BaseAppManager.process(baseAppFiles, appVariantInfo, options);
-        const actual = await resources[0].getBuffer().then((buffer: Buffer) => JSON.parse(buffer.toString()));
-        expect(actual).to.eql(JSON.parse(TestUtil.getResource("manifest-expected.json")));
+        const actualManifest = JSON.parse((await TestUtil.getResourceByName(resources, "manifest.json")).toString());
+        const actualCPreload = await TestUtil.getResourceByName(resources, "component-preload.js").then((buffer: Buffer) => buffer.toString());
+        expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected.json")));
+        expect(actualCPreload).to.eql(TestUtil.getResource("component-preload-expected.js"));
     });
 
     it("should skip base app files", async () => {

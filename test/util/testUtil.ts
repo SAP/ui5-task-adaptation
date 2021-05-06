@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import AppVariantManager from "../../src/appVariantManager";
+
 const normalizer = require("@ui5/project").normalizer;
 const resourceFactory = require("@ui5/fs").resourceFactory;
 const TaskUtil = require("@ui5/builder/lib/tasks/TaskUtil");
@@ -58,5 +59,9 @@ export default class TestUtil {
             stderr,
             exitCode
         });
+    }
+
+    static getResourceByName(resources: any[], name: string) {
+        return resources.find(res => res.getPath().endsWith(name)).getBuffer();
     }
 }
