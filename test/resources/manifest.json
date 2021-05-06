@@ -1,7 +1,7 @@
 {
     "_version": "1.12.0",
     "sap.app": {
-        "id": "com.sap.manifest.sample",
+        "id": "com.sap.base.app.id",
         "type": "application",
         "i18n": "i18n/i18n.properties",
         "applicationVersion": {
@@ -99,7 +99,7 @@
         },
         "rootView": {
             "id": "rootView",
-            "viewName": "com.sap.manifest.sample.view.App",
+            "viewName": "com.sap.base.app.id.view.App",
             "type": "XML"
         },
         "dependencies": {
@@ -122,7 +122,7 @@
             "i18n": {
                 "type": "sap.ui.model.resource.ResourceModel",
                 "settings": {
-                    "bundleName": "com.sap.manifest.sample.i18n.i18n"
+                    "bundleName": "com.sap.base.app.id.i18n.i18n"
                 }
             },
             "fcl": {
@@ -237,7 +237,7 @@
                 "routerClass": "sap.f.routing.Router",
                 "viewType": "XML",
                 "async": true,
-                "viewPath": "com.sap.manifest.sample.view",
+                "viewPath": "com.sap.base.app.id.view",
                 "controlId": "fcl",
                 "bypassed": {
                     "target": "notFound"

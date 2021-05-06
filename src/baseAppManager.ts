@@ -13,13 +13,13 @@ const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManag
 export default class BaseAppManager {
 
     static async process(baseAppFiles: Map<string, string>, appVariantInfo: IAppVariantInfo, options: IProjectOptions): Promise<any[]> {
-        const { filepath, content } = this.getBaseAppManifest(baseAppFiles);
         this.renameBaseApp(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
+        const { filepath, content } = this.getBaseAppManifest(baseAppFiles);
         this.updateCloudPlatform(content, options.configuration);
         this.fillAppVariantIdHierarchy(content);
         const i18nBundleName = replaceDots(appVariantInfo.id);
         await this.applyDescriptorChanges(content, appVariantInfo.manifest.content, i18nBundleName);
-        baseAppFiles.set(filepath, JSON.stringify(content));
+        this.setBaseAppManifest(baseAppFiles, filepath, content);
         return this.writeToWorkspace(baseAppFiles, options.projectNamespace);
     }
 
@@ -53,6 +53,11 @@ export default class BaseAppManager {
             }
         }
         throw new Error("Original application should have manifest.json in root folder");
+    }
+
+
+    private static setBaseAppManifest(baseAppFiles: Map<string, string>, filepath: string, content: string): void {
+        baseAppFiles.set(filepath, JSON.stringify(content));
     }
 
 
