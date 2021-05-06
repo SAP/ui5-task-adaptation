@@ -61,7 +61,8 @@ export default class TestUtil {
         });
     }
 
-    static getResourceByName(resources: any[], name: string) {
+
+    static getResourceByName(resources: any[], name: string): Promise<Buffer> {
         return resources.find(res => res.getPath().endsWith(name)).getBuffer();
     }
 }

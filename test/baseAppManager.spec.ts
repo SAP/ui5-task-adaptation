@@ -38,8 +38,8 @@ describe("BaseAppManager", () => {
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
         ]);
         const resources = await BaseAppManager.process(baseAppFiles, appVariantInfo, options);
-        const actualManifest = JSON.parse((await TestUtil.getResourceByName(resources, "manifest.json")).toString());
-        const actualCPreload = await TestUtil.getResourceByName(resources, "component-preload.js").then((buffer: Buffer) => buffer.toString());
+        const actualManifest = await TestUtil.getResourceByName(resources, "manifest.json").then(buffer => JSON.parse(buffer.toString()));
+        const actualCPreload = await TestUtil.getResourceByName(resources, "component-preload.js").then(buffer => buffer.toString());
         expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected.json")));
         expect(actualCPreload).to.eql(TestUtil.getResource("component-preload-expected.js"));
     });
