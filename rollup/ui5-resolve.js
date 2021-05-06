@@ -146,7 +146,7 @@ function replaceRequireAsync(code) {
             const varaibleName = match.groups.url.split("/").pop() + crypto.randomBytes(16).toString("hex");
             defineUrls.push(`"${match.groups.url}"`);
             defineVars.push(varaibleName);
-            matches.set(match[0], `function() { return Promise.resolve(${varaibleName}); }`);
+            matches.set(match[0], `() => Promise.resolve(${varaibleName})`);
         }
     }
     if (defineUrls.length > 0 && defineVars.length > 0) {
