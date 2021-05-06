@@ -38,6 +38,16 @@ sap.ui.define([
 	};
 
 	/**
+	 * Gets the layer type for the change.
+	 * @returns {string} Layer of the change file
+	 *
+	 * @public
+	 */
+	 Change.prototype.getLayer = function () {
+		return this._oDefinition.layer;
+	};
+
+	/**
 	 * Returns the content section of the change.
 	 * @returns {string} Content of the change file. The content structure can be any JSON.
 	 *
