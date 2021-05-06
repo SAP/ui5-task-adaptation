@@ -4,7 +4,8 @@ type: application
 metadata:
   name: rollup
 framework:
-  name: OpenUI5
-  version: 1.87.3
+  name: SAPUI5
+  version: 1.89.0
   libraries:
     - name: sap.ui.fl
+    - name: sap.suite.ui.generic.template

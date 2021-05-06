@@ -21,13 +21,15 @@ module.exports = (options) => {
     const skipTransformation = (id) => !options.skipTransformation.includes(id);
 
     async function getProject(projectPaths) {
-        for (const cwd of projectPaths) {
+        for (const { cwd, useLatestVersion } of projectPaths) {
             try {
-                const project = await normalizer.generateProjectTree({
-                    cwd, frameworkOptions: {
+                let options = { cwd };
+                if (useLatestVersion) {
+                    options.frameworkOptions = {
                         versionOverride: "latest"
                     }
-                });
+                }
+                const project = await normalizer.generateProjectTree(options);
                 validateProjectSettings(cwd);
                 return project;
             } catch (error) {
@@ -137,13 +139,15 @@ module.exports = (options) => {
 
 
 function replaceRequireAsync(code) {
-    const requireAsyncPattern = /requireAsync\("(?<url>[\/\w]*)"\)/mg;
+    const requireAsyncPatterns = [/requireAsync\("(?<url>[\/\w]*)"\)/mg, /requireAsync.bind\(this,[ ]*"(?<url>[\/\w]*)"\)/mg];
     let match, defineUrls = [], defineVars = [], matches = new Map();
-    while (match = requireAsyncPattern.exec(code)) {
-        const varaibleName = match.groups.url.split("/").pop() + crypto.randomBytes(16).toString("hex");
-        defineUrls.push(`"${match.groups.url}"`);
-        defineVars.push(varaibleName);
-        matches.set(match[0], varaibleName);
+    for (const requireAsyncPattern of requireAsyncPatterns) {
+        while (match = requireAsyncPattern.exec(code)) {
+            const varaibleName = match.groups.url.split("/").pop() + crypto.randomBytes(16).toString("hex");
+            defineUrls.push(`"${match.groups.url}"`);
+            defineVars.push(varaibleName);
+            matches.set(match[0], `function() { return Promise.resolve(${varaibleName}); }`);
+        }
     }
     if (defineUrls.length > 0 && defineVars.length > 0) {
         matches.forEach((value, key) => code = code.replace(key, value));
