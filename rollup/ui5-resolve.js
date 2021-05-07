@@ -145,7 +145,9 @@ function replaceRequireAsync(code) {
         const varaibleName = match.groups.url.split("/").pop() + crypto.randomBytes(16).toString("hex");
         defineUrls.push(`"${match.groups.url}"`);
         defineVars.push(varaibleName);
-        const value = match[0].includes("requireAsync.bind") ? `() => Promise.resolve(${varaibleName})` : varaibleName;
+        const value = match[0].includes("requireAsync.bind")
+            ? `() => Promise.resolve(${varaibleName})`
+            : varaibleName;
         matches.set(match[0], value);
     }
     if (defineUrls.length > 0 && defineVars.length > 0) {
