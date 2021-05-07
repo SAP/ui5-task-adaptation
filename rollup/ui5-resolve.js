@@ -139,15 +139,14 @@ module.exports = (options) => {
 
 
 function replaceRequireAsync(code) {
-    const requireAsyncPatterns = [/requireAsync\("(?<url>[\/\w]*)"\)/mg, /requireAsync.bind\(this,[ ]*"(?<url>[\/\w]*)"\)/mg];
+    const requireAsyncPattern = /requireAsync((.bind\(this, ")|(\("))+(?<url>[\/\w]*)"\)/mg;
     let match, defineUrls = [], defineVars = [], matches = new Map();
-    for (const requireAsyncPattern of requireAsyncPatterns) {
-        while (match = requireAsyncPattern.exec(code)) {
-            const varaibleName = match.groups.url.split("/").pop() + crypto.randomBytes(16).toString("hex");
-            defineUrls.push(`"${match.groups.url}"`);
-            defineVars.push(varaibleName);
-            matches.set(match[0], `() => Promise.resolve(${varaibleName})`);
-        }
+    while (match = requireAsyncPattern.exec(code)) {
+        const varaibleName = match.groups.url.split("/").pop() + crypto.randomBytes(16).toString("hex");
+        defineUrls.push(`"${match.groups.url}"`);
+        defineVars.push(varaibleName);
+        const value = match[0].includes("requireAsync.bind") ? `() => Promise.resolve(${varaibleName})` : varaibleName;
+        matches.set(match[0], value);
     }
     if (defineUrls.length > 0 && defineVars.length > 0) {
         matches.forEach((value, key) => code = code.replace(key, value));
