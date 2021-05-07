@@ -7,6 +7,8 @@ import BaseAppManager from "../src/baseAppManager";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./util/testUtil";
 
+const { Applier, Change } = require("../dist/bundle");
+
 const { expect, assert } = chai;
 
 describe("BaseAppManager", () => {
@@ -81,6 +83,14 @@ describe("BaseAppManager", () => {
         const resources = await BaseAppManager.process(baseAppFiles, appVariantInfo, options);
         const actual = await resources[0].getBuffer().then((buffer: Buffer) => JSON.parse(buffer.toString()));
         expect(actual["sap.cloud"]).to.eql({ service: "sapCloudService" });
+    });
+
+    it("should fill change layer", async () => {
+        const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
+        const stub = sandbox.stub(Applier, "applyChanges");
+        await BaseAppManager.process(baseAppFiles, appVariantInfo, options);
+        const layers = stub.getCall(0).args[1].map((change: typeof Change) => change.getLayer());
+        expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
 });
 

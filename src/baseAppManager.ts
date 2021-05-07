@@ -1,6 +1,6 @@
 import * as path from "path";
 
-import { IAppVariantInfo, IBaseAppInfo, IChange, IConfiguration, IProjectOptions } from "./model/types";
+import { IAppVariantInfo, IAppVariantManifest, IBaseAppInfo, IChange, IConfiguration, IProjectOptions } from "./model/types";
 
 import BuildStrategy from "./buildStrategy";
 import ResourceUtil from "./util/resourceUtil";
@@ -18,7 +18,7 @@ export default class BaseAppManager {
         this.updateCloudPlatform(content, options.configuration);
         this.fillAppVariantIdHierarchy(content);
         const i18nBundleName = replaceDots(appVariantInfo.id);
-        await this.applyDescriptorChanges(content, appVariantInfo.manifest.content, i18nBundleName);
+        await this.applyDescriptorChanges(content, appVariantInfo.manifest, i18nBundleName);
         this.setBaseAppManifest(baseAppFiles, filepath, content);
         return this.writeToWorkspace(baseAppFiles, options.projectNamespace);
     }
@@ -102,10 +102,11 @@ export default class BaseAppManager {
     }
 
 
-    static async applyDescriptorChanges(baseAppManifest: any, changes: IChange[], i18nBundleName: string) {
+    static async applyDescriptorChanges(baseAppManifest: any, appVariantManifest: IAppVariantManifest, i18nBundleName: string) {
         log.verbose("Applying appVariant changes");
         const strategy = new BuildStrategy(RegistrationBuild, ApplyUtil, i18nBundleName);
-        const changesContent = changes?.map((change: IChange) => new Change(change));
+        appVariantManifest.content?.forEach(item => item.layer = appVariantManifest.layer);
+        const changesContent = appVariantManifest.content?.map((change: IChange) => new Change(change));
         if (changesContent) {
             await Applier.applyChanges(baseAppManifest, changesContent, strategy);
         }
