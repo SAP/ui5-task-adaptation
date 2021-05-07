@@ -1,20 +1,20 @@
 {
     "_version": "1.12.0",
     "sap.app": {
-        "id": "com.sap.manifest.sample",
+        "id": "customer.com.sap.application.variant.id",
         "type": "application",
         "i18n": {
             "bundleUrl": "i18n/i18n.properties",
             "enhanceWith": [
                 {
-                    "bundleName": "com.sap.manifest.sample.customer_com_sap_application_variant_id.i18n.i18n"
+                    "bundleName": "customer.com.sap.application.variant.id.customer_com_sap_application_variant_id.i18n.i18n"
                 }
             ]
         },
         "applicationVersion": {
             "version": "1.0.0"
         },
-        "title": "{{com.sap.manifest.sample_sap.app.title}}",
+        "title": "{{customer.com.sap.application.variant.id_sap.app.title}}",
         "description": "{{appDescription}}",
         "resources": "resources.json",
         "ach": "MAN-IFE-ST-SAM-PLE",
@@ -106,7 +106,7 @@
         },
         "rootView": {
             "id": "rootView",
-            "viewName": "com.sap.manifest.sample.view.App",
+            "viewName": "customer.com.sap.application.variant.id.view.App",
             "type": "XML"
         },
         "dependencies": {
@@ -131,7 +131,7 @@
             "i18n": {
                 "type": "sap.ui.model.resource.ResourceModel",
                 "settings": {
-                    "bundleName": "com.sap.manifest.sample.i18n.i18n"
+                    "bundleName": "customer.com.sap.application.variant.id.i18n.i18n"
                 }
             },
             "fcl": {
@@ -246,7 +246,7 @@
                 "routerClass": "sap.f.routing.Router",
                 "viewType": "XML",
                 "async": true,
-                "viewPath": "com.sap.manifest.sample.view",
+                "viewPath": "customer.com.sap.application.variant.id.view",
                 "controlId": "fcl",
                 "bypassed": {
                     "target": "notFound"
@@ -542,7 +542,7 @@
         },
         "appVariantIdHierarchy": [
             {
-                "appVariantId": "com.sap.manifest.sample",
+                "appVariantId": "customer.com.sap.application.variant.id",
                 "version": "1.0.0"
             }
         ]

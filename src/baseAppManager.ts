@@ -1,6 +1,6 @@
 import * as path from "path";
 
-import { IAppVariantInfo, IBaseAppInfo, IChange, IConfiguration, IProjectOptions } from "./model/types";
+import { IAppVariantInfo, IAppVariantManifest, IBaseAppInfo, IChange, IConfiguration, IProjectOptions } from "./model/types";
 
 import BuildStrategy from "./buildStrategy";
 import ResourceUtil from "./util/resourceUtil";
@@ -13,13 +13,13 @@ const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManag
 export default class BaseAppManager {
 
     static async process(baseAppFiles: Map<string, string>, appVariantInfo: IAppVariantInfo, options: IProjectOptions): Promise<any[]> {
-        const { filepath, content } = this.getBaseAppManifest(baseAppFiles);
         this.renameBaseApp(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
+        const { filepath, content } = this.getBaseAppManifest(baseAppFiles);
         this.updateCloudPlatform(content, options.configuration);
         this.fillAppVariantIdHierarchy(content);
         const i18nBundleName = replaceDots(appVariantInfo.id);
-        await this.applyDescriptorChanges(content, appVariantInfo.manifest.content, i18nBundleName);
-        baseAppFiles.set(filepath, JSON.stringify(content));
+        await this.applyDescriptorChanges(content, appVariantInfo.manifest, i18nBundleName);
+        this.setBaseAppManifest(baseAppFiles, filepath, content);
         return this.writeToWorkspace(baseAppFiles, options.projectNamespace);
     }
 
@@ -53,6 +53,11 @@ export default class BaseAppManager {
             }
         }
         throw new Error("Original application should have manifest.json in root folder");
+    }
+
+
+    private static setBaseAppManifest(baseAppFiles: Map<string, string>, filepath: string, content: string): void {
+        baseAppFiles.set(filepath, JSON.stringify(content));
     }
 
 
@@ -97,10 +102,11 @@ export default class BaseAppManager {
     }
 
 
-    static async applyDescriptorChanges(baseAppManifest: any, changes: IChange[], i18nBundleName: string) {
+    static async applyDescriptorChanges(baseAppManifest: any, appVariantManifest: IAppVariantManifest, i18nBundleName: string) {
         log.verbose("Applying appVariant changes");
         const strategy = new BuildStrategy(RegistrationBuild, ApplyUtil, i18nBundleName);
-        const changesContent = changes?.map((change: IChange) => new Change(change));
+        appVariantManifest.content?.forEach(item => item.layer = appVariantManifest.layer);
+        const changesContent = appVariantManifest.content?.map((change: IChange) => new Change(change));
         if (changesContent) {
             await Applier.applyChanges(baseAppManifest, changesContent, strategy);
         }

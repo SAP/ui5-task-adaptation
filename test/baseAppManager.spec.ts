@@ -7,6 +7,8 @@ import BaseAppManager from "../src/baseAppManager";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./util/testUtil";
 
+const { Applier, Change } = require("../dist/bundle");
+
 const { expect, assert } = chai;
 
 describe("BaseAppManager", () => {
@@ -33,10 +35,15 @@ describe("BaseAppManager", () => {
     });
 
     it("should update base app manifest", async () => {
-        const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
+        const baseAppFiles = new Map([
+            ["manifest.json", TestUtil.getResource("manifest.json")],
+            ["component-preload.js", TestUtil.getResource("component-preload.js")]
+        ]);
         const resources = await BaseAppManager.process(baseAppFiles, appVariantInfo, options);
-        const actual = await resources[0].getBuffer().then((buffer: Buffer) => JSON.parse(buffer.toString()));
-        expect(actual).to.eql(JSON.parse(TestUtil.getResource("manifest-expected.json")));
+        const actualManifest = await TestUtil.getResourceByName(resources, "manifest.json").then(buffer => JSON.parse(buffer.toString()));
+        const actualCPreload = await TestUtil.getResourceByName(resources, "component-preload.js").then(buffer => buffer.toString());
+        expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected.json")));
+        expect(actualCPreload).to.eql(TestUtil.getResource("component-preload-expected.js"));
     });
 
     it("should skip base app files", async () => {
@@ -76,6 +83,14 @@ describe("BaseAppManager", () => {
         const resources = await BaseAppManager.process(baseAppFiles, appVariantInfo, options);
         const actual = await resources[0].getBuffer().then((buffer: Buffer) => JSON.parse(buffer.toString()));
         expect(actual["sap.cloud"]).to.eql({ service: "sapCloudService" });
+    });
+
+    it("should fill change layer", async () => {
+        const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
+        const stub = sandbox.stub(Applier, "applyChanges");
+        await BaseAppManager.process(baseAppFiles, appVariantInfo, options);
+        const layers = stub.getCall(0).args[1].map((change: typeof Change) => change.getLayer());
+        expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
 });
 
