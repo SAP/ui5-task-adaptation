@@ -9,15 +9,21 @@ module.exports = {
     plugins: [
         ui5({
             assets: [
-                "/resources/sap/ui/fl/**"
+                "/resources/sap/ui/fl/**",
+                "/resources/sap/suite/ui/generic/template/**"
             ],
             skipTransformation: [
                 "./rollup/bundle-def.js",
                 "sap/ui/thirdparty/URI"
             ],
             projectPaths: [
-                path.resolve(__dirname, "..", "..", ".."),
-                path.resolve(__dirname, "rollup", "project")
+                {
+                    cwd: path.resolve(__dirname, "..", "..", ".."),
+                },
+                {
+                    cwd: path.resolve(__dirname, "rollup", "project"),
+                    useLatestVersion: true
+                }
             ]
         }),
         nodeResolve({
