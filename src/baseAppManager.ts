@@ -13,14 +13,24 @@ const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManag
 export default class BaseAppManager {
 
     static async process(baseAppFiles: Map<string, string>, appVariantInfo: IAppVariantInfo, options: IProjectOptions): Promise<any[]> {
+        const baseAppManifest = this.getBaseAppManifest(baseAppFiles);
+        const { id, version } = this.getManifestInfo(baseAppManifest.content);
+
         this.renameBaseApp(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
         const { filepath, content } = this.getBaseAppManifest(baseAppFiles);
         this.updateCloudPlatform(content, options.configuration);
-        this.fillAppVariantIdHierarchy(content);
+        this.fillAppVariantIdHierarchy(id, version, content);
         const i18nBundleName = replaceDots(appVariantInfo.id);
         await this.applyDescriptorChanges(content, appVariantInfo.manifest, i18nBundleName);
         this.setBaseAppManifest(baseAppFiles, filepath, content);
         return this.writeToWorkspace(baseAppFiles, options.projectNamespace);
+    }
+
+
+    private static getManifestInfo(manifest: any) {
+        const id = manifest["sap.app"]?.id;
+        const version = manifest["sap.app"]?.applicationVersion?.version;
+        return { id, version };
     }
 
 
@@ -79,10 +89,8 @@ export default class BaseAppManager {
     }
 
 
-    private static fillAppVariantIdHierarchy(baseAppManifest: any) {
+    private static fillAppVariantIdHierarchy(id: string, version: string, baseAppManifest: any) {
         log.verbose("Filling up app variant hierarchy in manifest.json");
-        const id = baseAppManifest["sap.app"]?.id;
-        const version = baseAppManifest["sap.app"]?.applicationVersion?.version;
         this.validateProperty(id, "sap.app/id");
         this.validateProperty(version, "sap.app/applicationVersion/version");
         if (baseAppManifest["sap.ui5"] == null) {

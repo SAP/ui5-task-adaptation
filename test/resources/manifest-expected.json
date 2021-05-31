@@ -542,7 +542,7 @@
         },
         "appVariantIdHierarchy": [
             {
-                "appVariantId": "customer.com.sap.application.variant.id",
+                "appVariantId": "com.sap.base.app.id",
                 "version": "1.0.0"
             }
         ]
