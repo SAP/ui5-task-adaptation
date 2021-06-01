@@ -105,7 +105,9 @@ export default class BaseAppManager {
     static async applyDescriptorChanges(baseAppManifest: any, appVariantManifest: IAppVariantManifest, i18nBundleName: string) {
         log.verbose("Applying appVariant changes");
         const strategy = new BuildStrategy(RegistrationBuild, ApplyUtil, i18nBundleName);
-        appVariantManifest.content?.forEach(item => item.layer = appVariantManifest.layer);
+        if (appVariantManifest.layer) {
+            appVariantManifest.content?.forEach(item => item.layer = appVariantManifest.layer);
+        }
         const changesContent = appVariantManifest.content?.map((change: IChange) => new Change(change));
         if (changesContent) {
             await Applier.applyChanges(baseAppManifest, changesContent, strategy);

@@ -69,14 +69,14 @@ export interface IAppVariantInfo {
 export interface IAppVariantManifest {
     id: string;
     reference: string;
-    layer: string;
+    layer?: string;
     content: IChange[];
 }
 
 export interface IChange {
     changeType: string;
     texts: IChangeText;
-    layer: string;
+    layer?: string;
 }
 
 export interface IChangeText {
