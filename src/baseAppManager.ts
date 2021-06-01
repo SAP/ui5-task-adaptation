@@ -16,14 +16,15 @@ export default class BaseAppManager {
         const baseAppManifest = this.getBaseAppManifest(baseAppFiles);
         const { id, version } = this.getManifestInfo(baseAppManifest.content);
 
-        this.renameBaseApp(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
-        const { filepath, content } = this.getBaseAppManifest(baseAppFiles);
+        const renamedBaseAppFiles = this.renameBaseApp(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
+        const { filepath, content } = this.getBaseAppManifest(renamedBaseAppFiles);
         this.updateCloudPlatform(content, options.configuration);
         this.fillAppVariantIdHierarchy(id, version, content);
         const i18nBundleName = replaceDots(appVariantInfo.id);
         await this.applyDescriptorChanges(content, appVariantInfo.manifest, i18nBundleName);
-        this.setBaseAppManifest(baseAppFiles, filepath, content);
-        return this.writeToWorkspace(baseAppFiles, options.projectNamespace);
+        renamedBaseAppFiles.set(filepath, JSON.stringify(content));
+
+        return this.writeToWorkspace(renamedBaseAppFiles, options.projectNamespace);
     }
 
 
@@ -34,7 +35,7 @@ export default class BaseAppManager {
     }
 
 
-    static renameBaseApp(baseAppFiles: Map<string, string>, search: string, replacement: string) {
+    static renameBaseApp(baseAppFiles: Map<string, string>, search: string, replacement: string): Map<string, string> {
         log.verbose("Renaming base app resources to appVariant id");
         const dotToSlash = (update: string) => update.split(".").join("\/");
         const dotsEscape = (update: string) => update.split(".").join("\\.");
@@ -48,13 +49,15 @@ export default class BaseAppManager {
                 replacement: dotToSlash(replacement)
             }
         ];
-        baseAppFiles.forEach((content: string, filepath: string, map: Map<string, string>) => {
-            map.set(filepath, replaces.reduce((p, c) => p.replace(c.regexp, c.replacement), content));
+        const renamed = new Map();
+        baseAppFiles.forEach((content: string, filepath: string) => {
+            renamed.set(filepath, replaces.reduce((p, c) => p.replace(c.regexp, c.replacement), content));
         });
+        return renamed;
     }
 
 
-    private static getBaseAppManifest(baseAppFiles: Map<string, string>): IBaseAppInfo {
+    private static getBaseAppManifest(baseAppFiles: Readonly<Map<string, string>>): IBaseAppInfo {
         let filepath = [...baseAppFiles.keys()].find(filepath => filepath.endsWith("manifest.json"));
         if (filepath) {
             return {
@@ -63,11 +66,6 @@ export default class BaseAppManager {
             }
         }
         throw new Error("Original application should have manifest.json in root folder");
-    }
-
-
-    private static setBaseAppManifest(baseAppFiles: Map<string, string>, filepath: string, content: string): void {
-        baseAppFiles.set(filepath, JSON.stringify(content));
     }
 
 
