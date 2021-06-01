@@ -6,8 +6,6 @@
 src
 coverage
 node_modules
-rollup
-rollup.config.js
 test
 tsconfig.json
 dist/resources
