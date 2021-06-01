@@ -57,7 +57,7 @@ export default class BaseAppManager {
     }
 
 
-    private static getBaseAppManifest(baseAppFiles: Readonly<Map<string, string>>): IBaseAppInfo {
+    private static getBaseAppManifest(baseAppFiles: Map<string, string>): IBaseAppInfo {
         let filepath = [...baseAppFiles.keys()].find(filepath => filepath.endsWith("manifest.json"));
         if (filepath) {
             return {
