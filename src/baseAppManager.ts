@@ -94,10 +94,13 @@ export default class BaseAppManager {
         if (baseAppManifest["sap.ui5"] == null) {
             baseAppManifest["sap.ui5"] = {};
         }
-        baseAppManifest["sap.ui5"].appVariantIdHierarchy = [{
+        if (baseAppManifest["sap.ui5"].appVariantIdHierarchy == null) {
+            baseAppManifest["sap.ui5"].appVariantIdHierarchy = [];
+        }
+        baseAppManifest["sap.ui5"].appVariantIdHierarchy.unshift({
             appVariantId: id,
             version
-        }];
+        });
     }
 
 

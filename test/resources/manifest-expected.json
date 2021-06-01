@@ -544,6 +544,10 @@
             {
                 "appVariantId": "com.sap.base.app.id",
                 "version": "1.0.0"
+            },
+            {
+                "appVariantId": "some.previous.app.id",
+                "version": "0.0.9"
             }
         ]
     },
