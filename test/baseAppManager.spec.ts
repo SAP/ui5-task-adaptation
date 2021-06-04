@@ -92,6 +92,16 @@ describe("BaseAppManager", () => {
         const layers = stub.getCall(0).args[1].map((change: typeof Change) => change.getLayer());
         expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
+
+    it("shouldn't fill change layer if layer is undefined", async () => {
+        const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
+        const stub = sandbox.stub(Applier, "applyChanges");
+        const appVariantInfo = await TestUtil.getAppVariantInfo("appVariant1");
+        delete appVariantInfo.manifest["layer"];
+        await BaseAppManager.process(baseAppFiles, appVariantInfo, options);
+        const definitionKeys = stub.getCall(0).args[1].map((change: typeof Change) => Object.keys(change._oDefinition));
+        expect(definitionKeys.every((key: string[]) => !key.includes("layer"))).to.be.true;
+    });
 });
 
 const assertValidation = async (appVariantInfo: IAppVariantInfo, options: IProjectOptions, expectedError: string, manifest: any) => {
