@@ -13,18 +13,29 @@ const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManag
 export default class BaseAppManager {
 
     static async process(baseAppFiles: Map<string, string>, appVariantInfo: IAppVariantInfo, options: IProjectOptions): Promise<any[]> {
-        this.renameBaseApp(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
-        const { filepath, content } = this.getBaseAppManifest(baseAppFiles);
+        const baseAppManifest = this.getBaseAppManifest(baseAppFiles);
+        const { id, version } = this.getManifestInfo(baseAppManifest.content);
+
+        const renamedBaseAppFiles = this.renameBaseApp(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
+        const { filepath, content } = this.getBaseAppManifest(renamedBaseAppFiles);
         this.updateCloudPlatform(content, options.configuration);
-        this.fillAppVariantIdHierarchy(content);
+        this.fillAppVariantIdHierarchy(id, version, content);
         const i18nBundleName = replaceDots(appVariantInfo.id);
         await this.applyDescriptorChanges(content, appVariantInfo.manifest, i18nBundleName);
-        this.setBaseAppManifest(baseAppFiles, filepath, content);
-        return this.writeToWorkspace(baseAppFiles, options.projectNamespace);
+        renamedBaseAppFiles.set(filepath, JSON.stringify(content));
+
+        return this.writeToWorkspace(renamedBaseAppFiles, options.projectNamespace);
     }
 
 
-    static renameBaseApp(baseAppFiles: Map<string, string>, search: string, replacement: string) {
+    private static getManifestInfo(manifest: any) {
+        const id = manifest["sap.app"]?.id;
+        const version = manifest["sap.app"]?.applicationVersion?.version;
+        return { id, version };
+    }
+
+
+    static renameBaseApp(baseAppFiles: Map<string, string>, search: string, replacement: string): Map<string, string> {
         log.verbose("Renaming base app resources to appVariant id");
         const dotToSlash = (update: string) => update.split(".").join("\/");
         const dotsEscape = (update: string) => update.split(".").join("\\.");
@@ -38,9 +49,11 @@ export default class BaseAppManager {
                 replacement: dotToSlash(replacement)
             }
         ];
-        baseAppFiles.forEach((content: string, filepath: string, map: Map<string, string>) => {
-            map.set(filepath, replaces.reduce((p, c) => p.replace(c.regexp, c.replacement), content));
+        const renamed = new Map();
+        baseAppFiles.forEach((content: string, filepath: string) => {
+            renamed.set(filepath, replaces.reduce((p, c) => p.replace(c.regexp, c.replacement), content));
         });
+        return renamed;
     }
 
 
@@ -53,11 +66,6 @@ export default class BaseAppManager {
             }
         }
         throw new Error("Original application should have manifest.json in root folder");
-    }
-
-
-    private static setBaseAppManifest(baseAppFiles: Map<string, string>, filepath: string, content: string): void {
-        baseAppFiles.set(filepath, JSON.stringify(content));
     }
 
 
@@ -79,19 +87,20 @@ export default class BaseAppManager {
     }
 
 
-    private static fillAppVariantIdHierarchy(baseAppManifest: any) {
+    private static fillAppVariantIdHierarchy(id: string, version: string, baseAppManifest: any) {
         log.verbose("Filling up app variant hierarchy in manifest.json");
-        const id = baseAppManifest["sap.app"]?.id;
-        const version = baseAppManifest["sap.app"]?.applicationVersion?.version;
         this.validateProperty(id, "sap.app/id");
         this.validateProperty(version, "sap.app/applicationVersion/version");
         if (baseAppManifest["sap.ui5"] == null) {
             baseAppManifest["sap.ui5"] = {};
         }
-        baseAppManifest["sap.ui5"].appVariantIdHierarchy = [{
+        if (baseAppManifest["sap.ui5"].appVariantIdHierarchy == null) {
+            baseAppManifest["sap.ui5"].appVariantIdHierarchy = [];
+        }
+        baseAppManifest["sap.ui5"].appVariantIdHierarchy.unshift({
             appVariantId: id,
             version
-        }];
+        });
     }
 
 
