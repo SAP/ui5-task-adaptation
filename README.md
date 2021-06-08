@@ -4,6 +4,23 @@
 ## Description
 A custom task for [ui5-builder](https://github.com/SAP/ui5-builder) that allows building [UI5 Flexibility adaptation projects](https://help.sap.com/viewer/584e0bcbfd4a4aff91c815cefa0bce2d/Cloud/en-US/019b0c38a6b043d1a66b11d992eed290.html) for SAP BTP, Cloud Foundry environment.
 
+## How to specify a UI5 version
+ui5-task-adaptation is based on ui5 implementation. In order to use a curtain ui5 version, edit the ui5.yaml specifying a desired ui5 version (1.89.0 in the example below):
+
+```yaml
+---
+specVersion: "2.2"
+type: application
+metadata:
+  name: example
+framework:
+  name: SAPUI5
+  version: 1.89.0
+  libraries:
+    - name: sap.ui.fl
+    - name: sap.suite.ui.generic.template
+```
+
 ## How to obtain support
 In case you need any support, please create a GitHub issue.
 
