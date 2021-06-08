@@ -6,6 +6,7 @@
     "scripts": {
         "test": "npm run build && npm run coverage",
         "dev": "mocha --no-timeouts -r ts-node/register 'test/**/*.spec.ts'",
+        "perf": "mocha --no-timeouts -r ts-node/register 'test/**/*.perf.ts'",
         "coverage": "nyc node_modules/.bin/mocha -r ts-node/register 'test/**/*.spec.ts'",
         "coverage-verbose": "nyc --reporter=html --reporter=text node_modules/.bin/mocha -r ts-node/register 'test/**/*.spec.ts'",
         "preversion": "npm test",
