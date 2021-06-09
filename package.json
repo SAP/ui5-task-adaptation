@@ -58,6 +58,7 @@
         "@types/rimraf": "^3.0.0",
         "@types/sinon": "^10.0.0",
         "chai": "^4.3.4",
+        "chalk": "^4.1.1",
         "mocha": "^8.4.0",
         "mock-require": "^3.0.3",
         "nyc": "^15.1.0",
