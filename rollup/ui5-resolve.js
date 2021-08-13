@@ -4,15 +4,11 @@ const fs = require("fs");
 const stream = require("stream");
 const { promisify } = require("util");
 const pipe = promisify(stream.pipeline);
-const yaml = require("js-yaml");
-const semver = require("semver");
 const crypto = require("crypto");
 
 const convertAMDtoES6 = require("@buxlabs/amd-to-es6");
 
 const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-adaptation");
-//@ts-ignore
-const { normalizer } = require("@ui5/project");
 const { resourceFactory } = require("@ui5/fs");
 
 
@@ -20,45 +16,13 @@ module.exports = (options) => {
 
     const skipTransformation = (id) => !options.skipTransformation.includes(id);
 
-    async function getProject(projectPaths) {
-        for (const { cwd, useLatestVersion } of projectPaths) {
-            try {
-                let options = { cwd };
-                if (useLatestVersion) {
-                    options.frameworkOptions = {
-                        versionOverride: "latest"
-                    }
-                }
-                const project = await normalizer.generateProjectTree(options);
-                validateProjectSettings(cwd);
-                return project;
-            } catch (error) {
-                log.info(`${error.message}`);
-            }
-        }
-    }
-
-    function validateProjectSettings(projectPath) {
-        const FRAMEWORK_TYPES = ["OpenUI5", "SAPUI5"];
-        const content = fs.readFileSync(path.join(projectPath, "ui5.yaml"), { encoding: "utf-8" });
-        const framework = yaml.load(content)["framework"];
-        if (!FRAMEWORK_TYPES.includes(framework.name)) {
-            throw new Error(`UI5 framework name is incorrect, possible values: ${FRAMEWORK_TYPES.join(" or ")}`);
-        }
-        if (!semver.valid(framework.version)) {
-            throw new Error(`UI5 framework version should correspond semantic version standard, e.g: 1.85.2`);
-        }
-    }
-
-
     return {
 
         name: "ui5-resolve",
 
         buildStart: async (buildOptions) => {
 
-            const project = await getProject(options.projectPaths);
-            this.dependencies = resourceFactory.createCollectionsForTree(project, {}).dependencies;
+            this.dependencies = resourceFactory.createCollectionsForTree(options.project, {}).dependencies;
 
             const resources = await Promise.all(options.assets.map(asset => this.dependencies.byGlob(asset)));
             const writePromises = [].concat(...resources).map(resource => {
@@ -80,7 +44,7 @@ module.exports = (options) => {
          * Right before writing result to dist
          */
         renderChunk: async (code) => {
-            return "var window = {};" + code;
+            return `//${options.ui5version}\nvar window = {};\n${code}`;
         },
 
 
