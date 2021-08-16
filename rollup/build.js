@@ -5,9 +5,9 @@ const yaml = require("js-yaml");
 const semver = require("semver");
 const ui5 = require("./ui5-resolve");
 const builtins = require("builtin-modules");
-const { nodeResolve } = require("@rollup/plugin-node-resolve");
+const nodeResolve = require("@rollup/plugin-node-resolve").nodeResolve;
 //@ts-ignore
-const { normalizer } = require("@ui5/project");
+const normalizer = require("@ui5/project").normalizer;
 const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-adaptation");
 
 const OUTPUT_PATH = "./dist/bundle.js";
