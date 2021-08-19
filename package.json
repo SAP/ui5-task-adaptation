@@ -112,9 +112,5 @@
         "cache": true,
         "all": true
     },
-    "types": "dist/index.d.ts",
-    "engines": {
-        "node": ">=10.0.0",
-        "npm": ">=6.0.0"
-    }
+    "types": "dist/index.d.ts"
 }
