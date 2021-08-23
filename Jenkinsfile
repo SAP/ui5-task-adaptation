@@ -22,7 +22,7 @@ try {
     globalPipelineEnvironment.addError(this, e)
     throw e
 } finally {
-    sendBuildResultNotification(deployEnv, slackNotification)
+    sendBuildResultNotification(env.BRANCH_NAME, slackNotification)
 }
 
 def localBuildStage(progress) {
