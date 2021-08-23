@@ -48,9 +48,12 @@ function validateProjectSettings(projectPath) {
 }
 
 function getBundledUI5Version() {
-    const bundle = fs.readFileSync(path.join(process.cwd(), OUTPUT_PATH), { encoding: "utf-8" });
-    const version = bundle.substring(2, bundle.indexOf("\n"));
-    return semver.coerce(version);
+    const bundleFilePath = path.join(process.cwd(), OUTPUT_PATH);
+    if (fs.existsSync(bundleFilePath)) {
+        const bundle = fs.readFileSync(bundleFilePath, { encoding: "utf-8" });
+        const version = bundle.substring(2, bundle.indexOf("\n"));
+        return semver.coerce(version);
+    }
 }
 
 async function build() {
