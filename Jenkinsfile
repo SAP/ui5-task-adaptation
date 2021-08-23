@@ -27,8 +27,10 @@ try {
 }
 
 def localBuildStage(progress) {
-    dockerExecute(script: this, dockerWorkspace: '/home/node', dockerImage: 'docker.wdf.sap.corp:50000/chrome-docker') {
-        sh "npm install && npm run test"
+    durationMeasure(script: this, measurementName: 'Mocha tests') {
+    	dockerExecute(script: this, dockerWorkspace: '/home/node', dockerImage: 'docker.wdf.sap.corp:50000/chrome-docker') {
+            sh "npm install && npm run test"
+        }
     }
 }
 
