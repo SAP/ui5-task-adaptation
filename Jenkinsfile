@@ -59,7 +59,7 @@ def notifyBuildFailed(deployEnv, slackNotification) {
         def subject = "${currentBuild.result}: Build ${currentBuild.fullProjectName} ${currentBuild.displayName}"
         def body = "The current Jenkins job failed for jobname: ${env.JOB_NAME}, job url: ${env.BUILD_URL}. Please check the attached logs for error details."
         emailext (
-           to: committerEmail//'DL_5EC26BC8F86611027EAC0886@global.corp.sap',
+           to: committerEmail,//'DL_5EC26BC8F86611027EAC0886@global.corp.sap',
            subject: subject,
            body: body,
            attachLog: true
