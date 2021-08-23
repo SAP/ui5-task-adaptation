@@ -4,6 +4,8 @@
 import com.sap.icd.jenkins.Utils
 import com.sap.piper.internal.JenkinsUtils
 
+def slackNotification = false;
+
 try {
     if (env.BRANCH_NAME.startsWith('PR')) {
         localBuildStage(10)
