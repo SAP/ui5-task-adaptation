@@ -30,6 +30,7 @@ def localBuildStage(progress) {
     node {
         deleteDir()
         checkout scm
+        setupPipelineEnvironment script: this, productiveBranch: 'master', runNightly: true, nightlySchedule: 'H 1 * * *'
 
     	dockerExecute(script: this, dockerWorkspace: '/home/node', dockerImage: 'docker.wdf.sap.corp:50000/node') {
             sh "node -v"
