@@ -15,19 +15,19 @@ describe("when having bundle.js", () => {
     beforeEach(() => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
 
-    it("should rollup if there were no version specfied", async () => await runRollupBuilder(sandbox, "bundle-no-version.js", true, 1));
-    it("should rollup if the version specified is lower", async () => await runRollupBuilder(sandbox, "bundle-old-version.js", true, 1));
+    it("should rollup if there were no version specfied", async () => await runRollupBuilder(sandbox, "bundle-no-version.js", 1));
+    it("should rollup if the version specified is lower", async () => await runRollupBuilder(sandbox, "bundle-old-version.js", 1));
     it("should rollup if the bundle doesn't exist", async () => {
         sandbox.stub(fs, "existsSync").returns(false);
         const ui5yaml = TestUtil.getResource("ui5.yaml");
         sandbox.stub(fs, "readFileSync").returns(ui5yaml);
         await runAndVerify(sandbox, 1);
     });
-    it("shouldn't rollup if the version specified is the same", async () => await runRollupBuilder(sandbox, "bundle-same-version.js", true, 0));
+    it("shouldn't rollup if the version specified is the same", async () => await runRollupBuilder(sandbox, "bundle-same-version.js", 0));
 });
 
-async function runRollupBuilder(sandbox: sinon.SinonSandbox, bundleFilename: string, bundleExists: boolean, calls: number) {
-    sandbox.stub(fs, "existsSync").returns(bundleExists);
+async function runRollupBuilder(sandbox: sinon.SinonSandbox, bundleFilename: string, calls: number) {
+    sandbox.stub(fs, "existsSync").returns(true);
     const bundleNoVersion = TestUtil.getResource(bundleFilename);
     const ui5yaml = TestUtil.getResource("ui5.yaml");
     sandbox.stub(fs, "readFileSync")
