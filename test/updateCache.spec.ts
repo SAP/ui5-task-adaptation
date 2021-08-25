@@ -9,7 +9,7 @@ import updateCache from "../src/updateCache";
 
 const { expect } = chai;
 
-describe("updateCache", () => {
+describe("UpdateCache", () => {
     let sandbox: SinonSandbox;
     const options: IProjectOptions = {
         projectNamespace: "ns",

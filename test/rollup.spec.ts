@@ -9,7 +9,7 @@ import * as fs from "fs";
 const { normalizer } = require("@ui5/project");
 const { expect } = chai;
 
-describe("when having bundle.js", () => {
+describe("Rollup", () => {
     let sandbox: SinonSandbox;
 
     beforeEach(() => sandbox = sinon.createSandbox());
