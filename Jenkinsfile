@@ -13,10 +13,6 @@ try {
         // not a branch we should work on at all, so no slack msg
         echo "Nothing to do in pipeline. Branch name: ${env.BRANCH_NAME}"
     }
-
-    // if we get here, all is fine
-    currentBuild.result = "SUCCESS"
-
 } catch (Throwable e) {
     globalPipelineEnvironment.addError(this, e)
     throw e
@@ -57,11 +53,12 @@ def notifyBuildFailed() {
         if (!dotGitExists) {
             checkout scm
         }
+        def committerEmail = sh(returnStdout: true, script: 'git log -n 1 --format="%ae"').trim()
         def message = "${currentBuild.result}: Job ${env.JOB_NAME} <${env.BUILD_URL}|#${env.BUILD_NUMBER}>"
         def subject = "${currentBuild.result}: Build ${currentBuild.fullProjectName} ${currentBuild.displayName}"
         def body = "The current Jenkins job failed for jobname: ${env.JOB_NAME}, job url: ${env.BUILD_URL}. Please check the attached logs for error details."
         emailext (
-           to: 'DL_5EC26BC8F86611027EAC0886@global.corp.sap',
+           to: committerEmail,
            subject: subject,
            body: body,
            attachLog: true
