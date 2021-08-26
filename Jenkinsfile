@@ -54,9 +54,8 @@ def notifyBuildFailed() {
             checkout scm
         }
         def committerEmail = sh(returnStdout: true, script: 'git log -n 1 --format="%ae"').trim()
-        def message = "${currentBuild.result}: Job ${env.JOB_NAME} <${env.BUILD_URL}|#${env.BUILD_NUMBER}>"
         def subject = "${currentBuild.result}: Build ${currentBuild.fullProjectName} ${currentBuild.displayName}"
-        def body = "The current Jenkins job failed for jobname: ${env.JOB_NAME}, job url: ${env.BUILD_URL}. Please check the attached logs for error details."
+        def body = "The current Jenkins job ${currentBuild.result} for jobname: ${env.JOB_NAME}, job url: ${env.BUILD_URL}. Please check the attached logs for error details."
         emailext (
            to: committerEmail,
            subject: subject,
