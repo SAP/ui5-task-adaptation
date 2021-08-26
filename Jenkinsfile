@@ -13,6 +13,8 @@ try {
         // not a branch we should work on at all, so no slack msg
         echo "Nothing to do in pipeline. Branch name: ${env.BRANCH_NAME}"
     }
+    // if we get here, all is fine
+    currentBuild.result = "SUCCESS"
 } catch (Throwable e) {
     globalPipelineEnvironment.addError(this, e)
     throw e
