@@ -7,7 +7,7 @@ import com.sap.piper.internal.JenkinsUtils
 try {
     if (env.BRANCH_NAME.startsWith('PR')) {
         localBuildStage(false)
-    } else if (env.BRANCH_NAME == 'master') {
+    } else if (env.BRANCH_NAME == 'main') {
         localBuildStage(true)
     } else {
         // not a branch we should work on at all, so no slack msg
