@@ -1,0 +1,2 @@
+var window = {};
+'use strict';

@@ -5,7 +5,7 @@ metadata:
   name: rollup
 framework:
   name: SAPUI5
-  version: "1.91.0"
+  version: "1.92.0"
   libraries:
     - name: sap.ui.fl
     - name: sap.suite.ui.generic.template
