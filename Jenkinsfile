@@ -27,7 +27,7 @@ def localBuildStage(isNightly) {
         deleteDir()
         checkout scm
         if (isNightly) {
-            setupPipelineEnvironment script: this, productiveBranch: 'master', runNightly: true, nightlySchedule: 'H 1 * * *'
+            setupPipelineEnvironment script: this, productiveBranch: 'main', runNightly: true, nightlySchedule: 'H 1 * * *'
         }
 
     	dockerExecute(script: this, dockerWorkspace: '/home/node', dockerImage: 'docker.wdf.sap.corp:50000/node') {
