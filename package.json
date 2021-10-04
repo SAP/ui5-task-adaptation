@@ -36,7 +36,7 @@
         "@sap/cf-tools": "^1.1.1",
         "@ui5/fs": "^2.0.6",
         "@ui5/logger": "^2.0.1",
-        "@ui5/project": "^2.3.1",
+        "@ui5/project": "^2.5.0",
         "adm-zip": "^0.5.5",
         "amdextract": "^3.0.0",
         "builtin-modules": "^3.2.0",
