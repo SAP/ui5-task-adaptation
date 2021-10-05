@@ -118,7 +118,7 @@ describe("CFUtil", () => {
             try {
                 await CFUtil.requestCfApi("/v3/service_instances?per_page=200");
                 assert.fail(true, false, "Exception not thrown");
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).to.equal(`Failed to send request with parameters '["curl","/v3/service_instances?per_page=200"]': Error from 1 page`);
             }
         });
@@ -146,7 +146,7 @@ describe("CFUtil", () => {
             try {
                 await CFUtil.requestCfApi("/v3/service_instances?per_page=200");
                 assert.fail(true, false, "Exception not thrown");
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).to.equal(`Failed to send request with parameters '["curl","/v3/service_instances?per_page=200&page=2"]': 1 attempt: Error from 2 page 1 call; 2 attempt: Error from 2 page 2 call; 3 attempt: Error from 2 page 3 call`);
             }
         });
@@ -204,7 +204,7 @@ describe("CFUtil", () => {
                     names: ["serviceInstance1"]
                 });
                 assert.fail(true, false, "Exception not thrown");
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).to.equal("Cannot get service keys for 'serviceInstance1' service in current space: spaceGuid1");
             }
         });
@@ -219,7 +219,7 @@ describe("CFUtil", () => {
                     names: ["serviceInstance1"]
                 });
                 assert.fail(true, false, "Exception not thrown");
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).to.equal("Cannot find 'serviceInstance1' service in current space: spaceGuid1");
             }
         });
@@ -316,7 +316,7 @@ const spyCFToolsCliCliExecute = async (sandbox: SinonSandbox, params: IGetServic
     stub.callsFake(() => TestUtil.getStdOut(TestUtil.getResource("service_instances_empty_bs.json")));
     try {
         await CFUtil.getServiceInstanceKeys(params);
-    } catch (error) {
+    } catch (error: any) {
         expect(error.message).to.equal(`Cannot find '${params.names?.join(", ")}' service in current space: ${params.spaceGuids?.join(", ")}`);
     }
     expect(stub.getCall(0).args[0]).to.eql(["curl", expected]);

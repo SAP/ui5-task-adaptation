@@ -72,7 +72,7 @@ describe("Html5RepoManager", () => {
         try {
             await Html5RepoManager.getBaseAppFiles(options.configuration)
             assert.fail(true, false, "Exception not thrown");
-        } catch (error) {
+        } catch (error: any) {
             expect(error.message).to.equal("Failed to parse zip content from HTML5 Repository: Invalid CEN header (bad signature)");
         }
     });

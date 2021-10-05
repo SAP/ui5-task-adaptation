@@ -1,0 +1,11 @@
+---
+specVersion: "2.2"
+type: application
+metadata:
+  name: rollup
+framework:
+  name: SAPUI5
+  version: "1.91.0"
+  libraries:
+    - name: sap.ui.fl
+    - name: sap.suite.ui.generic.template

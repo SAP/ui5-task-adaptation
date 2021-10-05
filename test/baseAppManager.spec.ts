@@ -108,7 +108,7 @@ const assertValidation = async (appVariantInfo: IAppVariantInfo, options: IProje
     try {
         await BaseAppManager.process(new Map([["/manifest.json", JSON.stringify(manifest)]]), appVariantInfo, options);
         assert.fail(true, false, "Exception not thrown");
-    } catch (error) {
+    } catch (error: any) {
         expect(error.message).to.equal(expectedError);
     }
 }

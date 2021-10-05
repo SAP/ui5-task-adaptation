@@ -93,7 +93,7 @@ export default class HTML5RepoManager {
         try {
             admZip = new AdmZip(zip);
             return admZip.getEntries();
-        } catch (error) {
+        } catch (error: any) {
             throw new Error("Failed to parse zip content from HTML5 Repository: " + error.message);
         }
     }

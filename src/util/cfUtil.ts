@@ -49,7 +49,7 @@ export default class CFUtil {
         }
         try {
             await CFLocal.cfCreateService(publicPlan.guid, params.serviceName, params.parameters, params.tags);
-        } catch (error) {
+        } catch (error: any) {
             throw new Error(`Cannot create a service instance '${params.serviceName}' in space '${params.spaceGuid}': ${error.message}`);
         }
     }
@@ -83,7 +83,7 @@ export default class CFUtil {
     private static async createServiceKey(serviceInstanceName: string, serviceKeyName: string) {
         try {
             return this.cfExecute(["create-service-key", serviceInstanceName, serviceKeyName]);
-        } catch (error) {
+        } catch (error: any) {
             throw new Error(`Couldn't create a service key for instance: ${serviceInstanceName}`);
         }
     }
@@ -143,7 +143,7 @@ export default class CFUtil {
                     return response.stdout;
                 }
                 errors.add(response.error || response.stderr);
-            } catch (error) {
+            } catch (error: any) {
                 errors.add(error.message);
             }
         }
@@ -161,7 +161,7 @@ export default class CFUtil {
     private static parseJson(jsonString: string) {
         try {
             return JSON.parse(jsonString);
-        } catch (error) {
+        } catch (error: any) {
             throw new Error(`Failed parse response from request CF API: ${error.message}`);
         }
     }

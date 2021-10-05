@@ -18,7 +18,7 @@ describe("CommonUtil", () => {
                 //@ts-ignore otherwise the compiler warns - that is expected
                 validateObject(configuration, ["someOther", "andOneMore"], "should be specified");
                 assert.fail(true, false, "Exception not thrown");
-            } catch (error) {
+            } catch (error: any) {
                 expect(error.message).to.equal("'someOther' should be specified");
             }
         });
