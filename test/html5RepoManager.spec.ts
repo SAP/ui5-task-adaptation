@@ -31,7 +31,7 @@ describe("Html5RepoManager", () => {
     beforeEach(async () => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
 
-    it("should update base app manifest", async () => {
+    it("should download archive from htlm5 repo", async () => {
         sandbox.stub(CFToolsCli.Cli, "execute")
             .withArgs(["curl", "/v3/service_instances?space_guids=spaceGuid&service_plan_names=app-runtime&names=html5-apps-repo-runtime"], TestUtil.ENV)
             .callsFake(() => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json")));
@@ -52,7 +52,7 @@ describe("Html5RepoManager", () => {
         expect([...baseAppFiles.keys()]).to.have.members(["i18n.properties", "manifest.json"]);
     });
 
-    it("should update base app manifest", async () => {
+    it("should throw an exception because of corrupt archive", async () => {
         sandbox.stub(CFToolsCli.Cli, "execute")
             .withArgs(["curl", "/v3/service_instances?space_guids=spaceGuid&service_plan_names=app-runtime&names=html5-apps-repo-runtime"], TestUtil.ENV)
             .callsFake(() => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json")));
