@@ -68,7 +68,7 @@ export default function (options: any) {
 
             const localFile = path.join(__dirname, id);
             if (fs.existsSync(localFile)) {
-                log.info(`Using local file "${localFile}"`);
+                log.info(`Using local file "${id}"`);
                 return fs.readFileSync(localFile, {
                     encoding: "utf8"
                 });
