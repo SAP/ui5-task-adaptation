@@ -12,7 +12,7 @@ const { normalizer } = require("@ui5/project");
 const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-adaptation");
 
 const projectPaths = [
-    path.resolve(process.cwd(), "..", "..", "..", ".."),
+    path.resolve(process.cwd(), "..", "..", ".."),
     path.resolve(__dirname, "rollup", "project")
 ];
 
@@ -21,10 +21,15 @@ export default class Builder {
     static async getProjectInfo(projectPaths: string[]) {
         for (const cwd of projectPaths) {
             try {
-                let options = { cwd };
+                let options = {
+                    cwd,
+                    frameworkOptions: {
+                        versionOverride: "latest"
+                    }
+                };
                 const project = await normalizer.generateProjectTree(options);
-                const ui5Version = this.validateProjectSettings(cwd);
-                return { project, ui5Version };
+                this.validateProjectSettings(cwd);
+                return project;
             } catch (error: any) {
                 log.info(`${error.message}`);
             }
@@ -42,7 +47,6 @@ export default class Builder {
         if (!semver.valid(framework.version)) {
             throw new Error(`UI5 framework version should correspond semantic version standard, e.g: 1.85.2`);
         }
-        return semver.coerce(framework.version);
     }
 
     static getBundledUI5Version(destination: string) {
@@ -56,12 +60,16 @@ export default class Builder {
 
     static async run(destination: string): Promise<void> {
         const bundledUI5Version = this.getBundledUI5Version(destination);
-        const projectInfo = await this.getProjectInfo(projectPaths);
-        if (!projectInfo) {
+        const project = await this.getProjectInfo(projectPaths);
+        if (!project) {
             throw new Error("ui5.yaml is not found or incorrect");
         }
-        if (bundledUI5Version == null || projectInfo.ui5Version == null || semver.lt(bundledUI5Version, projectInfo.ui5Version)) {
-            log.info(`[ROLLUP] New UI5 version ${projectInfo.ui5Version!.toString()} available to bundle`);
+        const isSapUiFl = (dependency: any) => dependency.id.endsWith("/sap.ui.fl");
+        const sapUiFlDependency = project.dependencies.find(isSapUiFl);
+        if (bundledUI5Version == null || sapUiFlDependency && semver.lt(bundledUI5Version, sapUiFlDependency.version)) {
+            if (sapUiFlDependency.version) {
+                log.info(`[ROLLUP] New UI5 version ${sapUiFlDependency.version.toString()} available to bundle`);
+            }
             const inputOptions = <rollup.RollupOptions>{
                 input: "bundleDefinition.js",
                 plugins: [
@@ -75,8 +83,8 @@ export default class Builder {
                             "sap/ui/thirdparty/URI"
                         ],
                         output: destination,
-                        project: projectInfo.project,
-                        ui5version: projectInfo.ui5Version
+                        project: project,
+                        ui5version: sapUiFlDependency.version
                     }),
                     nodeResolve({
                         preferBuiltins: true

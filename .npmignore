@@ -10,3 +10,4 @@ test
 tsconfig.json
 dist/resources
 **/*.map
+.travis.yml
