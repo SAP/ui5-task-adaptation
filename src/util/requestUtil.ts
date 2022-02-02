@@ -19,9 +19,9 @@ export default class RequestUtil {
         });
         return new Promise((resolve, reject) => {
             const data: Buffer[] = [];
-            response.body.on("error", err => reject(err));
-            response.body.on("data", block => data.push(block));
-            response.body.on("end", () => resolve(Buffer.concat(data)));
+            response.body!.on("error", err => reject(err));
+            response.body!.on("data", block => data.push(block));
+            response.body!.on("end", () => resolve(Buffer.concat(data)));
         })
     }
 }

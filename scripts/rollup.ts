@@ -12,7 +12,6 @@ const { normalizer } = require("@ui5/project");
 const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-adaptation");
 
 const projectPaths = [
-    path.resolve(process.cwd(), "..", "..", ".."),
     path.resolve(__dirname, "rollup", "project")
 ];
 
@@ -25,7 +24,8 @@ export default class Builder {
                     cwd,
                     frameworkOptions: {
                         versionOverride: "latest"
-                    }
+                    },
+                    allowSapInternal: true
                 };
                 const project = await normalizer.generateProjectTree(options);
                 this.validateProjectSettings(cwd);
@@ -80,7 +80,7 @@ export default class Builder {
                         ],
                         skipTransformation: [
                             "bundleDefinition.js",
-                            "sap/ui/thirdparty/URI"
+                            "sap/ui/thirdparty/URI",
                         ],
                         output: destination,
                         project: project,
