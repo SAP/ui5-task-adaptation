@@ -24,8 +24,7 @@ export default class Builder {
                     cwd,
                     frameworkOptions: {
                         versionOverride: "latest"
-                    },
-                    allowSapInternal: true
+                    }
                 };
                 const project = await normalizer.generateProjectTree(options);
                 this.validateProjectSettings(cwd);
@@ -80,7 +79,7 @@ export default class Builder {
                         ],
                         skipTransformation: [
                             "bundleDefinition.js",
-                            "sap/ui/thirdparty/URI",
+                            "sap/ui/thirdparty/URI"
                         ],
                         output: destination,
                         project: project,

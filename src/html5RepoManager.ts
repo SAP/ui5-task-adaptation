@@ -1,4 +1,4 @@
-const AdmZip = require("adm-zip");
+import * as AdmZip from "adm-zip";
 
 import { IConfiguration, ICreateServiceInstanceParams, ICredentials, IGetServiceInstanceParams, IHTML5RepoInfo } from "./model/types";
 
@@ -68,7 +68,7 @@ export default class HTML5RepoManager {
     }
 
 
-    private static async requestMetadata(options: IConfiguration, html5RepoBaseUri: string, token: string): Promise<any[]> {
+    private static async requestMetadata(options: IConfiguration, html5RepoBaseUri: string, token: string): Promise<AdmZip.IZipEntry[]> {
         validateObject(options, ["appHostId", "appName", "appVersion"], "should be specified in ui5.yaml configuration");
         const { appHostId, appName, appVersion } = options;
         const uri = `${html5RepoBaseUri}/applications/metadata/`;
@@ -84,7 +84,7 @@ export default class HTML5RepoManager {
     }
 
 
-    private static async getBaseAppZipEntries(options: IConfiguration, html5RepoBaseUri: string, token: string): Promise<any[]> {
+    private static async getBaseAppZipEntries(options: IConfiguration, html5RepoBaseUri: string, token: string): Promise<AdmZip.IZipEntry[]> {
         validateObject(options, ["appHostId", "appName", "appVersion"], "should be specified in ui5.yaml configuration");
         const { appHostId, appName, appVersion } = options;
         const uri = `${html5RepoBaseUri}/applications/content/${appName}-${appVersion}/`;
@@ -99,7 +99,7 @@ export default class HTML5RepoManager {
     }
 
 
-    private static mapEntries(entries: any[]): Map<string, string> {
+    private static mapEntries(entries: AdmZip.IZipEntry[]): Map<string, string> {
         return new Map(entries.filter(entry => !entry.isDirectory).map(entry => [entry.entryName, entry.getData().toString("utf8")]));
     }
 }
