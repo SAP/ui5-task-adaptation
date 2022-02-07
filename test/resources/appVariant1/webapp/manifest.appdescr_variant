@@ -40,6 +40,21 @@
                     }
                 }
             }
+        },
+        {
+            "changeType": "appdescr_fe_changePageConfiguration",
+            "content": {
+                "page": "GLLineItemListReport",
+                "entityPropertyChange": {
+                    "propertyPath": "controlConfiguration/@com.sap.vocabularies.UI.v1.LineItem/tableSettings",
+                    "operation": "UPSERT",
+                    "propertyValue": {
+                        "type": "ResponsiveTable",
+                        "personalization": false,
+                        "enableMassEdit": true
+                    }
+                }
+            }
         }
     ]
 }

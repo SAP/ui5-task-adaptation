@@ -95,12 +95,10 @@ export default function (options: any) {
             code = replaceRequireAsync(code);
 
             code = code
-                .replace(/sap\.ui\.define/g, "define")
-                .replace(/\, \/\* bExport\= \*\/ true\)/g, ")")
-                .replace(/}, true\);$/g, "});")
-                .replace(/}, true\);(\n\/\/# sourceMappingURL=)*/g, "});\n//# sourceMappingURL=")
-                .replace(/}, false\);$/g, "});")
-                .replace(/}, false\);(\n\/\/# sourceMappingURL=)*/g, "});\n//# sourceMappingURL=");
+            .replace(/sap\.ui\.define/g, "define")
+            .replace(/\, \/\* bExport\= \*\/ true\)/g, ")")
+            .replace(/}, (true|false)\);$/g, "});")
+            .replace(/}, (true|false)\);(\n\/\/# sourceMappingURL=)*/g, "});\n//# sourceMappingURL=");
             return convertAMDtoES6(code);
         }
 
