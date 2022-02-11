@@ -528,6 +528,31 @@
                     "viewName": "NotFound",
                     "transition": "show",
                     "controlAggregation": "beginColumnPages"
+                },
+                "GLLineItemList": {
+                    "type": "Component",
+                    "id": "GLLineItemListReport",
+                    "name": "sap.fe.templates.ListReport",
+                    "controlAggregation": "beginColumnPages",
+                    "contextPattern": "",
+                    "options": {
+                        "settings": {
+                            "entitySet": "GLLineItem",
+                            "initialLoad": true,
+                            "variantManagement": "Control",
+                            "controlConfiguration": {
+                                "@com.sap.vocabularies.UI.v1.LineItem": {
+                                    "tableSettings": {
+                                        "type": "GridTable",
+                                        "condensedTableLayout": true,
+                                        "selectionMode": "Multi",
+                                        "selectAll": true,
+                                        "selectionLimit": 200
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         },

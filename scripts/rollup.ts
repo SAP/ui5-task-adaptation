@@ -12,7 +12,6 @@ const { normalizer } = require("@ui5/project");
 const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-adaptation");
 
 const projectPaths = [
-    path.resolve(process.cwd(), "..", "..", ".."),
     path.resolve(__dirname, "rollup", "project")
 ];
 
