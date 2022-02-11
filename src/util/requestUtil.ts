@@ -1,27 +1,22 @@
-import fetch from "node-fetch";
+import axios from "axios";
 
 export default class RequestUtil {
 
     static get(uri: string, options: any): Promise<any> {
-        return fetch(uri, options).then(res => res.json());
+        return axios.get(uri, options).then(response => response.data);
     }
 
     static async download(token: string, appHostId: string, uri: string): Promise<Buffer> {
         if (!token) {
             throw new Error("HTML5 token is undefined");
         }
-        const response = await fetch(uri, {
+        return axios.get(uri, {
+            responseType: "arraybuffer",
             headers: {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + token,
                 "x-app-host-id": appHostId
             }
-        });
-        return new Promise((resolve, reject) => {
-            const data: Buffer[] = [];
-            response.body.on("error", err => reject(err));
-            response.body.on("data", block => data.push(block));
-            response.body.on("end", () => resolve(Buffer.concat(data)));
-        })
+        }).then(response => response.data);
     }
 }
