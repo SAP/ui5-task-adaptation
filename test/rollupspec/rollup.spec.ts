@@ -7,6 +7,7 @@ import RollupBuilder from "../../scripts/rollup";
 import * as fs from "fs";
 import * as chaiAsPromised from "chai-as-promised";
 
+require("@ui5/logger").setLevel("error");
 const { normalizer } = require("@ui5/project");
 const { expect } = chai;
 chai.use(chaiAsPromised);
