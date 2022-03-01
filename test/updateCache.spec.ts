@@ -31,7 +31,9 @@ describe("UpdateCache", () => {
         const DOWNLOADED_METADATA = { changedOn: "2100.01.01" };
         sandbox.stub(HTML5RepoManager, "getMetadata").callsFake(() => Promise.resolve(DOWNLOADED_METADATA));
         sandbox.stub(ResourceUtil, "readTempMetadata").callsFake(() => DOWNLOADED_METADATA);
-        expect(await updateCache(options.configuration)).to.be.false;
+        const html5RepoManagerStub = sandbox.spy(HTML5RepoManager, "getBaseAppFiles");
+        await updateCache(options.configuration);
+        expect(html5RepoManagerStub.getCalls().length).to.equal(0);
     });
 
     it("shouldn't update cache when the same metadata", async () => {

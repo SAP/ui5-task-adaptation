@@ -30,7 +30,7 @@ describe("Index", () => {
 
     after(async () => await ResourceUtil.deleteTemp(OPTIONS.configuration));
 
-    it("should download and write base files", async () => {
+    it("should download and write base files because metadata is different", async () => {
         const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const html5RepoManagerStub = sandbox.stub(HTML5RepoManager, "getBaseAppFiles");
         sandbox.stub(HTML5RepoManager, "getMetadata").callsFake(() => Promise.resolve({ changedOn: "2100.01.01" }));
@@ -39,21 +39,17 @@ describe("Index", () => {
         expect(html5RepoManagerStub.getCalls().length).to.equal(1);
     });
 
-    it("should read base app files from temp", async () => {
-        const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
-        await ResourceUtil.writeTemp(OPTIONS.configuration, baseAppFiles)
+    it("should read base app files from temp because metadata is the same", async () => {
+        const DOWNLOADED_METADATA = { changedOn: "2100.01.01" };
+        const baseAppFiles = new Map([
+            ["manifest.json", TestUtil.getResource("manifest.json")],
+            [ResourceUtil.METADATA_FILENAME, JSON.stringify(DOWNLOADED_METADATA)]
+        ]);
+        await ResourceUtil.writeTemp(OPTIONS.configuration, baseAppFiles);
         const html5RepoManagerStub = sandbox.spy(HTML5RepoManager, "getBaseAppFiles");
+        sandbox.stub(HTML5RepoManager, "getMetadata").callsFake(() => Promise.resolve(DOWNLOADED_METADATA));
         await runUi5TaskAdaptation(OPTIONS);
         expect(html5RepoManagerStub.getCalls().length).to.equal(0);
-    });
-
-    it("shouldn't read base app files from temp with ignoreCache", async () => {
-        const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
-        const html5RepoManagerStub = sandbox.stub(HTML5RepoManager, "getBaseAppFiles");
-        sandbox.stub(HTML5RepoManager, "getMetadata").callsFake(() => Promise.resolve({ changedOn: "2100.01.01" }));
-        html5RepoManagerStub.callsFake(() => Promise.resolve(baseAppFiles));
-        await runUi5TaskAdaptation({ ...OPTIONS, configuration: { ...OPTIONS.configuration, ignoreCache: true } });
-        expect(html5RepoManagerStub.getCalls().length).to.equal(1);
     });
 
 });

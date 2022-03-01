@@ -6,7 +6,6 @@ export interface IConfiguration {
     spaceGuid?: string;
     orgGuid?: string;
     sapCloudService?: string;
-    ignoreCache?: boolean;
 }
 
 export interface IProjectOptions {
