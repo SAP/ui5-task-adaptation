@@ -1,5 +1,5 @@
 language: node_js
 node_js:
- - "node"
+ - 17
 before_install:
 - npm install -g ts-node typescript nyc mocha
