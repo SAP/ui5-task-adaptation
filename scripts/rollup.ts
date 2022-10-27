@@ -14,28 +14,30 @@ const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-ada
 const projectPaths = [
     path.resolve(__dirname, "rollup", "project")
 ];
+const LATEST_VERSION_PLACEHOLDER = "0.0.0";
 
 export default class Builder {
 
     static async getProjectInfo(projectPaths: string[]) {
         for (const cwd of projectPaths) {
             try {
-                let options = {
-                    cwd,
-                    frameworkOptions: {
+                const options = <any>{
+                    cwd
+                };
+                const version = this.validateProjectSettings(cwd);
+                if (version === LATEST_VERSION_PLACEHOLDER) {
+                    options.frameworkOptions = {
                         versionOverride: "latest"
                     }
-                };
-                const project = await normalizer.generateProjectTree(options);
-                this.validateProjectSettings(cwd);
-                return project;
+                }
+                return normalizer.generateProjectTree(options);
             } catch (error: any) {
                 log.info(`${error.message}`);
             }
         }
     }
 
-    static validateProjectSettings(projectPath: string) {
+    static validateProjectSettings(projectPath: string): string {
         const FRAMEWORK_TYPES = ["OpenUI5", "SAPUI5"];
         const content = fs.readFileSync(path.join(projectPath, "ui5.yaml"), { encoding: "utf-8" });
         const yamlJson = <any>yaml.load(content);
@@ -46,6 +48,7 @@ export default class Builder {
         if (!semver.valid(framework.version)) {
             throw new Error(`UI5 framework version should correspond semantic version standard, e.g: 1.85.2`);
         }
+        return framework.version;
     }
 
     static getBundledUI5Version(destination: string) {
@@ -65,9 +68,9 @@ export default class Builder {
         }
         const isSapUiFl = (dependency: any) => dependency.id.endsWith("/sap.ui.fl");
         const sapUiFlDependency = project.dependencies.find(isSapUiFl);
-        if (bundledUI5Version == null || sapUiFlDependency && semver.lt(bundledUI5Version, sapUiFlDependency.version)) {
+        if (bundledUI5Version == null || sapUiFlDependency && semver.neq(bundledUI5Version, sapUiFlDependency.version)) {
             if (sapUiFlDependency.version) {
-                log.info(`[ROLLUP] New UI5 version ${sapUiFlDependency.version.toString()} available to bundle`);
+                log.info(`Using UI5 version ${sapUiFlDependency.version.toString()} to bundle`);
             }
             const inputOptions = <rollup.RollupOptions>{
                 input: "bundleDefinition.js",
@@ -100,7 +103,7 @@ export default class Builder {
             await bundle.write(outputOptions);
             await bundle.close();
         } else {
-            log.info(`[ROLLUP] UI5 version ${bundledUI5Version!.toString()} is already bundled`);
+            log.info(`UI5 version ${bundledUI5Version!.toString()} is already bundled`);
         }
 
     }
