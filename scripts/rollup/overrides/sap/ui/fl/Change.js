@@ -32,8 +32,10 @@ sap.ui.define([
 	 * @public
 	 */
 	AppDescriptorChange.prototype.getChangeType = function () {
-		if (this._oDefinition && this._oDefinition.flexObjectMetadata) {
-			return this._oDefinition.flexObjectMetadata.changeType;
+		if (this._oDefinition) {
+			return this._oDefinition.flexObjectMetadata
+				? this._oDefinition.flexObjectMetadata.changeType
+				: this._oDefinition.changeType
 		}
 	};
 
@@ -43,7 +45,7 @@ sap.ui.define([
 	 *
 	 * @public
 	 */
-	 AppDescriptorChange.prototype.getLayer = function () {
+	AppDescriptorChange.prototype.getLayer = function () {
 		return this._oDefinition.layer;
 	};
 

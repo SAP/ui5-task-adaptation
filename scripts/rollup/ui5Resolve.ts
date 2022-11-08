@@ -97,8 +97,8 @@ export default function (options: any) {
             code = code
             .replace(/sap\.ui\.define/g, "define")
             .replace(/\, \/\* bExport\= \*\/ true\)/g, ")")
-            .replace(/}, (true|false)\);$/g, "});")
-            .replace(/}, (true|false)\);(\n\/\/# sourceMappingURL=)*/g, "});\n//# sourceMappingURL=");
+            .replace(/},.*(true|false)\);$/g, "});")
+            .replace(/},.*(true|false)\);(\n\/\/# sourceMappingURL=)*/g, "});\n//# sourceMappingURL=");
             return convertAMDtoES6(code);
         }
 

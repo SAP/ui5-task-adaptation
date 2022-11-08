@@ -6,7 +6,7 @@ import BuildStrategy from "./buildStrategy";
 import ResourceUtil from "./util/resourceUtil";
 import { replaceDots } from "./util/commonUtil";
 
-const { RegistrationBuild, ApplyUtil, Applier, AppDescriptorChange } = require("../dist/bundle");
+const { RegistrationBuild, ApplyUtil, Applier, Change } = require("../dist/bundle");
 const resourceFactory = require("@ui5/fs/lib/resourceFactory");
 const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManager");
 
@@ -117,7 +117,7 @@ export default class BaseAppManager {
         if (appVariantManifest.layer) {
             appVariantManifest.content?.forEach(item => item.layer = appVariantManifest.layer);
         }
-        const changesContent = appVariantManifest.content?.map((change: IChange) => new AppDescriptorChange(change));
+        const changesContent = appVariantManifest.content?.map((change: IChange) => new Change(change));
         if (changesContent) {
             await Applier.applyChanges(baseAppManifest, changesContent, strategy);
         }
