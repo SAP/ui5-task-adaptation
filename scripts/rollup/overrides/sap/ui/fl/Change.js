@@ -21,7 +21,7 @@ sap.ui.define([
 	 * @ui5-restricted
 	 * @experimental Since 1.25.0
 	 */
-	var AppDescriptorChange = function (oFile) {
+	var Change = function (oFile) {
 		this._oDefinition = oFile;
 	};
 
@@ -31,7 +31,7 @@ sap.ui.define([
 	 * @returns {String} Change type of the file, for example <code>LabelChange</code>
 	 * @public
 	 */
-	AppDescriptorChange.prototype.getChangeType = function () {
+	Change.prototype.getChangeType = function () {
 		if (this._oDefinition) {
 			return this._oDefinition.flexObjectMetadata
 				? this._oDefinition.flexObjectMetadata.changeType
@@ -45,7 +45,7 @@ sap.ui.define([
 	 *
 	 * @public
 	 */
-	AppDescriptorChange.prototype.getLayer = function () {
+	Change.prototype.getLayer = function () {
 		return this._oDefinition.layer;
 	};
 
@@ -55,7 +55,7 @@ sap.ui.define([
 	 *
 	 * @public
 	 */
-	AppDescriptorChange.prototype.getContent = function () {
+	Change.prototype.getContent = function () {
 		return this._oDefinition.content;
 	};
 
@@ -66,9 +66,9 @@ sap.ui.define([
 	 *
 	 * @function
 	 */
-	AppDescriptorChange.prototype.getTexts = function () {
+	Change.prototype.getTexts = function () {
 		return this._oDefinition.texts;
 	};
 
-	return AppDescriptorChange;
+	return Change;
 }, true);
