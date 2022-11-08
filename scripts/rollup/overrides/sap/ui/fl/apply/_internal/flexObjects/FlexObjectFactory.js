@@ -1,1 +1,11 @@
-export default class FlexObjectFactory {}
+sap.ui.define([
+
+], function (
+) {
+
+    var FlexObjectFactory = function () {
+    };
+
+    return FlexObjectFactory;
+
+}, true);

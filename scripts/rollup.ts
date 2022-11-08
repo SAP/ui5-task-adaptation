@@ -82,8 +82,7 @@ export default class Builder {
                         ],
                         skipTransformation: [
                             "bundleDefinition.js",
-                            "sap/ui/thirdparty/URI",
-                            "sap/ui/fl/apply/_internal/flexObjects/FlexObjectFactory"
+                            "sap/ui/thirdparty/URI"
                         ],
                         output: destination,
                         project: project,

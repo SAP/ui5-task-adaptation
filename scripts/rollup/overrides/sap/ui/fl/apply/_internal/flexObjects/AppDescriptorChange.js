@@ -32,8 +32,8 @@ sap.ui.define([
 	 * @public
 	 */
 	AppDescriptorChange.prototype.getChangeType = function () {
-		if (this._oDefinition) {
-			return this._oDefinition.changeType;
+		if (this._oDefinition && this._oDefinition.flexObjectMetadata) {
+			return this._oDefinition.flexObjectMetadata.changeType;
 		}
 	};
 
