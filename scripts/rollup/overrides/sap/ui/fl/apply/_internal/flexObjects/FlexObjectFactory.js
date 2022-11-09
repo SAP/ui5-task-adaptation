@@ -5,12 +5,16 @@
  */
 
 sap.ui.define([
-
+	"sap/ui/fl/Change"
 ], function (
-
+	Change
 ) {
 	var FlexObjectFactory = function () {
 	};
+
+	FlexObjectFactory.createFromFileContent = function (oFileContent) {
+		return new Change(oFileContent);
+	}
 
 	return FlexObjectFactory;
 }, true);
