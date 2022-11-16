@@ -33,7 +33,9 @@ sap.ui.define([
 	 */
 	Change.prototype.getChangeType = function () {
 		if (this._oDefinition) {
-			return this._oDefinition.changeType;
+			return this._oDefinition.flexObjectMetadata
+				? this._oDefinition.flexObjectMetadata.changeType
+				: this._oDefinition.changeType
 		}
 	};
 
@@ -43,7 +45,7 @@ sap.ui.define([
 	 *
 	 * @public
 	 */
-	 Change.prototype.getLayer = function () {
+	Change.prototype.getLayer = function () {
 		return this._oDefinition.layer;
 	};
 

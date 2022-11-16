@@ -97,8 +97,8 @@ export default function (options: any) {
             code = code
             .replace(/sap\.ui\.define/g, "define")
             .replace(/\, \/\* bExport\= \*\/ true\)/g, ")")
-            .replace(/}, (true|false)\);$/g, "});")
-            .replace(/}, (true|false)\);(\n\/\/# sourceMappingURL=)*/g, "});\n//# sourceMappingURL=");
+            .replace(/},.*(true|false)\);$/g, "});")
+            .replace(/},.*(true|false)\);(\n\/\/# sourceMappingURL=)*/g, "});\n//# sourceMappingURL=");
             return convertAMDtoES6(code);
         }
 
@@ -108,7 +108,7 @@ export default function (options: any) {
 
 function replaceRequireAsync(code: string) {
     const requireAsyncPattern = /requireAsync((.bind\(this, ")|(\("))+(?<url>[\/\w]*)"\)/mg;
-    let match, defineUrls = [], defineVars = [], matches = new Map();
+    let match, defineUrls = new Array<string>(), defineVars = new Array<string>(), matches = new Map();
     while (match = requireAsyncPattern.exec(code)) {
         if (match.groups?.url) {
             const varaibleName = match.groups.url.split("/").pop() + crypto.randomBytes(16).toString("hex");
