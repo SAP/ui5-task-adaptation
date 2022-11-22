@@ -1,6 +1,6 @@
 {
     "name": "@ui5/task-adaptation",
-    "version": "1.0.12",
+    "version": "1.0.13",
     "description": "Custom task for ui5-builder which allows building UI5 Flexibility Adaptation Projects for SAP BTP, Cloud Foundry environment",
     "main": "index.js",
     "scripts": {
