@@ -3,15 +3,7 @@
     "compilerOptions": {
         "rootDir": "./src",
         "module": "commonjs",
-        "lib": [
-            "es7"
-        ],
-        "plugins": [
-            {
-                "name": "typescript-tslint-plugin"
-            }
-        ],
-        "target": "es6",
+        "target": "es2021",
         "moduleResolution": "node",
         "outDir": "./dist",
         "declaration": true,

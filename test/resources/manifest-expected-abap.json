@@ -19,6 +19,14 @@
         "resources": "resources.json",
         "ach": "MAN-IFE-ST-SAM-PLE",
         "dataSources": {
+            "annotationName1": {
+                "type": "ODataAnnotation",
+                "uri": "annotations/annotation_annotationName1.xml"
+            },
+            "annotationName2": {
+                "type": "ODataAnnotation",
+                "uri": "annotations/annotation_annotationName2.xml"
+            },
             "manifestConfigService": {
                 "uri": "odata/v2/ManifestConfigurationService",
                 "type": "OData",
@@ -70,13 +78,27 @@
                         "parameters": {},
                         "additionalParameters": "allowed"
                     }
+                },
+                "customer.contactCreate": {
+                    "semanticObject": "Contact",
+                    "signature": {
+                        "parameters": {
+                            "id": {
+                                "required": false
+                            }
+                        }
+                    },
+                    "action": "create",
+                    "icon": "sap-icon://add-contact",
+                    "title": "Title",
+                    "subTitle": "SubTitle"
                 }
             }
         }
     },
     "sap.cloud": {
         "public": true,
-        "service": "sapCloudService"
+        "service": "com.sap.manifest.default.service"
     },
     "sap.ui": {
         "technology": "UI5",
@@ -128,9 +150,15 @@
             "cozy": true
         },
         "models": {
-            "i18n": {
+            "@i18n": {
                 "type": "sap.ui.model.resource.ResourceModel",
                 "settings": {
+                    "enhanceWith": [
+                        {
+                            "bundleUrl": "i18n/annotations/customercomsapapplicationvariantid/i18n.properties",
+                            "bundleUrlRelativeTo": "component"
+                        }
+                    ],
                     "bundleName": "customer.com.sap.application.variant.id.i18n.i18n"
                 }
             },
@@ -566,18 +594,27 @@
         "appVariantIdHierarchy": [
             {
                 "appVariantId": "com.sap.base.app.id",
+                "layer": "VENDOR",
                 "version": "1.0.0"
             },
             {
                 "appVariantId": "some.previous.app.id",
                 "version": "0.0.9"
             }
-        ]
+        ],
+        "isCloudDevAdaptation": true
     },
     "sap.platform.cf": {
         "oAuthScopes": [
-            "$XSAPPNAME('com.sap.manifest.default.service').view_manifest_config",
-            "$XSAPPNAME('com.sap.manifest.default.service').view_manifest_personal_data"
+            "$XSAPPNAME.view_manifest_config",
+            "$XSAPPNAME.view_manifest_personal_data"
         ]
+    },
+    "sap.fiori": {
+        "registrationIds": [
+            "F1234"
+        ],
+        "archeType": "transactional",
+        "abstract": true
     }
 }

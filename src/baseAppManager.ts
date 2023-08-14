@@ -1,8 +1,9 @@
 import * as path from "path";
 
-import { IAppVariantInfo, IAppVariantManifest, IBaseAppInfo, IChange, IConfiguration, IProjectOptions } from "./model/types";
+import { IAppVariantInfo, IAppVariantManifest, IBaseAppInfo, IChange, IProjectOptions } from "./model/types";
 
 import BuildStrategy from "./buildStrategy";
+import IProcessor from "./processors/processor";
 import ResourceUtil from "./util/resourceUtil";
 import { replaceDots } from "./util/commonUtil";
 
@@ -12,14 +13,15 @@ const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManag
 
 export default class BaseAppManager {
 
-    static async process(baseAppFiles: Map<string, string>, appVariantInfo: IAppVariantInfo, options: IProjectOptions): Promise<any[]> {
+    static async process(baseAppFiles: Map<string, string>, appVariantInfo: IAppVariantInfo, options: IProjectOptions, processor: IProcessor): Promise<any[]> {
         const baseAppManifest = this.getBaseAppManifest(baseAppFiles);
         const { id, version } = this.getManifestInfo(baseAppManifest.content);
 
         const renamedBaseAppFiles = this.renameBaseApp(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
         const { filepath, content } = this.getBaseAppManifest(renamedBaseAppFiles);
-        this.updateCloudPlatform(content, options.configuration);
-        this.fillAppVariantIdHierarchy(id, version, content);
+        await processor.updateLandscapeSpecificContent(content, renamedBaseAppFiles);
+        this.fillAppVariantIdHierarchy(processor, id, version, content);
+        this.updateAdaptationProperties(content);
         const i18nBundleName = replaceDots(appVariantInfo.id);
         await this.applyDescriptorChanges(content, appVariantInfo.manifest, i18nBundleName);
         renamedBaseAppFiles.set(filepath, JSON.stringify(content));
@@ -28,9 +30,20 @@ export default class BaseAppManager {
     }
 
 
-    private static getManifestInfo(manifest: any) {
-        const id = manifest["sap.app"]?.id;
-        const version = manifest["sap.app"]?.applicationVersion?.version;
+    private static updateAdaptationProperties(content: any) {
+        if (content["sap.fiori"]?.cloudDevAdaptationStatus) {
+            delete content["sap.fiori"].cloudDevAdaptationStatus;
+        }
+        if (content["sap.ui5"] == null) {
+            content["sap.ui5"] = {};
+        }
+        content["sap.ui5"].isCloudDevAdaptation = true;
+    }
+
+
+    static getManifestInfo(manifest: any) {
+        const id = manifest["sap.app"]?.id as string;
+        const version = manifest["sap.app"]?.applicationVersion?.version as string;
         return { id, version };
     }
 
@@ -69,25 +82,7 @@ export default class BaseAppManager {
     }
 
 
-    private static updateCloudPlatform(baseAppManifest: any, configuration: IConfiguration) {
-        const sapCloudService = baseAppManifest["sap.cloud"]?.service;
-        const sapPlatformCf = baseAppManifest["sap.platform.cf"];
-        if (sapPlatformCf && sapCloudService) {
-            sapPlatformCf.oAuthScopes = sapPlatformCf.oAuthScopes.map((scope: string) =>
-                scope.replace(`$XSAPPNAME.`, `$XSAPPNAME('${sapCloudService}').`));
-        }
-        if (configuration.sapCloudService) {
-            if (baseAppManifest["sap.cloud"] == null) {
-                baseAppManifest["sap.cloud"] = {};
-            }
-            baseAppManifest["sap.cloud"].service = configuration.sapCloudService;
-        } else {
-            delete baseAppManifest["sap.cloud"];
-        }
-    }
-
-
-    private static fillAppVariantIdHierarchy(id: string, version: string, baseAppManifest: any) {
+    private static fillAppVariantIdHierarchy(processor: IProcessor, id: string, version: string, baseAppManifest: any) {
         log.verbose("Filling up app variant hierarchy in manifest.json");
         this.validateProperty(id, "sap.app/id");
         this.validateProperty(version, "sap.app/applicationVersion/version");
@@ -97,14 +92,12 @@ export default class BaseAppManager {
         if (baseAppManifest["sap.ui5"].appVariantIdHierarchy == null) {
             baseAppManifest["sap.ui5"].appVariantIdHierarchy = [];
         }
-        baseAppManifest["sap.ui5"].appVariantIdHierarchy.unshift({
-            appVariantId: id,
-            version
-        });
+        const appVariantIdHierarchyItem = processor.createAppVariantHierarchyItem(id, version);
+        baseAppManifest["sap.ui5"].appVariantIdHierarchy.unshift(appVariantIdHierarchyItem);
     }
 
 
-    private static validateProperty(value: string, property: string) {
+    static validateProperty(value: string, property: string) {
         if (!value) {
             throw new Error(`Original application manifest should have ${property}`);
         }
@@ -128,8 +121,7 @@ export default class BaseAppManager {
         const IGNORE_FILES = [
             "/manifest-bundle.zip",
             "/Component-preload.js",
-            "/sap-ui-cachebuster-info.json",
-            `/${ResourceUtil.METADATA_FILENAME}`
+            "/sap-ui-cachebuster-info.json"
         ];
         const resources = [];
         for (let filename of baseAppFiles.keys()) {

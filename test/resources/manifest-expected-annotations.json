@@ -1,7 +1,7 @@
 {
     "_version": "1.12.0",
     "sap.app": {
-        "id": "com.sap.base.app.id",
+        "id": "customer.com.sap.application.variant.id",
         "type": "application",
         "i18n": "i18n/i18n.properties",
         "applicationVersion": {
@@ -14,11 +14,11 @@
         "dataSources": {
             "annotationName1": {
                 "type": "ODataAnnotation",
-                "uri": "/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/"
+                "uri": "annotations/annotation_annotationName1.xml"
             },
             "annotationName2": {
                 "type": "ODataAnnotation",
-                "uri": "/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml"
+                "uri": "annotations/annotation_annotationName2.xml"
             },
             "manifestConfigService": {
                 "uri": "odata/v2/ManifestConfigurationService",
@@ -73,11 +73,11 @@
                     }
                 },
                 "SomeInboundId1": {
-                    "semanticObject": "SemanticObject1",
                     "action": "configure",
-                    "title": "Title1",
+                    "icon": "Icon1",
+                    "semanticObject": "SemanticObject1",
                     "subTitle": "SubTitle1",
-                    "icon": "Icon1"
+                    "title": "Title1"
                 }
             }
         }
@@ -85,6 +85,14 @@
     "sap.cloud": {
         "public": true,
         "service": "com.sap.manifest.default.service"
+    },
+    "sap.fiori": {
+        "abstract": true,
+        "archeType": "transactional",
+        "cloudDevAdaptationStatus": "released",
+        "registrationIds": [
+            "F1234"
+        ]
     },
     "sap.ui": {
         "technology": "UI5",
@@ -114,7 +122,7 @@
         },
         "rootView": {
             "id": "rootView",
-            "viewName": "com.sap.base.app.id.view.App",
+            "viewName": "customer.com.sap.application.variant.id.view.App",
             "type": "XML"
         },
         "dependencies": {
@@ -135,10 +143,16 @@
         },
         "models": {
             "@i18n": {
-                "type": "sap.ui.model.resource.ResourceModel",
                 "settings": {
-                    "bundleName": "com.sap.base.app.id.i18n.i18n"
-                }
+                    "bundleName": "customer.com.sap.application.variant.id.i18n.i18n",
+                    "enhanceWith": [
+                        {
+                            "bundleUrl": "i18n/annotations/customercomsapapplicationvariantid/i18n.properties",
+                            "bundleUrlRelativeTo": "component"
+                        }
+                    ]
+                },
+                "type": "sap.ui.model.resource.ResourceModel"
             },
             "fcl": {
                 "type": "sap.ui.model.json.JSONModel"
@@ -252,7 +266,7 @@
                 "routerClass": "sap.f.routing.Router",
                 "viewType": "XML",
                 "async": true,
-                "viewPath": "com.sap.base.app.id.view",
+                "viewPath": "customer.com.sap.application.variant.id.view",
                 "controlId": "fcl",
                 "bypassed": {
                     "target": "notFound"
@@ -583,13 +597,5 @@
             "$XSAPPNAME.view_manifest_config",
             "$XSAPPNAME.view_manifest_personal_data"
         ]
-    },
-    "sap.fiori": {
-        "registrationIds": [
-            "F1234"
-        ],
-        "archeType": "transactional",
-        "abstract": true,
-        "cloudDevAdaptationStatus": "released"
     }
 }

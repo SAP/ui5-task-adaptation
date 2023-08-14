@@ -1,13 +1,20 @@
 {
     "_version": "1.12.0",
     "sap.app": {
-        "id": "com.sap.base.app.id",
+        "id": "customer.com.sap.application.variant.id",
         "type": "application",
-        "i18n": "i18n/i18n.properties",
+        "i18n": {
+            "bundleUrl": "i18n/i18n.properties",
+            "enhanceWith": [
+                {
+                    "bundleName": "customer.com.sap.application.variant.id.customer_com_sap_application_variant_id.i18n.i18n"
+                }
+            ]
+        },
         "applicationVersion": {
             "version": "1.0.0"
         },
-        "title": "{{appTitle}}",
+        "title": "{{customer.com.sap.application.variant.id_sap.app.title}}",
         "description": "{{appDescription}}",
         "resources": "resources.json",
         "ach": "MAN-IFE-ST-SAM-PLE",
@@ -72,19 +79,26 @@
                         "additionalParameters": "allowed"
                     }
                 },
-                "SomeInboundId1": {
-                    "semanticObject": "SemanticObject1",
-                    "action": "configure",
-                    "title": "Title1",
-                    "subTitle": "SubTitle1",
-                    "icon": "Icon1"
+                "customer.contactCreate": {
+                    "semanticObject": "Contact",
+                    "signature": {
+                        "parameters": {
+                            "id": {
+                                "required": false
+                            }
+                        }
+                    },
+                    "action": "create",
+                    "icon": "sap-icon://add-contact",
+                    "title": "Title",
+                    "subTitle": "SubTitle"
                 }
             }
         }
     },
     "sap.cloud": {
         "public": true,
-        "service": "com.sap.manifest.default.service"
+        "service": "sapCloudService"
     },
     "sap.ui": {
         "technology": "UI5",
@@ -114,14 +128,16 @@
         },
         "rootView": {
             "id": "rootView",
-            "viewName": "com.sap.base.app.id.view.App",
+            "viewName": "customer.com.sap.application.variant.id.view.App",
             "type": "XML"
         },
         "dependencies": {
             "minUI5Version": "1.65.6",
             "libs": {
                 "sap.ui.core": {},
-                "sap.m": {},
+                "sap.m": {
+                    "minVersion": "1.73"
+                },
                 "sap.ui.layout": {},
                 "sap.ushell": {},
                 "sap.collaboration": {},
@@ -137,7 +153,7 @@
             "@i18n": {
                 "type": "sap.ui.model.resource.ResourceModel",
                 "settings": {
-                    "bundleName": "com.sap.base.app.id.i18n.i18n"
+                    "bundleName": "customer.com.sap.application.variant.id.i18n.i18n"
                 }
             },
             "fcl": {
@@ -252,7 +268,7 @@
                 "routerClass": "sap.f.routing.Router",
                 "viewType": "XML",
                 "async": true,
-                "viewPath": "com.sap.base.app.id.view",
+                "viewPath": "customer.com.sap.application.variant.id.view",
                 "controlId": "fcl",
                 "bypassed": {
                     "target": "notFound"
@@ -558,11 +574,9 @@
                             "controlConfiguration": {
                                 "@com.sap.vocabularies.UI.v1.LineItem": {
                                     "tableSettings": {
-                                        "type": "GridTable",
-                                        "condensedTableLayout": true,
-                                        "selectionMode": "Multi",
-                                        "selectAll": true,
-                                        "selectionLimit": 200
+                                        "type": "ResponsiveTable",
+                                        "personalization": false,
+                                        "enableMassEdit": true
                                     }
                                 }
                             }
@@ -573,15 +587,20 @@
         },
         "appVariantIdHierarchy": [
             {
+                "appVariantId": "com.sap.base.app.id",
+                "version": "1.0.0"
+            },
+            {
                 "appVariantId": "some.previous.app.id",
                 "version": "0.0.9"
             }
-        ]
+        ],
+        "isCloudDevAdaptation": true
     },
     "sap.platform.cf": {
         "oAuthScopes": [
-            "$XSAPPNAME.view_manifest_config",
-            "$XSAPPNAME.view_manifest_personal_data"
+            "$XSAPPNAME('com.sap.manifest.default.service').view_manifest_config",
+            "$XSAPPNAME('com.sap.manifest.default.service').view_manifest_personal_data"
         ]
     },
     "sap.fiori": {
@@ -589,7 +608,6 @@
             "F1234"
         ],
         "archeType": "transactional",
-        "abstract": true,
-        "cloudDevAdaptationStatus": "released"
+        "abstract": true
     }
 }

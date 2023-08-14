@@ -6,6 +6,10 @@ export interface IConfiguration {
     spaceGuid?: string;
     orgGuid?: string;
     sapCloudService?: string;
+    destination?: string;
+    credentials?: IAuth;
+    type?: "cf" | "abap";
+    languages?: string[]
 }
 
 export interface IProjectOptions {
@@ -96,6 +100,16 @@ export interface IBaseAppInfo {
 export interface IHTML5RepoInfo {
     token: string;
     baseUri: string;
+}
+
+export interface IAuth {
+    username: string;
+    password: string;
+}
+
+export interface IMetadata {
+    changedOn: string;
+    id?: string;
 }
 
 export type KeyedMap<T, K extends keyof T, V> = { [k in K]: V };

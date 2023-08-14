@@ -6,7 +6,7 @@ export function replaceDots(value: string) {
 export function validateObject<T extends Object>(options: T, properties: Array<keyof T>, message: string) {
     for (const property of properties) {
         if (!options[property]) {
-            throw new Error(`'${property}' ${message}`);
+            throw new Error(`'${String(property)}' ${message}`);
         }
     }
 }

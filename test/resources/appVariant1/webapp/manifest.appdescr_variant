@@ -55,6 +55,37 @@
                     }
                 }
             }
+        },
+        {
+            "changeType": "appdescr_app_removeAllInboundsExceptOne",
+            "content": {
+                "inboundId": "manifest-configure"
+            }
+        },
+        {
+            "changeType": "appdescr_app_addNewInbound",
+            "content": {
+                "inbound": {
+                    "customer.contactCreate": {
+                        "semanticObject": "Contact",
+                        "action": "create",
+                        "icon": "sap-icon://add-contact",
+                        "title": "Title",
+                        "subTitle": "SubTitle"
+                    }
+                }
+            }
+        },
+        {
+            "changeType": "appdescr_app_changeInbound",
+            "content": {
+                "inboundId": "customer.contactCreate",
+                "entityPropertyChange": {
+                    "propertyPath": "signature/parameters/id/required",
+                    "operation": "UPSERT",
+                    "propertyValue": false
+                }
+            }
         }
     ]
 }

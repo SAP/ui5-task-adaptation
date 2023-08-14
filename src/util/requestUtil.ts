@@ -1,22 +1,55 @@
-import axios from "axios";
+import axios, { AxiosError, AxiosResponse } from "axios";
+
+import { IAuth } from "../model/types";
+import NoAuthorizationProvidedError from "../model/noAuthorizationProvidedError";
 
 export default class RequestUtil {
 
-    static get(uri: string, options: any): Promise<any> {
-        return axios.get(uri, options).then(response => response.data);
+    static async head(url: string, auth?: IAuth): Promise<any> {
+        return this.request(url, axios.head, auth);
     }
 
-    static async download(token: string, appHostId: string, uri: string): Promise<Buffer> {
-        if (!token) {
-            throw new Error("HTML5 token is undefined");
+
+    static async get(url: string, options?: any, auth?: IAuth): Promise<any> {
+        return this.request(url, axios.get, auth, options);
+    }
+
+
+    static async request(url: string, method: Function, auth?: IAuth, options?: any): Promise<any> {
+        try {
+            return await method(url, { auth, ...options })
+                .then((response: AxiosResponse) => response.data);
+        } catch (error: any) {
+            this.handleError(error, url);
         }
-        return axios.get(uri, {
-            responseType: "arraybuffer",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + token,
-                "x-app-host-id": appHostId
+    }
+
+
+    private static handleError(error: AxiosError, uri: string) {
+        if (error.response) {
+            // HTTP Status Code > 2xx
+            if (error.response.status === 401) {
+                throw new NoAuthorizationProvidedError(uri);
+            } else {
+                throw new Error(`Unexpected response received from '${uri}': ${error.response.status} ${error.response.data ?? ""}`);
             }
-        }).then(response => response.data);
+        } else if (error.request) {
+            throw new Error(`No response was received from '${uri}': ${error.code}`);
+        } else {
+            throw new Error(`Error sending request to '${uri}': ${error.code}`);
+        }
+    }
+
+
+    static async retryWithAuth<T>(requestWithoutAuth: Function, requestWithAuth: Function): Promise<T> {
+        try {
+            return await requestWithoutAuth();
+        } catch (error) {
+            if (error instanceof NoAuthorizationProvidedError) {
+                return await requestWithAuth();
+            } else {
+                throw error;
+            }
+        }
     }
 }

@@ -79,13 +79,13 @@ describe("UI5Resolve", () => {
         it("should resolve relative path", async () => {
             expect(ui5Resolve({ ui5version: "1.0.0" }).resolveId("path1/a/b/c", "path2/a/b/c")).to.eql("path1/a/b/c");
         });
-        it("should return override path", async () => {
+        it("should return override path with leading slash", async () => {
             expect(ui5Resolve({ ui5version: "1.0.0" }).resolveId("./path1/a/b/c", "path2/a/b/c")).to.eql("path2/a/b/path1/a/b/c");
         });
     });
 
     describe("when load", () => {
-        it("should resolve relative path", async () => {
+        it("should resolve bundle definition", async () => {
             sandbox.stub(resourceFactory, "createCollectionsForTree").returns({
                 dependencies: {
                     byPath: () => Promise.resolve(

@@ -7,6 +7,7 @@ import { IAppVariantInfo, IAppVariantManifest, IChange } from "../src/model/type
 import AppVariantManager from "../src/appVariantManager";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./util/testUtil";
+
 const Resource = require("@ui5/fs/lib/Resource");
 const { expect } = chai;
 

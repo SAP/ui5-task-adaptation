@@ -1,0 +1,154 @@
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+	<edmx:Reference Uri="/sap/opu/odata/sap/M2_SB_TRAVEL_MDUU_02/$metadata">
+		<edmx:Include Alias="Metadata" Namespace="cds_m2_sd_travel_mduu"/>
+	</edmx:Reference>
+	<edmx:Reference Uri="https://wiki.scn.sap.com/wiki/download/attachments/448470968/UI.xml?api=v2">
+		<edmx:Include Alias="UI" Namespace="com.sap.vocabularies.UI.v1"/>
+	</edmx:Reference>
+	<edmx:Reference Uri="http://docs.oasis-open.org/odata/odata/v4.0/errata03/os/complete/vocabularies/Org.OData.Capabilities.V1.xml">
+		<edmx:Include Alias="Capabilities" Namespace="Org.OData.Capabilities.V1"/>
+	</edmx:Reference>
+	<edmx:DataServices>
+		<Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="fin.test.rap.lr1-1.annotations.annotation1.cds_m2_sd_travel_mduu">
+			<Annotations Target="Metadata.TravelType">
+				<Annotation Term="com.sap.vocabularies.Common.v1.SideEffects" Qualifier="calculer le prix total">
+					<Record>
+						<PropertyValue Property="SourceProperties">
+							<Collection>
+								<PropertyPath>TravelID</PropertyPath>
+								<PropertyPath>AgencyID</PropertyPath>
+								<PropertyPath>CustomerID</PropertyPath>
+								<PropertyPath>BeginDate</PropertyPath>
+								<PropertyPath>EndDate</PropertyPath>
+								<PropertyPath>BookingFee</PropertyPath>
+								<PropertyPath>CurrencyCode</PropertyPath>
+								<PropertyPath>Memo</PropertyPath>
+								<PropertyPath>Status</PropertyPath>
+								<PropertyPath>Confirmed</PropertyPath>
+							</Collection>
+						</PropertyValue>
+						<PropertyValue Property="TargetProperties">
+							<Collection>
+								<String>TotalPrice</String>
+							</Collection>
+						</PropertyValue>
+						<PropertyValue Property="TriggerAction" String="cds_m2_sd_travel_mduu.cds_m2_sd_travel_mduu_Entities/Check"/>
+					</Record>
+				</Annotation>
+				<Annotation Term="com.sap.vocabularies.Common.v1.SideEffects" Qualifier="calculateTotalPrice2">
+					<Record>
+						<PropertyValue Property="SourceProperties">
+							<Collection>
+								<PropertyPath>Confirmed</PropertyPath>
+							</Collection>
+						</PropertyValue>
+						<PropertyValue Property="TargetProperties">
+							<Collection>
+								<String>TotalPrice</String>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+				<!--<Annotation Term="com.sap.vocabularies.Common.v1.SideEffects" Qualifier="globalValidation1">-->
+				<!--	<Record>-->
+				<!--		<PropertyValue Property="TriggerAction" String="cds_m2_sd_travel_mduu.cds_m2_sd_travel_mduu_Entities/Check"/>-->
+				<!--	</Record>-->
+				<!--</Annotation>	-->
+				<!--Defines the default fields in the mass edit popup-->
+				<Annotation Term="UI.FieldGroup" Qualifier="MultiEdit">
+					<Record>
+						<PropertyValue Property="Data">
+							<Collection>
+								<Record Type="UI.DataField">
+									<PropertyValue Property="Value" Path="AgencyID"/>
+								</Record>
+								<Record Type="UI.DataField">
+									<PropertyValue Property="Value" Path="CustomerID"/>
+								</Record>
+								<Record Type="UI.DataField">
+									<PropertyValue Property="Value" Path="BeginDate"/>
+								</Record>
+								<Record Type="UI.DataField">
+									<PropertyValue Property="Value" Path="EndDate"/>
+								</Record>
+								<Record Type="UI.DataField">
+									<PropertyValue Property="Value" Path="Memo"/>
+								</Record>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="Metadata.BookingType">
+				<Annotation Term="com.sap.vocabularies.Common.v1.SideEffects" Qualifier="refreshCustomer">
+					<Record>
+						<PropertyValue Property="SourceProperties">
+							<Collection>
+								<PropertyPath>CustomerID</PropertyPath>
+							</Collection>
+						</PropertyValue>
+						<PropertyValue Property="TargetProperties">
+							<Collection>
+								<String>CustomerID</String>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+				<Annotation Term="com.sap.vocabularies.Common.v1.SideEffects" Qualifier="refreshAirline">
+					<Record>
+						<PropertyValue Property="SourceProperties">
+							<Collection>
+								<PropertyPath>AirlineID</PropertyPath>
+							</Collection>
+						</PropertyValue>
+						<PropertyValue Property="TargetProperties">
+							<Collection>
+								<String>AirlineID</String>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+			<!--	<Annotation Term="com.sap.vocabularies.Common.v1.SideEffects" Qualifier="globalValidation2">-->
+			<!--		<Record>-->
+			<!--			<PropertyValue Property="TriggerAction" String="cds_m2_sd_travel_mduu.cds_m2_sd_travel_mduu_Entities/CheckBooking"/>-->
+			<!--		</Record>-->
+			<!--	</Annotation>	-->
+			</Annotations>
+			<!--<Annotations Target="Metadata.BookingSupplementType">-->
+			<!--	<Annotation Term="com.sap.vocabularies.Common.v1.SideEffects" Qualifier="globalValidation3">-->
+			<!--		<Record>-->
+			<!--			<PropertyValue Property="TriggerAction" String="cds_m2_sd_travel_mduu.cds_m2_sd_travel_mduu_Entities/CheckSupplement"/>-->
+			<!--		</Record>-->
+			<!--	</Annotation>	-->
+			<!--</Annotations>			-->
+			<!--<Annotations Target="Metadata.TravelType/AgencyID">-->
+				<!--<Annotation Term="com.sap.vocabularies.Common.v1.ValueListWithFixedValues" Bool="true"/>-->
+			<!--</Annotations>-->
+			<!--<Annotations Target="Metadata.cds_m2_sd_travel_mduu_Entities/I_DraftAdministrativeData">-->
+			<!--	<Annotation Term="Capabilities.FilterRestrictions">-->
+			<!--		<Record>-->
+			<!--			<PropertyValue Property="FilterExpressionRestrictions">-->
+			<!--				<Collection>-->
+			<!--					<Record>-->
+			<!--						<PropertyValue Property="Property" PropertyPath="CreationDateTime"/>-->
+			<!--						<PropertyValue Property="AllowedExpressions" String="SingleRange"/>-->
+			<!--					</Record>-->
+			<!--					<Record>-->
+			<!--						<PropertyValue Property="Property" PropertyPath="LastChangeDateTime"/>-->
+			<!--						<PropertyValue Property="AllowedExpressions" String="SingleRange"/>-->
+			<!--					</Record>-->
+			<!--				</Collection>-->
+			<!--			</PropertyValue>-->
+			<!--		</Record>-->
+			<!--	</Annotation>-->
+			<!--</Annotations>-->
+			<Annotations Target="Metadata.BookingType/AirlineID">
+				<Annotation Term="com.sap.vocabularies.Common.v1.ValueListWithFixedValues" Bool="true"/>
+				<Annotation Term="com.sap.vocabularies.Common.v1.Label" String="Compagnie aérienne" Value="Compagnie aérienne"/>
+			</Annotations>
+			<Annotations Target="Metadata.TravelType/CustomerID">
+				<Annotation Term="com.sap.vocabularies.Common.v1.Label" String="Client" Value="Client valeur"/>
+			</Annotations>
+		</Schema>
+	</edmx:DataServices>
+</edmx:Edmx>

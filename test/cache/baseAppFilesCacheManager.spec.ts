@@ -1,15 +1,15 @@
 import * as chai from "chai";
 import * as sinon from "sinon";
 
-import HTML5RepoManager from "../src/html5RepoManager";
-import { IProjectOptions } from "../src/model/types";
-import ResourceUtil from "../src/util/resourceUtil";
+import BaseAppFilesCacheManager from "../../src/cache/baseAppFilesCacheManager";
+import CFProcessor from "../../src/processors/cfProcessor";
+import HTML5RepoManager from "../../src/repositories/html5RepoManager";
+import { IProjectOptions } from "../../src/model/types";
 import { SinonSandbox } from "sinon";
-import updateCache from "../src/updateCache";
 
 const { expect } = chai;
 
-describe("UpdateCache", () => {
+describe("BaseAppFilesCacheManager", () => {
     let sandbox: SinonSandbox;
     const options: IProjectOptions = {
         projectNamespace: "ns",
@@ -30,9 +30,10 @@ describe("UpdateCache", () => {
     it("shouldn't update cache when the same metadata", async () => {
         const DOWNLOADED_METADATA = { changedOn: "2100.01.01" };
         sandbox.stub(HTML5RepoManager, "getMetadata").callsFake(() => Promise.resolve(DOWNLOADED_METADATA));
-        sandbox.stub(ResourceUtil, "readTempMetadata").callsFake(() => DOWNLOADED_METADATA);
+        const cacheManager = new BaseAppFilesCacheManager(options.configuration);
+        sandbox.stub(cacheManager, "readTempMetadata").callsFake(() => DOWNLOADED_METADATA);
         const html5RepoManagerStub = sandbox.spy(HTML5RepoManager, "getBaseAppFiles");
-        await updateCache(options.configuration);
+        await new CFProcessor(options.configuration, cacheManager).getBaseAppFiles();
         expect(html5RepoManagerStub.getCalls().length).to.equal(0);
     });
 
@@ -48,12 +49,13 @@ describe("UpdateCache", () => {
 
 const downloadFiles = async (options: IProjectOptions, sandbox: SinonSandbox, cacheMetadata: any) => {
     const DOWNLOADED_METADATA = { changedOn: "2100.01.02" };
+    const cacheManager = new BaseAppFilesCacheManager(options.configuration);
     sandbox.stub(HTML5RepoManager, "getMetadata").callsFake(() => Promise.resolve(DOWNLOADED_METADATA));
-    sandbox.stub(ResourceUtil, "readTempMetadata").callsFake(() => cacheMetadata);
+    sandbox.stub(cacheManager, "readTempMetadata").callsFake(() => cacheMetadata);
     const html5RepoManagerStub = sandbox.stub(HTML5RepoManager, "getBaseAppFiles");
     html5RepoManagerStub.callsFake(() => Promise.resolve(new Map()));
-    const resourceUtilStub = sandbox.stub(ResourceUtil, "writeTemp");
-    expect(await updateCache(options.configuration)).to.be.true;
+    const resourceUtilStub = sandbox.stub(cacheManager, "writeTemp");
+    expect(await new CFProcessor(options.configuration, cacheManager).getBaseAppFiles()).to.be.true;
     expect(html5RepoManagerStub.getCalls().length).to.equal(1);
     expect(resourceUtilStub.getCalls().length).to.equal(1);
 }
