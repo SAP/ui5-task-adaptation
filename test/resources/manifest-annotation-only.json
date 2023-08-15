@@ -1,0 +1,11 @@
+{
+    "sap.app": {
+        "id": "com.sap.base.app.id",
+        "dataSources": {
+            "annotationName1": {
+                "type": "ODataAnnotation",
+                "uri": "/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/"
+            }
+        }
+    }
+}

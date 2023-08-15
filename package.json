@@ -13,7 +13,7 @@
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",
         "postversion": "git push --follow-tags",
         "release-note": "git-chglog -c .chglog/release-config.yml v$npm_package_version",
-        "rollup": "ts-node scripts/rollup.ts ./dist/bundle.js",
+        "rollup": "ts-node scripts/rollup.ts",
         "build": "npm run rollup && tsc -p ./"
     },
     "repository": {
@@ -42,11 +42,14 @@
         "amdextract": "^3.0.0",
         "axios": "^0.25.0",
         "builtin-modules": "^3.2.0",
+        "dotenv": "^16.0.3",
         "js-yaml": "^4.1.0",
+        "json-diff": "^1.0.6",
         "rimraf": "^3.0.2",
         "rollup": "^2.56.3",
         "semver": "^7.3.5",
-        "temp-dir": "^2.0.0"
+        "temp-dir": "^2.0.0",
+        "xml-js": "^1.6.11"
     },
     "devDependencies": {
         "@istanbuljs/nyc-config-typescript": "^1.0.1",
@@ -54,6 +57,8 @@
         "@types/chai": "^4.2.21",
         "@types/chai-as-promised": "^7.1.4",
         "@types/js-yaml": "^4.0.3",
+        "@types/json-diff": "^0.9.1",
+        "@types/lodash": "^4.14.196",
         "@types/mocha": "^9.1.0",
         "@types/rimraf": "^3.0.2",
         "@types/semver": "^7.3.8",

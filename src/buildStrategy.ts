@@ -28,6 +28,9 @@ export default class BuildStrategy {
         if (typeof manifest["sap.app"].i18n === "string") {
             manifest["sap.app"].i18n = { bundleUrl: manifest["sap.app"].i18n };
         }
+        if (manifest["sap.app"].i18n == null) {
+            manifest["sap.app"].i18n = {};
+        }
         if (manifest["sap.app"].i18n.enhanceWith == null) {
             manifest["sap.app"].i18n.enhanceWith = [];
         }

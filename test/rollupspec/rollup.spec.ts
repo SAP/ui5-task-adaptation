@@ -25,7 +25,7 @@ describe("Rollup", () => {
     afterEach(() => sandbox.restore());
 
     it("should rollup if there were no version specfied", async () => {
-        await runRollupBuilder(sandbox, "bundle-no-version.js", 1, DEFAULT_PROJECT);
+        await runRollupBuilder(sandbox, "bundle-no-version.js", 2, DEFAULT_PROJECT);
     });
     it("should rollup if the version specified is lower", async () => {
         await runRollupBuilder(sandbox, "bundle-old-version.js", 1, DEFAULT_PROJECT);
@@ -38,8 +38,8 @@ describe("Rollup", () => {
         const ui5yaml = TestUtil.getResource("ui5.yaml");
         sandbox.stub(fs, "readFileSync").returns(ui5yaml);
         const rollupStub = await prepareStubs(sandbox, DEFAULT_PROJECT);
-        await RollupBuilder.run("./dist/bundle.js");
-        expect(rollupStub.getCalls().length).to.equal(1);
+        await RollupBuilder.run();
+        expect(rollupStub.getCalls().length).to.equal(2);
     });
     it("shouldn't rollup if the version specified is the same", async () => {
         await runRollupBuilder(sandbox, "bundle-same-version.js", 0, {
@@ -58,11 +58,11 @@ describe("Rollup", () => {
     });
     it("should throw error if framework name is incorrect", async () => {
         await testUi5YamlValidation(sandbox, "ui5-incorrect-framework.yaml", DEFAULT_PROJECT);
-        await expect(RollupBuilder.run("./dist/bundle.js")).to.be.rejectedWith("ui5.yaml is not found or incorrect")
+        await expect(RollupBuilder.run()).to.be.rejectedWith("ui5.yaml is not found or incorrect")
     });
     it("should throw error if framework version is incorrect", async () => {
         await testUi5YamlValidation(sandbox, "ui5-incorrect-version.yaml", DEFAULT_PROJECT);
-        await expect(RollupBuilder.run("./dist/bundle.js")).to.be.rejectedWith("ui5.yaml is not found or incorrect")
+        await expect(RollupBuilder.run()).to.be.rejectedWith("ui5.yaml is not found or incorrect")
     });
 });
 
@@ -79,11 +79,12 @@ async function runRollupBuilder(sandbox: sinon.SinonSandbox, bundleFilename: str
     const bundleNoVersion = TestUtil.getResource(bundleFilename);
     const ui5yaml = TestUtil.getResource("ui5.yaml");
     sandbox.stub(fs, "readFileSync")
-        .onFirstCall().returns(bundleNoVersion)
-        .onSecondCall().returns(ui5yaml);
+        .onFirstCall().returns(ui5yaml)
+        .onSecondCall().returns(bundleNoVersion)
+        .onThirdCall().returns(bundleNoVersion);
 
     const rollupStub = await prepareStubs(sandbox, project);
-    await RollupBuilder.run("./dist/bundle.js");
+    await RollupBuilder.run();
     expect(rollupStub.getCalls().length).to.equal(calls);
 }
 

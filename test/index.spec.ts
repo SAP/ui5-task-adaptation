@@ -1,9 +1,9 @@
 import * as chai from "chai";
 import * as sinon from "sinon";
 
-import HTML5RepoManager from "../src/html5RepoManager";
+import BaseAppFilesCacheManager from "../src/cache/baseAppFilesCacheManager";
+import HTML5RepoManager from "../src/repositories/html5RepoManager";
 import { IProjectOptions } from "../src/model/types";
-import ResourceUtil from "../src/util/resourceUtil";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./util/testUtil";
 
@@ -21,6 +21,7 @@ const OPTIONS: IProjectOptions = {
         sapCloudService: "sapCloudService"
     }
 };
+const cacheManager = new BaseAppFilesCacheManager(OPTIONS.configuration);
 
 describe("Index", () => {
     let sandbox: SinonSandbox;
@@ -28,11 +29,12 @@ describe("Index", () => {
     beforeEach(() => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
 
-    after(async () => await ResourceUtil.deleteTemp(OPTIONS.configuration));
+    after(async () => await cacheManager.deleteTemp());
 
     it("should download and write base files because metadata is different", async () => {
         const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const html5RepoManagerStub = sandbox.stub(HTML5RepoManager, "getBaseAppFiles");
+        sandbox.stub(cacheManager, "readTempMetadata" as any).callsFake(() => Promise.resolve({ changedOn: "2100.01.01" }));
         sandbox.stub(HTML5RepoManager, "getMetadata").callsFake(() => Promise.resolve({ changedOn: "2100.01.01" }));
         html5RepoManagerStub.callsFake(() => Promise.resolve(baseAppFiles));
         await runUi5TaskAdaptation(OPTIONS);
@@ -42,10 +44,9 @@ describe("Index", () => {
     it("should read base app files from temp because metadata is the same", async () => {
         const DOWNLOADED_METADATA = { changedOn: "2100.01.01" };
         const baseAppFiles = new Map([
-            ["manifest.json", TestUtil.getResource("manifest.json")],
-            [ResourceUtil.METADATA_FILENAME, JSON.stringify(DOWNLOADED_METADATA)]
+            ["manifest.json", TestUtil.getResource("manifest.json")]
         ]);
-        await ResourceUtil.writeTemp(OPTIONS.configuration, baseAppFiles);
+        await cacheManager.writeTemp(baseAppFiles, DOWNLOADED_METADATA);
         const html5RepoManagerStub = sandbox.spy(HTML5RepoManager, "getBaseAppFiles");
         sandbox.stub(HTML5RepoManager, "getMetadata").callsFake(() => Promise.resolve(DOWNLOADED_METADATA));
         await runUi5TaskAdaptation(OPTIONS);
@@ -64,6 +65,6 @@ const runUi5TaskAdaptation = async (options: IProjectOptions) => {
         "/manifest.appdescr_variant",
         "/resources/ns/manifest.json"
     ]);
-    const tempResources = await ResourceUtil.readTemp(OPTIONS.configuration);
+    const tempResources = await cacheManager.readTemp();
     expect([...tempResources.keys()]).to.have.members(["/manifest.json"]);
 }

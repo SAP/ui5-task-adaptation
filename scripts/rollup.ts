@@ -1,12 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
-
-import * as builtins from "builtin-modules";
-import { nodeResolve } from "@rollup/plugin-node-resolve";
-import * as rollup from "rollup";
 import * as semver from "semver";
 import * as yaml from "js-yaml";
-import ui5 from "./rollup/ui5Resolve";
+import Bundler from "./bundler";
 
 const { normalizer } = require("@ui5/project");
 const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-adaptation");
@@ -60,55 +56,35 @@ export default class Builder {
         }
     }
 
-    static async run(destination: string): Promise<void> {
-        const bundledUI5Version = this.getBundledUI5Version(destination);
+    static async run(): Promise<void> {
         const project = await this.getProjectInfo(projectPaths);
         if (!project) {
             throw new Error("ui5.yaml is not found or incorrect");
         }
-        const isSapUiFl = (dependency: any) => dependency.id.endsWith("/sap.ui.fl");
-        const sapUiFlDependency = project.dependencies.find(isSapUiFl);
-        if (bundledUI5Version == null || sapUiFlDependency && semver.neq(bundledUI5Version, sapUiFlDependency.version)) {
-            if (sapUiFlDependency.version) {
-                log.info(`Using UI5 version ${sapUiFlDependency.version.toString()} to bundle`);
-            }
-            const inputOptions = <rollup.RollupOptions>{
-                input: "bundleDefinition.js",
-                plugins: [
-                    ui5({
-                        assets: [
-                            "/resources/sap/ui/fl/**",
-                            "/resources/sap/suite/ui/generic/template/**"
-                        ],
-                        skipTransformation: [
-                            "bundleDefinition.js",
-                            "sap/ui/thirdparty/URI"
-                        ],
-                        output: destination,
-                        project: project,
-                        ui5version: sapUiFlDependency.version
-                    }),
-                    nodeResolve({
-                        preferBuiltins: true
-                    })
-                ],
-                external: builtins
-            }
-            const bundle = await rollup.rollup(inputOptions);
-
-            const outputOptions = <rollup.RollupOptions>{
-                file: destination,
-                format: "commonjs"
-            }
-            await bundle.write(outputOptions);
-            await bundle.close();
-        } else {
-            log.info(`UI5 version ${bundledUI5Version!.toString()} is already bundled`);
-        }
-
+        await Bundler.run(
+            project,
+            "bundleDefinition.js",
+            "./dist/bundle.js",
+            "/sap.ui.fl",
+            [
+                "/resources/sap/ui/fl/**",
+                "/resources/sap/suite/ui/generic/template/**"
+            ],
+            [
+                "sap/ui/thirdparty/URI"
+            ]);
+        await Bundler.run(
+            project,
+            "bundleDefinition-resourceBundle.js",
+            "./dist/bundle-resourceBundle.js",
+            "/sap.ui.core",
+            [
+                "/resources/sap/base/**"
+            ]
+        );
     }
 }
 
-if (process.argv.length === 3) {
-    Builder.run(process.argv[2]);
+if (process.argv.length === 2) {
+    Builder.run();
 }

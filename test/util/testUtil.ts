@@ -1,3 +1,4 @@
+import * as convert from "xml-js";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -14,6 +15,16 @@ export default class TestUtil {
 
     static getResource(filename: string): string {
         return fs.readFileSync(this.getResourcePath(filename), { encoding: "utf-8" });
+    }
+
+    static getResourceXml(filename: string): string {
+        const expectedXml = TestUtil.getResource(filename);
+        const convertXmlOptions = { compact: true, spaces: 4 };
+        return convert.json2xml(convert.xml2json(expectedXml, convertXmlOptions), convertXmlOptions);
+    }
+
+    static getResourceJson(filename: string): string {
+        return JSON.parse(TestUtil.getResource(filename));
     }
 
     static getResourceBuffer(filename: string): Buffer {
@@ -62,7 +73,12 @@ export default class TestUtil {
     }
 
 
-    static getResourceByName(resources: any[], name: string): Promise<Buffer> {
-        return resources.find(res => res.getPath().endsWith(name)).getBuffer();
+    static getResourceByName(resources: any[], name: string): Promise<string> {
+        return resources.find(res => res.getPath().endsWith(name)).getBuffer().then((buffer: any) => buffer.toString());
+    }
+
+
+    static getResourceJsonByName(resources: any[], name: string): Promise<any> {
+        return this.getResourceByName(resources, name).then((string) => JSON.parse(string));
     }
 }

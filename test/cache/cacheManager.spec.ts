@@ -1,7 +1,8 @@
 import * as chai from "chai";
 
-import { IProjectOptions } from "../src/model/types";
-import ResourceUtil from "../src/util/resourceUtil";
+import BaseAppFilesCacheManager from "../../src/cache/baseAppFilesCacheManager";
+import { IProjectOptions } from "../../src/model/types";
+import ResourceUtil from "../../src/util/resourceUtil";
 
 const { expect } = chai;
 
@@ -19,6 +20,7 @@ describe("ResourceUtil", () => {
             sapCloudService: "sapCloudService"
         }
     };
+    const cacheManager = new BaseAppFilesCacheManager(OPTIONS.configuration);
 
     describe("when getting root folder", () => {
         it("should return path with project namespace", () => expect(ResourceUtil.getRootFolder("projectNamespace1")).to.eql("/resources/projectNamespace1"));
@@ -26,17 +28,17 @@ describe("ResourceUtil", () => {
     });
 
     describe("when writing reading base app files", () => {
-        after(() => ResourceUtil.deleteTemp(OPTIONS.configuration));
+        after(() => cacheManager.deleteTemp());
 
         it("should return empty map for non-existing temp folder", async () => {
-            const result = await ResourceUtil.readTemp(OPTIONS.configuration);
+            const result = await cacheManager.readTemp();
             expect(result.size).to.equal(0);
         });
 
         it("should return files for existing temp folder", async () => {
-            const files = new Map([[`/${ResourceUtil.METADATA_FILENAME}`, `{ "some": true }`], ["/folder1/file1", "file1Content"], ["/file2", "file2Content"]]);
-            await ResourceUtil.writeTemp(OPTIONS.configuration, files);
-            const result = await ResourceUtil.readTemp(OPTIONS.configuration);
+            const files = new Map([["/folder1/file1", "file1Content"], ["/file2", "file2Content"]]);
+            await cacheManager.writeTemp(files, { some: true });
+            const result = await cacheManager.readTemp();
             expect(result.size).to.equal(2);
             expect(result.get("/folder1/file1")).to.equal("file1Content");
             expect(result.get("/file2")).to.equal("file2Content");
@@ -45,17 +47,20 @@ describe("ResourceUtil", () => {
 
     describe("when reading metadata", () => {
         before(async () => {
-            const files = new Map([[`/${ResourceUtil.METADATA_FILENAME}`, `{ "some": true }`], ["/file1", "file1Content"]]);
-            await ResourceUtil.writeTemp(OPTIONS.configuration, files);
+            const files = new Map([["/file1", "file1Content"]]);
+            await cacheManager.writeTemp(files, { some: true });
         });
-        after(() => ResourceUtil.deleteTemp(OPTIONS.configuration));
+
+        after(() => cacheManager.deleteTemp());
 
         it("should return metadata", async () => {
-            const result = await ResourceUtil.readTempMetadata(OPTIONS.configuration);
+            const result = await cacheManager.readTempMetadata();
             expect(result.some).to.be.true;
         });
+
         it("should return undefined for non-existing cache", async () => {
-            const result = await ResourceUtil.readTempMetadata({ ...OPTIONS.configuration, appVersion: "noAppVersion" });
+            cacheManager.deleteTemp();
+            const result = await cacheManager.readTempMetadata();
             expect(result).to.be.undefined;
         });
     });
