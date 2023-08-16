@@ -1,6 +1,6 @@
 {
     "name": "@ui5/task-adaptation",
-    "version": "1.0.16",
+    "version": "1.0.15",
     "description": "Custom task for ui5-builder which allows building UI5 Flexibility Adaptation Projects for SAP BTP, Cloud Foundry environment",
     "main": "index.js",
     "scripts": {
@@ -13,7 +13,7 @@
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",
         "postversion": "git push --follow-tags",
         "release-note": "git-chglog -c .chglog/release-config.yml v$npm_package_version",
-        "rollup": "ts-node scripts/rollup.ts",
+        "rollup": "npx ts-node scripts/rollup.ts",
         "build": "npm run rollup && tsc -p ./"
     },
     "repository": {
@@ -62,14 +62,14 @@
         "@types/mocha": "^9.1.0",
         "@types/rimraf": "^3.0.2",
         "@types/semver": "^7.3.8",
-        "@types/sinon": "^10.0.2",
+        "@types/sinon": "^10.0.16",
         "chai": "^4.3.4",
         "chai-as-promised": "^7.1.1",
         "chalk": "^4.1.2",
         "mocha": "^9.2.0",
         "mock-require": "^3.0.3",
         "nyc": "^15.1.0",
-        "sinon": "^11.1.2",
+        "sinon": "^15.2.0",
         "source-map-support": "^0.5.19",
         "ts-node": "^10.4.0",
         "typescript": "^4.3.5"
