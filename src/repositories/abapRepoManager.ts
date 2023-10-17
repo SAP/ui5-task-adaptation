@@ -58,10 +58,21 @@ export default class AbapRepoManager {
             () => this.downloadBaseAppFilesRequest(this.getAuth()));
     }
 
+    private getUrl(destination: string) {
+        try {
+            return new URL(destination);
+        } catch (error) {
+            return new URL(`https://${destination}.dest`);
+        }
+    }
+
 
     private async getMetadataRequest(id: string, auth?: IAuth): Promise<IMetadata | undefined> {
-        let uri = `https://${this.configuration.destination}.dest/sap/bc/ui2/app_index/ui5_app_info_json?id=${id}`;
-        const data = await RequestUtil.get(uri, REQUEST_OPTIONS_JSON, auth);
+        const uri = this.getUrl(this.configuration.destination!);
+        uri.pathname = '/sap/bc/ui2/app_index/ui5_app_info_json';
+        uri.searchParams.set('id', id);
+
+        const data = await RequestUtil.get(uri.toString(), REQUEST_OPTIONS_JSON, auth);
         if (data && data[id]) {
             return {
                 changedOn: data[id].url,
@@ -75,8 +86,11 @@ export default class AbapRepoManager {
     private async downloadBaseAppFilesRequest(auth?: IAuth): Promise<Map<string, string>> {
         const { destination, appName } = this.configuration;
         const encodedAppName = encodeURIComponent(appName!);
-        const uri = `https://${destination}.dest/sap/opu/odata/UI5/ABAP_REPOSITORY_SRV/Repositories('${encodedAppName}')?DownloadFiles=RUNTIME&CodePage=UTF8`;
-        const data = await RequestUtil.get(uri, REQUEST_OPTIONS_XML, auth);
+        const uri = this.getUrl(this.configuration.destination!);
+        uri.pathname = `/sap/opu/odata/UI5/ABAP_REPOSITORY_SRV/Repositories('${encodedAppName}')`;
+        uri.searchParams.set('DownloadFiles', 'RUNTIME');
+        uri.searchParams.set('CodePage','UTF8');
+        const data = await RequestUtil.get(uri.toString(), REQUEST_OPTIONS_XML, auth);
         if (data?.d?.ZipArchive.length > 0) {
             const buffer = Buffer.from(data.d.ZipArchive, "base64");
             return unzipZipEntries(buffer);
