@@ -40,7 +40,7 @@
         "@ui5/project": "^2.6.0",
         "adm-zip": "^0.5.5",
         "amdextract": "^3.0.0",
-        "axios": "^0.25.0",
+        "axios": "^1.6.0",
         "builtin-modules": "^3.2.0",
         "dotenv": "^16.0.3",
         "js-yaml": "^4.1.0",
