@@ -1,7 +1,8 @@
 import * as fs from "fs";
-import * as path from "path";
+import { posix as path } from "path";
 
 const resourceFactory = require("@ui5/fs/lib/resourceFactory");
+const UTF8 = "utf8";
 
 export default class ResourceUtil {
 
@@ -12,6 +13,11 @@ export default class ResourceUtil {
             newPath.push(projectNamespace);
         }
         return path.join(...newPath);
+    }
+
+
+    static getResourcePath(projectNamespace?: string, ...paths: string[]) {
+        return path.join(this.getRootFolder(projectNamespace), ...paths);
     }
 
 
@@ -43,5 +49,14 @@ export default class ResourceUtil {
         }
     }
 
+
+    static getString(resource: any): Promise<string> {
+        return resource.getBuffer().then((buffer: Buffer) => buffer.toString(UTF8));
+    }
+
+
+    static setString(resource: any, str: string): void {
+        resource.setBuffer(Buffer.from(str, UTF8));
+    }
 
 }

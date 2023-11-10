@@ -1,9 +1,8 @@
-import * as path from "path";
-
 import { IAppVariantInfo, IChange } from "./model/types";
+import { renameResources, replaceDots } from "./util/commonUtil";
 
 import ResourceUtil from "./util/resourceUtil";
-import { replaceDots } from "./util/commonUtil";
+import { posix as path } from "path";
 
 const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::AppVariantManager");
 
@@ -22,6 +21,7 @@ export default class AppVariantManager {
             this.omitFiles(resource, taskUtil);
         }
         this.adjustAddNewModelEnhanceWith(appVariantInfo?.manifest?.content ?? [], i18nBundleName);
+        await this.renameChanges(appVariantResources, projectNamespace, appVariantInfo);
         return appVariantInfo;
     }
 
@@ -31,27 +31,57 @@ export default class AppVariantManager {
     }
 
 
-    static async getAppVariantInfo(appVariantResources: any[]): Promise<IAppVariantInfo> {
+    static async renameChanges(appVariantResources: any[], projectNamespace: string, appVariantInfo: IAppVariantInfo): Promise<void> {
+        const changesFolder = ResourceUtil.getResourcePath(projectNamespace, "changes");
+        const changes = new Map<string, string>();
+        const resourcesByPath = new Map<string, any>();
         for (const resource of appVariantResources) {
-            const basename = path.basename(resource.getPath());
-            if (basename === MANIFEST_APP_VARIANT) {
-                const manifest = await resource.getBuffer().then((buffer: Buffer) => buffer.toString("utf8")).then(JSON.parse);
-                const { id, reference } = manifest;
-                return { id, reference, manifest };
+            const resourcePath = resource.getPath();
+            const basename = path.dirname(resourcePath);
+            if (changesFolder === basename) {
+                changes.set(resourcePath, await ResourceUtil.getString(resource));
+                resourcesByPath.set(resourcePath, resource);
             }
         }
-        throw new Error("Application variant should contain manifest.appdescr_variant");
+        const renamedChanges = renameResources(changes, appVariantInfo.reference, appVariantInfo.id);
+        renamedChanges.forEach((renamedContent, resourcePath) => {
+            const resource = resourcesByPath.get(resourcePath);
+            ResourceUtil.setString(resource, renamedContent);
+        });
+    }
+
+
+    static async getAppVariantInfo(appVariantResources: any[]): Promise<IAppVariantInfo> {
+        const changesManifestFolder = path.join("changes", "manifest");
+        let manifest;
+        const manifestChanges = [];
+        for (const resource of appVariantResources) {
+            const resourcePath = resource.getPath();
+            const dirname = path.dirname(resource.getPath());
+            const basename = path.basename(resourcePath);
+            if (basename === MANIFEST_APP_VARIANT) {
+                manifest = await ResourceUtil.getString(resource).then(JSON.parse);
+            } else if (dirname.endsWith(changesManifestFolder)) {
+                const str = await ResourceUtil.getString(resource);
+                manifestChanges.push(JSON.parse(str));
+            }
+        }
+        if (manifest) {
+            return {
+                id: manifest.id,
+                reference: manifest.reference,
+                manifest,
+                manifestChanges
+            };
+        }
+        throw new Error("Adaptation project should contain manifest.appdescr_variant");
     }
 
 
     static writeI18nToModule(resource: any, projectNamespace: string, i18nBundleName: string) {
         if (path.extname(resource.getPath()) === ".properties") {
             let rootFolder = ResourceUtil.getRootFolder(projectNamespace);
-            if (resource.getPath().startsWith(rootFolder)) {
-                resource.setPath(path.join(rootFolder, i18nBundleName, resource.getPath().substring(rootFolder.length)));
-            } else {
-                resource.setPath(path.join("/", i18nBundleName, resource.getPath()));
-            }
+            resource.setPath(path.join(rootFolder, i18nBundleName, resource.getPath().substring(rootFolder.length)));
         }
     }
 

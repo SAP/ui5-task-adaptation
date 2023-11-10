@@ -1,0 +1,23 @@
+{
+    "changeType": "propertyChange",
+    "reference": "com.sap.base.app.id",
+    "namespace": "apps/com.sap.base.app.id/changes",
+    "fileName": "id_1696839317667_propertyChange",
+    "fileType": "change",
+    "layer": "CUSTOMER_BASE",
+    "creation": "2023-10-09T08:15:17.668Z",
+    "packageName": "$TMP",
+    "support": {
+        "generator": "change-inbound-generator"
+    },
+    "selector": {
+        "id": "com.sap.base.app.id::sap.suite.ui.generic.template.ListReport--addEntry",
+        "type": "sap.m.Button",
+        "idIsLocal": false
+    },
+    "texts": {},
+    "content": {
+        "property": "type",
+        "newValue": "Default"
+    }
+}

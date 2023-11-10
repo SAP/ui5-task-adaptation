@@ -4,12 +4,12 @@ import TestUtil from "./testUtil";
 
 export default class MockServer {
 
-    static stubAnnotations(sandbox: SinonSandbox, abapRepoManager: AbapRepoManager) {
+    static stubAnnotations(sandbox: SinonSandbox, abapRepoManager: AbapRepoManager, folder?: string) {
         const annotationsName1 = new Map<string, Map<string, string>>([
-            ["", new Map([["annotation.xml", TestUtil.getResource("annotationName1.xml")]])],
-            ["EN", new Map([["annotation.xml", TestUtil.getResource("annotationName1-en.xml")]])],
-            ["DE", new Map([["annotation.xml", TestUtil.getResource("annotationName1-de.xml")]])],
-            ["FR", new Map([["annotation.xml", TestUtil.getResource("annotationName1-fr.xml")]])]
+            ["", new Map([["annotation.xml", TestUtil.getResource(`${folder ? folder + "/" : ""}annotationName1.xml`)]])],
+            ["EN", new Map([["annotation.xml", TestUtil.getResource(`${folder ? folder + "/" : ""}annotationName1-en.xml`)]])],
+            ["DE", new Map([["annotation.xml", TestUtil.getResource(`${folder ? folder + "/" : ""}annotationName1-de.xml`)]])],
+            ["FR", new Map([["annotation.xml", TestUtil.getResource(`${folder ? folder + "/" : ""}annotationName1-fr.xml`)]])]
         ]);
         const annotationsName2 = new Map<string, Map<string, string>>([
             ["", new Map([["annotation.xml", TestUtil.getResource("annotationName2.xml")]])],

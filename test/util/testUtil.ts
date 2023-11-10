@@ -1,8 +1,8 @@
 import * as convert from "xml-js";
 import * as fs from "fs";
-import * as path from "path";
 
 import AppVariantManager from "../../src/appVariantManager";
+import { posix as path } from "path";
 
 const normalizer = require("@ui5/project").normalizer;
 const resourceFactory = require("@ui5/fs").resourceFactory;
@@ -35,9 +35,14 @@ export default class TestUtil {
         return path.join(process.cwd(), "test", "resources", filename);
     }
 
-    static async getWorkspace(projectName: string) {
+    static async getWorkspace(projectName: string, namespace: string) {
         const project = await normalizer.generateProjectTree({ cwd: path.join(process.cwd(), "test", "resources", projectName) });
-        const resourceCollections = resourceFactory.createCollectionsForTree(project, {});
+        const rootPath = ["resources"];
+        if (namespace) {
+            rootPath.push(namespace);
+        }
+        const getVirtualBasePathPrefix = () => "/" + path.join(...rootPath);
+        const resourceCollections = resourceFactory.createCollectionsForTree(project, { getVirtualBasePathPrefix });
         const workspace = resourceFactory.createWorkspace({
             virBasePath: "/",
             reader: resourceCollections.source,
@@ -56,8 +61,8 @@ export default class TestUtil {
         return { workspace, taskUtil };
     }
 
-    static async getAppVariantInfo(projectName: string) {
-        const projectMeta = await TestUtil.getWorkspace(projectName);
+    static async getAppVariantInfo(projectName: string, namespace: string) {
+        const projectMeta = await TestUtil.getWorkspace(projectName, namespace);
         const appVariantResources = await AppVariantManager.getAppVariantResources(projectMeta.workspace);
         return AppVariantManager.getAppVariantInfo(appVariantResources);
     }
@@ -74,7 +79,11 @@ export default class TestUtil {
 
 
     static getResourceByName(resources: any[], name: string): Promise<string> {
-        return resources.find(res => res.getPath().endsWith(name)).getBuffer().then((buffer: any) => buffer.toString());
+        const file = resources.find(res => res.getPath().endsWith(name));
+        if (file) {
+            return file.getBuffer().then((buffer: any) => buffer.toString());
+        }
+        throw new Error(`Resources have no ${name}`);
     }
 
 

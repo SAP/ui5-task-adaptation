@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import * as path from "path";
+import { posix as path } from "path";
 import * as semver from "semver";
 import * as rollup from "rollup";
 import * as builtins from "builtin-modules";

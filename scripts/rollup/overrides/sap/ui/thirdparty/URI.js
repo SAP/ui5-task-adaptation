@@ -1,4 +1,4 @@
-import * as path from "path";
+import { posix as path } from "path";
 
 export default class URI {
     constructor(value) {
@@ -6,7 +6,7 @@ export default class URI {
     }
 
     normalize() {
-        this.value = path.normalize(this.value);
+        this.value = path.normalize(this.value).replace(/\\/g, "/");
         return this;
     }
 

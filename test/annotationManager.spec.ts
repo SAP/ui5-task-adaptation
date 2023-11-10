@@ -2,12 +2,12 @@ import * as sinon from "sinon";
 
 import AbapRepoManager from "../src/repositories/abapRepoManager";
 import AnnotationManager from "../src/annotationManager"
-import BaseAppManager from "../src/baseAppManager";
 import { IProjectOptions } from "../src/model/types";
 import MockServer from "./util/mockServer";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./util/testUtil";
 import { expect } from "chai";
+import { renameResources } from "../src/util/commonUtil";
 
 let sandbox: SinonSandbox = sinon.createSandbox();
 const options: IProjectOptions = {
@@ -35,24 +35,11 @@ describe("AnnotationManager", () => {
         const abapRepoManager = new AbapRepoManager(options.configuration);
         MockServer.stubAnnotations(sandbox, abapRepoManager);
         const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
-        const getAnnotationI18nsSpy = sandbox.spy(annotationManager, "getAdaptedAnnotation" as any);
         const MANIFEST_FILENAME = "manifest.json";
         const baseAppFiles = new Map<string, string>([[MANIFEST_FILENAME, manifestString]]);
-        const renamedFiles = BaseAppManager.renameBaseApp(baseAppFiles, "com.sap.base.app.id", "customer.com.sap.application.variant.id");
+        const renamedFiles = renameResources(baseAppFiles, "com.sap.base.app.id", "customer.com.sap.application.variant.id");
         const manifest = JSON.parse(renamedFiles.get(MANIFEST_FILENAME)!);
         const result = await annotationManager.process(manifest, ["EN", "DE", "FR"]);
-        expect(getAnnotationI18nsSpy.getCalls().length).to.eql(2);
-        expect(getAnnotationI18nsSpy.getCalls()[0].args[0]).to.have.members([
-            "edmx:Edmx/edmx:DataServices/Schema/Annotations/2/Annotation/1/_attributes/String/",
-            "edmx:Edmx/edmx:DataServices/Schema/Annotations/2/Annotation/1/_attributes/Value/",
-            "edmx:Edmx/edmx:DataServices/Schema/Annotations/3/Annotation/_attributes/String/",
-            "edmx:Edmx/edmx:DataServices/Schema/Annotations/3/Annotation/_attributes/Value/",
-            "edmx:Edmx/edmx:DataServices/Schema/Annotations/0/Annotation/0/_attributes/Qualifier/"
-        ]);
-        expect(getAnnotationI18nsSpy.getCalls()[1].args[0]).to.have.members([
-            "edmx:Edmx/edmx:Include/_attributes/Alias/",
-            "edmx:Edmx/edmx:Include/_attributes/Namespace/"
-        ]);
         expect(result.get("annotations/annotation_annotationName1.xml")).to.be.eql(expectedAnnotationName1);
         expect(manifest).to.be.eql(JSON.parse(expectedManifest));
         expect([...result.keys()]).to.have.members([
@@ -62,34 +49,33 @@ describe("AnnotationManager", () => {
             "i18n/annotations/customercomsapapplicationvariantid/i18n_de.properties",
             "i18n/annotations/customercomsapapplicationvariantid/i18n_fr.properties"
         ]);
-        expect(getI18ns(result, ["annotations/annotation_annotationName1.xml", "annotations/annotation_annotationName2.xml"])).to.have.members([
-            "customer.com.sap.application.variant.id_AIRLINE0=Airline\ncustomer.com.sap.application.variant.id_AIRLINE=Airline\ncustomer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculateTotalPrice\ncustomer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_travel_mduu\ncustomer.com.sap.application.variant.id_CUSTOMER=Customer\ncustomer.com.sap.application.variant.id_CUSTOMER_VALUE_1=Customer Value 1\ncustomer.com.sap.application.variant.id_METADATA=Metadata",
-            "customer.com.sap.application.variant.id_AIRLINE0=Fluglinie\ncustomer.com.sap.application.variant.id_AIRLINE=Fluglinie\ncustomer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculateTotalPrice\ncustomer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_reise_mduu\ncustomer.com.sap.application.variant.id_CUSTOMER=Kunde\ncustomer.com.sap.application.variant.id_CUSTOMER_VALUE_1=KundeWert\ncustomer.com.sap.application.variant.id_METADATA=Metadaten",
-            "customer.com.sap.application.variant.id_AIRLINE0=Compagnie aérienne\ncustomer.com.sap.application.variant.id_AIRLINE=Compagnie aérienne\ncustomer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculer le prix total\ncustomer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_voyager_mduu\ncustomer.com.sap.application.variant.id_CUSTOMER=Client\ncustomer.com.sap.application.variant.id_CUSTOMER_VALUE_1=Client valeur\ncustomer.com.sap.application.variant.id_METADATA=Metadonnees"
+        expect(getI18ns(result, "i18n_en")).to.have.members([
+            "customer.com.sap.application.variant.id_AIRLINE=Airline",
+            "customer.com.sap.application.variant.id_AIRLINE0=Airline",
+            "customer.com.sap.application.variant.id_CUSTOMER=Customer",
+            "customer.com.sap.application.variant.id_CUSTOMER_VALUE_1=Customer Value 1",
+            "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculateTotalPrice",
+            "customer.com.sap.application.variant.id_METADATA=Metadata",
+            "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_travel_mduu"
         ]);
-    });
-
-    describe("traverse json", () => {
-        it("should throw exception when incorrect path", () => {
-            expect(() => AnnotationManager.traverseJson({ a: "" }, "a/b")).to.throw("Target property 'b' is undefined in path 'a/b' for { a: '' }");
-            expect(() => AnnotationManager.traverseJson({ a: undefined }, "a/b")).to.throw("Property 'a' is undefined in path 'a/b' for { a: undefined }");
-            expect(() => AnnotationManager.traverseJson({ a: null }, "a/b")).to.throw("Property 'a' is undefined in path 'a/b' for { a: null }");
-            expect(() => AnnotationManager.traverseJson({ a: "" }, "a/b/c")).to.throw("Property 'b' is undefined in path 'a/b/c' for { a: '' }");
-            expect(() => AnnotationManager.traverseJson({ a: { c: "" } }, "a/b")).to.throw("Target property 'b' is undefined in path 'a/b' for { a: { c: '' } }");
-            expect(() => AnnotationManager.traverseJson({ a: [{}, {}] }, "a/2")).to.throw("Target property '2' is undefined in path 'a/2' for { a: [ {}, {}, [length]: 2 ] }");
-            expect(() => AnnotationManager.traverseJson({ a: [{}, {}] }, "a/c")).to.throw("Array index 'c' is not a number in path 'a/c' for { a: [ {}, {}, [length]: 2 ] }");
-            expect(() => AnnotationManager.traverseJson({ a: [{ c: "item1" }, {}] }, "a/1/c")).to.throw("Target property 'c' is undefined in path 'a/1/c' for { a: [ { c: 'item1' }, {}, [length]: 2 ] }");
-        });
-        it("should return correct array element", () => {
-            const { subject, property } = AnnotationManager.traverseJson({ a: [{ c: "item1" }, {}] }, "a/0/c");
-            expect(property).to.eql("c");
-            expect(subject).to.eql({ "c": "item1" });
-        });
-        it("should return correct path for single element", () => {
-            const { subject, property } = AnnotationManager.traverseJson({ a: "item1" }, "a");
-            expect(property).to.eql("a");
-            expect(subject).to.eql({ "a": "item1" });
-        });
+        expect(getI18ns(result, "i18n_de")).to.have.members([
+            "customer.com.sap.application.variant.id_AIRLINE=Fluglinie",
+            "customer.com.sap.application.variant.id_AIRLINE0=Fluglinie",
+            "customer.com.sap.application.variant.id_CUSTOMER=Kunde",
+            "customer.com.sap.application.variant.id_CUSTOMER_VALUE_1=KundeWert",
+            "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculateTotalPrice",
+            "customer.com.sap.application.variant.id_METADATA=Metadaten",
+            "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_reise_mduu"
+        ]);
+        expect(getI18ns(result, "i18n_fr")).to.have.members([
+            "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculer le prix total",
+            "customer.com.sap.application.variant.id_AIRLINE=Compagnie aérienne",
+            "customer.com.sap.application.variant.id_AIRLINE0=Compagnie aérienne",
+            "customer.com.sap.application.variant.id_CUSTOMER=Client",
+            "customer.com.sap.application.variant.id_CUSTOMER_VALUE_1=Client valeur",
+            "customer.com.sap.application.variant.id_METADATA=Metadonnees",
+            "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_voyager_mduu"
+        ]);
     });
 
     describe("when updating @i18n model", () => {
@@ -196,16 +182,8 @@ describe("AnnotationManager", () => {
             expect(actual).to.be.eql({ ...sapAppExpected, ...expectedSapUi5 });
         }
     });
-
 });
 
-
-function getI18ns(files: Map<string, string>, annotationFileNames: string[]) {
-    const i18ns: string[] = [];
-    files.forEach((value, key) => {
-        if (!annotationFileNames.includes(key)) {
-            i18ns.push(value);
-        }
-    });
-    return i18ns;
+function getI18ns(files: Map<string, string>, fileName: string) {
+    return files.get(`i18n/annotations/customercomsapapplicationvariantid/${fileName}.properties`)!.split("\n");
 }

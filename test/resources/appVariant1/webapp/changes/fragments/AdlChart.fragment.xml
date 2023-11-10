@@ -1,0 +1,44 @@
+<!--
+
+    Copyright (C) 2009-2023 SAP SE or an SAP affiliate company. All rights reserved.
+
+-->
+<Popover xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:layout="sap.ui.layout"
+    xmlns:viz="sap.viz.ui5.controls"
+    xmlns:viz.feeds="sap.viz.ui5.controls.common.feeds"
+    xmlns:viz.data="sap.viz.ui5.data" modal="false" placement="Vertical" showHeader="true" title="{i18n>PaymentBehavior}" contentWidth="1200px" contentHeight="500px">
+
+
+    <content>
+        <viz:VizFrame id="AdlChartID" appId="customer.com.sap.application.variant.id" appIdSlashes="customer/com/sap/application/variant/id" uiConfig="{applicationSet:'fiori'}" vizType='column' vizProperties="{ title: {visible: false},
+							 valueAxis: {title: {visible: 'true'},
+							 label: {}},
+							 categoryAxis: {title: {visible: true}},
+							 plotArea: {dataLabel: {visible: true}},
+							 legend: {visible: true}, general:{groupData: false} }" width="100%">
+
+            <viz:dataset>
+                <viz.data:FlattenedDataset id="flattened1" data="{json>/AdlAdpItems}">
+                    <viz.data:dimensions>
+                        <viz.data:DimensionDefinition id="Date" name="Rolling 12 Months" value="{json>AgingPeriod}"/>
+                    </viz.data:dimensions>
+                    <viz.data:measures>
+                        <viz.data:MeasureDefinition id="ADL" name="Average Days Late" value="{json>AverageDaysLate}"  />
+                        <viz.data:MeasureDefinition id="ADP" name="Average Days To Payment" value="{json>AverageDaysToPayment}"  />
+                    </viz.data:measures>
+                </viz.data:FlattenedDataset>
+
+            </viz:dataset>
+
+            <viz:feeds>
+                <viz.feeds:FeedItem id="ADLMeasure" uid="valueAxis" type="Measure" values="Average Days Late,Average Days To Payment" />
+                   <!-- <viz.feeds:FeedItem id="ADPMeasure" uid="valueAxis2" type="Measure" values="Average Days To Payment"/> -->
+                <viz.feeds:FeedItem id="DateDimension" uid="categoryAxis" type="Dimension" values="Rolling 12 Months" />
+            </viz:feeds>
+        </viz:VizFrame>
+
+    </content>
+
+</Popover>

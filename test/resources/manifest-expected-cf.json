@@ -66,9 +66,9 @@
                 "manifest-configure": {
                     "semanticObject": "Manifest",
                     "action": "configure",
-                    "icon": "sap-icon://settings",
-                    "title": "{{appTitle}}",
-                    "subTitle": "{{subTitle}}",
+                    "icon": "id1Icon",
+                    "title": "id1Title",
+                    "subTitle": "id1Subtitle",
                     "deviceTypes": {
                         "desktop": true,
                         "tablet": true,

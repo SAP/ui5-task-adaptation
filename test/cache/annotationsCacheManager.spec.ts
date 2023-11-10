@@ -24,31 +24,62 @@ describe("AnnotationsCacheManager", () => {
     afterEach(() => {
         sandbox.restore();
         cacheManager.deleteTemp();
+        delete configuration.enableAnnotationCache;
     });
 
 
-    it("should read from temp with the same metadata", async () => {
-        const { downloadCalled, promisesPerLanguage } = await prepareTest({ changedOn: "2100.01.01" }, { changedOn: "2100.01.01" });
+    it("should read from temp with the same metadata with annotation cache enabled", async () => {
+        const { downloadCalled, promisesPerLanguage } = await prepareTest({ changedOn: "2100.01.01" }, { changedOn: "2100.01.01" }, true);
         expect(downloadCalled).to.be.false;
         expect((await promisesPerLanguage[0])).to.eql({ language: "EN", xml: "content1" });
     });
 
+    it("should download with the same metadata with annotation cache disabled", async () => {
+        const { downloadCalled, promisesPerLanguage } = await prepareTest({ changedOn: "2100.01.01" }, { changedOn: "2100.01.01" });
+        expect(downloadCalled).to.be.true;
+        expect((await promisesPerLanguage[0])).to.eql({ language: "EN", xml: "content2" });
+    });
 
-    it("should download with different metadata", async () => {
+    it("should download with different metadata with annotation cache enabled", async () => {
+        const { downloadCalled, promisesPerLanguage } = await prepareTest({ changedOn: "2100.01.01" }, { changedOn: "2100.01.02" }, true);
+        expect(downloadCalled).to.be.true;
+        expect((await promisesPerLanguage[0])).to.eql({ language: "EN", xml: "content2" });
+    });
+
+    it("should download with different metadata with annotation cache disabled", async () => {
         const { downloadCalled, promisesPerLanguage } = await prepareTest({ changedOn: "2100.01.01" }, { changedOn: "2100.01.02" });
         expect(downloadCalled).to.be.true;
         expect((await promisesPerLanguage[0])).to.eql({ language: "EN", xml: "content2" });
     });
 
+    it("should download without temp metadata with annotation cache enabled", async () => {
+        const { downloadCalled, promisesPerLanguage } = await prepareTest(undefined, { changedOn: "2100.01.02" }, true);
+        expect(downloadCalled).to.be.true;
+        expect((await promisesPerLanguage[0])).to.eql({ language: "EN", xml: "content2" });
+    });
 
-    it("should download without temp metadata", async () => {
+    it("should download without temp metadata with annotation cache disabled", async () => {
         const { downloadCalled, promisesPerLanguage } = await prepareTest(undefined, { changedOn: "2100.01.02" });
         expect(downloadCalled).to.be.true;
         expect((await promisesPerLanguage[0])).to.eql({ language: "EN", xml: "content2" });
     });
 
+    it("should download having different metadata with annotation cache enabled", async () => {
+        const { downloadCalled, promisesPerLanguage } = await prepareTest({ changedOn: "2100.01.01" }, { changedOn: "2100.01.02" }, true);
+        expect(downloadCalled).to.be.true;
+        expect((await promisesPerLanguage[0])).to.eql({ language: "EN", xml: "content2" });
+    });
 
-    async function prepareTest(tempMetadata: any, metadata: any) {
+    it("should download having different metadata with annotation cache disabled", async () => {
+        const { downloadCalled, promisesPerLanguage } = await prepareTest({ changedOn: "2100.01.01" }, { changedOn: "2100.01.02" });
+        expect(downloadCalled).to.be.true;
+        expect((await promisesPerLanguage[0])).to.eql({ language: "EN", xml: "content2" });
+    });
+
+    async function prepareTest(tempMetadata: any, metadata: any, enableAnnotationCache: boolean = false) {
+        if (enableAnnotationCache) {
+            configuration.enableAnnotationCache = enableAnnotationCache;
+        }
         const abapRepoManager = new AbapRepoManager(configuration);
         sandbox.stub(abapRepoManager, "getAnnotationMetadata").resolves(metadata);
 

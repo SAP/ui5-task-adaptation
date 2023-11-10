@@ -9,7 +9,8 @@ export interface IConfiguration {
     destination?: string;
     credentials?: IAuth;
     type?: "cf" | "abap";
-    languages?: string[]
+    languages?: string[];
+    enableAnnotationCache?: boolean;
 }
 
 export interface IProjectOptions {
@@ -67,6 +68,7 @@ export interface IAppVariantInfo {
     id: string;
     reference: string;
     manifest: IAppVariantManifest;
+    manifestChanges: Array<IChange>;
 }
 
 export interface IAppVariantManifest {

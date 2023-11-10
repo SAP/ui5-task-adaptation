@@ -17,8 +17,8 @@ module.exports = ({ workspace, options, taskUtil }: ITaskParameters) => {
         const appVariantResources = await AppVariantManager.getAppVariantResources(workspace);
         const appVariantInfo = await AppVariantManager.process(appVariantResources, options.projectNamespace, taskUtil);
         const baseAppFiles = await processor.getBaseAppFiles(appVariantInfo.reference);
-        const baseAppResources = await BaseAppManager.process(baseAppFiles, appVariantInfo, options, processor);
-        await Promise.all(appVariantResources.concat(baseAppResources).map(resource => workspace.write(resource)));
+        const { resources } = await BaseAppManager.process(baseAppFiles, appVariantInfo, options, processor);
+        await Promise.all(appVariantResources.concat(resources).map(resource => workspace.write(resource)));
     }
 
     return process(workspace, taskUtil);

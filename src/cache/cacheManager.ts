@@ -45,6 +45,7 @@ export default abstract class CacheManager {
 
 
     isMetadataSame(tempMetadata: IMetadata, metadata: IMetadata) {
+        // TODO: Implement correct metadata comparision.
         return tempMetadata && metadata && tempMetadata.changedOn === metadata.changedOn;
     }
 

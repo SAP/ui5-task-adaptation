@@ -1,5 +1,4 @@
 import * as chai from "chai";
-import * as path from "path";
 import * as sinon from "sinon";
 
 import { IAppVariantInfo, IAppVariantManifest, IChange } from "../src/model/types";
@@ -8,7 +7,6 @@ import AppVariantManager from "../src/appVariantManager";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./util/testUtil";
 
-const Resource = require("@ui5/fs/lib/Resource");
 const { expect } = chai;
 
 describe("AppVariantManager", () => {
@@ -18,11 +16,13 @@ describe("AppVariantManager", () => {
     let manifest: IAppVariantManifest;
     let workspace: any;
 
+    const NAMESPACE = "ns";
+
     beforeEach(async () => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
 
     before(async () => {
-        const projectMeta = await TestUtil.getWorkspace("appVariant1");
+        const projectMeta = await TestUtil.getWorkspace("appVariant1", NAMESPACE);
         workspace = projectMeta.workspace;
         taskUtil = projectMeta.taskUtil;
         manifest = JSON.parse(TestUtil.getResource("appVariant1/webapp/manifest.appdescr_variant"));
@@ -34,24 +34,35 @@ describe("AppVariantManager", () => {
     describe("when process appvariant resources", () => {
 
         let appVariantInfo: IAppVariantInfo;
+        const manifestChanges = TestUtil.getResourceJson("appVariant1/webapp/changes/manifest/id_1696839317668_changeInbound.change");
 
         before(async () => {
             appVariantResources = await AppVariantManager.getAppVariantResources(workspace);
-            appVariantInfo = await AppVariantManager.process(appVariantResources, "ns", taskUtil);
+            appVariantInfo = await AppVariantManager.process(appVariantResources, NAMESPACE, taskUtil);
         });
 
         it("should get appVariant info and adjsted manifest", () => {
             expect(appVariantInfo).to.eql({
                 id: "customer.com.sap.application.variant.id",
                 reference: "com.sap.base.app.id",
-                manifest
+                manifest,
+                manifestChanges: [manifestChanges]
             });
         });
 
         it("should adjust .properties path", () => {
+            expect(appVariantResources.some(resource =>
+                resource.getPath() === "/resources/ns/customer_com_sap_application_variant_id/i18n/i18n.properties")).to.be.true;
+        });
+
+        it("should include also other changes", () => {
             expect(appVariantResources.map(resource => resource.getPath())).to.have.members([
-                "/manifest.appdescr_variant", // we don't adjust the path since we omit it anyway
-                "/customer_com_sap_application_variant_id/i18n/i18n.properties"
+                "/resources/ns/manifest.appdescr_variant", // we don't adjust the path since we omit it anyway
+                "/resources/ns/customer_com_sap_application_variant_id/i18n/i18n.properties",
+                "/resources/ns/changes/fragments/AdlChart.fragment.xml",
+                "/resources/ns/changes/id_1696839317667_propertyChange.change",
+                "/resources/ns/changes/coding/id_12345.js",
+                "/resources/ns/changes/manifest/id_1696839317668_changeInbound.change"
             ]);
         });
 
@@ -65,27 +76,33 @@ describe("AppVariantManager", () => {
     });
 
     describe("when process appvariant resources with resources path", () => {
-        let clones: any[]
 
         before(async () => {
             appVariantResources = await AppVariantManager.getAppVariantResources(workspace);
-            clones = await Promise.all(appVariantResources.map(resource => clone(resource, "ns")));
-            await AppVariantManager.process(clones, "ns", taskUtil);
+            await AppVariantManager.process(appVariantResources, "ns", taskUtil);
         });
 
         it("should adjust .properties path", () => {
-            expect(clones.map(resource => resource.getPath())).to.have.members([
+            expect(appVariantResources.map(resource => resource.getPath())).to.have.members([
                 "/resources/ns/manifest.appdescr_variant", // we don't adjust the path since we omit it anyway
-                "/resources/ns/customer_com_sap_application_variant_id/i18n/i18n.properties"
+                "/resources/ns/customer_com_sap_application_variant_id/i18n/i18n.properties",
+                "/resources/ns/changes/manifest/id_1696839317668_changeInbound.change",
+                "/resources/ns/changes/id_1696839317667_propertyChange.change",
+                "/resources/ns/changes/fragments/AdlChart.fragment.xml",
+                "/resources/ns/changes/coding/id_12345.js"
             ]);
         });
+
+        it("shouldn't rename changes/manifest", async () => await assertRename(appVariantResources, "manifest/id_1696839317668_changeInbound.change"));
+        it("shouldn't rename changes/coding", async () => await assertRename(appVariantResources, "coding/id_12345.js"));
+        it("shouldn't rename changes/fragments", async () => await assertRename(appVariantResources, "fragments/AdlChart.fragment.xml"));
+        it("should rename in changes root folder", async () => await assertRename(appVariantResources, "id_1696839317667_propertyChange.change", "appVariant1-renamed/webapp"));
+
     });
 
 });
 
-async function clone(resource: any, namespace: string) {
-    const clone = { ...resource };
-    clone.path = path.join("/resources", namespace, clone._path);
-    clone.string = await resource.getString();
-    return new Resource(clone);
+async function assertRename(clones: any[], filename: string, testResourcesFolder = "appVariant1/webapp") {
+    const changeInboundChange = await TestUtil.getResourceByName(clones, `/resources/ns/changes/${filename}`);
+    expect(changeInboundChange).to.eql(TestUtil.getResource(`${testResourcesFolder}/changes/${filename}`));
 }

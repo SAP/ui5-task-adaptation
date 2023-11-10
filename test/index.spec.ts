@@ -52,18 +52,21 @@ describe("Index", () => {
         await runUi5TaskAdaptation(OPTIONS);
         expect(html5RepoManagerStub.getCalls().length).to.equal(0);
     });
-
 });
 
 const runUi5TaskAdaptation = async (options: IProjectOptions) => {
-    const { workspace, taskUtil } = await TestUtil.getWorkspace("appVariant1");
+    const { workspace, taskUtil } = await TestUtil.getWorkspace("appVariant1", options.projectNamespace);
     const workspaceSpied = sinon.spy(workspace, "write");
     await index({ workspace, options: options, taskUtil });
     const resourcePaths = workspaceSpied.getCalls().map(call => call.args[0].getPath());
     expect(resourcePaths).to.have.members([
-        "/customer_com_sap_application_variant_id/i18n/i18n.properties",
-        "/manifest.appdescr_variant",
-        "/resources/ns/manifest.json"
+        "/resources/ns/customer_com_sap_application_variant_id/i18n/i18n.properties",
+        "/resources/ns/manifest.appdescr_variant",
+        "/resources/ns/manifest.json",
+        "/resources/ns/changes/id_1696839317667_propertyChange.change",
+        "/resources/ns/changes/manifest/id_1696839317668_changeInbound.change",
+        "/resources/ns/changes/fragments/AdlChart.fragment.xml",
+        "/resources/ns/changes/coding/id_12345.js"
     ]);
     const tempResources = await cacheManager.readTemp();
     expect([...tempResources.keys()]).to.have.members(["/manifest.json"]);

@@ -1,32 +1,44 @@
-import * as path from "path";
-
-import { IAppVariantInfo, IAppVariantManifest, IBaseAppInfo, IChange, IProjectOptions } from "./model/types";
+import { IAppVariantInfo, IBaseAppInfo, IProjectOptions } from "./model/types";
+import { renameResources, replaceDots } from "./util/commonUtil";
 
 import BuildStrategy from "./buildStrategy";
 import IProcessor from "./processors/processor";
 import ResourceUtil from "./util/resourceUtil";
-import { replaceDots } from "./util/commonUtil";
+import { posix as path } from "path";
 
 const { RegistrationBuild, ApplyUtil, Applier, Change } = require("../dist/bundle");
 const resourceFactory = require("@ui5/fs/lib/resourceFactory");
 const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManager");
 
+export interface IBaseAppResources {
+    resources: any[];
+    manifestInfo: IManifestInfo;
+}
+
+export interface IManifestInfo {
+    id: string;
+    version: string;
+}
+
 export default class BaseAppManager {
 
-    static async process(baseAppFiles: Map<string, string>, appVariantInfo: IAppVariantInfo, options: IProjectOptions, processor: IProcessor): Promise<any[]> {
+    static async process(baseAppFiles: Map<string, string>, appVariantInfo: IAppVariantInfo, options: IProjectOptions, processor: IProcessor): Promise<IBaseAppResources> {
         const baseAppManifest = this.getBaseAppManifest(baseAppFiles);
         const { id, version } = this.getManifestInfo(baseAppManifest.content);
 
-        const renamedBaseAppFiles = this.renameBaseApp(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
+        const renamedBaseAppFiles = renameResources(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
         const { filepath, content } = this.getBaseAppManifest(renamedBaseAppFiles);
         await processor.updateLandscapeSpecificContent(content, renamedBaseAppFiles);
         this.fillAppVariantIdHierarchy(processor, id, version, content);
         this.updateAdaptationProperties(content);
         const i18nBundleName = replaceDots(appVariantInfo.id);
-        await this.applyDescriptorChanges(content, appVariantInfo.manifest, i18nBundleName);
+        await this.applyDescriptorChanges(content, appVariantInfo, i18nBundleName);
         renamedBaseAppFiles.set(filepath, JSON.stringify(content));
 
-        return this.writeToWorkspace(renamedBaseAppFiles, options.projectNamespace);
+        return {
+            resources: this.writeToWorkspace(renamedBaseAppFiles, options.projectNamespace),
+            manifestInfo: this.getManifestInfo(content)
+        }
     }
 
 
@@ -41,32 +53,10 @@ export default class BaseAppManager {
     }
 
 
-    static getManifestInfo(manifest: any) {
+    static getManifestInfo(manifest: any): IManifestInfo {
         const id = manifest["sap.app"]?.id as string;
         const version = manifest["sap.app"]?.applicationVersion?.version as string;
         return { id, version };
-    }
-
-
-    static renameBaseApp(baseAppFiles: Map<string, string>, search: string, replacement: string): Map<string, string> {
-        log.verbose("Renaming base app resources to appVariant id");
-        const dotToSlash = (update: string) => update.split(".").join("\/");
-        const dotsEscape = (update: string) => update.split(".").join("\\.");
-        const replaces = [
-            {
-                regexp: new RegExp(dotsEscape(search), "g"),
-                replacement
-            },
-            {
-                regexp: new RegExp(dotToSlash(search), "g"),
-                replacement: dotToSlash(replacement)
-            }
-        ];
-        const renamed = new Map();
-        baseAppFiles.forEach((content: string, filepath: string) => {
-            renamed.set(filepath, replaces.reduce((p, c) => p.replace(c.regexp, c.replacement), content));
-        });
-        return renamed;
     }
 
 
@@ -104,14 +94,19 @@ export default class BaseAppManager {
     }
 
 
-    static async applyDescriptorChanges(baseAppManifest: any, appVariantManifest: IAppVariantManifest, i18nBundleName: string) {
+    static async applyDescriptorChanges(baseAppManifest: any, appVariantInfo: IAppVariantInfo, i18nBundleName: string) {
         log.verbose("Applying appVariant changes");
         const strategy = new BuildStrategy(RegistrationBuild, ApplyUtil, i18nBundleName);
-        if (appVariantManifest.layer) {
-            appVariantManifest.content?.forEach(item => item.layer = appVariantManifest.layer);
+        const { manifest } = appVariantInfo;
+        const allChanges = [
+            ...manifest.content,
+            ...appVariantInfo.manifestChanges
+        ];
+        if (manifest.layer) {
+            allChanges.forEach(item => item.layer = manifest.layer);
         }
-        const changesContent = appVariantManifest.content?.map((change: IChange) => new Change(change));
-        if (changesContent) {
+        const changesContent: Array<typeof Change> = allChanges.map(change => new Change(change));
+        if (changesContent.length > 0) {
             await Applier.applyChanges(baseAppManifest, changesContent, strategy);
         }
     }
@@ -139,5 +134,5 @@ export default class BaseAppManager {
 
 const getPath = (filename: string, projectNamespace: string) => {
     const rootFolder = ResourceUtil.getRootFolder(projectNamespace);
-    return path.resolve(path.join(rootFolder, filename));
+    return path.join(rootFolder, filename);
 };
