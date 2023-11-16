@@ -52,6 +52,22 @@ describe("CommonUtil", () => {
             const expected = "This is a apps/customer.ns.test-[]/{}()*+?^$|.app.var (or apps/customer/ns/test-[]/{}()*+?^$|/app/var), really nice apps/customer.ns.test-[]/{}()*+?^$|.app.var (or apps/customer/ns/test-[]/{}()*+?^$|/app/var), but not a customer.ns.test-[]/{}()*+?^$|.app.var (or customer/ns/test-[]/{}()*+?^$|/app/var)"
             assertRename(input, expected, search, replacement);
         });
+
+        it("should replace search string without dots with replacement with dots", () => {
+            const search = "zroomv2fs"
+            const replacement = "customer.deploytestzroomv2fs.variant1";
+            const input = "This is a url1/zroomv2fs/url2"
+            const expected = "This is a url1/customer.deploytestzroomv2fs.variant1/url2"
+            assertRename(input, expected, search, replacement);
+        });
+
+        it("should replace search string without dots", () => {
+            const search = "zroomv2fs"
+            const replacement = "deploytestzroomv2fs";
+            const input = "This is a url1/zroomv2fs/url2"
+            const expected = "This is a url1/deploytestzroomv2fs/url2"
+            assertRename(input, expected, search, replacement);
+        });
     });
 
     function assertRename(inputString: string, expectedString: string, search: string, replacement: string) {

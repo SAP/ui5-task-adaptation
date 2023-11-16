@@ -13,33 +13,40 @@ export function validateObject<T extends Object>(options: T, properties: Array<k
 
 
 export function renameResources(files: Map<string, string>, search: string, replacement: string): Map<string, string> {
-	const escapeRegexSpecialChars = (update: string) => update.replaceAll(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+    const escapeRegexSpecialChars = (update: string) => update.replaceAll(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
     // The current regex works if the old Id is contained in the new Id, given
     // that they do not have the same beginning.
     // more complete alternative: /((?<!newIdStart)|(?!newIdEnd))oldId/g
+    let escapedSearch: string;
     if (replacement.includes(search)) {
-		const [before, _] = replacement.split(search);
-		// Matches a position in the string that is not immediately preceded by
-		// the string "before".
-        search = `(?<!${escapeRegexSpecialChars(before)})${escapeRegexSpecialChars(search)}`;
+        const [before, _] = replacement.split(search);
+        // Matches a position in the string that is not immediately preceded by
+        // the string "before".
+        escapedSearch = `(?<!${escapeRegexSpecialChars(before)})${escapeRegexSpecialChars(search)}`;
     } else {
-		search = escapeRegexSpecialChars(search);
-	}
+        escapedSearch = escapeRegexSpecialChars(search);
+    }
 
-	const dotToSlash = (update: string) => update.replaceAll(".", "\/");
-    const replaces = [
-        {
-            regexp: new RegExp(search, "g"),
-            replacement
-        },
-        {
-            regexp: new RegExp(dotToSlash(search), "g"),
-            replacement: dotToSlash(replacement)
+    const dotToSlash = (update: string) => update.replaceAll(".", "\/");
+    const replace = (content: string) => content.replace(new RegExp(escapedSearch, "g"), replacement);
+
+    const replaceWithSlashesOnly = (content: string) => {
+        if (!search.includes(".")) {
+            return content;
         }
-    ];
+        let searchWithSlashes = dotToSlash(escapedSearch);
+        return content.replace(new RegExp(searchWithSlashes, "g"), dotToSlash(replacement));
+    }
+
     const renamed = new Map();
     files.forEach((content: string, filepath: string) => {
-        renamed.set(filepath, replaces.reduce((p, c) => p.replace(c.regexp, c.replacement), content));
+        // Finds the id with dots (test.id) or without dots (id) and replaces it
+        content = replace(content);
+        // Only if the id has dots, these dots will be replaced with slashes
+        // first, and then it will search for the id with slashes and replace
+        // with the appVariantId also with slashes
+        content = replaceWithSlashesOnly(content);
+        renamed.set(filepath, content);
     });
     return renamed;
 }

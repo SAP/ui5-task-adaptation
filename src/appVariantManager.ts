@@ -6,10 +6,7 @@ import { posix as path } from "path";
 
 const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::AppVariantManager");
 
-const OMIT_FILES: string[] = ["manifest.appdescr_variant"];
-const OMIT_FOLDERS: string[] = [];
 const EXTENSIONS = "js,json,xml,html,properties,change,appdescr_variant";
-const MANIFEST_APP_VARIANT = "manifest.appdescr_variant";
 
 export default class AppVariantManager {
 
@@ -51,19 +48,29 @@ export default class AppVariantManager {
     }
 
 
-    static async getAppVariantInfo(appVariantResources: any[]): Promise<IAppVariantInfo> {
+    private static isManifestChange(resource: any) {
         const changesManifestFolder = path.join("changes", "manifest");
+        const dirname = path.dirname(resource.getPath());
+        return dirname.endsWith(changesManifestFolder);
+    }
+
+
+    private static isManifestAppVariant(resource: any) {
+        const MANIFEST_APP_VARIANT = "manifest.appdescr_variant";
+        const basename = path.basename(resource.getPath());
+        return basename === MANIFEST_APP_VARIANT;
+    }
+
+
+    static async getAppVariantInfo(appVariantResources: any[]): Promise<IAppVariantInfo> {
         let manifest;
         const manifestChanges = [];
         for (const resource of appVariantResources) {
-            const resourcePath = resource.getPath();
-            const dirname = path.dirname(resource.getPath());
-            const basename = path.basename(resourcePath);
-            if (basename === MANIFEST_APP_VARIANT) {
+            if (this.isManifestAppVariant(resource)) {
                 manifest = await ResourceUtil.getString(resource).then(JSON.parse);
-            } else if (dirname.endsWith(changesManifestFolder)) {
-                const str = await ResourceUtil.getString(resource);
-                manifestChanges.push(JSON.parse(str));
+            } else if (this.isManifestChange(resource)) {
+                const content = await ResourceUtil.getString(resource);
+                manifestChanges.push(JSON.parse(content));
             }
         }
         if (manifest) {
@@ -87,10 +94,7 @@ export default class AppVariantManager {
 
 
     private static omitFiles(resource: any, taskUtil: any) {
-        const dirname = path.dirname(resource.getPath());
-        const filename = path.basename(resource.getPath());
-        if (OMIT_FILES.includes(filename) ||
-            OMIT_FOLDERS.some(folder => dirname.endsWith(folder))) {
+        if (this.isManifestAppVariant(resource) || this.isManifestChange(resource)) {
             taskUtil.setTag(resource, taskUtil.STANDARD_TAGS.OmitFromBuildResult, true);
         }
     }

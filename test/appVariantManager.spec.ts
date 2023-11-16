@@ -66,12 +66,17 @@ describe("AppVariantManager", () => {
             ]);
         });
 
-        it("should omit manifest.appdescr_variant", () => {
-            const manifestActual = appVariantResources.find(resource => resource.getPath().endsWith("manifest.appdescr_variant"));
-            const i18nActual = appVariantResources.find(resource => resource.getPath().endsWith("i18n.properties"));
-            expect(taskUtil.getTag(manifestActual, taskUtil.STANDARD_TAGS.OmitFromBuildResult)).to.be.true;
-            expect(taskUtil.getTag(i18nActual, taskUtil.STANDARD_TAGS.OmitFromBuildResult)).to.be.undefined;
-        });
+        describe("when omitting appVariant files", () => {
+            it("should omit manifest.appdescr_variant", () => {
+                expect(getOmitFlag(appVariantResources, taskUtil, "manifest.appdescr_variant")).to.be.true;
+            });
+            it("should omit changes/manifest files", () => {
+                expect(getOmitFlag(appVariantResources, taskUtil, "manifest/id_1696839317668_changeInbound.change")).to.be.true;
+            });
+            it("should not omit i18n*.properties files", () => {
+                expect(getOmitFlag(appVariantResources, taskUtil, "i18n.properties")).to.be.undefined;
+            });
+        })
 
     });
 
@@ -105,4 +110,9 @@ describe("AppVariantManager", () => {
 async function assertRename(clones: any[], filename: string, testResourcesFolder = "appVariant1/webapp") {
     const changeInboundChange = await TestUtil.getResourceByName(clones, `/resources/ns/changes/${filename}`);
     expect(changeInboundChange).to.eql(TestUtil.getResource(`${testResourcesFolder}/changes/${filename}`));
+}
+
+function getOmitFlag(resources: any[], taskUtil: any, endsWith: string) {
+    const resource = resources.find(resource => resource.getPath().endsWith(endsWith));
+    return taskUtil.getTag(resource, taskUtil.STANDARD_TAGS.OmitFromBuildResult);
 }
