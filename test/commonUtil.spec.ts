@@ -68,6 +68,38 @@ describe("CommonUtil", () => {
             const expected = "This is a url1/deploytestzroomv2fs/url2"
             assertRename(input, expected, search, replacement);
         });
+
+        it("should not replace search string being part of replacement in input with slashes", () => {
+            const search = "zroomv2fs"
+            const replacement = "customer.zroomv2fs.variant1";
+            const input = "customer/zroomv2fs/variant1/changes/fragments/ConsumerCopyRoomButton.fragment.xml"
+            const expected = "customer/zroomv2fs/variant1/changes/fragments/ConsumerCopyRoomButton.fragment.xml"
+            assertRename(input, expected, search, replacement);
+        });
+
+        it("should not replace search string being part of replacement in input with dots", () => {
+            const search = "zroomv2fs"
+            const replacement = "customer.zroomv2fs.variant1";
+            const input = "customer.zroomv2fs.variant1.changes.fragments.ConsumerCopyRoomButton.fragment.xml"
+            const expected = "customer.zroomv2fs.variant1.changes.fragments.ConsumerCopyRoomButton.fragment.xml"
+            assertRename(input, expected, search, replacement);
+        });
+
+        it("should not replace search string being part of complex replacement in input with dots", () => {
+            const search = "zroomv2fs"
+            const replacement = "cust.omer.zroomv2fs.variant1";
+            const input = "cust.omer.zroomv2fs.variant1.changes.fragments.ConsumerCopyRoomButton.fragment.xml"
+            const expected = "cust.omer.zroomv2fs.variant1.changes.fragments.ConsumerCopyRoomButton.fragment.xml"
+            assertRename(input, expected, search, replacement);
+        });
+
+        it("should not replace search string being part of complex replacement in input with slashes", () => {
+            const search = "zroomv2fs"
+            const replacement = "cust.omer.zroomv2fs.variant1";
+            const input = "cust/omer/zroomv2fs/variant1/changes/fragments/ConsumerCopyRoomButton.fragment.xml"
+            const expected = "cust/omer/zroomv2fs/variant1/changes/fragments/ConsumerCopyRoomButton.fragment.xml"
+            assertRename(input, expected, search, replacement);
+        });
     });
 
     function assertRename(inputString: string, expectedString: string, search: string, replacement: string) {

@@ -1,3 +1,3 @@
-<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0"> 
     <edmx:Include Alias="{@i18n>customer.com.sap.application.variant.id_METADATA}" Namespace="{@i18n>customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU}"/>
 </edmx:Edmx>

@@ -1,7 +1,7 @@
 import * as sinon from "sinon";
 
 import AbapRepoManager from "../src/repositories/abapRepoManager";
-import AnnotationManager from "../src/annotationManager"
+import AnnotationManager from "../src/annotationManager";
 import { IProjectOptions } from "../src/model/types";
 import MockServer from "./util/mockServer";
 import { SinonSandbox } from "sinon";
@@ -28,8 +28,10 @@ describe("AnnotationManager", () => {
     beforeEach(() => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
 
-    const expectedAnnotationName1 = TestUtil.getResourceXml("annotationName1-expected.xml")
+    const expectedAnnotationName1 = TestUtil.getResourceXml("annotationName1-expected.xml");
+    const expectedAnnotationName1WithoutI18NModel = TestUtil.getResourceXml("annotationName1WithoutI18NModel-expected.xml");
     const expectedManifest = TestUtil.getResource("manifest-expected-annotations.json");
+    const expectedManifestForOneLanguage = TestUtil.getResource("manifest-expected-annotations-one-langauge.json");
 
     it("should process annotations", async () => {
         const abapRepoManager = new AbapRepoManager(options.configuration);
@@ -68,14 +70,33 @@ describe("AnnotationManager", () => {
             "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_reise_mduu"
         ]);
         expect(getI18ns(result, "i18n_fr")).to.have.members([
-            "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculer le prix total",
             "customer.com.sap.application.variant.id_AIRLINE=Compagnie aérienne",
             "customer.com.sap.application.variant.id_AIRLINE0=Compagnie aérienne",
             "customer.com.sap.application.variant.id_CUSTOMER=Client",
             "customer.com.sap.application.variant.id_CUSTOMER_VALUE_1=Client valeur",
+            "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculer le prix total",
             "customer.com.sap.application.variant.id_METADATA=Metadonnees",
             "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_voyager_mduu"
         ]);
+    
+    it("should process annotations without enhancing @i18n model if only one language is active", async () => {
+        const abapRepoManager = new AbapRepoManager(options.configuration);
+        MockServer.stubAnnotations(sandbox, abapRepoManager);
+        const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
+        const getAnnotationI18nsSpy = sandbox.spy(annotationManager, "getAdaptedAnnotation" as any);
+        const MANIFEST_FILENAME = "manifest.json";
+        const baseAppFiles = new Map<string, string>([[MANIFEST_FILENAME, manifestString]]);
+        const renamedFiles = renameResources(baseAppFiles, "com.sap.base.app.id", "customer.com.sap.application.variant.id");
+        const manifest = JSON.parse(renamedFiles.get(MANIFEST_FILENAME)!);
+        const result = await annotationManager.process(manifest, ["EN"]);
+        expect(getAnnotationI18nsSpy.getCalls().length).to.eql(0);
+        expect(result.get("annotations/annotation_annotationName1.xml")).to.be.eql(expectedAnnotationName1WithoutI18NModel);
+        expect(manifest).to.be.eql(JSON.parse(expectedManifestForOneLanguage));
+        expect([...result.keys()]).to.have.members([
+            "annotations/annotation_annotationName1.xml",
+            "annotations/annotation_annotationName2.xml",
+        ]);
+    });
     });
 
     describe("when updating @i18n model", () => {

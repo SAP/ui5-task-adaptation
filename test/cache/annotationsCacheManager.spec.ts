@@ -91,7 +91,8 @@ describe("AnnotationsCacheManager", () => {
 
         const annotationManager = new AnnotationManager(configuration, abapRepoManager);
         const createFilesSpy = sandbox.stub(annotationManager, "createAnnotationFile" as any);
-        sandbox.stub(annotationManager, "updateManifest" as any);
+        sandbox.stub(annotationManager, "updateManifestModel" as any);
+        sandbox.stub(annotationManager, "updateManifestDataSources" as any);
         const files = await annotationManager.process(manifestAnnotationOnly, ["EN"]);
         expect([...files.keys()]).to.have.members(["annotations/annotation_annotationName1.xml"]);
         return {

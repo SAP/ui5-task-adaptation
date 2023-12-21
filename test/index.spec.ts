@@ -37,7 +37,7 @@ describe("Index", () => {
         sandbox.stub(cacheManager, "readTempMetadata" as any).callsFake(() => Promise.resolve({ changedOn: "2100.01.01" }));
         sandbox.stub(HTML5RepoManager, "getMetadata").callsFake(() => Promise.resolve({ changedOn: "2100.01.01" }));
         html5RepoManagerStub.callsFake(() => Promise.resolve(baseAppFiles));
-        await runUi5TaskAdaptation(OPTIONS);
+        await runUi5TaskAdaptation(OPTIONS, false);
         expect(html5RepoManagerStub.getCalls().length).to.equal(1);
     });
 
@@ -49,16 +49,37 @@ describe("Index", () => {
         await cacheManager.writeTemp(baseAppFiles, DOWNLOADED_METADATA);
         const html5RepoManagerStub = sandbox.spy(HTML5RepoManager, "getBaseAppFiles");
         sandbox.stub(HTML5RepoManager, "getMetadata").callsFake(() => Promise.resolve(DOWNLOADED_METADATA));
-        await runUi5TaskAdaptation(OPTIONS);
+        await runUi5TaskAdaptation(OPTIONS, false);
         expect(html5RepoManagerStub.getCalls().length).to.equal(0);
+    });
+    
+    it("should read base app files from temp because metadata is the same and add enhanceWith to i18n model in manifest.json", async () => {
+        const DOWNLOADED_METADATA = { changedOn: "2100.01.01" };
+        const baseAppFiles = new Map([
+            ["manifest.json", TestUtil.getResource("manifest.json")]
+        ]);
+        await cacheManager.writeTemp(baseAppFiles, DOWNLOADED_METADATA);
+        const html5RepoManagerStub = sandbox.spy(HTML5RepoManager, "getBaseAppFiles");
+        sandbox.stub(HTML5RepoManager, "getMetadata").callsFake(() => Promise.resolve(DOWNLOADED_METADATA));
+        OPTIONS.configuration.languages = ["EN", "DE"];
+        await runUi5TaskAdaptation(OPTIONS, true);
+        expect(html5RepoManagerStub.getCalls().length).to.equal(0);
+        delete OPTIONS.configuration.languages;
     });
 });
 
-const runUi5TaskAdaptation = async (options: IProjectOptions) => {
+const runUi5TaskAdaptation = async (options: IProjectOptions, hasEnhanceWithForI18NModel: boolean) => {
     const { workspace, taskUtil } = await TestUtil.getWorkspace("appVariant1", options.projectNamespace);
     const workspaceSpied = sinon.spy(workspace, "write");
     await index({ workspace, options: options, taskUtil });
     const resourcePaths = workspaceSpied.getCalls().map(call => call.args[0].getPath());
+    const manifestJsonResource = workspaceSpied.getCalls().find(resource => resource.args[0].getPath().includes("manifest.json")) as any;
+    const manifestJson = JSON.parse(await manifestJsonResource.args[0]?.getString());
+    if (hasEnhanceWithForI18NModel && manifestJson) {
+        expect(Object.keys(manifestJson["sap.ui5"]["models"]["@i18n"])).to.have.members(["type", "settings"]);
+    } else {
+        expect(Object.keys(manifestJson["sap.ui5"]["models"]["@i18n"])).to.not.have.members(["settings"]);
+    }
     expect(resourcePaths).to.have.members([
         "/resources/ns/customer_com_sap_application_variant_id/i18n/i18n.properties",
         "/resources/ns/manifest.appdescr_variant",

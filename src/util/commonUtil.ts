@@ -21,8 +21,10 @@ export function renameResources(files: Map<string, string>, search: string, repl
     if (replacement.includes(search)) {
         const [before, _] = replacement.split(search);
         // Matches a position in the string that is not immediately preceded by
-        // the string "before".
-        escapedSearch = `(?<!${escapeRegexSpecialChars(before)})${escapeRegexSpecialChars(search)}`;
+        // the string "before". Since we won't replace anyway, we should also
+        // ignore one with the slashes.
+        const escapedBefore = escapeRegexSpecialChars(before).replaceAll("\\.", "[\\./]");
+        escapedSearch = `(?<!${escapedBefore})${escapeRegexSpecialChars(search)}`;
     } else {
         escapedSearch = escapeRegexSpecialChars(search);
     }

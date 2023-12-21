@@ -57,11 +57,13 @@ export default class AnnotationManager {
             annotationFiles.set(annotationFileName, annotationXml);
             metaInfo.push({ annotationFileName, annotationName });
         }
-
         if (metaInfo.length > 0) {
-            this.updateManifest(renamedBaseAppManifest, metaInfo, modelName, i18nPathName);
+            this.updateManifestDataSources(renamedBaseAppManifest, metaInfo);
+            if (i18nManager.hasTranslations()) {
+                this.updateManifestModel(renamedBaseAppManifest, modelName, i18nPathName);
+            }
         }
-
+        
         const i18nFiles = i18nManager.createFiles(i18nPathName);
 
         return new Map([...annotationFiles, ...i18nFiles]);
@@ -92,12 +94,11 @@ export default class AnnotationManager {
     }
 
 
-    private updateManifest(renamedBaseAppManifest: any, metaInfo: IAnnotationFiles[], modelName: string, i18nPathName: string) {
+    private updateManifestModel(renamedBaseAppManifest: any, modelName: string, i18nPathName: string) {
         const uri = `${i18nPathName}/i18n.properties`;
         this.enhanceManifestModel(renamedBaseAppManifest, modelName, uri);
         //TODO: switch to this after resolving @i18n custom model
         //this.createManifestModel(renamedBaseAppManifest, modelName, uri);
-        this.updateManifestDataSources(renamedBaseAppManifest, metaInfo);
     }
 
 

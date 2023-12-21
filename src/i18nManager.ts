@@ -223,6 +223,11 @@ export default class I18nManager {
         return key;
     }
 
+
+    hasTranslations() {
+        return this.i18nFileContent.hasTranslations();
+    }
+
     private initPropertyValues(diff: any, propertyValues: PropertyValue[]) {
         propertyValues.forEach(prop => prop.set(diff, this.references));
     }
