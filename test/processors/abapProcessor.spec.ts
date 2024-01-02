@@ -6,7 +6,7 @@ import AnnotationManager from "../../src/annotationManager";
 import BaseAppFilesCacheManager from "../../src/cache/baseAppFilesCacheManager";
 import { IProjectOptions } from "../../src/model/types";
 import { SinonSandbox } from "sinon";
-import TestUtil from "../util/testUtil";
+import TestUtil from "../testUtilities/testUtil";
 import axios from "axios";
 import { expect } from "chai";
 

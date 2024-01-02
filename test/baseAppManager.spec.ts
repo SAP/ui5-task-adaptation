@@ -9,13 +9,47 @@ import AbapRepoManager from "../src/repositories/abapRepoManager";
 import AnnotationManager from "../src/annotationManager";
 import BaseAppFilesCacheManager from "../src/cache/baseAppFilesCacheManager";
 import CFProcessor from "../src/processors/cfProcessor"
-import MockServer from "./util/mockServer";
+import MockServer from "./testUtilities/mockServer";
 import { SinonSandbox } from "sinon";
-import TestUtil from "./util/testUtil";
+import TestUtil from "./testUtilities/testUtil";
 
 const { Applier, Change } = require("../dist/bundle");
 
 const { expect, assert } = chai;
+
+describe("BaseAppManager getManifestInfo", () => {
+
+    it("should replace . with / from i18n bundleName", async () => {
+        const manifestJson = JSON.parse(TestUtil.getResource("manifest.json"));
+        const { i18nPath, id, version } = BaseAppManager.getManifestInfo(manifestJson);
+        expect(i18nPath).to.be.equal("com/sap/base/app/id/i18n/i18n.properties");
+        expect(id).to.be.equal("com.sap.base.app.id");
+        expect(version).to.be.equal("1.0.0");
+    });
+    
+    it("should not replace .properties from i18n bundleUrl", async () => {
+        const manifestJson = JSON.parse(TestUtil.getResource("manifest.json"));
+        manifestJson["sap.app"]["i18n"] = {
+            "bundleUrl": "samplePath/i18n/i18n.properties"
+        }
+        const { i18nPath, id, version } = BaseAppManager.getManifestInfo(manifestJson);
+        expect(i18nPath).to.be.equal("samplePath/i18n/i18n");
+        expect(id).to.be.equal("com.sap.base.app.id");
+        expect(version).to.be.equal("1.0.0");
+    });
+
+    it("should replace .properties from i18n bundleUrl path but keep file extension", async () => {
+        const manifestJson = JSON.parse(TestUtil.getResource("manifest.json"));
+        manifestJson["sap.app"]["i18n"] = {
+            "bundleUrl": "samplePath.properties/i18n/i18n.properties"
+        }
+        const { i18nPath, id, version } = BaseAppManager.getManifestInfo(manifestJson);
+        expect(i18nPath).to.be.equal("samplePath.properties/i18n/i18n");
+        expect(id).to.be.equal("com.sap.base.app.id");
+        expect(version).to.be.equal("1.0.0");
+    });
+
+});
 
 describe("BaseAppManager CF", () => {
     let appVariantInfo: IAppVariantInfo;

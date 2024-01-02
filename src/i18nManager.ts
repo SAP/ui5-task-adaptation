@@ -1,7 +1,7 @@
 import JsonDiffUtil, { IDiffProperty, IJsonContent } from "./util/jsonDiffUtil";
 
 import AnnotationDiffStructureError from "./model/annotationDiffStructureError";
-import { join } from "path";
+import { join } from "path/posix"; // Ensure standardized dir separators to ensure Windows compatibility
 
 // To generate keys, english language is more common, so compare all other
 // languages with it

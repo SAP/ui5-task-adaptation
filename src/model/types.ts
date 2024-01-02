@@ -80,12 +80,20 @@ export interface IAppVariantManifest {
 
 export interface IChange {
     changeType: string;
-    texts: IChangeText;
+    texts?: IChangeText;
     layer?: string;
+    content?: IChangeContent;
 }
 
 export interface IChangeText {
     i18n: string;
+}
+
+export interface IChangeContent {
+    bundleUrl?: string;
+    fallbackLocale?: string;
+    modelId?: string;
+    supportedLocales?: string[];
 }
 
 export interface ITaskParameters {

@@ -1,23 +1,20 @@
 import { IAppVariantInfo, IChange } from "./model/types";
-import { renameResources, replaceDots } from "./util/commonUtil";
+import { renameResources } from "./util/commonUtil";
 
 import ResourceUtil from "./util/resourceUtil";
 import { posix as path } from "path";
 
 const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::AppVariantManager");
-
 const EXTENSIONS = "js,json,xml,html,properties,change,appdescr_variant";
 
 export default class AppVariantManager {
 
     static async process(appVariantResources: any[], projectNamespace: string, taskUtil: any): Promise<IAppVariantInfo> {
         const appVariantInfo = await this.getAppVariantInfo(appVariantResources);
-        const i18nBundleName = replaceDots(appVariantInfo.id);
         for (const resource of appVariantResources) {
-            this.writeI18nToModule(resource, projectNamespace, i18nBundleName);
             this.omitFiles(resource, taskUtil);
         }
-        this.adjustAddNewModelEnhanceWith(appVariantInfo?.manifest?.content ?? [], i18nBundleName);
+        this.patchMissingTextsNode(appVariantInfo?.manifest?.content ?? []);
         await this.renameChanges(appVariantResources, projectNamespace, appVariantInfo);
         return appVariantInfo;
     }
@@ -85,31 +82,26 @@ export default class AppVariantManager {
     }
 
 
-    static writeI18nToModule(resource: any, projectNamespace: string, i18nBundleName: string) {
-        if (path.extname(resource.getPath()) === ".properties") {
-            let rootFolder = ResourceUtil.getRootFolder(projectNamespace);
-            resource.setPath(path.join(rootFolder, i18nBundleName, resource.getPath().substring(rootFolder.length)));
-        }
-    }
-
-
     private static omitFiles(resource: any, taskUtil: any) {
         if (this.isManifestAppVariant(resource) || this.isManifestChange(resource)) {
             taskUtil.setTag(resource, taskUtil.STANDARD_TAGS.OmitFromBuildResult, true);
         }
     }
 
-
-    private static adjustAddNewModelEnhanceWith(changes: IChange[], i18nBundleName: string) {
+    /**
+     * We need to add texts properties to changes because not all have texts property.
+     * Changes without texts property can causes issues in bundle.js
+     * This is needed for now, and will be removed as soon as change merger in openUI5 is updated
+     * @param changes 
+     */
+    private static patchMissingTextsNode(changes: IChange[]) {
         log.verbose("Adjusting appdescr_ui5_addNewModelEnhanceWith with module");
         for (const change of changes) {
             if (change.changeType === "appdescr_ui5_addNewModelEnhanceWith") {
-                if (!change.texts) {
-                    change.texts = { i18n: "i18n/i18n.properties" };
+                if (!change.texts && change.content?.bundleUrl) {
+                    change.texts = { i18n: change.content.bundleUrl };
                 }
-                change.texts.i18n = i18nBundleName + "/" + change.texts.i18n;
             }
         }
     }
-
 }

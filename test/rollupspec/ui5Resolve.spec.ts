@@ -7,7 +7,7 @@ import * as sinon from "sinon";
 import * as util from "util";
 
 import { SinonSandbox } from "sinon";
-import TestUtil from "../util/testUtil";
+import TestUtil from "../testUtilities/testUtil";
 import ui5Resolve from "../../scripts/rollup/ui5Resolve";
 
 const { resourceFactory } = require("@ui5/fs");

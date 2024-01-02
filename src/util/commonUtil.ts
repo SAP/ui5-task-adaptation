@@ -1,4 +1,4 @@
-export function replaceDots(value: string) {
+export function dotToUnderscore(value: string) {
     return value.replace(/\./g, "_");
 }
 
@@ -11,9 +11,11 @@ export function validateObject<T extends Object>(options: T, properties: Array<k
     }
 }
 
+export function escapeRegex(update: string) {
+    return update.replaceAll(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+}
 
 export function renameResources(files: Map<string, string>, search: string, replacement: string): Map<string, string> {
-    const escapeRegexSpecialChars = (update: string) => update.replaceAll(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
     // The current regex works if the old Id is contained in the new Id, given
     // that they do not have the same beginning.
     // more complete alternative: /((?<!newIdStart)|(?!newIdEnd))oldId/g
@@ -23,10 +25,10 @@ export function renameResources(files: Map<string, string>, search: string, repl
         // Matches a position in the string that is not immediately preceded by
         // the string "before". Since we won't replace anyway, we should also
         // ignore one with the slashes.
-        const escapedBefore = escapeRegexSpecialChars(before).replaceAll("\\.", "[\\./]");
-        escapedSearch = `(?<!${escapedBefore})${escapeRegexSpecialChars(search)}`;
+        const escapedBefore = escapeRegex(before).replaceAll("\\.", "[\\./]");
+        escapedSearch = `(?<!${escapedBefore})${escapeRegex(search)}`;
     } else {
-        escapedSearch = escapeRegexSpecialChars(search);
+        escapedSearch = escapeRegex(search);
     }
 
     const dotToSlash = (update: string) => update.replaceAll(".", "\/");
@@ -51,4 +53,9 @@ export function renameResources(files: Map<string, string>, search: string, repl
         renamed.set(filepath, content);
     });
     return renamed;
+}
+
+export function removePropertiesExtension(filePath: string) {
+    const lastIndexOf = filePath.lastIndexOf(".properties");
+    return filePath.substring(0, lastIndexOf);
 }

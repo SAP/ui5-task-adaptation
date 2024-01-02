@@ -1,12 +1,13 @@
 import { IAppVariantInfo, IBaseAppInfo, IProjectOptions } from "./model/types";
-import { renameResources, replaceDots } from "./util/commonUtil";
+import { renameResources } from "./util/commonUtil";
 
 import BuildStrategy from "./buildStrategy";
 import IProcessor from "./processors/processor";
 import ResourceUtil from "./util/resourceUtil";
 import { posix as path } from "path";
+import { removePropertiesExtension } from "./util/commonUtil";
 
-const { RegistrationBuild, ApplyUtil, Applier, Change } = require("../dist/bundle");
+const { RegistrationBuild, Applier, Change } = require("../dist/bundle");
 const resourceFactory = require("@ui5/fs/lib/resourceFactory");
 const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManager");
 
@@ -15,24 +16,27 @@ export interface IBaseAppResources {
     manifestInfo: IManifestInfo;
 }
 
-export interface IManifestInfo {
+export interface IManifestIdVersion {
     id: string;
     version: string;
+}
+
+export interface IManifestInfo extends IManifestIdVersion {
+    i18nPath: string;
 }
 
 export default class BaseAppManager {
 
     static async process(baseAppFiles: Map<string, string>, appVariantInfo: IAppVariantInfo, options: IProjectOptions, processor: IProcessor): Promise<IBaseAppResources> {
         const baseAppManifest = this.getBaseAppManifest(baseAppFiles);
-        const { id, version } = this.getManifestInfo(baseAppManifest.content);
+        const { id, version } = this.getIdVersion(baseAppManifest.content);
 
         const renamedBaseAppFiles = renameResources(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
         const { filepath, content } = this.getBaseAppManifest(renamedBaseAppFiles);
         await processor.updateLandscapeSpecificContent(content, renamedBaseAppFiles);
         this.fillAppVariantIdHierarchy(processor, id, version, content);
         this.updateAdaptationProperties(content);
-        const i18nBundleName = replaceDots(appVariantInfo.id);
-        await this.applyDescriptorChanges(content, appVariantInfo, i18nBundleName);
+        await this.applyDescriptorChanges(content, appVariantInfo);
         renamedBaseAppFiles.set(filepath, JSON.stringify(content));
 
         return {
@@ -52,13 +56,34 @@ export default class BaseAppManager {
         content["sap.ui5"].isCloudDevAdaptation = true;
     }
 
-
-    static getManifestInfo(manifest: any): IManifestInfo {
+    static getIdVersion(manifest: any): IManifestIdVersion {
         const id = manifest["sap.app"]?.id as string;
         const version = manifest["sap.app"]?.applicationVersion?.version as string;
         return { id, version };
     }
 
+    static getManifestInfo(manifest: any): IManifestInfo {
+        const { id, version } = this.getIdVersion(manifest);
+        const i18nNode = manifest["sap.app"]?.i18n;
+        const i18nPath = this.extractI18nPathFromManifest(id, i18nNode);
+        return { id, version, i18nPath };
+    }
+
+    private static extractI18nPathFromManifest(sapAppId: string, i18nNode: any) {
+        if (typeof i18nNode === "object") {
+            return i18nNode["bundleUrl"] ? this.extractI18NFromBundleUrl(i18nNode) : this.extractI18NFromBundleName(i18nNode, sapAppId);
+        } else {
+            return `${sapAppId?.replaceAll(".", "/")}/${i18nNode}`;
+        }
+    }
+    
+    private static extractI18NFromBundleName(i18nNode: any, sapAppId: string) {
+        return i18nNode["bundleName"].replace(sapAppId, "").replaceAll(".", "/").substring(1);
+    }
+
+    private static extractI18NFromBundleUrl(i18nNode: any) {
+        return removePropertiesExtension(i18nNode["bundleUrl"]);
+    }
 
     private static getBaseAppManifest(baseAppFiles: Map<string, string>): IBaseAppInfo {
         let filepath = [...baseAppFiles.keys()].find(filepath => filepath.endsWith("manifest.json"));
@@ -94,9 +119,9 @@ export default class BaseAppManager {
     }
 
 
-    static async applyDescriptorChanges(baseAppManifest: any, appVariantInfo: IAppVariantInfo, i18nBundleName: string) {
+    static async applyDescriptorChanges(baseAppManifest: any, appVariantInfo: IAppVariantInfo) {
         log.verbose("Applying appVariant changes");
-        const strategy = new BuildStrategy(RegistrationBuild, ApplyUtil, i18nBundleName);
+        const strategy = new BuildStrategy(RegistrationBuild);
         const { manifest } = appVariantInfo;
         const allChanges = [
             ...manifest.content,

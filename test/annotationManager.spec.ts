@@ -3,9 +3,9 @@ import * as sinon from "sinon";
 import AbapRepoManager from "../src/repositories/abapRepoManager";
 import AnnotationManager from "../src/annotationManager";
 import { IProjectOptions } from "../src/model/types";
-import MockServer from "./util/mockServer";
+import MockServer from "./testUtilities/mockServer";
 import { SinonSandbox } from "sinon";
-import TestUtil from "./util/testUtil";
+import TestUtil from "./testUtilities/testUtil";
 import { expect } from "chai";
 import { renameResources } from "../src/util/commonUtil";
 

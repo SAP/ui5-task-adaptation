@@ -90,4 +90,14 @@ export default class TestUtil {
     static getResourceJsonByName(resources: any[], name: string): Promise<any> {
         return this.getResourceByName(resources, name).then((string) => JSON.parse(string));
     }
+
+    /**
+     * 
+     * @param resources Factory for filter predicate to filter not omited resources
+     * @param taskUtil 
+     * @returns Filter function
+     */
+    static byIsOmited(taskUtil: any) {
+        return (resource: any) => !taskUtil.getTag(resource, taskUtil.STANDARD_TAGS.OmitFromBuildResult);
+    }
 }
