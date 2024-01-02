@@ -4,12 +4,7 @@
         "id": "customer.com.sap.application.variant.id",
         "type": "application",
         "i18n": {
-            "bundleUrl": "i18n/i18n.properties",
-            "enhanceWith": [
-                {
-                    "bundleName": "customer.com.sap.application.variant.id.customer_com_sap_application_variant_id.i18n.i18n"
-                }
-            ]
+            "bundleUrl": "i18n/i18n.properties"
         },
         "applicationVersion": {
             "version": "1.0.0"

@@ -5,7 +5,7 @@ import AnnotationManager from "../src/annotationManager"
 import { IProjectOptions } from "../src/model/types";
 import RequestUtil from "../src/util/requestUtil";
 import { SinonSandbox } from "sinon";
-import TestUtil from "./util/testUtil";
+import TestUtil from "./testUtilities/testUtil";
 import { expect } from "chai";
 
 describe("AnnotationManager Failed Request", () => {

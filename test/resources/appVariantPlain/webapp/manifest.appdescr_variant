@@ -1,0 +1,11 @@
+{
+    "fileName": "manifest",
+    "layer": "CUSTOMER_BASE",
+    "fileType": "appdescr_variant",
+    "reference": "com.sap.base.app.id",
+    "id": "customer.com.sap.application.variant.id",
+    "namespace": "apps/com.sap.base.app.id/appVariants/customer.com.sap.application.variant.id/",
+    "content": [
+        
+    ]
+}

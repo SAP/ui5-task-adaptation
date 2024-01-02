@@ -6,7 +6,7 @@ import AnnotationManager from "../../src/annotationManager";
 import AnnotationsCacheManager from "../../src/cache/annotationsCacheManager";
 import { IConfiguration } from "../../src/model/types";
 import { SinonSandbox } from "sinon";
-import TestUtil from "../util/testUtil";
+import TestUtil from "../testUtilities/testUtil";
 
 const { expect } = chai;
 

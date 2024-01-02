@@ -8,7 +8,7 @@ import Html5RepoManager from "../../src/repositories/html5RepoManager";
 import { IProjectOptions } from "../../src/model/types";
 import RequestUtil from "../../src/util/requestUtil";
 import { SinonSandbox } from "sinon";
-import TestUtil from "../util/testUtil";
+import TestUtil from "../testUtilities/testUtil";
 import { eFilters } from "@sap/cf-tools";
 
 const { assert, expect } = chai;

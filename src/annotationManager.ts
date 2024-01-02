@@ -37,7 +37,7 @@ export default class AnnotationManager {
 
 
     async process(renamedBaseAppManifest: any, languages: string[]) {
-        const { id } = BaseAppManager.getManifestInfo(renamedBaseAppManifest);
+        const { id } = BaseAppManager.getIdVersion(renamedBaseAppManifest);
         BaseAppManager.validateProperty(id, "sap.app/id");
 
         const normalisedId = this.normalizeAppVariantId(id);

@@ -1,11 +1,12 @@
 import * as chai from "chai";
 import * as sinon from "sinon";
 
-import { IAppVariantInfo, IAppVariantManifest, IChange } from "../src/model/types";
+import { IAppVariantInfo, IAppVariantManifest } from "../src/model/types";
 
 import AppVariantManager from "../src/appVariantManager";
 import { SinonSandbox } from "sinon";
-import TestUtil from "./util/testUtil";
+import TestUtil from "./testUtilities/testUtil";
+const { byIsOmited } = TestUtil;
 
 const { expect } = chai;
 
@@ -26,9 +27,6 @@ describe("AppVariantManager", () => {
         workspace = projectMeta.workspace;
         taskUtil = projectMeta.taskUtil;
         manifest = JSON.parse(TestUtil.getResource("appVariant1/webapp/manifest.appdescr_variant"));
-        manifest.content.filter((change: IChange) => change.changeType === "appdescr_ui5_addNewModelEnhanceWith").forEach((change: IChange) => {
-            change.texts.i18n = "customer_com_sap_application_variant_id/" + change.texts.i18n;
-        });
     });
 
     describe("when process appvariant resources", () => {
@@ -50,19 +48,16 @@ describe("AppVariantManager", () => {
             });
         });
 
-        it("should adjust .properties path", () => {
-            expect(appVariantResources.some(resource =>
-                resource.getPath() === "/resources/ns/customer_com_sap_application_variant_id/i18n/i18n.properties")).to.be.true;
-        });
-
         it("should include also other changes", () => {
-            expect(appVariantResources.map(resource => resource.getPath())).to.have.members([
-                "/resources/ns/manifest.appdescr_variant", // we don't adjust the path since we omit it anyway
-                "/resources/ns/customer_com_sap_application_variant_id/i18n/i18n.properties",
+            const filtered = appVariantResources.filter(byIsOmited(taskUtil));
+            expect(filtered.map(resource => resource.getPath())).to.have.members([
                 "/resources/ns/changes/fragments/AdlChart.fragment.xml",
-                "/resources/ns/changes/id_1696839317667_propertyChange.change",
+                //"/resources/ns/changes/manifest/id_1696839317668_changeInbound.change", => Merged and no longer needed
+                "/resources/ns/i18n/i18n_de.properties",
+                "/resources/ns/i18n/i18n.properties",
+                "/resources/ns/changes/id_1696839317667_propertyChange.change", // Will be bundled and omitted later
+                //"/resources/ns/manifest.appdescr_variant", => Omitted
                 "/resources/ns/changes/coding/id_12345.js",
-                "/resources/ns/changes/manifest/id_1696839317668_changeInbound.change"
             ]);
         });
 
@@ -86,13 +81,15 @@ describe("AppVariantManager", () => {
             appVariantResources = await AppVariantManager.getAppVariantResources(workspace);
             await AppVariantManager.process(appVariantResources, "ns", taskUtil);
         });
-
+        
         it("should adjust .properties path", () => {
-            expect(appVariantResources.map(resource => resource.getPath())).to.have.members([
-                "/resources/ns/manifest.appdescr_variant", // we don't adjust the path since we omit it anyway
-                "/resources/ns/customer_com_sap_application_variant_id/i18n/i18n.properties",
-                "/resources/ns/changes/manifest/id_1696839317668_changeInbound.change",
-                "/resources/ns/changes/id_1696839317667_propertyChange.change",
+            const filtered = appVariantResources.filter(byIsOmited(taskUtil));
+            expect(filtered.map(resource => resource.getPath())).to.have.members([
+                // "/resources/ns/manifest.appdescr_variant", => Omitted
+                "/resources/ns/i18n/i18n.properties",
+                "/resources/ns/i18n/i18n_de.properties",
+                //"/resources/ns/changes/manifest/id_1696839317668_changeInbound.change", => Merged and no longer needed
+                "/resources/ns/changes/id_1696839317667_propertyChange.change", // Will be bundled and omitted later
                 "/resources/ns/changes/fragments/AdlChart.fragment.xml",
                 "/resources/ns/changes/coding/id_12345.js"
             ]);

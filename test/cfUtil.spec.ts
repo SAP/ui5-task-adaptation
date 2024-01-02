@@ -4,7 +4,7 @@ import * as sinon from "sinon";
 import CFUtil from "../src/util/cfUtil";
 import { IGetServiceInstanceParams } from "../src/model/types";
 import { SinonSandbox } from "sinon";
-import TestUtil from "./util/testUtil";
+import TestUtil from "./testUtilities/testUtil";
 import { eFilters } from "@sap/cf-tools/out/src/types";
 
 import CFToolsCli = require("@sap/cf-tools/out/src/cli");

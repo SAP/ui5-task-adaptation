@@ -3,7 +3,7 @@ import * as sinon from "sinon";
 import AbapRepoManager from "../../src/repositories/abapRepoManager"
 import { IProjectOptions } from "../../src/model/types";
 import { SinonSandbox } from "sinon";
-import TestUtil from "../util/testUtil";
+import TestUtil from "../testUtilities/testUtil";
 import axios from "axios";
 import { expect } from "chai";
 

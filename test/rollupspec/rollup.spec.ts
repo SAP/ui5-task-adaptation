@@ -2,7 +2,7 @@ import * as chai from "chai";
 import * as rollup from "rollup";
 import * as sinon from "sinon";
 import { SinonSandbox } from "sinon";
-import TestUtil from "../util/testUtil";
+import TestUtil from "../testUtilities/testUtil";
 import RollupBuilder from "../../scripts/rollup";
 import * as fs from "fs";
 import * as chaiAsPromised from "chai-as-promised";
