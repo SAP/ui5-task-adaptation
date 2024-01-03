@@ -76,7 +76,7 @@ export default class AbapRepoManager {
         const { destination, appName } = this.configuration;
         const encodedAppName = encodeURIComponent(appName!);
         const uri = `https://${destination}.dest/sap/opu/odata/UI5/ABAP_REPOSITORY_SRV/Repositories('${encodedAppName}')?DownloadFiles=RUNTIME&CodePage=UTF8`;
-        const data = await RequestUtil.get(uri, REQUEST_OPTIONS_XML, auth);
+        const data = await RequestUtil.get(uri, {}, auth);
         if (data?.d?.ZipArchive.length > 0) {
             const buffer = Buffer.from(data.d.ZipArchive, "base64");
             return unzipZipEntries(buffer);
