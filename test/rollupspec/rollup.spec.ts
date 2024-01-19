@@ -25,7 +25,7 @@ describe("Rollup", () => {
     afterEach(() => sandbox.restore());
 
     it("should rollup if there were no version specfied", async () => {
-        await runRollupBuilder(sandbox, "bundle-no-version.js", 2, DEFAULT_PROJECT);
+        await runRollupBuilder(sandbox, "bundle-no-version.js", 1, DEFAULT_PROJECT);
     });
     it("should rollup if the version specified is lower", async () => {
         await runRollupBuilder(sandbox, "bundle-old-version.js", 1, DEFAULT_PROJECT);
@@ -39,7 +39,7 @@ describe("Rollup", () => {
         sandbox.stub(fs, "readFileSync").returns(ui5yaml);
         const rollupStub = await prepareStubs(sandbox, DEFAULT_PROJECT);
         await RollupBuilder.run();
-        expect(rollupStub.getCalls().length).to.equal(2);
+        expect(rollupStub.getCalls().length).to.equal(1);
     });
     it("shouldn't rollup if the version specified is the same", async () => {
         await runRollupBuilder(sandbox, "bundle-same-version.js", 0, {

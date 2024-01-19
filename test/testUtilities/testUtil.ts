@@ -3,6 +3,7 @@ import * as fs from "fs";
 
 import AppVariantManager from "../../src/appVariantManager";
 import { posix as path } from "path";
+import Language from "../../src/model/language";
 
 const normalizer = require("@ui5/project").normalizer;
 const resourceFactory = require("@ui5/fs").resourceFactory;
@@ -99,5 +100,10 @@ export default class TestUtil {
      */
     static byIsOmited(taskUtil: any) {
         return (resource: any) => !taskUtil.getTag(resource, taskUtil.STANDARD_TAGS.OmitFromBuildResult);
+    }
+
+    static getMapValueBySAPLanguageCode<V>(map: Map<Language, V>, language: Language): V | undefined {
+        const hit = Array.from(map.entries()).find(([key]) => key.sap === language.sap);
+        return hit ? hit[1] : undefined;
     }
 }

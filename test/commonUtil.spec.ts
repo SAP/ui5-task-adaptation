@@ -1,6 +1,6 @@
 import * as chai from "chai";
 
-import { IConfiguration } from "../src/model/types";
+import { IConfiguration} from "../src/model/types";
 import { renameResources } from "../src/util/commonUtil";
 import { validateObject } from "../src/util/commonUtil";
 

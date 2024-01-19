@@ -19,23 +19,23 @@ export default class MockServer {
         ]);
         const changedOn = new Date().toString();
         sandbox.stub(abapRepoManager, "getAnnotationMetadata" as any)
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/").resolves({ changedOn })
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/?sap-language=EN").resolves({ changedOn })
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/?sap-language=DE").resolves({ changedOn })
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/?sap-language=FR").resolves({ changedOn })
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml").resolves({ changedOn })
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml?sap-language=EN").resolves({ changedOn })
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml?sap-language=DE").resolves({ changedOn })
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml?sap-language=FR").resolves({ changedOn });
+            .withArgs("/sap/opu/o4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/").resolves({ changedOn })
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/?sap-language=EN").resolves({ changedOn })
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/?sap-language=DE").resolves({ changedOn })
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/?sap-language=FR").resolves({ changedOn })
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml").resolves({ changedOn })
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml?sap-language=EN").resolves({ changedOn })
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml?sap-language=DE").resolves({ changedOn })
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml?sap-language=FR").resolves({ changedOn });
         sandbox.stub(abapRepoManager, "downloadAnnotationFile" as any)
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/").resolves(annotationsName1.get(""))
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/?sap-language=EN").resolves(annotationsName1.get("EN"))
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/?sap-language=DE").resolves(annotationsName1.get("DE"))
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/?sap-language=FR").resolves(annotationsName1.get("FR"))
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml").resolves(annotationsName2.get(""))
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml?sap-language=EN").resolves(annotationsName2.get("EN"))
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml?sap-language=DE").resolves(annotationsName2.get("DE"))
-            .withArgs("https://system.dest/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml?sap-language=FR").resolves(annotationsName2.get("FR"));
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/").resolves(annotationsName1.get(""))
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/?sap-language=EN").resolves(annotationsName1.get("EN"))
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/?sap-language=DE").resolves(annotationsName1.get("DE"))
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/?sap-language=FR").resolves(annotationsName1.get("FR"))
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml").resolves(annotationsName2.get(""))
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml?sap-language=EN").resolves(annotationsName2.get("EN"))
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml?sap-language=DE").resolves(annotationsName2.get("DE"))
+            .withArgs("/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml?sap-language=FR").resolves(annotationsName2.get("FR"));
     }
 
 }

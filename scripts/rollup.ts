@@ -73,15 +73,6 @@ export default class Builder {
             [
                 "sap/ui/thirdparty/URI"
             ]);
-        await Bundler.run(
-            project,
-            "bundleDefinition-resourceBundle.js",
-            "./dist/bundle-resourceBundle.js",
-            "/sap.ui.core",
-            [
-                "/resources/sap/base/**"
-            ]
-        );
     }
 }
 

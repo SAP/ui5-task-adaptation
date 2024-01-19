@@ -75,7 +75,7 @@ export default class CFUtil {
                 key: eFilters.service_instance_guids
             }]
         }).catch((error: any) => {
-            throw Error("Failed to get service credentials: " + error.message);
+            throw new Error("Failed to get service credentials: " + error.message);
         });
     }
 

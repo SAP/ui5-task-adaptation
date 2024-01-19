@@ -1,3 +1,5 @@
+const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-adaptation");
+
 export function dotToUnderscore(value: string) {
     return value.replace(/\./g, "_");
 }
@@ -58,4 +60,14 @@ export function renameResources(files: Map<string, string>, search: string, repl
 export function removePropertiesExtension(filePath: string) {
     const lastIndexOf = filePath.lastIndexOf(".properties");
     return filePath.substring(0, lastIndexOf);
+}
+
+export async function logBuilderVersion() {
+    try {
+        // @ts-ignore
+        const packageJSON = await import ("../../package.json");
+        log.info(`Running app-variant-bundler-build with version ${packageJSON.version}`);
+    } catch(e: any) {
+        // do nothing
+    }
 }

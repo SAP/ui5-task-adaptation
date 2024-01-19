@@ -13,7 +13,7 @@
 
     <content>
         <!-- appId and appIdSlashes will be renamed -->
-        <viz:VizFrame id="AdlChartID" appId="com.sap.base.app.id" appIdSlashes="com/sap/base/app/id" uiConfig="{applicationSet:'fiori'}" vizType='column' vizProperties="{ title: {visible: false},
+        <viz:VizFrame id="AdlChartID" appId="customer.com.sap.application.variant.id" appIdSlashes="customer/com/sap/application/variant/id" uiConfig="{applicationSet:'fiori'}" vizType='column' vizProperties="{ title: {visible: false},
 							 valueAxis: {title: {visible: 'true'},
 							 label: {}},
 							 categoryAxis: {title: {visible: true}},

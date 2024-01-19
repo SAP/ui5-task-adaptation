@@ -4,6 +4,7 @@ import BaseAppFilesCacheManager from "../cache/baseAppFilesCacheManager";
 import { IConfiguration } from "../model/types";
 import IProcessor from "./processor";
 import { validateObject } from "../util/commonUtil";
+import Language from "../model/language";
 
 export default class AbapProcessor implements IProcessor {
 
@@ -35,8 +36,7 @@ export default class AbapProcessor implements IProcessor {
 
 
     async updateLandscapeSpecificContent(renamedBaseAppManifest: any, baseAppFiles?: Map<string, string>): Promise<void> {
-        const { languages } = this.configuration;
-        const files = await this.annotationManager.process(renamedBaseAppManifest, ["", ...(languages ?? ["EN"])]);
+        const files = await this.annotationManager.process(renamedBaseAppManifest, (Language.create(this.configuration.languages)));
         if (baseAppFiles) {
             files.forEach((value, key) => baseAppFiles.set(key, value));
         }

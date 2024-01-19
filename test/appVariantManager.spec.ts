@@ -95,11 +95,13 @@ describe("AppVariantManager", () => {
             ]);
         });
 
-        it("shouldn't rename changes/manifest", async () => await assertRename(appVariantResources, "manifest/id_1696839317668_changeInbound.change"));
-        it("shouldn't rename changes/coding", async () => await assertRename(appVariantResources, "coding/id_12345.js"));
-        it("shouldn't rename changes/fragments", async () => await assertRename(appVariantResources, "fragments/AdlChart.fragment.xml"));
+        // subfolder changes are renamed
+        it("should rename changes/manifest", async () => await assertRename(appVariantResources, "manifest/id_1696839317668_changeInbound.change", "appVariant1-renamed/webapp"));
+        it("should rename changes/coding", async () => await assertRename(appVariantResources, "coding/id_12345.js", "appVariant1-renamed/webapp"));
+        it("should rename changes/fragments", async () => await assertRename(appVariantResources, "fragments/AdlChart.fragment.xml", "appVariant1-renamed/webapp"));
+        // root folder changes are renamed
         it("should rename in changes root folder", async () => await assertRename(appVariantResources, "id_1696839317667_propertyChange.change", "appVariant1-renamed/webapp"));
-
+     
     });
 
 });

@@ -9,7 +9,7 @@ export interface IConfiguration {
     destination?: string;
     credentials?: IAuth;
     type?: "cf" | "abap";
-    languages?: string[];
+    languages?: any[] | undefined;
     enableAnnotationCache?: boolean;
 }
 

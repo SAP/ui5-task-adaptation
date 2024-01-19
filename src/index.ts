@@ -5,6 +5,7 @@ import BaseAppManager from "./baseAppManager";
 import { ITaskParameters } from "./model/types";
 import { determineProcessor } from "./processors/processor";
 import I18NMerger from "./util/i18nMerger";
+import { logBuilderVersion } from "./util/commonUtil";
 
 /**
  * Creates an appVariant bundle from the provided resources.
@@ -14,6 +15,7 @@ module.exports = ({ workspace, options, taskUtil }: ITaskParameters) => {
     dotenv.config();
 
     async function process(workspace: any, taskUtil: any) {
+        await logBuilderVersion();
         const processor = determineProcessor(options.configuration);
         const appVariantResources = await AppVariantManager.getAppVariantResources(workspace);
         const appVariantInfo = await AppVariantManager.process(appVariantResources, options.projectNamespace, taskUtil);

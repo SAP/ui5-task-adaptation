@@ -206,6 +206,7 @@ describe("BaseAppManager CF", () => {
 describe("BaseAppManager Abap", () => {
     let appVariantInfo: IAppVariantInfo;
     let sandbox: SinonSandbox;
+
     const options: IProjectOptions = {
         projectNamespace: "ns",
         configuration: {

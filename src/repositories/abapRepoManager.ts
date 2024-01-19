@@ -38,9 +38,10 @@ export default class AbapRepoManager {
 
 
     async downloadAnnotationFile(uri: string) {
+        const annotationUri = `https://${this.configuration.destination}.dest${uri}`;
         const annotation = await RequestUtil.retryWithAuth<string>(
-            () => RequestUtil.get(uri, REQUEST_OPTIONS_XML),
-            () => RequestUtil.get(uri, REQUEST_OPTIONS_XML, this.getAuth()));
+            () => RequestUtil.get(annotationUri, REQUEST_OPTIONS_XML),
+            () => RequestUtil.get(annotationUri, REQUEST_OPTIONS_XML, this.getAuth()));
         return new Map([["annotation.xml", annotation]]);
     }
 

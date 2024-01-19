@@ -32,7 +32,7 @@ export default class AppVariantManager {
         for (const resource of appVariantResources) {
             const resourcePath = resource.getPath();
             const basename = path.dirname(resourcePath);
-            if (changesFolder === basename) {
+            if (basename.startsWith(changesFolder)) {
                 changes.set(resourcePath, await ResourceUtil.getString(resource));
                 resourcesByPath.set(resourcePath, resource);
             }

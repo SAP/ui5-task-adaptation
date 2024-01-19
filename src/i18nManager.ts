@@ -1,22 +1,23 @@
-import JsonDiffUtil, { IDiffProperty, IJsonContent } from "./util/jsonDiffUtil";
+import JsonDiffUtil, { DiffTypeEnum, IDiffProperty, IJsonContent } from "./util/jsonDiffUtil";
 
 import AnnotationDiffStructureError from "./model/annotationDiffStructureError";
 import { join } from "path/posix"; // Ensure standardized dir separators to ensure Windows compatibility
+import Language from "./model/language";
+
 
 // To generate keys, english language is more common, so compare all other
 // languages with it
-const DEFAULT_LANGUAGES = ["", "EN", "EN_US", "EN_GB"];
 
 export class PropertyValue {
     public value: string;
     public isReference: boolean = false;
     public qualifier: string;
-    public language: string;
+    public language: Language;
 
     private static OLD = "__old";
     private static NEW = "__new";
 
-    private constructor(qualifier: string, language: string, value: string) {
+    private constructor(qualifier: string, language: Language, value: string) {
         this.qualifier = qualifier;
         this.language = language;
         this.value = value;
@@ -31,19 +32,19 @@ export class PropertyValue {
         this.isReference = references.has(diff[this.qualifier]);
     }
 
-    static oldFrom(language: string, value: string = "") {
+    static oldFrom(language: Language, value: string = "") {
         return new PropertyValue(PropertyValue.OLD, language, value);
     }
 
-    static newFrom(language: string, value: string = "") {
+    static newFrom(language: Language, value: string = "") {
         return new PropertyValue(PropertyValue.NEW, language, value);
     }
 }
 
 export class I18nFileContent {
-    private properties = new Map<string, Map<string, string>>();
+    private properties = new Map<Language, Map<string, string>>();
 
-    constructor(languages: string[]) {
+    constructor(languages: Language[]) {
         languages.forEach(language => this.properties.set(language, new Map<string, string>()));
     }
 
@@ -74,7 +75,7 @@ export class I18nFileContent {
         return [...this.properties.values()].some(keyValue => keyValue.size > 0);
     }
 
-    private getOrCreateLanguageContent(language: string) {
+    private getOrCreateLanguageContent(language: Language) {
         if (!this.properties.has(language)) {
             this.properties.set(language, new Map<string, string>());
         }
@@ -86,8 +87,8 @@ export class I18nFileContent {
         if (this.hasTranslations()) {
             this.properties.forEach((i18nLines, language) => {
                 let filename = "i18n";
-                if (language) {
-                    filename += "_" + language.toLowerCase();
+                if (language.i18n) {
+                    filename += "_" + language.i18n;
                 }
                 const filepath = join(i18nPathName, filename + ".properties");
                 files.set(filepath, [...i18nLines].map(([key, value]) => `${key}=${value}`).join("\n"));
@@ -105,13 +106,13 @@ export default class I18nManager {
     private existingKeys = new Set<string>();
     private i18nFileContent: I18nFileContent;
 
-    constructor(modelName: string, appVariantId: string, languages: string[]) {
+    constructor(modelName: string, appVariantId: string, languages: Language[]) {
         this.modelName = modelName;
         this.appVariantId = appVariantId;
         this.i18nFileContent = new I18nFileContent(languages);
     }
 
-    processDiff(properties: Set<IDiffProperty>, previousLanguage: string, currentLanguage: string) {
+    processDiff(properties: Set<IDiffProperty>, previousLanguage: Language, currentLanguage: Language) {
         // json-diff uses __old and __new value as diff,
         // so we assign it with languages which were in comparison
         const propertyValues: PropertyValue[] = [
@@ -127,7 +128,7 @@ export default class I18nManager {
         return this.i18nFileContent.createFiles(i18nPathName);
     }
 
-    populateTranslations(annotationJsons: Map<string, any>): IJsonContent {
+    populateTranslations(annotationJsons: Map<Language, any>): IJsonContent {
         /* We compare annotations. Diff gives us:
         {
             "string": {
@@ -156,7 +157,7 @@ export default class I18nManager {
         return defaultAnnotation;
     }
 
-    populate(annotationJsons: [string, any][], defaultAnnotation: IJsonContent) {
+    populate(annotationJsons: [Language, any][], defaultAnnotation: IJsonContent) {
         return annotationJsons
             .map(([language, json]) => ({ language, json }))
             .reduce((p: IJsonContent, c: IJsonContent) => {
@@ -166,18 +167,17 @@ export default class I18nManager {
                     return { json: pDiff.json, language: p.language };
                 } catch (error) {
                     if (error instanceof AnnotationDiffStructureError) {
-                        throw new Error(`The structure of the oData annotation xml of language '${p.language}' is different from xml of language '${c.language}' near element: ${error.message}`);
+                        throw new Error(`The structure of the oData annotation xml of language '${p.language.sap}' is different from xml of language '${c.language.sap}' near element: ${error.message}`);
                     }
                     throw error;
                 }
             }, defaultAnnotation);
     }
 
-    static extractDefaultLanguageAnnotation(annotationJsons: Map<string, any>): IJsonContent {
+    static extractDefaultLanguageAnnotation(annotationJsons: Map<Language, any>): IJsonContent {
         let json = null;
-        for (const language of DEFAULT_LANGUAGES) {
-            json = annotationJsons.get(language);
-            if (json != null) {
+        for (const [language, json] of annotationJsons) {
+            if (language.isDefault) {
                 annotationJsons.delete(language);
                 return { json, language };
             }
@@ -188,18 +188,20 @@ export default class I18nManager {
         return { json, language };
     }
 
-    private replaceWithModelReference({ object, property }: IDiffProperty, propertyValues: PropertyValue[]) {
-        const diff = object[property];
-        this.initPropertyValues(diff, propertyValues);
-        // If there are already generated key, like on step 3. above comment, we
-        // take it (from __old), so we don't need to generate new
-        const propReference = propertyValues.find(prop => prop.isReference);
-        let reference = propReference?.value ?? this.createReference(diff.__old);
-        object[property] = reference;
-        // Other values, which are not references, are extracted to .properties
-        const key = this.references.get(reference);
-        if (key) {
-            propertyValues.filter(prop => !prop.isReference).forEach(prop => this.i18nFileContent.add(prop, key));
+    private replaceWithModelReference({ object, property, type }: IDiffProperty, propertyValues: PropertyValue[]) {
+        if (type === DiffTypeEnum.DELTA) {
+            const diff = object[property];
+            this.initPropertyValues(diff, propertyValues);
+            // If there are already generated key, like on step 3. above comment, we
+            // take it (from __old), so we don't need to generate new
+            const propReference = propertyValues.find(prop => prop.isReference);
+            let reference = propReference?.value ?? this.createReference(diff.__old);
+            object[property] = reference;
+            // Other values, which are not references, are extracted to .properties
+            const key = this.references.get(reference);
+            if (key) {
+                propertyValues.filter(prop => !prop.isReference).forEach(prop => this.i18nFileContent.add(prop, key));
+            }
         }
     }
 
