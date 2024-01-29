@@ -1,11 +1,11 @@
-import { IAppVariantInfo, IBaseAppInfo, IProjectOptions } from "./model/types";
-import { renameResources } from "./util/commonUtil";
+import { IAppVariantInfo, IBaseAppInfo, IChange, IProjectOptions } from "./model/types";
+import { dotToUnderscore, removePropertiesExtension } from "./util/commonUtil";
 
 import BuildStrategy from "./buildStrategy";
 import IProcessor from "./processors/processor";
 import ResourceUtil from "./util/resourceUtil";
 import { posix as path } from "path";
-import { removePropertiesExtension } from "./util/commonUtil";
+import { renameResources } from "./util/commonUtil";
 
 const { RegistrationBuild, Applier, Change } = require("../dist/bundle");
 const resourceFactory = require("@ui5/fs/lib/resourceFactory");
@@ -76,7 +76,7 @@ export default class BaseAppManager {
             return `${sapAppId?.replaceAll(".", "/")}/${i18nNode}`;
         }
     }
-    
+
     private static extractI18NFromBundleName(i18nNode: any, sapAppId: string) {
         return i18nNode["bundleName"].replace(sapAppId, "").replaceAll(".", "/").substring(1);
     }
@@ -127,12 +127,31 @@ export default class BaseAppManager {
             ...manifest.content,
             ...appVariantInfo.manifestChanges
         ];
-        if (manifest.layer) {
-            allChanges.forEach(item => item.layer = manifest.layer);
+        const changesContent = new Array<typeof Change>();
+        const i18nBundleName = dotToUnderscore(appVariantInfo.id);
+        for (const change of structuredClone(allChanges)) {
+            if (manifest.layer) {
+                change.layer = manifest.layer;
+            }
+            this.adjustAddNewModelEnhanceWith(change, i18nBundleName);
+            changesContent.push(new Change(change));
         }
-        const changesContent: Array<typeof Change> = allChanges.map(change => new Change(change));
         if (changesContent.length > 0) {
             await Applier.applyChanges(baseAppManifest, changesContent, strategy);
+        }
+    }
+
+
+    private static adjustAddNewModelEnhanceWith(change: IChange, i18nBundleName: string) {
+        if (change.changeType === "appdescr_ui5_addNewModelEnhanceWith") {
+            if (change.texts == null) {
+                // We need to add texts properties to changes because not all
+                // have texts property. Changes without texts property can
+                // causes issues in bundle.js This is needed for now, and will
+                // be removed as soon as change merger in openUI5 is updated
+                change.texts = { i18n: change.content?.bundleUrl || "i18n/i18n.properties" };
+            }
+            change.texts.i18n = i18nBundleName + "/" + change.texts.i18n;
         }
     }
 
