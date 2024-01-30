@@ -1,10 +1,8 @@
-import { IAppVariantInfo, IChange } from "./model/types";
-import { renameResources } from "./util/commonUtil";
-
+import { IAppVariantInfo } from "./model/types";
 import ResourceUtil from "./util/resourceUtil";
 import { posix as path } from "path";
+import { renameResources } from "./util/commonUtil";
 
-const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::AppVariantManager");
 const EXTENSIONS = "js,json,xml,html,properties,change,appdescr_variant";
 
 export default class AppVariantManager {
@@ -14,7 +12,6 @@ export default class AppVariantManager {
         for (const resource of appVariantResources) {
             this.omitFiles(resource, taskUtil);
         }
-        this.patchMissingTextsNode(appVariantInfo?.manifest?.content ?? []);
         await this.renameChanges(appVariantResources, projectNamespace, appVariantInfo);
         return appVariantInfo;
     }
@@ -88,20 +85,4 @@ export default class AppVariantManager {
         }
     }
 
-    /**
-     * We need to add texts properties to changes because not all have texts property.
-     * Changes without texts property can causes issues in bundle.js
-     * This is needed for now, and will be removed as soon as change merger in openUI5 is updated
-     * @param changes 
-     */
-    private static patchMissingTextsNode(changes: IChange[]) {
-        log.verbose("Adjusting appdescr_ui5_addNewModelEnhanceWith with module");
-        for (const change of changes) {
-            if (change.changeType === "appdescr_ui5_addNewModelEnhanceWith") {
-                if (!change.texts && change.content?.bundleUrl) {
-                    change.texts = { i18n: change.content.bundleUrl };
-                }
-            }
-        }
-    }
 }

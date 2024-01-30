@@ -8,7 +8,7 @@ import { SinonSandbox } from "sinon";
 import TestUtil from "./../testUtilities/testUtil";
 import { expect } from "chai";
 
-const {byIsOmited} = TestUtil;
+const { byIsOmited } = TestUtil;
 
 const index = require("../../src/index");
 
@@ -133,7 +133,7 @@ describe("Index", () => {
         expect(await TestUtil.getResourceByName(files, "i18n/hugo_de.properties")).to.eql("original de\n\n#App variant specific text file\n\nappVariant de");
     });
 
-    it("should copy enhanceWith properties", async () => {
+    it("should copy enhanceWith properties and update changes", async () => {
         const baseAppFiles = new Map([
             ["manifest.json", JSON.stringify({
                 "sap.app": {
@@ -144,7 +144,14 @@ describe("Index", () => {
                     }
                 },
                 "sap.ui5": {
-                    models: []
+                    models: {
+                        "i18n|sap.suite.ui.generic.template.ListObject": {
+                            "type": "sap.ui.model.resource.ResourceModel",
+                            "settings": {
+                                "bundleName": "com.sap.base.app.id.i18n.i18n"
+                            }
+                        }
+                    }
                 }
             })]]);
         const files = await test({
@@ -161,6 +168,36 @@ describe("Index", () => {
         });
         expect(await TestUtil.getResourceByName(files, "customer_com_sap_application_variant_id/i18n/ListObject/i18n.properties")).to.eql("appVariant");
         expect(await TestUtil.getResourceByName(files, "customer_com_sap_application_variant_id/i18n/ListObject/i18n_de.properties")).to.eql("appVariant de");
+        const manifestJson = await TestUtil.getResourceByName(files, "manifest.json");
+        expect(JSON.parse(manifestJson)).to.eql({
+            "sap.app": {
+                "applicationVersion": {
+                    "version": "1.0.0"
+                },
+                "i18n": "i18n/i18n.properties",
+                "id": "customer.com.sap.application.variant.id"
+            },
+            "sap.ui5": {
+                "appVariantIdHierarchy": [
+                    {
+                        "appVariantId": "com.sap.base.app.id",
+                        "version": "1.0.0"
+                    }
+                ],
+                "isCloudDevAdaptation": true,
+                "models": {
+                    "i18n|sap.suite.ui.generic.template.ListObject": {
+                        "type": "sap.ui.model.resource.ResourceModel",
+                        "settings": {
+                            "bundleName": "customer.com.sap.application.variant.id.i18n.i18n",
+                            "enhanceWith": [{
+                                "bundleName": "customer.com.sap.application.variant.id.customer_com_sap_application_variant_id.i18n.ListObject.i18n"
+                            }]
+                        }
+                    }
+                }
+            }
+        });
     });
 
     it("should copy enhanceWith and merge simple change with same i18n paths", async () => {
