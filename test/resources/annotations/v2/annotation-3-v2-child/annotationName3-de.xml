@@ -1,0 +1,12 @@
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+	<edmx:Reference Uri="/sap/opu/odata/sap/M2_SB_TRAVEL_MDUU_02/$metadata">
+		<edmx:Include Alias="Communication" Namespace="com.sap.vocabularies.Communication.v1"/>
+	</edmx:Reference>
+	<edmx:DataServices>
+		<Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="fin.test.rap.lr1-1.annotations.annotation1.com.sap.temp">
+			<Annotations Target="Temp.SomeType">
+				<Annotation Term="com.sap.vocabularies.Common.v1.Label" String="währung" />
+			</Annotations>
+		</Schema>
+	</edmx:DataServices>
+</edmx:Edmx>

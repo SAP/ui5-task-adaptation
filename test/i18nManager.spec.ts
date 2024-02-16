@@ -1,6 +1,7 @@
 import * as chai from "chai";
 
 import I18nManager, { I18nFileContent, PropertyValue } from "../src/i18nManager";
+
 import Language from "../src/model/language";
 
 const { expect } = chai;
@@ -34,17 +35,43 @@ describe("I18nManager", () => {
 
         let i18nManager: I18nManager;
 
+        const json = {
+            "edmx:Edmx": {
+                "edmx:DataServices": {
+                    "Schema": {
+                        "Annotations": [
+                            {
+                                "_attributes": {
+                                    "Target": "SAP__self.M2_C_BookSup_MDUU/CurrencyCode"
+                                },
+                                "Annotation": [
+                                    {
+                                        "_attributes": {
+                                            "Term": "SAP__common.Label",
+                                            "String": "Currency"
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+
         beforeEach(() => i18nManager = new I18nManager("modelName1", "appVariantId1", Language.create(["EN"])));
 
-        it("should not create translations if default language is the same", () => {
-            const annotationJsons = new Map<Language, any>([[new Language("", ""), { s: "a" }], [new Language("", ""), { s: "a" }]]);
-            i18nManager.populateTranslations(annotationJsons);
+        it("should not create translations if default language is the same", async () => {
+            const annotationJsons = new Map<Language, any>([[new Language("", ""), json], [new Language("EN", "en"), json]]);
+            await i18nManager.populateTranslations(annotationJsons);
             expect(i18nManager.createFiles("i18n").size).to.eql(0);
         });
 
-        it("should create translations if default language is different", () => {
-            const annotationJsons = new Map<Language, any>([[new Language("", ""), { s: "a" }], [new Language("", ""), { s: "b" }]]);
-            i18nManager.populateTranslations(annotationJsons);
+        it("should create translations if default language is different", async () => {
+            const clone = structuredClone(json) as any;
+            clone["edmx:Edmx"]["edmx:DataServices"].Schema.Annotations[0].Annotation[0]._attributes.String = "Valuta";
+            const annotationJsons = new Map<Language, any>([[new Language("", ""), json], [new Language("EN", "en"), clone]]);
+            await i18nManager.populateTranslations(annotationJsons);
             expect(i18nManager.createFiles("i18n").size).to.eql(2);
         });
 
@@ -53,20 +80,20 @@ describe("I18nManager", () => {
     describe("when extracting default language", () => {
 
         it("should return ''", () => {
-            const annotationJsons = new Map<Language, any>([[new Language("",""), { s: "a" }], [new Language("EN", "en_EN"), { s: "a" }]]);
-            expect(I18nManager.extractDefaultLanguageAnnotation(annotationJsons).language).to.eql(new Language("",""));
+            const annotationJsons = new Map<Language, any>([[new Language("", ""), { s: "a" }], [new Language("EN", "en_EN"), { s: "a" }]]);
+            expect(I18nManager.extractDefaultLanguageAnnotation(annotationJsons).language).to.eql(new Language("", ""));
         });
 
         it("should return '' as default language although it's not at the first place", () => {
             const annotationJsons = new Map<Language, any>([[new Language("FR", "fr_FR"), { s: "a" }], [new Language("", ""), { s: "a" }]]);
-            expect(I18nManager.extractDefaultLanguageAnnotation(annotationJsons).language).to.eql(new Language("",""));
+            expect(I18nManager.extractDefaultLanguageAnnotation(annotationJsons).language).to.eql(new Language("", ""));
         });
 
         it("should return first language", () => {
             const annotationJsons = new Map<Language, any>([[new Language("FR", "fr_FR"), { s: "a" }], [new Language("DE", "de_DE"), { s: "a" }]]);
-            expect(I18nManager.extractDefaultLanguageAnnotation(annotationJsons).language).to.eql(new Language("FR","fr_FR"));
+            expect(I18nManager.extractDefaultLanguageAnnotation(annotationJsons).language).to.eql(new Language("FR", "fr_FR"));
         });
 
     });
 
-});  
+});

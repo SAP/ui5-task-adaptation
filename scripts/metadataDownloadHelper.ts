@@ -53,16 +53,17 @@ export default class MetadataDownloadHelper {
         return fs.readFile(filePath, { encoding: "utf8" });
     }
 
-    static fetchMetadataFileByUri(host: string, uri: string) {
+    static fetchMetadataFileByUri(host: string, url: string) {
         const REQUEST_OPTIONS_XML = {
             headers: {
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
                 'Cookie': process.env.cookie,
             },
-            httpsAgent
+            httpsAgent,
+            timeout: 4000
         };
-        uri = uri.endsWith("/") ? `${uri}$metadata` : `${uri}/$metadata`;
-        return RequestUtil.get(host + uri, REQUEST_OPTIONS_XML);
+        url = url.endsWith("/") ? `${url}$metadata` : `${url}/$metadata`;
+        return RequestUtil.get(host + url, REQUEST_OPTIONS_XML);
     }
 }
 
@@ -76,7 +77,8 @@ const hostArgIndex = args.findIndex(arg => arg.startsWith('--host='));
 if (hostArgIndex !== -1) {
   // Extract the value of the `--host=` argument
   const hostArg = args[hostArgIndex];
-  const host = hostArg.split('=')[1];
+  let host = hostArg.split('=')[1];
+  host = host.endsWith("/") ? host.substring(0, host.lastIndexOf("/")) : host;
 
   // Use the `host` variable as needed
   MetadataDownloadHelper.fetchAllUrls(host);

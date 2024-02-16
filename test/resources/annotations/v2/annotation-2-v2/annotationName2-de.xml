@@ -1,0 +1,21 @@
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+	<edmx:Reference Uri="/sap/opu/odata/sap/M2_SB_TRAVEL_MDUU_02/$metadata">
+		<edmx:Include Alias="Metadata" Namespace="cds_m2_sd_travel_mduu"/>
+	</edmx:Reference>
+	<edmx:DataServices>
+		<Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="fin.test.rap.lr1-1.annotations.annotation1.cds_m2_sd_travel_mduu">
+			<Annotations Target="Metadata.TravelType">
+				<Annotation Term="com.sap.vocabularies.Common.v1.SideEffects" Qualifier="calculateTotalPrice">
+					<Record>
+						<PropertyValue Property="TargetProperties">
+							<Collection>
+								<String>Metadaten</String>
+							</Collection>
+						</PropertyValue>
+						<PropertyValue Property="TriggerAction" String="cds_m2_sd_reise_mduu"/>
+					</Record>
+				</Annotation>
+			</Annotations>
+		</Schema>
+	</edmx:DataServices>
+</edmx:Edmx>

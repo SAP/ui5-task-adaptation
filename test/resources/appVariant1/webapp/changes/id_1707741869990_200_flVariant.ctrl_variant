@@ -1,0 +1,9 @@
+{
+	"reference": "customer.com.sap.application.variant.id",
+	"namespace": "apps/customer.com.sap.application.variant.id/variants/",
+	"projectId": "customer.com.sap.application.variant.id",
+	"fileType": "ctrl_variant",
+	"fileName": "id_1707741869990_200_flVariant",
+	"variantReference": "com.sap.base.app.id::FreightCostAllocationDocumentList--fe::PageVariantManagement",
+	"variantManagementReference": "com.sap.base.app.id::FreightCostAllocationDocumentList--fe::PageVariantManagement",
+}

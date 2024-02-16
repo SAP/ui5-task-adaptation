@@ -1,0 +1,12 @@
+{
+	"changeType": "setTitle",
+	"reference": "customer.com.sap.application.variant.id",
+	"namespace": "apps/customer.com.sap.application.variant.id/changes/",
+	"projectId": "customer.com.sap.application.variant.id",
+	"fileType": "ctrl_variant_change",
+	"fileName": "id_1707749484507_210_setTitle",
+	"selector": {
+		"id": "id_1707741869990_200_flVariant",
+		"idIsLocal": false
+	}
+}

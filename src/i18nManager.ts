@@ -1,12 +1,14 @@
-import JsonDiffUtil, { DiffTypeEnum, IDiffProperty, IJsonContent } from "./util/jsonDiffUtil";
+import Comparator, { IDiffProperty } from "./annotations/comparator/comparator";
+import { IJsonPerLanguage, IJsonPromisePerLanguage } from "./model/types";
 
 import AnnotationDiffStructureError from "./model/annotationDiffStructureError";
-import { join } from "path/posix"; // Ensure standardized dir separators to ensure Windows compatibility
 import Language from "./model/language";
-
+import { getUniqueName } from "./util/commonUtil";
+import { join } from "path/posix"; // Ensure standardized dir separators to ensure Windows compatibility
 
 // To generate keys, english language is more common, so compare all other
 // languages with it
+
 
 export class PropertyValue {
     public value: string;
@@ -128,7 +130,7 @@ export default class I18nManager {
         return this.i18nFileContent.createFiles(i18nPathName);
     }
 
-    populateTranslations(annotationJsons: Map<Language, any>): IJsonContent {
+    async populateTranslations(annotationJsons: Map<Language, Promise<any>>): Promise<IJsonPromisePerLanguage> {
         /* We compare annotations. Diff gives us:
         {
             "string": {
@@ -152,29 +154,30 @@ export default class I18nManager {
         and so on */
         let defaultAnnotation = I18nManager.extractDefaultLanguageAnnotation(annotationJsons);
         if (annotationJsons.size > 0 && defaultAnnotation) {
-            defaultAnnotation = this.populate([...annotationJsons], defaultAnnotation);
+            defaultAnnotation = await this.populate([...annotationJsons], defaultAnnotation);
         }
         return defaultAnnotation;
     }
 
-    populate(annotationJsons: [Language, any][], defaultAnnotation: IJsonContent) {
-        return annotationJsons
-            .map(([language, json]) => ({ language, json }))
-            .reduce((p: IJsonContent, c: IJsonContent) => {
-                try {
-                    const pDiff = JsonDiffUtil.diff(p.json, c.json);
-                    this.processDiff(pDiff.properties, p.language, c.language);
-                    return { json: pDiff.json, language: p.language };
-                } catch (error) {
-                    if (error instanceof AnnotationDiffStructureError) {
-                        throw new Error(`The structure of the oData annotation xml of language '${p.language.sap}' is different from xml of language '${c.language.sap}' near element: ${error.message}`);
-                    }
-                    throw error;
+    async populate(annotationJsons: [Language, Promise<any>][], defaultAnnotation: IJsonPerLanguage) {
+        let p = defaultAnnotation;
+        for (const c of annotationJsons.map(([language, json]) => ({ language, json }))) {
+            try {
+                const comparator = new Comparator(await p.json, await c.json);
+                const pDiff = comparator.compare();
+                this.processDiff(pDiff.properties, p.language, c.language);
+                p.json = pDiff.json;
+            } catch (error) {
+                if (error instanceof AnnotationDiffStructureError) {
+                    throw new Error(`The structure of the OData annotation xml of language '${p.language}' is different from xml of language '${c.language}' near element: ${error.message}`);
                 }
-            }, defaultAnnotation);
+                throw error;
+            }
+        }
+        return p;
     }
 
-    static extractDefaultLanguageAnnotation(annotationJsons: Map<Language, any>): IJsonContent {
+    static extractDefaultLanguageAnnotation(annotationJsons: Map<Language, Promise<any>>): IJsonPromisePerLanguage {
         let json = null;
         for (const [language, json] of annotationJsons) {
             if (language.isDefault) {
@@ -183,25 +186,23 @@ export default class I18nManager {
             }
         }
         const language = [...annotationJsons.keys()][0];
-        json = annotationJsons.get(language);
+        json = annotationJsons.get(language)!;
         annotationJsons.delete(language);
         return { json, language };
     }
 
-    private replaceWithModelReference({ object, property, type }: IDiffProperty, propertyValues: PropertyValue[]) {
-        if (type === DiffTypeEnum.DELTA) {
-            const diff = object[property];
-            this.initPropertyValues(diff, propertyValues);
-            // If there are already generated key, like on step 3. above comment, we
-            // take it (from __old), so we don't need to generate new
-            const propReference = propertyValues.find(prop => prop.isReference);
-            let reference = propReference?.value ?? this.createReference(diff.__old);
-            object[property] = reference;
-            // Other values, which are not references, are extracted to .properties
-            const key = this.references.get(reference);
-            if (key) {
-                propertyValues.filter(prop => !prop.isReference).forEach(prop => this.i18nFileContent.add(prop, key));
-            }
+    private replaceWithModelReference({ object, property }: IDiffProperty, propertyValues: PropertyValue[]) {
+        const diff = object[property];
+        this.initPropertyValues(diff, propertyValues);
+        // If there are already generated key, like on step 3. above comment, we
+        // take it (from __old), so we don't need to generate new
+        const propReference = propertyValues.find(prop => prop.isReference);
+        let reference = propReference?.value ?? this.createReference(diff.__old);
+        object[property] = reference;
+        // Other values, which are not references, are extracted to .properties
+        const key = this.references.get(reference);
+        if (key) {
+            propertyValues.filter(prop => !prop.isReference).forEach(prop => this.i18nFileContent.add(prop, key));
         }
     }
 
@@ -213,14 +214,11 @@ export default class I18nManager {
     }
 
     getUniqueKeyForValue(value: string) {
+        if (typeof value !== "string") {
+            throw new Error("Failed to create unique key from: " + JSON.stringify(value));
+        }
         const propertyName = value.replace(/\W/gi, "_").toUpperCase();
-        let suffix = -1;
-        let suffixString;
-        do {
-            suffixString = suffix === -1 ? "" : suffix;
-            suffix++;
-        } while (this.existingKeys.has(propertyName + suffixString));
-        const key = propertyName + suffixString;
+        const key = getUniqueName([...this.existingKeys.keys()], propertyName);
         this.existingKeys.add(key);
         return key;
     }

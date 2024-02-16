@@ -1,3 +1,0 @@
-<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
-	<edmx:Include Alias="Metadaten" Namespace="cds_m2_sd_reise_mduu" />
-</edmx:Edmx>

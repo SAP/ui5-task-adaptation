@@ -1,0 +1,26 @@
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+	<edmx:Reference Uri="/sap/opu/odata/sap/M2_SB_TRAVEL_MDUU_02/$metadata">
+		<edmx:Include Alias="Metadata" Namespace="cds_m2_sd_travel_mduu" />
+	</edmx:Reference>
+	<edmx:DataServices>
+		<Schema xmlns="http://docs.oasis-open.org/odata/ns/edm"
+			Namespace="fin.test.rap.lr1-1.annotations.annotation1.cds_m2_sd_travel_mduu">
+			<Annotations Target="Metadata.TravelType" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+				<Annotation Term="com.sap.vocabularies.Common.v1.SideEffects"
+					Qualifier="calculateTotalPrice">
+					<Record>
+						<PropertyValue Property="TargetProperties">
+							<Collection>
+								<String>{@i18n>customer.com.sap.application.variant.id_METADATA}</String>
+							</Collection>
+						</PropertyValue>
+						<PropertyValue Property="TriggerAction" String="{@i18n>customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU}" />
+					</Record>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="Temp.SomeType" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+				<Annotation Term="com.sap.vocabularies.Common.v1.Label" String="{@i18n>customer.com.sap.application.variant.id_CURRENCY0}"/>
+			</Annotations>
+		</Schema>
+	</edmx:DataServices>
+</edmx:Edmx>

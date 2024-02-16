@@ -1,0 +1,114 @@
+<edmx:Edmx xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx"
+    xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata"
+    xmlns:sap="http://www.sap.com/Protocols/SAPData" Version="1.0">
+    <edmx:Reference xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+        Uri="https://wdciw13.wdf.sap.corp:1301/sap/opu/odata/iwfnd/catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_AGGREGATION',Version='0001',SAP__Origin='ER9CLNT500')/$value">
+        <edmx:Include Namespace="Org.OData.Aggregation.V1" Alias="Aggregation" />
+    </edmx:Reference>
+    <edmx:Reference xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+        Uri="https://wdciw13.wdf.sap.corp:1301/sap/opu/odata/iwfnd/catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_ANALYTICS',Version='0001',SAP__Origin='ER9CLNT500')/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.Analytics.v1" Alias="Analytics" />
+    </edmx:Reference>
+    <edmx:Reference xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+        Uri="https://wdciw13.wdf.sap.corp:1301/sap/opu/odata/iwfnd/catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_CAPABILITIES',Version='0001',SAP__Origin='ER9CLNT500')/$value">
+        <edmx:Include Namespace="Org.OData.Capabilities.V1" Alias="Capabilities" />
+    </edmx:Reference>
+    <edmx:Reference xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+        Uri="https://wdciw13.wdf.sap.corp:1301/sap/opu/odata/iwfnd/catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_CODELIST',Version='0001',SAP__Origin='ER9CLNT500')/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.CodeList.v1" Alias="SAP__CodeList" />
+    </edmx:Reference>
+    <edmx:Reference xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+        Uri="https://wdciw13.wdf.sap.corp:1301/sap/opu/odata/iwfnd/catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_COMMON',Version='0001',SAP__Origin='ER9CLNT500')/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.Common.v1" Alias="Common" />
+        <edmx:Include Namespace="com.sap.vocabularies.Common.v1" Alias="SAP__common" />
+    </edmx:Reference>
+    <edmx:Reference xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+        Uri="https://wdciw13.wdf.sap.corp:1301/sap/opu/odata/iwfnd/catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_COMMUNICATION',Version='0001',SAP__Origin='ER9CLNT500')/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.Communication.v1" Alias="Communication" />
+    </edmx:Reference>
+    <edmx:Reference xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+        Uri="https://wdciw13.wdf.sap.corp:1301/sap/opu/odata/iwfnd/catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_CORE',Version='0001',SAP__Origin='ER9CLNT500')/$value">
+        <edmx:Include Namespace="Org.OData.Core.V1" Alias="SAP__core" />
+    </edmx:Reference>
+    <edmx:Reference xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+        Uri="https://wdciw13.wdf.sap.corp:1301/sap/opu/odata/iwfnd/catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_MEASURES',Version='0001',SAP__Origin='ER9CLNT500')/$value">
+        <edmx:Include Namespace="Org.OData.Measures.V1" Alias="Measures" />
+    </edmx:Reference>
+    <edmx:Reference xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+        Uri="https://wdciw13.wdf.sap.corp:1301/sap/opu/odata/iwfnd/catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_PDF',Version='0001',SAP__Origin='ER9CLNT500')/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.PDF.v1" Alias="SAP__PDF" />
+    </edmx:Reference>
+    <edmx:Reference xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+        Uri="https://wdciw13.wdf.sap.corp:1301/sap/opu/odata/iwfnd/catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_PERSONALDATA',Version='0001',SAP__Origin='ER9CLNT500')/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.PersonalData.v1" Alias="PersonalData" />
+    </edmx:Reference>
+    <edmx:Reference xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+        Uri="https://wdciw13.wdf.sap.corp:1301/sap/opu/odata/iwfnd/catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_UI',Version='0001',SAP__Origin='ER9CLNT500')/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.UI.v1" Alias="UI" />
+    </edmx:Reference>
+    <edmx:Reference xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+        Uri="https://wdciw13.wdf.sap.corp:1301/sap/opu/odata/iwfnd/catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_VALIDATION',Version='0001',SAP__Origin='ER9CLNT500')/$value">
+        <edmx:Include Namespace="Org.OData.Validation.V1" Alias="Validation" />
+    </edmx:Reference>
+    <edmx:DataServices m:DataServiceVersion="2.0">
+        <Schema xmlns="http://schemas.microsoft.com/ado/2008/09/edm"
+            Namespace="cds_m2_sd_travel_mduu" Alias="SAP__self" xml:lang="en" sap:schema-version="1">
+            <EntityType Name="SupplementType" sap:label="supplement view - cds data model"
+                sap:content-version="1">
+                <Key>
+                    <PropertyRef Name="SupplementID" />
+                    <PropertyRef Name="IsActiveEntity" />
+                </Key>
+                <Property Name="Edit_ac" Type="Edm.Boolean" sap:label="Dyn. Action Control"
+                    sap:creatable="false" sap:updatable="false" sap:sortable="false"
+                    sap:filterable="false" />
+                <Property Name="SupplementID" Type="Edm.String" Nullable="false" MaxLength="10"
+                    sap:display-format="UpperCase" sap:label="Product ID"
+                    sap:quickinfo="Flight Reference Scenario: Supplement ID" sap:creatable="false"
+                    sap:updatable="false" />
+                <Property Name="Price" Type="Edm.Decimal" Precision="16" Scale="3"
+                    sap:unit="CurrencyCode" sap:variable-scale="true" sap:label="Product Price"
+                    sap:quickinfo="Flight Reference Scenario: Supplement Price" />
+                <Property Name="CurrencyCode" Type="Edm.String" MaxLength="5"
+                    sap:label="Currency Code"
+                    sap:quickinfo="Flight Reference Scenario: Currency Code"
+                    sap:semantics="currency-code" />
+            </EntityType>
+            <EntityContainer Name="cds_m2_sd_travel_mduu_Entities" m:IsDefaultEntityContainer="true"
+                sap:message-scope-supported="true" sap:supported-formats="atom json xlsx pdf">
+                <EntitySet Name="SAP__FormatSet" EntityType="cds_m2_sd_travel_mduu.SAP__Format"
+                    sap:creatable="false" sap:updatable="false" sap:deletable="false"
+                    sap:pageable="false" sap:addressable="false" sap:content-version="1" />
+                <FunctionImport Name="SupplementEdit"
+                    ReturnType="cds_m2_sd_travel_mduu.SupplementType" EntitySet="Supplement"
+                    m:HttpMethod="POST" sap:action-for="cds_m2_sd_travel_mduu.SupplementType"
+                    sap:applicable-path="Edit_ac">
+                    <Parameter Name="SupplementID" Type="Edm.String" Mode="In" MaxLength="10"
+                        sap:label="Product ID" />
+                    <Parameter Name="IsActiveEntity" Type="Edm.Boolean" Mode="In"
+                        sap:label="Is active" />
+                    <Parameter Name="PreserveChanges" Type="Edm.Boolean" Mode="In" Nullable="true"
+                        sap:label="TRUE" />
+                </FunctionImport>
+            </EntityContainer>
+            <Annotation xmlns="http://docs.oasis-open.org/odata/ns/edm" Term="Core.SchemaVersion"
+                String="1.0.0" />
+            <Annotations xmlns="http://docs.oasis-open.org/odata/ns/edm"
+                Target="cds_m2_sd_travel_mduu.cds_m2_sd_travel_mduu_Entities/deductDiscount">
+                <Annotation Term="SAP__common.Label" String="Currency" />
+                <Annotation Term="Common.SideEffects" Qualifier="SAP__Action_deductDiscount">
+                    <Record Type="Common.SideEffectsType">
+                        <PropertyValue Property="TargetProperties">
+                            <Collection>
+                                <String>_it/BookingFee</String>
+                                <String>_it/CurrencyCode</String>
+                                <String>_it/TotalPrice</String>
+                                <String>_it/to_Booking_oc</String>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+            </Annotations>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

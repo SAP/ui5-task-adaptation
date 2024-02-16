@@ -1,6 +1,6 @@
 import * as chai from "chai";
 
-import { IConfiguration} from "../src/model/types";
+import { IConfiguration } from "../src/model/types";
 import { renameResources } from "../src/util/commonUtil";
 import { validateObject } from "../src/util/commonUtil";
 
@@ -32,8 +32,8 @@ describe("CommonUtil", () => {
         it("should replace search string", () => {
             const search = "test.app"
             const replacement = "bla";
-            const input = "This is a apps/test.app (or apps/test/app), really nice apps/test.app (or apps/test/app)"
-            const expected = "This is a apps/bla (or apps/bla), really nice apps/bla (or apps/bla)"
+            const input = "This is a apps.test.app (or apps/test/app), really nice apps.test.app (or apps/test/app)"
+            const expected = "This is a apps.bla (or apps/bla), really nice apps.bla (or apps/bla)"
             assertRename(input, expected, search, replacement);
         });
 
@@ -54,50 +54,58 @@ describe("CommonUtil", () => {
         });
 
         it("should replace search string without dots with replacement with dots", () => {
-            const search = "zroomv2fs"
-            const replacement = "customer.deploytestzroomv2fs.variant1";
-            const input = "This is a url1/zroomv2fs/url2"
-            const expected = "This is a url1/customer.deploytestzroomv2fs.variant1/url2"
+            const search = "zroomv2.fs"
+            const replacement = "customer.deploytestzroomv2.fs.variant1";
+            const input = "This is a url1/zroomv2.fs/url2"
+            const expected = "This is a url1/customer.deploytestzroomv2.fs.variant1/url2"
             assertRename(input, expected, search, replacement);
         });
 
-        it("should replace search string without dots", () => {
-            const search = "zroomv2fs"
-            const replacement = "deploytestzroomv2fs";
-            const input = "This is a url1/zroomv2fs/url2"
-            const expected = "This is a url1/deploytestzroomv2fs/url2"
+        it("should replace search string with protocol chars", () => {
+            const search = "zroomv2.fs"
+            const replacement = "cust.omer.zroomv2.fs.variant1";
+            const input = "ui5://zroomv2.fs/img/pic.jpg";
+            const expected = "ui5://cust.omer.zroomv2.fs.variant1/img/pic.jpg";
+            assertRename(input, expected, search, replacement);
+        });
+
+        it("should not replace search string being part of replacement with protocol chars", () => {
+            const search = "zroomv2.fs"
+            const replacement = "cust.omer.zroomv2.fs.variant1";
+            const input = "ui5://cust.omer.zroomv2.fs.variant1/img/pic.jpg";
+            const expected = "ui5://cust.omer.zroomv2.fs.variant1/img/pic.jpg";
             assertRename(input, expected, search, replacement);
         });
 
         it("should not replace search string being part of replacement in input with slashes", () => {
-            const search = "zroomv2fs"
-            const replacement = "customer.zroomv2fs.variant1";
-            const input = "customer/zroomv2fs/variant1/changes/fragments/ConsumerCopyRoomButton.fragment.xml"
-            const expected = "customer/zroomv2fs/variant1/changes/fragments/ConsumerCopyRoomButton.fragment.xml"
+            const search = "zroomv2.fs"
+            const replacement = "customer.zroomv2.fs.variant1";
+            const input = "customer/zroomv2/fs/variant1/changes/fragments/ConsumerCopyRoomButton.fragment.xml"
+            const expected = "customer/zroomv2/fs/variant1/changes/fragments/ConsumerCopyRoomButton.fragment.xml"
             assertRename(input, expected, search, replacement);
         });
 
         it("should not replace search string being part of replacement in input with dots", () => {
-            const search = "zroomv2fs"
-            const replacement = "customer.zroomv2fs.variant1";
-            const input = "customer.zroomv2fs.variant1.changes.fragments.ConsumerCopyRoomButton.fragment.xml"
-            const expected = "customer.zroomv2fs.variant1.changes.fragments.ConsumerCopyRoomButton.fragment.xml"
+            const search = "zroomv2.fs"
+            const replacement = "customer.zroomv2.fs.variant1";
+            const input = "customer.zroomv2.fs.variant1.changes.fragments.ConsumerCopyRoomButton.fragment.xml"
+            const expected = "customer.zroomv2.fs.variant1.changes.fragments.ConsumerCopyRoomButton.fragment.xml"
             assertRename(input, expected, search, replacement);
         });
 
         it("should not replace search string being part of complex replacement in input with dots", () => {
-            const search = "zroomv2fs"
-            const replacement = "cust.omer.zroomv2fs.variant1";
-            const input = "cust.omer.zroomv2fs.variant1.changes.fragments.ConsumerCopyRoomButton.fragment.xml"
-            const expected = "cust.omer.zroomv2fs.variant1.changes.fragments.ConsumerCopyRoomButton.fragment.xml"
+            const search = "zroomv2.fs"
+            const replacement = "cust.omer.zroomv2.fs.variant1";
+            const input = "cust.omer.zroomv2.fs.variant1.changes.fragments.ConsumerCopyRoomButton.fragment.xml"
+            const expected = "cust.omer.zroomv2.fs.variant1.changes.fragments.ConsumerCopyRoomButton.fragment.xml"
             assertRename(input, expected, search, replacement);
         });
 
         it("should not replace search string being part of complex replacement in input with slashes", () => {
-            const search = "zroomv2fs"
-            const replacement = "cust.omer.zroomv2fs.variant1";
-            const input = "cust/omer/zroomv2fs/variant1/changes/fragments/ConsumerCopyRoomButton.fragment.xml"
-            const expected = "cust/omer/zroomv2fs/variant1/changes/fragments/ConsumerCopyRoomButton.fragment.xml"
+            const search = "zroomv2.fs"
+            const replacement = "cust.omer.zroomv2.fs.variant1";
+            const input = "cust/omer/zroomv2/fs/variant1/changes/fragments/ConsumerCopyRoomButton.fragment.xml"
+            const expected = "cust/omer/zroomv2/fs/variant1/changes/fragments/ConsumerCopyRoomButton.fragment.xml"
             assertRename(input, expected, search, replacement);
         });
     });

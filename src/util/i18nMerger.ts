@@ -1,5 +1,6 @@
-import { IAppVariantInfo } from "../model/types";
 import { dotToUnderscore, escapeRegex, removePropertiesExtension } from "./commonUtil";
+
+import { IAppVariantInfo } from "../model/types";
 import ResourceUtil from "./resourceUtil";
 import { posix as path } from "path";
 
@@ -7,24 +8,23 @@ const Resource = require("@ui5/fs/lib/Resource");
 
 export default class I18NMerger {
 
-    static analyzeAppVariantManifestChanges(rootFolder: string, tranlsationRegexPattern: string, appVariantInfo: IAppVariantInfo) {
+    static analyzeAppVariantManifestChanges(rootFolder: string, tranlsationRegexPattern: string, { changes }: IAppVariantInfo) {
         // check which files need to be copied and which files need to be merged and copied
         // this is necessary because lrep does not support multiple enhanceWith with multiple locations
         const mergePaths = new Set<RegExp>();
         const copyPaths = new Set<RegExp>();
-        const { manifest, manifestChanges } = appVariantInfo;
-        manifestChanges.concat(manifest.content).forEach((change) => {
+        changes.forEach((change) => {
             const i18nPathWithExtension = change.content?.bundleUrl || change.texts?.i18n;
             if (i18nPathWithExtension) {
-                  // build regex to match specific + language related files
-                  const i18nPath = removePropertiesExtension(i18nPathWithExtension);
-                  const resourcePath = path.join(rootFolder, i18nPath);
-                  const regex = new RegExp(escapeRegex(resourcePath) + tranlsationRegexPattern);
-                  if (change.changeType.includes("addNewModelEnhanceWith")) {
-                      copyPaths.add(regex);
-                  } else {
-                      mergePaths.add(regex);
-                  }
+                // build regex to match specific + language related files
+                const i18nPath = removePropertiesExtension(i18nPathWithExtension);
+                const resourcePath = path.join(rootFolder, i18nPath);
+                const regex = new RegExp(escapeRegex(resourcePath) + tranlsationRegexPattern);
+                if (change.changeType.includes("addNewModelEnhanceWith")) {
+                    copyPaths.add(regex);
+                } else {
+                    mergePaths.add(regex);
+                }
             }
         });
         return { mergePathsRegex: [...mergePaths.values()], copyPathsRegex: [...copyPaths.values()] };
@@ -45,13 +45,13 @@ export default class I18NMerger {
                 const mergePathMatch = mergePathsValues.map(path => appVariantResourcePath.match(path)).find(match => match);
                 const shouldMergeFile = !!mergePathMatch;
                 const shouldCopyFile = copyPathsValues.map(path => appVariantResourcePath.match(path)).find(match => match);
-                
+
                 if (shouldMergeFile) {
                     let baseAppI18NPath = `${rootFolder}/${baseAppManifestI18NPath}${mergePathMatch[1] || ""}.properties`;
                     await this.mergePropertiesFiles(aggregatedResourceFilesMap, appVariantResource, baseAppI18NPath);
                 }
-                
-                // Resource for to be copied file already exists so we only have to adjust path 
+
+                // Resource for to be copied file already exists so we only have to adjust path
                 // Otherwise we have to omit it. We always change the path to avoid omitting a base app file
                 this.moveToAppVarSubfolder(appVariantResource, rootFolder, i18nTargetFolder);
                 if (!shouldCopyFile) {

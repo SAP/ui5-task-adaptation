@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"
+    xmlns="http://docs.oasis-open.org/odata/ns/edm">
+    <edmx:Reference Uri="../../../sap/fco_workcenter_cost_srv/$metadata">
+        <edmx:Include Namespace="FCO_WORKCENTER_COST_SRV" Alias="SAP" />
+    </edmx:Reference>
+    <edmx:DataServices>
+        <Schema Namespace="com.sap.gateway.srvd.m2_sd_travel_mduu.v0001" Alias="SAP__self">
+            <Annotations Target="SAP__self.M2_C_BookSup_MDUU/CurrencyCode">
+                <Annotation Term="SAP__common.Label" String="Währung" />
+            </Annotations>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>
