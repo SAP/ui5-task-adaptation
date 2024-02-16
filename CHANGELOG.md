@@ -2,7 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task-adaptation/compare/v1.1.0...HEAD).
+A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task-adaptation/compare/v1.1.1...HEAD).
+
+<a name="v1.1.1"></a>
+## [v1.1.1] - 2024-02-16
 
 <a name="v1.1.0"></a>
 ## [v1.1.0] - 2024-01-30
@@ -73,6 +76,7 @@ A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task
 <a name="v1.0.0"></a>
 ## v1.0.0 - 2020-12-09
 
+[v1.1.1]: https://github.com/SAP/ui5-task-adaptation/compare/v1.1.0...v1.1.1
 [v1.1.0]: https://github.com/SAP/ui5-task-adaptation/compare/v1.0.23...v1.1.0
 [v1.0.23]: https://github.com/SAP/ui5-task-adaptation/compare/v1.0.21...v1.0.23
 [v1.0.21]: https://github.com/SAP/ui5-task-adaptation/compare/v1.0.20...v1.0.21
