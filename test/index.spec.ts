@@ -94,8 +94,8 @@ describe("Index", () => {
                 sandbox.stub(HTML5RepoManager, "getMetadata").callsFake(() => Promise.resolve({ changedOn: "2100.01.01" }));
                 html5RepoManagerStub.callsFake(() => Promise.resolve(baseAppFiles));
                 const { workspace, taskUtil } = await getWorkspace(OPTIONS);
-                const appVariantResources = await AppVariantManager.getAppVariantResources(workspace);
-                sandbox.stub(AppVariantManager, "getAppVariantResources").callsFake(() => Promise.resolve(appVariantResources));
+                const appVariantResources = await AppVariantManager.getAppVariantResourcesToProcess(workspace);
+                sandbox.stub(AppVariantManager, "getAppVariantResourcesToProcess").callsFake(() => Promise.resolve(appVariantResources));
                 
                 await index({ workspace, options: OPTIONS, taskUtil });
                 
@@ -107,7 +107,11 @@ describe("Index", () => {
                     "/resources/ns/changes/id_1696839317667_propertyChange.change",
                     "/resources/ns/i18n/i18n_de.properties",
                     "/resources/ns/changes/fragments/AdlChart.fragment.xml",
-                    "/resources/ns/changes/coding/id_12345.js"
+                    "/resources/ns/changes/coding/id_12345.js",
+                    "/resources/ns/changes/id_1707741869990_200_flVariant.ctrl_variant",
+                    "/resources/ns/changes/id_1707749484507_210_setTitle.ctrl_variant_change",
+                    "/resources/ns/changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
+                    "/resources/ns/changes/notsupported.testfile"
                 ];
                 const tempResources = await cacheManager.readTemp();
                 const tempResourcesMembers = [
@@ -157,7 +161,11 @@ const runUi5TaskAdaptation = async (options: IProjectOptions, hasEnhanceWithForI
         "/resources/ns/changes/id_1696839317667_propertyChange.change",
         "/resources/ns/i18n/i18n.properties",
         "/resources/ns/changes/fragments/AdlChart.fragment.xml",
-        "/resources/ns/changes/coding/id_12345.js"
+        "/resources/ns/changes/coding/id_12345.js",
+        "/resources/ns/changes/id_1707741869990_200_flVariant.ctrl_variant",
+        "/resources/ns/changes/id_1707749484507_210_setTitle.ctrl_variant_change",
+        "/resources/ns/changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
+        "/resources/ns/changes/notsupported.testfile"
     ];
     const tempResources = await cacheManager.readTemp();
     checkResourcePathsAndTempResources(resourcePaths, resourcePathsMembers, tempResources, ["/manifest.json"]);

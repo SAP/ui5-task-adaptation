@@ -11,7 +11,8 @@ import Language from "../../src/model/language";
 
 const { expect } = chai;
 
-describe("AnnotationsCacheManager", () => {
+// TODO: unskip as soon as annotations are cached
+describe.skip("AnnotationsCacheManager", () => {
     let sandbox: SinonSandbox;
     const configuration: IConfiguration = {
         destination: "abc",

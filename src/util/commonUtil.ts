@@ -1,4 +1,11 @@
+import * as fs from "fs";
+
+import { IConfiguration } from "../model/types";
+import Language from "../model/language";
+import { posix as path } from "path";
+
 const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-adaptation");
+
 
 export function dotToUnderscore(value: string) {
     return value.replace(/\./g, "_");
@@ -34,27 +41,38 @@ export function renameResources(files: Map<string, string>, search: string, repl
     }
 
     const dotToSlash = (update: string) => update.replaceAll(".", "\/");
-    const replace = (content: string) => content.replace(new RegExp(escapedSearch, "g"), replacement);
-
-    const replaceWithSlashesOnly = (content: string) => {
-        if (!search.includes(".")) {
-            return content;
+    const replaces = [
+        {
+            regexp: new RegExp(escapedSearch, "g"),
+            replacement
+        },
+        {
+            regexp: new RegExp(dotToSlash(escapedSearch), "g"),
+            replacement: dotToSlash(replacement)
         }
-        let searchWithSlashes = dotToSlash(escapedSearch);
-        return content.replace(new RegExp(searchWithSlashes, "g"), dotToSlash(replacement));
-    }
-
-    const renamed = new Map();
-    files.forEach((content: string, filepath: string) => {
-        // Finds the id with dots (test.id) or without dots (id) and replaces it
-        content = replace(content);
-        // Only if the id has dots, these dots will be replaced with slashes
-        // first, and then it will search for the id with slashes and replace
-        // with the appVariantId also with slashes
-        content = replaceWithSlashesOnly(content);
-        renamed.set(filepath, content);
+    ];
+    files.forEach((content: string, filepath: string, map: Map<string, string>) => {
+        map.set(filepath, replaces.reduce((p, c) => p.replace(c.regexp, c.replacement), content));
     });
-    return renamed;
+
+    return files;
+}
+
+export function insertInArray<T>(array: T[], index: number, insert: T) {
+    array.splice(index, 0, insert);
+}
+
+export function writeTempAnnotations({ writeTempFiles }: IConfiguration, name: string, language: Language, content: string) {
+    const TEMP_DIST_FOLDER = path.join(process.cwd(), "dist-debug", name);
+    if (writeTempFiles) {
+        if (!fs.existsSync(TEMP_DIST_FOLDER)) {
+            fs.mkdirSync(TEMP_DIST_FOLDER, { recursive: true });
+        }
+        if (language) {
+            name += "-" + language.i18n;
+        }
+        fs.writeFileSync(path.join(TEMP_DIST_FOLDER, name + ".xml"), content);
+    }
 }
 
 export function removePropertiesExtension(filePath: string) {
@@ -62,12 +80,49 @@ export function removePropertiesExtension(filePath: string) {
     return filePath.substring(0, lastIndexOf);
 }
 
+export function traverse(json: any, paths: string[], callback: (json: any, key: string | number, paths: string[]) => void) {
+    for (const key of Object.keys(json)) {
+        const internPaths = [...paths];
+        internPaths.push(key);
+        if (typeof json[key] === "object") {
+            if (Array.isArray(json[key])) {
+                const array = json[key];
+                for (let i = 0; i < array.length; i++) {
+                    if (typeof array[i] === "object") {
+                        traverse(array[i], internPaths, callback);
+                    } else {
+                        callback(array, i, internPaths);
+                    }
+                }
+            } else {
+                traverse(json[key], internPaths, callback);
+            }
+        } else {
+            callback(json, key, internPaths);
+        }
+    }
+}
+
 export async function logBuilderVersion() {
     try {
         // @ts-ignore
-        const packageJSON = await import ("../../package.json");
+        const packageJSON = await import("../../package.json");
         log.info(`Running app-variant-bundler-build with version ${packageJSON.version}`);
-    } catch(e: any) {
+    } catch (e: any) {
         // do nothing
     }
+}
+
+export async function logBetaUsage() {
+    log.info("Beta features enabled");
+}
+
+export function getUniqueName(existingNames: string[], template: string) {
+    let suffix = -1;
+    let suffixString;
+    do {
+        suffixString = suffix === -1 ? "" : suffix;
+        suffix++;
+    } while (existingNames.includes(template + suffixString));
+    return template + suffixString;
 }

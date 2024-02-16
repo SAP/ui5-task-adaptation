@@ -1,4 +1,7 @@
+import Language from "./language";
+
 export interface IConfiguration {
+    writeTempFiles?: any;
     appHostId?: string;
     appId?: string;
     appName?: string;
@@ -11,6 +14,7 @@ export interface IConfiguration {
     type?: "cf" | "abap";
     languages?: any[] | undefined;
     enableAnnotationCache?: boolean;
+    enableBetaFeatures?: boolean;
 }
 
 export interface IProjectOptions {
@@ -67,8 +71,8 @@ export interface IUaa {
 export interface IAppVariantInfo {
     id: string;
     reference: string;
-    manifest: IAppVariantManifest;
-    manifestChanges: Array<IChange>;
+    layer?: string;
+    changes: IChange[];
 }
 
 export interface IAppVariantManifest {
@@ -123,3 +127,13 @@ export interface IMetadata {
 }
 
 export type KeyedMap<T, K extends keyof T, V> = { [k in K]: V };
+
+export interface IJsonPerLanguage {
+    language: Language;
+    json: any;
+}
+
+export interface IJsonPromisePerLanguage {
+    language: Language;
+    json: Promise<any>;
+}

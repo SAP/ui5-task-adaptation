@@ -1,0 +1,12 @@
+{
+	"changeType": "setDefault",
+	"reference": "customer.com.sap.application.variant.id",
+	"namespace": "apps/customer.com.sap.application.variant.id/changes/",
+	"projectId": "customer.com.sap.application.variant.id",
+	"fileType": "ctrl_variant_management_change",
+	"fileName": "id_1707753753776_217_setDefault",
+	"selector": {
+		"id": "customer.com.sap.application.variant.id::FreightCostAllocationDocumentList--fe::PageVariantManagement",
+		"idIsLocal": false
+	}
+}

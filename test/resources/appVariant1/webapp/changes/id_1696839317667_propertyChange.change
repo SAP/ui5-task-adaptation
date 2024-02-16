@@ -1,7 +1,7 @@
 {
     "changeType": "propertyChange",
     "reference": "com.sap.base.app.id",
-    "namespace": "apps/com.sap.base.app.id/changes",
+    "namespace": "apps/com/sap/base/app/id/changes",
     "fileName": "id_1696839317667_propertyChange",
     "fileType": "change",
     "layer": "CUSTOMER_BASE",

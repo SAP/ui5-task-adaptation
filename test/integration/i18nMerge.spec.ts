@@ -17,7 +17,7 @@ const OPTIONS: IProjectOptions = {
     configuration: {}
 };
 
-describe("Index", () => {
+describe("i18nMerge", () => {
     let sandbox: SinonSandbox;
 
     beforeEach(() => sandbox = sinon.createSandbox());

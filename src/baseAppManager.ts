@@ -4,11 +4,9 @@ import { dotToUnderscore, removePropertiesExtension } from "./util/commonUtil";
 import BuildStrategy from "./buildStrategy";
 import IProcessor from "./processors/processor";
 import ResourceUtil from "./util/resourceUtil";
-import { posix as path } from "path";
 import { renameResources } from "./util/commonUtil";
 
 const { RegistrationBuild, Applier, Change } = require("../dist/bundle");
-const resourceFactory = require("@ui5/fs/lib/resourceFactory");
 const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManager");
 
 export interface IBaseAppResources {
@@ -29,7 +27,10 @@ export default class BaseAppManager {
 
     static async process(baseAppFiles: Map<string, string>, appVariantInfo: IAppVariantInfo, options: IProjectOptions, processor: IProcessor): Promise<IBaseAppResources> {
         const baseAppManifest = this.getBaseAppManifest(baseAppFiles);
+
         const { id, version } = this.getIdVersion(baseAppManifest.content);
+        this.validateProperty(id, "sap.app/id");
+        this.validateProperty(version, "sap.app/applicationVersion/version");
 
         const renamedBaseAppFiles = renameResources(baseAppFiles, appVariantInfo.reference, appVariantInfo.id);
         const { filepath, content } = this.getBaseAppManifest(renamedBaseAppFiles);
@@ -44,7 +45,6 @@ export default class BaseAppManager {
             manifestInfo: this.getManifestInfo(content)
         }
     }
-
 
     private static updateAdaptationProperties(content: any) {
         if (content["sap.fiori"]?.cloudDevAdaptationStatus) {
@@ -99,8 +99,6 @@ export default class BaseAppManager {
 
     private static fillAppVariantIdHierarchy(processor: IProcessor, id: string, version: string, baseAppManifest: any) {
         log.verbose("Filling up app variant hierarchy in manifest.json");
-        this.validateProperty(id, "sap.app/id");
-        this.validateProperty(version, "sap.app/applicationVersion/version");
         if (baseAppManifest["sap.ui5"] == null) {
             baseAppManifest["sap.ui5"] = {};
         }
@@ -112,31 +110,37 @@ export default class BaseAppManager {
     }
 
 
+    private static VALIDATION_RULES = new Map([["sap.app/id", (value: string) => {
+        if (!value.includes(".")) {
+            throw new Error(`The original application id '${value}' should consist of multiple segments split by dot, e.g.: original.id`);
+        }
+    }]]);
+
+
     static validateProperty(value: string, property: string) {
         if (!value) {
             throw new Error(`Original application manifest should have ${property}`);
         }
+        let validatationRule = this.VALIDATION_RULES.get(property);
+        if (validatationRule) {
+            validatationRule(value);
+        }
     }
 
 
-    static async applyDescriptorChanges(baseAppManifest: any, appVariantInfo: IAppVariantInfo) {
+    static async applyDescriptorChanges(baseAppManifest: any, { layer, changes, id }: IAppVariantInfo) {
         log.verbose("Applying appVariant changes");
-        const strategy = new BuildStrategy(RegistrationBuild);
-        const { manifest } = appVariantInfo;
-        const allChanges = [
-            ...manifest.content,
-            ...appVariantInfo.manifestChanges
-        ];
         const changesContent = new Array<typeof Change>();
-        const i18nBundleName = dotToUnderscore(appVariantInfo.id);
-        for (const change of structuredClone(allChanges)) {
-            if (manifest.layer) {
-                change.layer = manifest.layer;
+        const i18nBundleName = dotToUnderscore(id);
+        for (const change of structuredClone(changes)) {
+            if (layer) {
+                change.layer = layer;
             }
-            this.adjustAddNewModelEnhanceWith(change, i18nBundleName);
             changesContent.push(new Change(change));
+            this.adjustAddNewModelEnhanceWith(change, i18nBundleName);
         }
         if (changesContent.length > 0) {
+            const strategy = new BuildStrategy(RegistrationBuild);
             await Applier.applyChanges(baseAppManifest, changesContent, strategy);
         }
     }
@@ -165,18 +169,11 @@ export default class BaseAppManager {
         const resources = [];
         for (let filename of baseAppFiles.keys()) {
             if (!IGNORE_FILES.includes(filename)) {
-                const resource = resourceFactory.createResource({
-                    path: getPath(filename, projectNamespace),
-                    string: baseAppFiles.get(filename)!
-                });
+                const resource = ResourceUtil.createResource(filename,
+                    projectNamespace, baseAppFiles.get(filename)!);
                 resources.push(resource);
             }
         }
         return resources;
     }
 }
-
-const getPath = (filename: string, projectNamespace: string) => {
-    const rootFolder = ResourceUtil.getRootFolder(projectNamespace);
-    return path.join(rootFolder, filename);
-};

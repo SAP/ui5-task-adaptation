@@ -26,7 +26,7 @@ describe("BaseAppManager getManifestInfo", () => {
         expect(id).to.be.equal("com.sap.base.app.id");
         expect(version).to.be.equal("1.0.0");
     });
-    
+
     it("should not replace .properties from i18n bundleUrl", async () => {
         const manifestJson = JSON.parse(TestUtil.getResource("manifest.json"));
         manifestJson["sap.app"]["i18n"] = {
@@ -106,7 +106,7 @@ describe("BaseAppManager CF", () => {
 
     it("should validate sap.app/applicationVersion/version", async () => {
         await assertValidation(appVariantInfo, options, "Original application manifest should have sap.app/applicationVersion/version", {
-            "sap.app": { id: "id" }
+            "sap.app": { id: "base.id" }
         });
     });
 
@@ -142,7 +142,7 @@ describe("BaseAppManager CF", () => {
         const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const stub = sandbox.stub(Applier, "applyChanges");
         const appVariantInfo = await TestUtil.getAppVariantInfo("appVariant1", options.projectNamespace);
-        delete appVariantInfo.manifest["layer"];
+        delete appVariantInfo["layer"];
         await BaseAppManager.process(baseAppFiles, appVariantInfo, options, new CFProcessor(options.configuration, baseAppCacheManager));
         const definitionKeys = stub.getCall(0).args[1].map((change: typeof Change) => Object.keys(change._oDefinition));
         expect(definitionKeys.every((key: string[]) => !key.includes("layer"))).to.be.true;
@@ -213,7 +213,8 @@ describe("BaseAppManager Abap", () => {
             type: "abap",
             appName: "appName",
             destination: "system",
-            languages: ["EN", "FR", "DE"]
+            languages: ["EN", "FR", "DE"],
+            enableBetaFeatures: true
         }
     };
     const baseAppCacheManager = new BaseAppFilesCacheManager(options.configuration);
@@ -227,7 +228,24 @@ describe("BaseAppManager Abap", () => {
     before(async () => {
         appVariantInfo = await TestUtil.getAppVariantInfo("appVariant1", options.projectNamespace);
         sandbox = sinon.createSandbox();
-        MockServer.stubAnnotations(sandbox, abapRepoManager);
+        MockServer.stubAnnotations(sandbox, abapRepoManager, [
+            {
+                folder: "annotations/v2/annotation-1-v2",
+                url: "/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/"
+            },
+            {
+                folder: "annotations/v2/annotation-2-v2",
+                url: "/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0002/annotation.xml"
+            },
+            {
+                folder: "annotations/v2/annotation-3-v2-child",
+                url: "/sap/opu/odata/sap/M2_SB_TRAVEL_MDUU_02/$metadata"
+            },
+            {
+                folder: "annotations/v2/annotation-3-v2-child",
+                url: "/sap/opu/odata/sap/M2_SB_TRAVEL_MDUU_02/$metadata"
+            }
+        ]);
     });
 
     it("should update base app manifest", async () => {
@@ -271,7 +289,7 @@ describe("BaseAppManager Abap", () => {
 
     it("should validate sap.app/applicationVersion/version", async () => {
         await assertValidation(appVariantInfo, options, "Original application manifest should have sap.app/applicationVersion/version", {
-            "sap.app": { id: "id" }
+            "sap.app": { id: "base.id" }
         });
     });
 
@@ -309,10 +327,20 @@ describe("BaseAppManager Abap", () => {
         const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const stub = sandbox.stub(Applier, "applyChanges");
         const appVariantInfo = await TestUtil.getAppVariantInfo("appVariant1", options.projectNamespace);
-        delete appVariantInfo.manifest["layer"];
+        delete appVariantInfo["layer"];
         await BaseAppManager.process(baseAppFiles, appVariantInfo, options, abapProcessor);
         const definitionKeys = stub.getCall(0).args[1].map((change: typeof Change) => Object.keys(change._oDefinition));
         expect(definitionKeys.every((key: string[]) => !key.includes("layer"))).to.be.true;
+    });
+
+    it("should throw an error because of one-segment id", async () => {
+        const baseAppFiles = new Map([["manifest.json", JSON.stringify({
+            "sap.app": {
+                "id": "segment"
+            }
+        })]]);
+        await expect(BaseAppManager.process(baseAppFiles, appVariantInfo, options, abapProcessor)).to.be
+            .rejectedWith("The original application id 'segment' should consist of multiple segments split by dot, e.g.: original.id");
     });
 
     const assertValidation = async (appVariantInfo: IAppVariantInfo, options: IProjectOptions, expectedError: string, manifest: any) => {
@@ -333,8 +361,8 @@ function assertManifestInfo(manifestInfo: IManifestInfo) {
 }
 
 async function assertAnnotations(resources: any[], resourceCountExpected: number) {
-    const annotationName1Expected = TestUtil.getResourceXml("annotationName1-expected.xml");
-    const annotationName2Expected = TestUtil.getResourceXml("annotationName2-expected.xml");
+    const annotationName1Expected = TestUtil.getResourceXml("annotations/v2/annotation-1-v2-expected/annotationName1-expected.xml");
+    const annotationName2Expected = TestUtil.getResourceXml("annotations/v2/annotation-2-v2-expected/annotationName2-expected.xml");
     const name1i18nDf = await TestUtil.getResourceByName(resources, "i18n/annotations/customercomsapapplicationvariantid/i18n.properties");
     const name1i18nEn = await TestUtil.getResourceByName(resources, "i18n/annotations/customercomsapapplicationvariantid/i18n_en.properties");
     const name1i18nDe = await TestUtil.getResourceByName(resources, "i18n/annotations/customercomsapapplicationvariantid/i18n_de.properties");
@@ -348,8 +376,10 @@ async function assertAnnotations(resources: any[], resourceCountExpected: number
         "customer.com.sap.application.variant.id_AIRLINE0=Airline",
         "customer.com.sap.application.variant.id_CUSTOMER=Customer",
         "customer.com.sap.application.variant.id_CUSTOMER_VALUE_1=Customer Value 1",
+        "customer.com.sap.application.variant.id_CURRENCY=currency",
         "customer.com.sap.application.variant.id_METADATA=Metadata",
-        "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_travel_mduu"
+        "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_travel_mduu",
+        "customer.com.sap.application.variant.id_CURRENCY0=currency"
     ]);
     expect(name1i18nEn.split("\n")).to.have.members([
         "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculateTotalPrice",
@@ -357,8 +387,10 @@ async function assertAnnotations(resources: any[], resourceCountExpected: number
         "customer.com.sap.application.variant.id_AIRLINE0=Airline",
         "customer.com.sap.application.variant.id_CUSTOMER=Customer",
         "customer.com.sap.application.variant.id_CUSTOMER_VALUE_1=Customer Value 1",
+        "customer.com.sap.application.variant.id_CURRENCY=currency",
         "customer.com.sap.application.variant.id_METADATA=Metadata",
-        "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_travel_mduu"
+        "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_travel_mduu",
+        "customer.com.sap.application.variant.id_CURRENCY0=currency"
     ]);
     expect(name1i18nDe.split("\n")).to.have.members([
         "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculateTotalPrice",
@@ -366,8 +398,10 @@ async function assertAnnotations(resources: any[], resourceCountExpected: number
         "customer.com.sap.application.variant.id_AIRLINE0=Fluglinie",
         "customer.com.sap.application.variant.id_CUSTOMER=Kunde",
         "customer.com.sap.application.variant.id_CUSTOMER_VALUE_1=KundeWert",
+        "customer.com.sap.application.variant.id_CURRENCY=währung",
         "customer.com.sap.application.variant.id_METADATA=Metadaten",
-        "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_reise_mduu"
+        "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_reise_mduu",
+        "customer.com.sap.application.variant.id_CURRENCY0=währung"
     ]);
     expect(name1i18nFr.split("\n")).to.have.members([
         "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculer le prix total",
@@ -375,8 +409,10 @@ async function assertAnnotations(resources: any[], resourceCountExpected: number
         "customer.com.sap.application.variant.id_AIRLINE0=Compagnie aérienne",
         "customer.com.sap.application.variant.id_CUSTOMER=Client",
         "customer.com.sap.application.variant.id_CUSTOMER_VALUE_1=Client valeur",
+        "customer.com.sap.application.variant.id_CURRENCY=monnaie",
         "customer.com.sap.application.variant.id_METADATA=Metadonnees",
-        "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_voyager_mduu"
+        "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_voyager_mduu",
+        "customer.com.sap.application.variant.id_CURRENCY0=monnaie"
     ]);
     expect(annotationName1Actual).to.be.eql(annotationName1Expected);
     expect(annotationName2Actual).to.be.eql(annotationName2Expected);

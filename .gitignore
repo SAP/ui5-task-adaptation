@@ -2,6 +2,8 @@ node_modules
 .nyc_output
 coverage
 dist
+dist-debug
+dist.zip
 .env
 test/resources/metadata/download
 .DS_Store

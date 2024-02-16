@@ -10,6 +10,23 @@ const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-ada
 const { resourceFactory } = require("@ui5/fs");
 
 
+interface TransformCase {
+    accept(code: string, id: string): string;
+}
+
+class UriTransformCase implements TransformCase {
+    accept(code: string, id: string) {
+        if (id !== "sap/ui/thirdparty/URI") {
+            return code;
+        }
+        const header = code.substring(0, code.indexOf("(function"));
+        const neededCode = code.substring(code.indexOf("root) {") + 8, code.lastIndexOf("}));"))
+            .replace(/root/g, "window");
+        return header + "define('sap/ui/thirdparty/URI', [], function () {" + neededCode + "});";
+    }
+}
+
+
 export default function (options: any) {
 
     let dependencies: any;
@@ -45,7 +62,7 @@ export default function (options: any) {
          * Right before writing result to dist
          */
         renderChunk: (code: string) => {
-            return `//${options.ui5version}\nvar window = {};\n${code}`;
+            return `var window = {};\n${code}`;
         },
 
 
@@ -93,17 +110,29 @@ export default function (options: any) {
             }
 
             code = replaceRequireAsync(code);
+            code = transform(code, id);
 
             code = code
-            .replace(/sap\.ui\.define/g, "define")
-            .replace(/\, \/\* bExport\= \*\/ true\)/g, ")")
-            .replace(/},.*(true|false)\);$/g, "});")
-            .replace(/},.*(true|false)\);(\n\/\/# sourceMappingURL=)*/g, "});\n//# sourceMappingURL=");
+                .replace(/sap\.ui\.define/g, "define")
+                .replace(/\, \/\* bExport\= \*\/ true\)/g, ")")
+                .replace(/},.*(true|false)\);$/g, "});")
+                .replace(/},.*(true|false)\);(\n\/\/# sourceMappingURL=)*/g, "});\n//# sourceMappingURL=");
             return convertAMDtoES6(code);
         }
 
     };
 };
+
+
+function transform(code: string, id: string) {
+    const transformers = [
+        new UriTransformCase()
+    ];
+    for (const transformer of transformers) {
+        code = transformer.accept(code, id);
+    }
+    return code;
+}
 
 
 function replaceRequireAsync(code: string) {

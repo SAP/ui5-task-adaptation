@@ -4,8 +4,10 @@ import * as sinon from "sinon";
 import { IAppVariantInfo, IAppVariantManifest } from "../src/model/types";
 
 import AppVariantManager from "../src/appVariantManager";
+import ResourceUtil from "../src/util/resourceUtil";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil";
+
 const { byIsOmited } = TestUtil;
 
 const { expect } = chai;
@@ -32,10 +34,10 @@ describe("AppVariantManager", () => {
     describe("when process appvariant resources", () => {
 
         let appVariantInfo: IAppVariantInfo;
-        const manifestChanges = TestUtil.getResourceJson("appVariant1/webapp/changes/manifest/id_1696839317668_changeInbound.change");
+        const changes = TestUtil.getResourceJson("appVariant1-renamed/webapp/changes/manifest/id_1696839317668_changeInbound.change");
 
         before(async () => {
-            appVariantResources = await AppVariantManager.getAppVariantResources(workspace);
+            appVariantResources = await AppVariantManager.getAppVariantResourcesToProcess(workspace);
             appVariantInfo = await AppVariantManager.process(appVariantResources, NAMESPACE, taskUtil);
         });
 
@@ -43,8 +45,8 @@ describe("AppVariantManager", () => {
             expect(appVariantInfo).to.eql({
                 id: "customer.com.sap.application.variant.id",
                 reference: "com.sap.base.app.id",
-                manifest,
-                manifestChanges: [manifestChanges]
+                layer: "CUSTOMER_BASE",
+                changes: [changes].concat(manifest.content)
             });
         });
 
@@ -58,6 +60,9 @@ describe("AppVariantManager", () => {
                 "/resources/ns/changes/id_1696839317667_propertyChange.change", // Will be bundled and omitted later
                 //"/resources/ns/manifest.appdescr_variant", => Omitted
                 "/resources/ns/changes/coding/id_12345.js",
+                "/resources/ns/changes/id_1707741869990_200_flVariant.ctrl_variant",
+                "/resources/ns/changes/id_1707749484507_210_setTitle.ctrl_variant_change",
+                "/resources/ns/changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
             ]);
         });
 
@@ -78,11 +83,12 @@ describe("AppVariantManager", () => {
     describe("when process appvariant resources with resources path", () => {
 
         before(async () => {
-            appVariantResources = await AppVariantManager.getAppVariantResources(workspace);
+            appVariantResources = await AppVariantManager.getAppVariantResourcesToProcess(workspace);
             await AppVariantManager.process(appVariantResources, "ns", taskUtil);
         });
-        
+
         it("should adjust .properties path", () => {
+            // TODO Get all workspace files and do not prefilter
             const filtered = appVariantResources.filter(byIsOmited(taskUtil));
             expect(filtered.map(resource => resource.getPath())).to.have.members([
                 // "/resources/ns/manifest.appdescr_variant", => Omitted
@@ -91,7 +97,10 @@ describe("AppVariantManager", () => {
                 //"/resources/ns/changes/manifest/id_1696839317668_changeInbound.change", => Merged and no longer needed
                 "/resources/ns/changes/id_1696839317667_propertyChange.change", // Will be bundled and omitted later
                 "/resources/ns/changes/fragments/AdlChart.fragment.xml",
-                "/resources/ns/changes/coding/id_12345.js"
+                "/resources/ns/changes/coding/id_12345.js",
+                "/resources/ns/changes/id_1707741869990_200_flVariant.ctrl_variant",
+                "/resources/ns/changes/id_1707749484507_210_setTitle.ctrl_variant_change",
+                "/resources/ns/changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
             ]);
         });
 
@@ -100,11 +109,64 @@ describe("AppVariantManager", () => {
         it("should rename changes/coding", async () => await assertRename(appVariantResources, "coding/id_12345.js", "appVariant1-renamed/webapp"));
         it("should rename changes/fragments", async () => await assertRename(appVariantResources, "fragments/AdlChart.fragment.xml", "appVariant1-renamed/webapp"));
         // root folder changes are renamed
-        it("should rename in changes root folder", async () => await assertRename(appVariantResources, "id_1696839317667_propertyChange.change", "appVariant1-renamed/webapp"));
-     
+        it("should rename .change in changes root folder", async () => await assertRename(appVariantResources, "id_1696839317667_propertyChange.change", "appVariant1-renamed/webapp"));
+        it("should rename .ctrl_variant in changes root folder", async () => await assertRename(appVariantResources, "id_1707741869990_200_flVariant.ctrl_variant", "appVariant1-renamed/webapp"));
+        it("should rename .ctrl_variant_change in changes root folder", async () => await assertRename(appVariantResources, "id_1707749484507_210_setTitle.ctrl_variant_change", "appVariant1-renamed/webapp"));
+        it("should rename .ctrl_variant_management_change in changes root folder", async () => await assertRename(appVariantResources, "id_1707749484509_240_setDefault.ctrl_variant_management_change", "appVariant1-renamed/webapp"));
+        it("should not rename .testfile in changes root folder", async () => {
+            const resources: any[] = (await workspace.byGlob("/**/*")).filter(byIsOmited(taskUtil));
+            await assertRename(resources, "notsupported.testfile", "appVariant1-renamed/webapp")
+        });
+        
     });
 
+    describe("when having change with url", () => {
+        it("should adjust url when url to local file", async () => {
+            await assertChangeUrl("../annotations/annotation_1707246076536.xml", "changes/annotations/annotation_1707246076536.xml");
+        });
+        it("shouldn't adjust url when url to service", async () => {
+            await assertChangeUrl("/sap/opu/odata4/f4_sd_airlines_mduu/", "/sap/opu/odata4/f4_sd_airlines_mduu/");
+        });
+        it("should adjust url when url to local file", async () => {
+            await assertChangeUrl("../annotation_1707246076536.xml", "changes/annotation_1707246076536.xml");
+        });
+    });
+
+    async function assertChangeUrl(testUrl: string, expectedUrl: string) {
+        const changeResource = ResourceUtil.createResource(
+            "changes/manifest/id_1707246076536_addAnnotationsToOData.change",
+            NAMESPACE, JSON.stringify({
+                "changeType": "appdescr_app_addAnnotationsToOData",
+                "content": {
+                    "dataSource": {
+                        "customer.annotation.annotation_1707246076536": {
+                            "uri": testUrl,
+                            "type": "ODataAnnotation"
+                        }
+                    }
+                }
+            })
+        );
+        const manifestResource = ResourceUtil.createResource(
+            "manifest.appdescr_variant",
+            NAMESPACE, JSON.stringify({
+                "reference": "base.app.id",
+                "id": "customer.base.app.id.variant1",
+                "content": []
+            })
+        );
+        const resources = [changeResource, manifestResource];
+        const appVariantInfo = await AppVariantManager.process(resources, NAMESPACE, taskUtil);
+        const manifest = JSON.parse(await TestUtil.getResourceByName(resources,
+            "id_1707246076536_addAnnotationsToOData.change"));
+        expect(manifest.content.dataSource["customer.annotation.annotation_1707246076536"].uri)
+            .to.eq(expectedUrl);
+        expect((appVariantInfo.changes[0].content! as any).dataSource["customer.annotation.annotation_1707246076536"].uri)
+            .to.eq(expectedUrl);
+    }
+
 });
+
 
 async function assertRename(clones: any[], filename: string, testResourcesFolder = "appVariant1/webapp") {
     const changeInboundChange = await TestUtil.getResourceByName(clones, `/resources/ns/changes/${filename}`);

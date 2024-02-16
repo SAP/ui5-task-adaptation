@@ -1,9 +1,10 @@
 import * as convert from "xml-js";
 import * as fs from "fs";
+import * as util from "util";
 
 import AppVariantManager from "../../src/appVariantManager";
-import { posix as path } from "path";
 import Language from "../../src/model/language";
+import { posix as path } from "path";
 
 const normalizer = require("@ui5/project").normalizer;
 const resourceFactory = require("@ui5/fs").resourceFactory;
@@ -19,12 +20,16 @@ export default class TestUtil {
     }
 
     static getResourceXml(filename: string): string {
-        const expectedXml = TestUtil.getResource(filename);
-        const convertXmlOptions = { compact: true, spaces: 4 };
-        return convert.json2xml(convert.xml2json(expectedXml, convertXmlOptions), convertXmlOptions);
+        const xml = TestUtil.getResource(filename);
+        return TestUtil.normalizeXml(xml);
     }
 
-    static getResourceJson(filename: string): string {
+    static normalizeXml(xml: string): string {
+        const convertXmlOptions = { compact: true, spaces: 4 };
+        return convert.json2xml(convert.xml2json(xml, convertXmlOptions), convertXmlOptions);
+    }
+
+    static getResourceJson(filename: string): any {
         return JSON.parse(TestUtil.getResource(filename));
     }
 
@@ -32,7 +37,7 @@ export default class TestUtil {
         return fs.readFileSync(this.getResourcePath(filename));
     }
 
-    private static getResourcePath(filename: string): string {
+    static getResourcePath(filename: string): string {
         return path.join(process.cwd(), "test", "resources", filename);
     }
 
@@ -64,7 +69,7 @@ export default class TestUtil {
 
     static async getAppVariantInfo(projectName: string, namespace: string) {
         const projectMeta = await TestUtil.getWorkspace(projectName, namespace);
-        const appVariantResources = await AppVariantManager.getAppVariantResources(projectMeta.workspace);
+        const appVariantResources = await AppVariantManager.getAppVariantResourcesToProcess(projectMeta.workspace);
         return AppVariantManager.getAppVariantInfo(appVariantResources);
     }
 
@@ -92,18 +97,42 @@ export default class TestUtil {
         return this.getResourceByName(resources, name).then((string) => JSON.parse(string));
     }
 
+    static write(path: string, data: any): void {
+        fs.writeFileSync(path, data);
+    }
+
+    static inspect(json: any): void {
+        console.log(util.inspect(json, true, Number.MAX_SAFE_INTEGER, true));
+    }
+
     /**
-     * 
+     *
      * @param resources Factory for filter predicate to filter not omited resources
-     * @param taskUtil 
+     * @param taskUtil
      * @returns Filter function
      */
     static byIsOmited(taskUtil: any) {
         return (resource: any) => !taskUtil.getTag(resource, taskUtil.STANDARD_TAGS.OmitFromBuildResult);
     }
 
+    static filter(array: string[], search?: string): string[] {
+        return search ? array.filter(item => item === search) : array;
+    }
+
     static getMapValueBySAPLanguageCode<V>(map: Map<Language, V>, language: Language): V | undefined {
         const hit = Array.from(map.entries()).find(([key]) => key.sap === language.sap);
         return hit ? hit[1] : undefined;
     }
+}
+
+export function metadataV4Xml(references: string, annotations = "", schema = '<Schema Namespace="com.sap.self" Alias="SAP__self">') {
+    return `<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+    ${references}
+    <edmx:DataServices>
+        ${schema}
+            ${annotations}
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>`;
 }

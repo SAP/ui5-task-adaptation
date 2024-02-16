@@ -1,17 +1,15 @@
 import AbapRepoManager from "./repositories/abapRepoManager";
 import BaseAppManager from "./baseAppManager";
+import DataSourceManager from "./annotations/dataSource/dataSourceManager";
 import I18nManager from "./i18nManager";
 import { IConfiguration } from "./model/types";
-import ODataV2Model from "./annotations/oDataV2Model";
-import ServiceRequestor from "./annotations/serviceRequestor";
-import XmlUtil from "./util/xmlUtil";
-import { posix as path } from "path";
 import Language from "./model/language";
+import ServiceRequestor from "./annotations/serviceRequestor";
+import { posix as path } from "path";
 
 const I18N_DEFAULT_PATH = "i18n/annotations";
 const I18N_DEFAULT_MODEL_NAME = "@i18n";
 const SAPUI5 = "sap.ui5";
-const SAPAPP = "sap.app";
 
 
 export interface IAnnotationFiles {
@@ -41,27 +39,18 @@ export default class AnnotationManager {
         //TODO: switch to this after resolving @i18n custom model
         const modelName = I18N_DEFAULT_MODEL_NAME;//`i18n_a9n_${normalisedId}`;
         const i18nPathName = path.join(I18N_DEFAULT_PATH, normalisedId);
-        const annotationFiles = new Map<string, string>();
-        const metaInfo = new Array<IAnnotationFiles>();
         const i18nManager = new I18nManager(modelName, id, languages);
+        const serviceRequestor = new ServiceRequestor(this.configuration, this.abapRepoManager);
 
-        const oDataModels = this.createODataModels(renamedBaseAppManifest);
-        for (const oDataModel of oDataModels) {
-            for (const { annotationJsons, annotationName } of oDataModel.getAnnotationJsons(languages)) {
-                const annotationXml = await this.createAnnotationFile(await annotationJsons, i18nManager);
-                const annotationFileName = `annotations/annotation_${annotationName}.xml`;
-                annotationFiles.set(annotationFileName, annotationXml);
-                metaInfo.push({ annotationFileName, annotationName });
-            }
-        }
-        if (metaInfo.length > 0) {
-            this.updateManifestDataSources(renamedBaseAppManifest, metaInfo);
-            if (i18nManager.hasTranslations()) {
-                this.updateManifestModel(renamedBaseAppManifest, modelName, i18nPathName);
-            }
-        }
-
+        const dataSourceManager = new DataSourceManager();
+        dataSourceManager.addDataSources(renamedBaseAppManifest["sap.app"]?.dataSources, this.configuration);
+        const annotationFiles = await dataSourceManager.createAnnotationFiles(languages, i18nManager, serviceRequestor);
         const i18nFiles = i18nManager.createFiles(i18nPathName);
+
+        if (i18nManager.hasTranslations()) {
+            this.updateManifestModel(renamedBaseAppManifest, modelName, i18nPathName);
+        }
+
         return new Map([...annotationFiles, ...i18nFiles]);
     }
 
@@ -71,25 +60,11 @@ export default class AnnotationManager {
     }
 
 
-    private async createAnnotationFile(annotationJsons: Map<Language, any>, i18nManager: I18nManager): Promise<string> {
-        const annotationJson = i18nManager.populateTranslations(annotationJsons);
-        return XmlUtil.jsonToXml(annotationJson.json);
-    }
-
-
     private updateManifestModel(renamedBaseAppManifest: any, modelName: string, i18nPathName: string) {
         const uri = `${i18nPathName}/i18n.properties`;
         this.enhanceManifestModel(renamedBaseAppManifest, modelName, uri);
         //TODO: switch to this after resolving @i18n custom model
         //this.createManifestModel(renamedBaseAppManifest, modelName, uri);
-    }
-
-
-    private updateManifestDataSources(renamedBaseAppManifest: any, metaInfo: IAnnotationFiles[]) {
-        const dataSources = renamedBaseAppManifest[SAPAPP]?.dataSources;
-        for (const { annotationName, annotationFileName } of metaInfo) {
-            dataSources[annotationName].uri = annotationFileName;
-        }
     }
 
 
@@ -127,20 +102,5 @@ export default class AnnotationManager {
         } else {
             this.createManifestModel(manifest, modelToEnhance, bundleUrl);
         }
-    }
-
-
-    private createODataModels(renamedBaseAppManifest: any) {
-        const serviceRequestor = new ServiceRequestor(this.configuration, this.abapRepoManager);
-        const oDataModels = [
-            new ODataV2Model(serviceRequestor)
-        ];
-        const dataSources = renamedBaseAppManifest["sap.app"]?.dataSources;
-        if (dataSources) {
-            for (const name of Object.keys(dataSources)) {
-                oDataModels.forEach(model => model.addDataSource(dataSources[name], name));
-            }
-        }
-        return oDataModels;
     }
 }

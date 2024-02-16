@@ -71,7 +71,7 @@ describe("UI5Resolve", () => {
 
     describe("when renderChunk", () => {
         it("should add version and window", async () => {
-            expect(ui5Resolve({ ui5version: "1.0.0" }).renderChunk("code")).to.eql("//1.0.0\nvar window = {};\ncode");
+            expect(ui5Resolve({ ui5version: "1.0.0" }).renderChunk("code")).to.eql("var window = {};\ncode");
         });
     });
 
@@ -118,8 +118,8 @@ describe("UI5Resolve", () => {
         it("should resolve relative path", async () => {
             stubDependencies(sandbox);
             const expected = fs.readFileSync(path.join(process.cwd(),
-                "scripts/rollup/overrides/sap/ui/thirdparty/URI.js"), { encoding: "utf-8" });
-            expect(await ui5Resolve({}).load("sap/ui/thirdparty/URI")).to.eql(expected);
+                "scripts/rollup/overrides/sap/ui/performance/Measurement.js"), { encoding: "utf-8" });
+            expect(await ui5Resolve({}).load("sap/ui/performance/Measurement")).to.eql(expected);
         });
     });
 
