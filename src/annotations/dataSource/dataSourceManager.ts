@@ -1,6 +1,7 @@
 import DataSource from "./dataSource";
 import DataSourceOData from "./dataSourceOData";
 import DataSourceODataAnnotation from "./dataSourceODataAnnotation";
+import DataSourceODataAnnotationBeta from "./dataSourceODataAnnotationBeta";
 import I18nManager from "../../i18nManager";
 import { IConfiguration } from "../../model/types";
 import Language from "../../model/language";
@@ -34,9 +35,14 @@ export default class DataSourceManager {
         }
         // If ODataAnnotation is in OData annotations, pass metadata url to it
         for (const [name, dataSource] of Object.entries<any>(dataSourcesJson)) {
-            if (dataSource.uri?.startsWith("/") && dataSource.type === "ODataAnnotation") {
-                this.dataSources.push(new DataSourceODataAnnotation(name, dataSource.uri, dataSource,
-                    odataAnnotationMap.get(name)));
+            const uri = dataSource.uri;
+            const metadataUrl = odataAnnotationMap.get(name);
+            if (uri?.startsWith("/") && dataSource.type === "ODataAnnotation") {
+                if (config.enableBetaFeatures) {
+                    this.dataSources.push(new DataSourceODataAnnotationBeta(name, uri, dataSource, metadataUrl));
+                } else {
+                    this.dataSources.push(new DataSourceODataAnnotation(name, uri, dataSource));
+                }
             }
         }
         for (const dataSource of this.dataSources) {

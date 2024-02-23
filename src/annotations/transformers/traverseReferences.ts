@@ -1,9 +1,8 @@
 import MetadataJsonUtil, { MetadataReference } from "../converter/metadataJsonUtil";
 import Transformer, { TransformerInput } from "../transformers/transformer";
 
-import DataSourceODataAnnotation from "../dataSource/dataSourceODataAnnotation";
-
-const { URI } = require("../../../dist/bundle-odata");
+import DataSourceODataAnnotation from "../dataSource/dataSourceODataAnnotationBeta";
+import UrlUtil from "../../util/urlUtil";
 
 export default class TraverseReferences implements Transformer {
 
@@ -17,9 +16,9 @@ export default class TraverseReferences implements Transformer {
         const references = MetadataJsonUtil.getReferences(json).filter(TraverseReferences.isTraversable);
         const promises = [];
         for (const { includes, uri: relativeUrl } of references) {
-            const absoluteUrl = TraverseReferences.joinUrls(relativeUrl, parentUrl);
-            if (this.isReferenceToMetadata(parentUrl, absoluteUrl, this.metadataUrl)) {
-                // If ODataAnnotation has reference to metadata, don't traverse
+            const absoluteUrl = UrlUtil.join(UrlUtil.getResourcePath(relativeUrl), parentUrl);
+            if (this.shouldIgnoreUrl(absoluteUrl, [parentUrl, this.metadataUrl])) {
+                // If reference to metadata or its parent, don't traverse
                 continue;
             }
             const name = includes[0]?.namespace;
@@ -35,20 +34,10 @@ export default class TraverseReferences implements Transformer {
     }
 
 
-    private isReferenceToMetadata(parentUrl: string, absoluteUrl: string, metadataUrl?: string) {
+    private shouldIgnoreUrl(referenceUrl: string, urlsToIgnore: Array<string | undefined>) {
+        const toResourcePath = (url: string | undefined) => UrlUtil.getResourcePath(url);
         const isEqual = (a?: string, b?: string) => a && b && a.toLowerCase() === b.toLowerCase();
-        return isEqual(parentUrl, metadataUrl) || isEqual(absoluteUrl, metadataUrl);
-    }
-
-
-    static joinUrls(relativeUrl: string, parentUrl: string) {
-        // Remove trailing slash, otherwise url join can be incorrect Remove
-        // trailing slash, otherwise url join can be incorrect Annotation URLs
-        // defined in manifest might end with .../$value/ or .../$value and both
-        // are accepted by Gateway and produce the same content with same
-        // relative URLs. The first case is actually incorrect and we have to
-        // sanitize the same way as UI5.
-        return new URI(relativeUrl).absoluteTo(parentUrl.replace(/\/$/, "")).toString();
+        return urlsToIgnore.map(toResourcePath).some(url => isEqual(referenceUrl, url));
     }
 
 

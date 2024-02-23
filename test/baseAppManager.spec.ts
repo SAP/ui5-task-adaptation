@@ -15,7 +15,7 @@ import TestUtil from "./testUtilities/testUtil";
 
 const { Applier, Change } = require("../dist/bundle");
 
-const { expect, assert } = chai;
+const { assert, expect } = chai;
 
 describe("BaseAppManager getManifestInfo", () => {
 
@@ -49,6 +49,64 @@ describe("BaseAppManager getManifestInfo", () => {
         expect(version).to.be.equal("1.0.0");
     });
 
+});
+
+describe("BaseAppManager getBaseAppManifest", () => {
+    let appVariantInfo: IAppVariantInfo;
+    let sandbox: SinonSandbox;
+    const options: IProjectOptions = {
+        projectNamespace: "ns",
+        configuration: {
+            appHostId: "appHostId",
+            appId: "appId",
+            appName: "appName",
+            appVersion: "appVersion",
+            spaceGuid: "spaceGuid",
+            orgGuid: "orgGuid",
+            sapCloudService: "sapCloudService"
+        }
+    };
+    const baseAppCacheManager = new BaseAppFilesCacheManager(options.configuration);
+    
+    before(async () => {
+        appVariantInfo = await TestUtil.getAppVariantInfo("appVariant1", options.projectNamespace);
+    });
+    
+    beforeEach(() => sandbox = sinon.createSandbox());
+    afterEach(() => sandbox.restore());
+
+    it("should return correct manifest.json from root folder", async () => {
+        const baseAppFiles = new Map([
+            ["subfolder/manifest.json", TestUtil.getResource("manifest-annotation-only.json")],
+            ["manifest.json", TestUtil.getResource("manifest.json")],
+            ["component-preload.js", TestUtil.getResource("component-preload.js")]
+        ]);
+        const getBaseAppManifestSpy = sandbox.spy(BaseAppManager, "getBaseAppManifest" as any);
+
+        const { manifestInfo } = await BaseAppManager.process(baseAppFiles, appVariantInfo, options, new CFProcessor(options.configuration, baseAppCacheManager));
+       
+        expect(manifestInfo.id).to.eql("customer.com.sap.application.variant.id");
+        expect(getBaseAppManifestSpy.calledTwice).to.eql(true);
+        expect(getBaseAppManifestSpy.returnValues[0].filepath).to.eql("manifest.json");
+        expect(getBaseAppManifestSpy.returnValues[1].filepath).to.eql("manifest.json");
+    });
+
+    it("should throw error in case manifest.json is not in root folder", async () => {
+        const baseAppFiles = new Map([
+            ["subfolder/manifest.json", TestUtil.getResource("manifest.json")],
+            ["component-preload.js", TestUtil.getResource("component-preload.js")]
+        ]);
+        const getBaseAppManifestSpy = sandbox.spy(BaseAppManager, "getBaseAppManifest" as any);
+        
+        try {
+            await BaseAppManager.process(baseAppFiles, appVariantInfo, options, new CFProcessor(options.configuration, baseAppCacheManager));
+            assert.fail(true, false, "Exception not thrown");
+        } catch (error: any) {
+            expect(error.message).to.eql("Original application should have manifest.json in root folder");
+            expect(getBaseAppManifestSpy.calledOnce).to.eql(true);
+            expect(getBaseAppManifestSpy.returnValues[0]).to.eql(undefined);
+        }
+    });
 });
 
 describe("BaseAppManager CF", () => {
@@ -90,10 +148,10 @@ describe("BaseAppManager CF", () => {
 
     it("should skip base app files", async () => {
         const baseAppFiles = new Map([
-            ["/manifest.json", TestUtil.getResource("manifest.json")],
-            ["/manifest-bundle.zip", ""],
-            ["/Component-preload.js", ""],
-            ["/sap-ui-cachebuster-info.json", ""]
+            ["manifest.json", TestUtil.getResource("manifest.json")],
+            ["manifest-bundle.zip", ""],
+            ["Component-preload.js", ""],
+            ["sap-ui-cachebuster-info.json", ""]
         ]);
         const { resources, manifestInfo } = await BaseAppManager.process(baseAppFiles, appVariantInfo, options, new CFProcessor(options.configuration, baseAppCacheManager));
         expect(resources.map(res => res.getPath())).to.have.members(["/resources/ns/manifest.json"]);
@@ -111,7 +169,7 @@ describe("BaseAppManager CF", () => {
     });
 
     it("should delete 'sap.cloud' if sapCloudService is not presented in config", async () => {
-        const baseAppFiles = new Map([["/manifest.json", TestUtil.getResource("manifest.json")]]);
+        const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const optionsClone = { ...options, configuration: { ...options.configuration } };
         delete optionsClone.configuration["sapCloudService"];
         const { resources, manifestInfo } = await BaseAppManager.process(baseAppFiles, appVariantInfo, optionsClone, new CFProcessor(optionsClone.configuration, baseAppCacheManager));
@@ -123,7 +181,7 @@ describe("BaseAppManager CF", () => {
     it("should create default 'sap.cloud'", async () => {
         const baseAppManifest = JSON.parse(TestUtil.getResource("manifest.json"));
         delete baseAppManifest["sap.cloud"];
-        const baseAppFiles = new Map([["/manifest.json", JSON.stringify(baseAppManifest)]]);
+        const baseAppFiles = new Map([["manifest.json", JSON.stringify(baseAppManifest)]]);
         const { resources, manifestInfo } = await BaseAppManager.process(baseAppFiles, appVariantInfo, options, new CFProcessor(options.configuration, baseAppCacheManager));
         const actual = await resources[0].getBuffer().then((buffer: Buffer) => JSON.parse(buffer.toString()));
         expect(actual["sap.cloud"]).to.eql({ service: "sapCloudService" });
@@ -185,7 +243,7 @@ describe("BaseAppManager CF", () => {
 
     const assertValidation = async (appVariantInfo: IAppVariantInfo, options: IProjectOptions, expectedError: string, manifest: any) => {
         try {
-            await BaseAppManager.process(new Map([["/manifest.json", JSON.stringify(manifest)]]), appVariantInfo, options, new CFProcessor(options.configuration, baseAppCacheManager));
+            await BaseAppManager.process(new Map([["manifest.json", JSON.stringify(manifest)]]), appVariantInfo, options, new CFProcessor(options.configuration, baseAppCacheManager));
             assert.fail(true, false, "Exception not thrown");
         } catch (error: any) {
             expect(error.message).to.equal(expectedError);
@@ -264,10 +322,10 @@ describe("BaseAppManager Abap", () => {
 
     it("should skip base app files", async () => {
         const baseAppFiles = new Map([
-            ["/manifest.json", TestUtil.getResource("manifest.json")],
-            ["/manifest-bundle.zip", ""],
-            ["/Component-preload.js", ""],
-            ["/sap-ui-cachebuster-info.json", ""]
+            ["manifest.json", TestUtil.getResource("manifest.json")],
+            ["manifest-bundle.zip", ""],
+            ["Component-preload.js", ""],
+            ["sap-ui-cachebuster-info.json", ""]
         ]);
         const { resources, manifestInfo } = await BaseAppManager.process(baseAppFiles, appVariantInfo, options, abapProcessor);
         await assertAnnotations(resources, 7);
@@ -294,7 +352,7 @@ describe("BaseAppManager Abap", () => {
     });
 
     it("should delete 'sap.cloud' if sapCloudService is not presented in config", async () => {
-        const baseAppFiles = new Map([["/manifest.json", TestUtil.getResource("manifest.json")]]);
+        const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const optionsClone = { ...options, configuration: { ...options.configuration } };
         delete optionsClone.configuration["sapCloudService"];
         const { resources, manifestInfo } = await BaseAppManager.process(baseAppFiles, appVariantInfo, optionsClone, abapProcessor);
@@ -307,7 +365,7 @@ describe("BaseAppManager Abap", () => {
     it("should create default 'sap.cloud'", async () => {
         const baseAppManifest = JSON.parse(TestUtil.getResource("manifest.json"));
         delete baseAppManifest["sap.cloud"];
-        const baseAppFiles = new Map([["/manifest.json", JSON.stringify(baseAppManifest)]]);
+        const baseAppFiles = new Map([["manifest.json", JSON.stringify(baseAppManifest)]]);
         const { resources, manifestInfo } = await BaseAppManager.process(baseAppFiles, appVariantInfo, options, abapProcessor);
         const actual = await resources[0].getBuffer().then((buffer: Buffer) => JSON.parse(buffer.toString()));
         expect(actual["sap.cloud"]).to.be.undefined;
@@ -345,7 +403,7 @@ describe("BaseAppManager Abap", () => {
 
     const assertValidation = async (appVariantInfo: IAppVariantInfo, options: IProjectOptions, expectedError: string, manifest: any) => {
         try {
-            await BaseAppManager.process(new Map([["/manifest.json", JSON.stringify(manifest)]]), appVariantInfo, options, abapProcessor);
+            await BaseAppManager.process(new Map([["manifest.json", JSON.stringify(manifest)]]), appVariantInfo, options, abapProcessor);
             assert.fail(true, false, "Exception not thrown");
         } catch (error: any) {
             expect(error.message).to.equal(expectedError);

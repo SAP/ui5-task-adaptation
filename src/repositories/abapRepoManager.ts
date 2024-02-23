@@ -8,13 +8,13 @@ const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::AbapRepoMana
 const REQUEST_OPTIONS_XML = {
     responseType: "text",
     headers: {
-        "Content-Type": "text/xml"
+        "Accept": "text/html,application/xhtml+xml,application/xml"
     }
 };
 
 const REQUEST_OPTIONS_JSON = {
     headers: {
-        "Content-Type": "application/json"
+        "Accept": "application/json"
     }
 };
 

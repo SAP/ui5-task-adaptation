@@ -4,6 +4,7 @@
         "rootDir": "./src",
         "module": "commonjs",
         "target": "es2021",
+        "experimentalDecorators": true,
         "moduleResolution": "node",
         "outDir": "./dist",
         "declaration": true,
