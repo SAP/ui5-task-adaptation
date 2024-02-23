@@ -36,12 +36,12 @@ describe("ResourceUtil", () => {
         });
 
         it("should return files for existing temp folder", async () => {
-            const files = new Map([["/folder1/file1", "file1Content"], ["/file2", "file2Content"]]);
+            const files = new Map([["folder1/file1", "file1Content"], ["file2", "file2Content"]]);
             await cacheManager.writeTemp(files, { some: true });
             const result = await cacheManager.readTemp();
             expect(result.size).to.equal(2);
-            expect(result.get("/folder1/file1")).to.equal("file1Content");
-            expect(result.get("/file2")).to.equal("file2Content");
+            expect(result.get("folder1/file1")).to.equal("file1Content");
+            expect(result.get("file2")).to.equal("file2Content");
         });
     });
 

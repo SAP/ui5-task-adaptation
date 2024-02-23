@@ -2,6 +2,7 @@ import axios, { AxiosError, AxiosResponse } from "axios";
 
 import { IAuth } from "../model/types";
 import NoAuthorizationProvidedError from "../model/noAuthorizationProvidedError";
+import ServerError from "../model/serverError";
 
 export default class RequestUtil {
 
@@ -30,6 +31,8 @@ export default class RequestUtil {
             // HTTP Status Code > 2xx
             if (error.response.status === 401) {
                 throw new NoAuthorizationProvidedError(uri);
+            } else if (error.response.status >= 500) {
+                throw new ServerError(uri, error);
             } else {
                 throw new Error(`Unexpected response received from '${uri}': ${error.response.status} ${error.response.data ?? ""}`);
             }

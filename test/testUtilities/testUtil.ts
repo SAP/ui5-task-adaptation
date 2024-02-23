@@ -4,12 +4,10 @@ import * as util from "util";
 
 import AppVariantManager from "../../src/appVariantManager";
 import Language from "../../src/model/language";
+import ResourceUtil from "../../src/util/resourceUtil";
+import { glob } from "glob";
+import { minimatch } from "minimatch";
 import { posix as path } from "path";
-
-const normalizer = require("@ui5/project").normalizer;
-const resourceFactory = require("@ui5/fs").resourceFactory;
-const TaskUtil = require("@ui5/builder/lib/tasks/TaskUtil");
-const BuildContext = require("@ui5/builder/lib/builder/BuildContext");
 
 export default class TestUtil {
 
@@ -42,29 +40,8 @@ export default class TestUtil {
     }
 
     static async getWorkspace(projectName: string, namespace: string) {
-        const project = await normalizer.generateProjectTree({ cwd: path.join(process.cwd(), "test", "resources", projectName) });
-        const rootPath = ["resources"];
-        if (namespace) {
-            rootPath.push(namespace);
-        }
-        const getVirtualBasePathPrefix = () => "/" + path.join(...rootPath);
-        const resourceCollections = resourceFactory.createCollectionsForTree(project, { getVirtualBasePathPrefix });
-        const workspace = resourceFactory.createWorkspace({
-            virBasePath: "/",
-            reader: resourceCollections.source,
-            name: "projectName1"
-        });
-        const buildContext = new BuildContext({ rootProject: project });
-        const taskUtil = new TaskUtil({
-            projectBuildContext: buildContext.createProjectContext({
-                project, // TODO 2.0: Add project facade object/instance here
-                resources: {
-                    workspace,
-                    dependencies: resourceCollections.dependencies
-                }
-            })
-        });
-        return { workspace, taskUtil };
+        const folder = path.join(process.cwd(), "test", "resources", projectName);
+        return { workspace: new Workspace(folder, namespace), taskUtil: new TaskUtil() };
     }
 
     static async getAppVariantInfo(projectName: string, namespace: string) {
@@ -122,6 +99,55 @@ export default class TestUtil {
     static getMapValueBySAPLanguageCode<V>(map: Map<Language, V>, language: Language): V | undefined {
         const hit = Array.from(map.entries()).find(([key]) => key.sap === language.sap);
         return hit ? hit[1] : undefined;
+    }
+}
+
+class Workspace {
+    private folder: string;
+    private namespace: string;
+    private resources = new Map<string, any>();
+    constructor(folder: string, namespace: string) {
+        this.folder = folder;
+        this.namespace = namespace;
+    }
+    async byGlob(pattern: string) {
+        const webappFolder = path.join(this.folder, "webapp");
+        if (this.resources.size === 0) {
+            const files = await glob(webappFolder + "/**/*.*");
+            for (const file of files) {
+                if (fs.statSync(file).isFile()) {
+                    const relativePath = path.relative(this.folder, file).substring(7); // webapp.length = 7
+                    const content = fs.readFileSync(file, { encoding: "utf-8" });
+                    const resource = ResourceUtil.createResource(relativePath, this.namespace, content);
+                    this.resources.set(resource.getPath(), resource);
+                }
+            }
+        }
+        const rotFolder = ResourceUtil.getRootFolder(this.namespace);
+        const result = new Array<any>();
+        for (const resource of [...this.resources.values()]) {
+            if (minimatch(resource.getPath(), rotFolder + pattern)) {
+                const relativePath = ResourceUtil.relativeToRoot(resource.getPath(), this.namespace);
+                result.push(ResourceUtil.createResource(relativePath, this.namespace, await resource.getString()));
+            }
+        }
+        return result;
+    }
+    write(resource: any) {
+        this.resources.set(resource.getPath(), resource);
+    }
+}
+
+class TaskUtil {
+    STANDARD_TAGS = {
+        OmitFromBuildResult: "OmitFromBuildResult"
+    };
+    private resources = new Map<string, boolean>();
+    setTag(resource: any, _: any, value: boolean) {
+        this.resources.set(resource.getPath(), value);
+    }
+    getTag(resource: any, _: any): boolean | undefined {
+        return this.resources.get(resource.getPath());
     }
 }
 

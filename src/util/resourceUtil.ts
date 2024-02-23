@@ -48,7 +48,7 @@ export default class ResourceUtil {
             const entryPath = path.join(folder, entry);
             const stats = fs.lstatSync(entryPath);
             if (stats.isFile() && !exclude.some(filepath => entryPath.endsWith(filepath))) {
-                const normalized = entryPath.substring(rootFolder.length);
+                const normalized = entryPath.substring(rootFolder.length + 1);
                 files.set(normalized, fs.readFileSync(entryPath, { encoding: "utf-8" }));
             } else if (stats.isDirectory()) {
                 this.read(rootFolder, entryPath, files, exclude);

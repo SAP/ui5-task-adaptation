@@ -3,16 +3,16 @@
     <edmx:Reference Uri="../../../sap/fco_workcenter_cost_srv/$metadata">
         <edmx:Include Namespace="FCO_WORKCENTER_COST_SRV" Alias="SAP"/>
     </edmx:Reference>
-    <edmx:Reference Uri="/odata/v2/ManifestConfigurationService/$metadata">
-        <edmx:Include Namespace="com.sap.gateway.srvd.m2_sd_travel_mduu.v0001" Alias="SAP__self"/>
-    </edmx:Reference>
     <edmx:DataServices>
-        <Schema Namespace="com.sap.gateway.srvd.m2_sd_travel_mduu.v0001.bb5">
+        <Schema Namespace="com.sap.gateway.srvd.m2_sd_travel_mduu.v0001" Alias="SAP__self">
             <Annotations Target="SAP__self.M2_C_BookSup_MDUU/CurrencyCode" xmlns="http://docs.oasis-open.org/odata/ns/edm">
                 <Annotation Term="SAP__common.Label" String="{model1>appVariantId1_CURRENCY}"/>
             </Annotations>
             <Annotations Target="FCO_WORKCENTER_COST_SRV.SAP__UnitOfMeasure/UnitCode" xmlns="http://docs.oasis-open.org/odata/ns/edm">
                 <Annotation Term="SAP__common.Text" String="{model1>appVariantId1_CHILD_1}"/>
+            </Annotations>
+            <Annotations Target="FCO_WORKCENTER_COST_SRV_2.SAP__UnitOfMeasure/UnitCode" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="SAP__common.Text" String="{model1>appVariantId1_CHILD_2}"/>
             </Annotations>
         </Schema>
     </edmx:DataServices>
