@@ -86,11 +86,11 @@ export default class BaseAppManager {
     }
 
     private static getBaseAppManifest(baseAppFiles: Map<string, string>): IBaseAppInfo {
-        let filepath = [...baseAppFiles.keys()].find(filepath => filepath.endsWith("manifest.json"));
-        if (filepath) {
+        const manifestContent = baseAppFiles.get("manifest.json");
+        if (manifestContent) {
             return {
-                content: JSON.parse(baseAppFiles.get(filepath)!),
-                filepath
+                content: JSON.parse(manifestContent),
+                filepath: "manifest.json"
             }
         }
         throw new Error("Original application should have manifest.json in root folder");
@@ -162,9 +162,9 @@ export default class BaseAppManager {
 
     static writeToWorkspace(baseAppFiles: Map<string, string>, projectNamespace: string) {
         const IGNORE_FILES = [
-            "/manifest-bundle.zip",
-            "/Component-preload.js",
-            "/sap-ui-cachebuster-info.json"
+            "manifest-bundle.zip",
+            "Component-preload.js",
+            "sap-ui-cachebuster-info.json"
         ];
         const resources = [];
         for (let filename of baseAppFiles.keys()) {

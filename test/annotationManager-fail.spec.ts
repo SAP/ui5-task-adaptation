@@ -3,11 +3,11 @@ import * as sinon from "sinon";
 import AbapRepoManager from "../src/repositories/abapRepoManager";
 import AnnotationManager from "../src/annotationManager"
 import { IProjectOptions } from "../src/model/types";
+import Language from "../src/model/language";
 import RequestUtil from "../src/util/requestUtil";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil";
 import { expect } from "chai";
-import Language from "../src/model/language";
 
 describe("AnnotationManager Failed Request", () => {
 

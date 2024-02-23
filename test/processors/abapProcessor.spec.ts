@@ -111,7 +111,7 @@ describe("AbapProcessor", () => {
         const abapProcessor = new AbapProcessor(options.configuration, baseAppCacheManager, abapRepoManager, annotationManager);
         await expect(abapProcessor.getBaseAppFiles(
             "sap.ui.rta.test.variantManagement.business.service"
-        )).to.be.rejectedWith("Unexpected response received from 'https://system.dest/sap/bc/ui2/app_index/ui5_app_info_json?id=sap.ui.rta.test.variantManagement.business.service': 500 reponse data");
+        )).to.be.rejectedWith("Request https://system.dest/sap/bc/ui2/app_index/ui5_app_info_json?id=sap.ui.rta.test.variantManagement.business.service failed with Server error: 500");
     });
 
     async function when_downloading_files_with_metadata(cacheBusterToken: string) {

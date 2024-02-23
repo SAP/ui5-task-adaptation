@@ -1,16 +1,18 @@
 import * as fs from "fs";
 
 import AbapRepoManager from "../../src/repositories/abapRepoManager";
+import ServerError from "../../src/model/serverError";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtil";
 import { posix as path } from "path";
 
 export default class MockServer {
 
-    static stubAnnotations(sandbox: SinonSandbox, abapRepoManager: AbapRepoManager, annotationFolders: IAnnotationFolder[]) {
+    static stubAnnotations(sandbox: SinonSandbox, abapRepoManager: AbapRepoManager, annotationFolders: IAnnotationFolder[], numberOfFailedRequests?: number) {
         const stub = sandbox.stub(abapRepoManager, "downloadAnnotationFile" as any);
         const regex = /\w+-([a-z]*).xml/gi;
         for (const { folder, url } of annotationFolders) {
+            const defaultServerError = new ServerError(url, {response: {status: 500}});
             const filesPerLanguage = new Map<string, Promise<Map<string, string>>>();
             const annotations = fs.readdirSync(TestUtil.getResourcePath(folder));
             for (const annotation of annotations) {
@@ -22,12 +24,23 @@ export default class MockServer {
                     }
                     const filename = path.join(TestUtil.getResourcePath(folder), annotation);
                     const map = new Map([["annotation.xml", fs.readFileSync(filename, { encoding: "utf-8" })]]);
+                    if (numberOfFailedRequests) {
+                        for (let i = 0; i < numberOfFailedRequests; i++) {
+                            stub.withArgs(languageUrl).onCall(i).rejects(defaultServerError);    
+                        }
+                    }
                     stub.withArgs(languageUrl).resolves(map);
                     filesPerLanguage.set(match[1].toUpperCase(), Promise.resolve(map));
                 }
             }
+            if (numberOfFailedRequests) {
+                for (let i = 0; i < numberOfFailedRequests; i++) {
+                    stub.withArgs(url).onCall(i).rejects(defaultServerError);    
+                }
+            }
             stub.withArgs(url).resolves(MockServer.getDefaultJson(filesPerLanguage));
         }
+        return stub;
     }
 
 

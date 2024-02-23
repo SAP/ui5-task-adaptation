@@ -1,6 +1,8 @@
 import * as fs from "fs";
 import * as sinon from "sinon";
 
+import { assert, expect } from "chai";
+
 import AbapRepoManager from "../src/repositories/abapRepoManager";
 import AnnotationManager from "../src/annotationManager";
 import { IProjectOptions } from "../src/model/types";
@@ -8,7 +10,6 @@ import Language from "../src/model/language";
 import MockServer from "./testUtilities/mockServer";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil";
-import { expect } from "chai";
 import { renameResources } from "../src/util/commonUtil";
 
 let sandbox: SinonSandbox = sinon.createSandbox();
@@ -219,15 +220,27 @@ describe("AnnotationManager", () => {
         it("should process xml with missing annotation terms", async () => await processAnnotations("annotations/v4/metadata-v4"));
         it("should extract translations (download content)", async () => await processAnnotations("metadata/download/mainService", ["ZH", "TH", "KO", "RO", "SL", "HR", "MS", "UK", "AR", "HE", "CS", "DE", "EN", "FR", "EL", "HU", "IT", "JA", "DA", "PL", "ZF", "NL", "NO", "PT", "SK", "RU", "ES", "TR", "FI", "SV", "BG", "SH", "KK"]));
     });
+
+    describe("Download Annotation files", () => {
+        it("should retry to download annoation file after first request failed", async () => await processAnnotations("annotations/v2/metadata-v2", ["DE", "EN"], 6, 1));
+        it("should throw error", async () => {
+            try {
+                await processAnnotations("annotations/v2/metadata-v2", ["DE", "EN"], 6, 2);
+                assert.fail(true, false, "Exception not thrown");
+            } catch (error: any) {
+                expect(error.message).to.eq("Error occurred: Request /sap/opu/odata4/m2_sd_travel_mduu/$metadata failed with Server error: 500. Please try again if this is a temporary issue. If not, please create a ticket on CA-UI5-ABA-AIDX");
+            }
+        });
+    });
 });
 
-async function processAnnotations(folder: string, languages = ["EN", "DE"]) {
+async function processAnnotations(folder: string, languages = ["EN", "DE"], expectedDownloadRequests?: number, numberOfFailedRequests?: number) {
     if (!fs.existsSync(TestUtil.getResourcePath(folder))) {
         return;
     }
     const abapRepoManager = new AbapRepoManager(options.configuration);
     const ODATA_URI = "/sap/opu/odata4/m2_sd_travel_mduu/";
-    MockServer.stubAnnotations(sandbox, abapRepoManager, [{ folder, url: ODATA_URI + "$metadata" }]);
+    const stub = MockServer.stubAnnotations(sandbox, abapRepoManager, [{ folder, url: ODATA_URI + "$metadata" }], numberOfFailedRequests);
     const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
     const MANIFEST_FILENAME = "manifest.json";
     const baseAppFiles = new Map<string, string>([[MANIFEST_FILENAME, JSON.stringify({
@@ -258,6 +271,9 @@ async function processAnnotations(folder: string, languages = ["EN", "DE"]) {
             "i18n/annotations/customercomsapapplicationvariantid/i18n_en.properties",
             "i18n/annotations/customercomsapapplicationvariantid/i18n_de.properties",
         ]);
+    }
+    if (expectedDownloadRequests) {
+        expect(stub.callCount).to.eq(expectedDownloadRequests);
     }
 }
 

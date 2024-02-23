@@ -115,8 +115,8 @@ describe("Index", () => {
                 ];
                 const tempResources = await cacheManager.readTemp();
                 const tempResourcesMembers = [
-                    "/i18n/i18n.properties",
-                    "/manifest.json"
+                    "i18n/i18n.properties",
+                    "manifest.json"
                 ];
                 checkResourcePathsAndTempResources(resourcePaths, resourcePathMembers, tempResources, tempResourcesMembers);
                 const i18nResources = resources.filter(resources => resources.getPath().includes("i18n"));
@@ -168,5 +168,5 @@ const runUi5TaskAdaptation = async (options: IProjectOptions, hasEnhanceWithForI
         "/resources/ns/changes/notsupported.testfile"
     ];
     const tempResources = await cacheManager.readTemp();
-    checkResourcePathsAndTempResources(resourcePaths, resourcePathsMembers, tempResources, ["/manifest.json"]);
+    checkResourcePathsAndTempResources(resourcePaths, resourcePathsMembers, tempResources, ["manifest.json"]);
 }
