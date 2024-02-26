@@ -74,11 +74,14 @@ export default class AppVariantManager {
             }
         }
         this.validateManifest(manifest);
+        // Order is important: apply manifest.json changes first, then *.change
+        // files. UI5 does the same.
+        const changes = (manifest.content ?? []).concat(manifestChanges);
         return {
             id: manifest.id,
             reference: manifest.reference,
             layer: manifest.layer,
-            changes: manifestChanges.concat(manifest.content)
+            changes
         };
     }
 

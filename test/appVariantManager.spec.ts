@@ -46,7 +46,7 @@ describe("AppVariantManager", () => {
                 id: "customer.com.sap.application.variant.id",
                 reference: "com.sap.base.app.id",
                 layer: "CUSTOMER_BASE",
-                changes: [changes].concat(manifest.content)
+                changes: manifest.content.concat(changes)
             });
         });
 
@@ -117,7 +117,7 @@ describe("AppVariantManager", () => {
             const resources: any[] = (await workspace.byGlob("/**/*")).filter(byIsOmited(taskUtil));
             await assertRename(resources, "notsupported.testfile", "appVariant1-renamed/webapp")
         });
-        
+
     });
 
     describe("when having change with url", () => {

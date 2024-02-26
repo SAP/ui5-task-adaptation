@@ -1,0 +1,63 @@
+{
+	"fileName": "manifest",
+	"layer": "CUSTOMER_BASE",
+	"fileType": "appdescr_variant",
+	"reference": "ci.settleman.fcadoc.opgs1",
+	"id": "customer.ci.settleman.fcadoc.opgs1",
+	"namespace": "apps/ci.settleman.fcadoc.opgs1/appVariants/customer.ci.settleman.fcadoc.opgs1/",
+	"content": [
+		{
+			"changeType": "appdescr_app_addNewInbound",
+			"content": {
+				"inbound": {
+					"customer.ci.settleman.fcadoc.opgs1.InboundID": {
+						"action": "displayFactSheet",
+						"semanticObject": "FreightCostAllocationDocument",
+						"title": "{{customer.ci.settleman.fcadoc.opgs1_sap.app.crossNavigation.inbounds.customer.ci.settleman.fcadoc.opgs1.InboundID.title}}",
+						"signature": {
+							"additionalParameters": "ignored",
+							"parameters": {
+								"sap-fiori-id": {
+									"required": false,
+									"defaultValue": {
+										"value": "F6215",
+										"format": "plain"
+									}
+								},
+								"sap-keep-alive": {
+									"required": false,
+									"defaultValue": {
+										"value": "restricted",
+										"format": "plain"
+									}
+								},
+								"FreightCostAllocationDocument": {},
+								"sap-appvar-id": {
+									"required": true,
+									"filter": {
+										"value": "customer.ci.settleman.fcadoc.opgs1",
+										"format": "plain"
+									},
+									"launcherValue": {
+										"value": "customer.ci.settleman.fcadoc.opgs1"
+									}
+								}
+							}
+						},
+						"subTitle": "{{customer.ci.settleman.fcadoc.opgs1_sap.app.crossNavigation.inbounds.customer.ci.settleman.fcadoc.opgs1.InboundID.subTitle}}"
+					}
+				}
+			},
+			"texts": {
+				"i18n": "i18n/i18n.properties"
+			}
+		},
+		{
+			"changeType": "appdescr_app_removeAllInboundsExceptOne",
+			"content": {
+				"inboundId": "customer.ci.settleman.fcadoc.opgs1.InboundID"
+			},
+			"texts": {}
+		}
+	]
+}

@@ -67,11 +67,11 @@ describe("BaseAppManager getBaseAppManifest", () => {
         }
     };
     const baseAppCacheManager = new BaseAppFilesCacheManager(options.configuration);
-    
+
     before(async () => {
         appVariantInfo = await TestUtil.getAppVariantInfo("appVariant1", options.projectNamespace);
     });
-    
+
     beforeEach(() => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
 
@@ -84,11 +84,27 @@ describe("BaseAppManager getBaseAppManifest", () => {
         const getBaseAppManifestSpy = sandbox.spy(BaseAppManager, "getBaseAppManifest" as any);
 
         const { manifestInfo } = await BaseAppManager.process(baseAppFiles, appVariantInfo, options, new CFProcessor(options.configuration, baseAppCacheManager));
-       
+
         expect(manifestInfo.id).to.eql("customer.com.sap.application.variant.id");
         expect(getBaseAppManifestSpy.calledTwice).to.eql(true);
         expect(getBaseAppManifestSpy.returnValues[0].filepath).to.eql("manifest.json");
         expect(getBaseAppManifestSpy.returnValues[1].filepath).to.eql("manifest.json");
+    });
+
+    it("should apply manifest.json changes first, then *.change files", async () => {
+        const appVariantInfo = await TestUtil.getAppVariantInfo("ci.settleman.fcadoc.opgs1", options.projectNamespace);
+        const baseAppFiles = new Map([
+            ["manifest.json", JSON.stringify({
+                "_version": "1.12.0",
+                "sap.app": {
+                    "id": "com.sap.base.app.id",
+                    "applicationVersion": {
+                        "version": "1.0.0"
+                    }
+                }
+            })]
+        ]);
+        await BaseAppManager.process(baseAppFiles, appVariantInfo, options, new CFProcessor(options.configuration, baseAppCacheManager));
     });
 
     it("should throw error in case manifest.json is not in root folder", async () => {
@@ -97,7 +113,7 @@ describe("BaseAppManager getBaseAppManifest", () => {
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
         ]);
         const getBaseAppManifestSpy = sandbox.spy(BaseAppManager, "getBaseAppManifest" as any);
-        
+
         try {
             await BaseAppManager.process(baseAppFiles, appVariantInfo, options, new CFProcessor(options.configuration, baseAppCacheManager));
             assert.fail(true, false, "Exception not thrown");

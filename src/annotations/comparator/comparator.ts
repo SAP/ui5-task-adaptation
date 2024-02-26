@@ -135,8 +135,11 @@ export default class Comparator {
         const includer_a = new Includer(a, property);
         const includer_b = new Includer(b, property);
         for (let i = 0; i < Math.max(a.length, b.length); i++) {
-            const id_a = a[i]?._attributes[idProperty];
-            const id_b = b[i]?._attributes[idProperty];
+            // There might be an exceptional case, when the object doesn't
+            // contain attributes. In this case we continue traversing, like
+            // UI5 does.
+            const id_a = a[i]?._attributes?.[idProperty];
+            const id_b = b[i]?._attributes?.[idProperty];
             if (id_a !== id_b) {
                 // We go down the array and if suddenly the ids for comparing
                 // items are not the same, we need to find the item with the

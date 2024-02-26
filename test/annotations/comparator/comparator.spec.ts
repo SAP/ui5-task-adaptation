@@ -246,6 +246,59 @@ describe("Comparator", () => {
         expect(() => comparator.compare()).to.throw(`The structure of the OData annotation xml is different near element: {"a":[{"_attributes":{"String":"value 1"}}],"b":[{"_attributes":{"String":"value 1"}},{"_attributes":{"String":"value 2"}}]}`);
     });
 
+    // Test 09
+    it("should not throw error in case of missing of SimpleIdentifier in PropertyValue (test 09)", () => {
+        const a = XmlUtil.xmlToJson(completeXml(`
+        <Annotations Target="cds_bomexplosion.ExplodeBOMType">
+            <Annotation Term="UI.ConnectedFields" Qualifier="Material">
+                <Record>
+                    <PropertyValue Property="Data">
+                        <Record>
+                            <PropertyValue>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="Material"/>
+                                </Record>
+                            </PropertyValue>
+                        </Record>
+                    </PropertyValue>
+                </Record>
+            </Annotation>
+        </Annotations>`));
+        const b = XmlUtil.xmlToJson(completeXml(`
+        <Annotations Target="cds_bomexplosion.ExplodeBOMType">
+            <Annotation Term="UI.ConnectedFields" Qualifier="Material">
+                <Record>
+                    <PropertyValue Property="Data">
+                        <Record>
+                            <PropertyValue>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="Material"/>
+                                </Record>
+                            </PropertyValue>
+                        </Record>
+                    </PropertyValue>
+                </Record>
+            </Annotation>
+        </Annotations>`));
+        const { json } = new Comparator(a, b).compare();
+        expect(XmlUtil.jsonToXml(json)).to.eql(completeXml(`
+            <Annotations Target="cds_bomexplosion.ExplodeBOMType">
+                <Annotation Term="UI.ConnectedFields" Qualifier="Material">
+                    <Record>
+                        <PropertyValue Property="Data">
+                            <Record>
+                                <PropertyValue>
+                                    <Record Type="UI.DataField">
+                                        <PropertyValue Property="Value" Path="Material"/>
+                                    </Record>
+                                </PropertyValue>
+                            </Record>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+            </Annotations>`));
+    });
+
 });
 
 describe("DataSourceOData: addNewODataAnnotation", () => {
