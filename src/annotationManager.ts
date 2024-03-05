@@ -43,7 +43,7 @@ export default class AnnotationManager {
         const serviceRequestor = new ServiceRequestor(this.configuration, this.abapRepoManager);
 
         const dataSourceManager = new DataSourceManager();
-        dataSourceManager.addDataSources(renamedBaseAppManifest["sap.app"]?.dataSources, this.configuration);
+        dataSourceManager.addDataSources(renamedBaseAppManifest["sap.app"]?.dataSources);
         const annotationFiles = await dataSourceManager.createAnnotationFiles(languages, i18nManager, serviceRequestor);
         const i18nFiles = i18nManager.createFiles(i18nPathName);
 

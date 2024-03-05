@@ -1,11 +1,11 @@
 import * as sinon from "sinon";
 
-import { IConfiguration, IProjectOptions } from "../../../src/model/types";
 import TestUtil, { metadataV4Xml } from "../../testUtilities/testUtil";
 
 import AbapRepoManager from "../../../src/repositories/abapRepoManager";
 import DataSourceManager from "../../../src/annotations/dataSource/dataSourceManager";
 import I18nManager from "../../../src/i18nManager";
+import { IProjectOptions } from "../../../src/model/types";
 import Language from "../../../src/model/language";
 import ServiceRequestor from "../../../src/annotations/serviceRequestor";
 import { SinonSandbox } from "sinon";
@@ -36,9 +36,7 @@ describe("TraverseReferences", () => {
     afterEach(() => sandbox.restore());
 
     it("should traverse OData with flag enabled", async () => await testTraverseAndFeatureFlag(true, true, 1));
-    it("should not process OData with flag disabled", async () => await testTraverseAndFeatureFlag(false, true, 0));
     it("should traverse ODataAnnotation with flag enabled", async () => await testTraverseAndFeatureFlag(true, false, 1));
-    it("should not traverse ODataAnnotation with flag disabled", async () => await testTraverseAndFeatureFlag(false, false, 1));
 
     it("should merge referenced annotations with same targets (single annotation)", async () => {
         const parent = metadataV4Xml(
@@ -58,7 +56,7 @@ describe("TraverseReferences", () => {
         const { files } = createAnnotationFiles(sandbox, dataSources, [
             { xml: child, uri: "/odata/v2/reference/to/child1", name: "CHILD_NAMESPACE" },
             { xml: parent, uri: "/odata/v2/ManifestConfigurationService/$metadata", name: "mainService" }
-        ], { enableBetaFeatures: true });
+        ]);
         expect((await files).get("annotations/annotation_mainService.xml")).to.eql(metadataV4Xml(
             `<edmx:Reference Uri="../reference/to/child1">
         <edmx:Include Namespace="CHILD_NAMESPACE" Alias="Child"/>
@@ -93,7 +91,7 @@ describe("TraverseReferences", () => {
         const { files } = createAnnotationFiles(sandbox, dataSources, [
             { xml: child, uri: "/odata/v2/reference/to/child1", name: "CHILD_NAMESPACE" },
             { xml: parent, uri: "/odata/v2/ManifestConfigurationService/$metadata", name: "mainService" }
-        ], { enableBetaFeatures: true });
+        ]);
         expect((await files).get("annotations/annotation_mainService.xml")).to.eql(metadataV4Xml(
             `<edmx:Reference Uri="../reference/to/child1">
         <edmx:Include Namespace="CHILD_NAMESPACE" Alias="Child"/>
@@ -127,7 +125,7 @@ describe("TraverseReferences", () => {
         const { files } = createAnnotationFiles(sandbox, dataSources, [
             { xml: child, uri: "/odata/v2/reference/to/child1", name: "CHILD_NAMESPACE" },
             { xml: odata, uri: "/odata/v2/ManifestConfigurationService/$metadata", name: "mainService" }
-        ], { enableBetaFeatures: true });
+        ]);
         expect((await files).get("annotations/annotation_mainService.xml")).to.eql(metadataV4Xml(
             `<edmx:Reference Uri="../reference/to/child1">
         <edmx:Include Namespace="CHILD_NAMESPACE" Alias="Child"/>
@@ -152,11 +150,6 @@ describe("TraverseReferences", () => {
     });
 
 
-    it("shouldn't do anything since feature flag disabled", async () => {
-        const { files } = createAnnotationFiles(sandbox, dataSources, [], {});
-        expect((await files).has("annotations/annotation_mainService.xml")).to.be.false;
-    });
-
     async function testTraverseAndFeatureFlag(enableBetaFeatures: boolean, isOData: boolean, filesCount: number) {
         const PARENT_NAME = "mainService";
         const PARENT_URL = "/odata/v2/ManifestConfigurationService/";
@@ -174,7 +167,7 @@ describe("TraverseReferences", () => {
                 "uri": PARENT_URL,
                 "type": isOData ? "OData" : "ODataAnnotation"
             }
-        }, { enableBetaFeatures });
+        });
         const languages = Language.create(["DE"]);
         const i18nManager = new I18nManager("model1", "appVariantId1", languages);
         const serviceRequestor = new ServiceRequestor(options.configuration, abapRepoManager);
@@ -209,9 +202,9 @@ describe("TraverseReferences", () => {
         }
     }
 
-    function createAnnotationFiles(sandbox: SinonSandbox, dataSources: any, annotations: IChild[], config: IConfiguration): IUnderTestResult {
+    function createAnnotationFiles(sandbox: SinonSandbox, dataSources: any, annotations: IChild[]): IUnderTestResult {
         const dataSourceManager = new DataSourceManager();
-        dataSourceManager.addDataSources(dataSources, config);
+        dataSourceManager.addDataSources(dataSources);
         const languages = [new Language("", "")];
         const i18nManager = new I18nManager("model1", "appVariantId1", languages);
         const serviceRequestor = new ServiceRequestor({}, abapRepoManager);
@@ -245,7 +238,7 @@ describe("TraverseReferences", () => {
         const { stub, files } = createAnnotationFiles(sandbox, dataSourcesClone, [
             { xml: odataAnnotation, uri: "/odata/v2/annotationName1", name: "annotatioName1" },
             { xml: odata, uri: "/odata/v2/ManifestConfigurationService/$metadata", name: "mainService" }
-        ], { enableBetaFeatures: true });
+        ]);
         await files;
         // Should download just odata and odataAnnotation xmls and not go deeper
         // to the references, since they are references to metadata and we
