@@ -1,7 +1,7 @@
 import MetadataJsonUtil, { MetadataReference } from "../converter/metadataJsonUtil";
 import Transformer, { TransformerInput } from "../transformers/transformer";
 
-import DataSourceODataAnnotation from "../dataSource/dataSourceODataAnnotationBeta";
+import DataSourceODataAnnotation from "../dataSource/dataSourceODataAnnotation";
 import UrlUtil from "../../util/urlUtil";
 
 export default class TraverseReferences implements Transformer {
