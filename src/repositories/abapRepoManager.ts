@@ -1,9 +1,10 @@
-import { IAuth, IConfiguration, IMetadata } from "../model/types";
+import { IAuth, IConfiguration, IMetadata } from "../model/types.js";
 
-import RequestUtil from "../util/requestUtil";
-import { unzipZipEntries } from "../util/zipUtil";
+import RequestUtil from "../util/requestUtil.js";
+import { getLogger } from "@ui5/logger";
+import { unzipZipEntries } from "../util/zipUtil.js";
 
-const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::AbapRepoManager");
+const log = getLogger("@ui5/task-adaptation::AbapRepoManager");
 
 const REQUEST_OPTIONS_XML = {
     responseType: "text",

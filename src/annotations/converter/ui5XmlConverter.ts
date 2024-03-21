@@ -1,4 +1,4 @@
-const { V2MetadataConverter, V4MetadataConverter } = require("../../../dist/bundle-odata");
+import { V2MetadataConverter, V4MetadataConverter } from "../../../dist/bundle.js";
 
 import { JSDOM } from "jsdom";
 

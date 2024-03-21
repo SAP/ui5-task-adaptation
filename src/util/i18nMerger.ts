@@ -1,10 +1,13 @@
-import { dotToUnderscore, escapeRegex, removePropertiesExtension } from "./commonUtil";
+import * as Resource from "@ui5/fs/Resource";
 
-import { IAppVariantInfo } from "../model/types";
-import ResourceUtil from "./resourceUtil";
+import { dotToUnderscore, escapeRegex, removePropertiesExtension } from "./commonUtil.js";
+
+import { IAppVariantInfo } from "../model/types.js";
+import ResourceUtil from "./resourceUtil.js";
 import { posix as path } from "path";
 
-const Resource = require("@ui5/fs/lib/Resource");
+type Resource = typeof Resource;
+
 
 export default class I18NMerger {
 
@@ -32,7 +35,7 @@ export default class I18NMerger {
 
 
     static async mergeI18NFiles(baseAppResources: any[], appVariantResources: any[], projectNamespace: string, baseAppManifestI18NPath: string, appVariantInfo: IAppVariantInfo, taskUtil: any) {
-        const aggregatedResourceFilesMap = new Map<string, typeof Resource>(baseAppResources.map(baseAppResource => [baseAppResource.getPath(), baseAppResource]));
+        const aggregatedResourceFilesMap = new Map<string, Resource>(baseAppResources.map(baseAppResource => [baseAppResource.getPath(), baseAppResource]));
         const i18nTargetFolder = dotToUnderscore(appVariantInfo.id);
         const rootFolder = ResourceUtil.getRootFolder(projectNamespace);
         const tranlsationRegexPattern = "((_[a-z]{2,3})?(_[a-zA-Z]{2,3}(_[a-zA-Z]{2,20})?)?)\.properties$";
@@ -72,7 +75,7 @@ export default class I18NMerger {
      * app variant Id as prefix => If we filter on them we do not need to remove
      * existing overwritten keys (as there should be none)
      */
-    private static async mergePropertiesFiles(aggregatedResourceFilesMap: Map<string, typeof Resource>, variantResource: typeof Resource, baseAppI18NPath: string) {
+    private static async mergePropertiesFiles(aggregatedResourceFilesMap: Map<string, Resource>, variantResource: Resource, baseAppI18NPath: string) {
         const baseAppI18NFile = aggregatedResourceFilesMap.get(baseAppI18NPath);
         if (baseAppI18NFile) {
             await this.mergeFiles(baseAppI18NFile, variantResource);
@@ -88,7 +91,7 @@ export default class I18NMerger {
      * update the path of app variant property file so it will be copied into
      <app_variant_id> folder
      */
-    private static moveToAppVarSubfolder(variantResource: typeof Resource, rootFolder: string, i18nBundleName: string) {
+    private static moveToAppVarSubfolder(variantResource: Resource, rootFolder: string, i18nBundleName: string) {
         const relativeFilePath = variantResource.getPath().substring(rootFolder.length);
         const newResourcePath = path.join(rootFolder, i18nBundleName, relativeFilePath);
         variantResource.setPath(newResourcePath);
@@ -99,14 +102,14 @@ export default class I18NMerger {
      * create new i18n file in case e.g. translation file does not exist in base
      * app but in variant and copy of translation file is needed
      */
-    private static async createFile(aggregatedResourceFilesMap: Map<string, typeof Resource>, path: string, resource: typeof Resource) {
+    private static async createFile(aggregatedResourceFilesMap: Map<string, Resource>, path: string, resource: Resource) {
         const createdFile = await resource.clone();
         createdFile.setPath(path);
         aggregatedResourceFilesMap.set(path, createdFile);
     }
 
 
-    private static async mergeFiles(baseFile: typeof Resource, variantFile: typeof Resource) {
+    private static async mergeFiles(baseFile: Resource, variantFile: Resource) {
         const variantFileContent = await variantFile.getString();
         const mergedFileContent = await baseFile.getString();
         baseFile.setString(`${mergedFileContent}\n\n#App variant specific text file\n\n${variantFileContent}`);

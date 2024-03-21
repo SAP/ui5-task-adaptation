@@ -1,4 +1,4 @@
-import UI5JsonParser from "./ui5MetadataJsonUtil";
+import UI5JsonParser from "./ui5MetadataJsonUtil.js";
 
 interface ProcessTermOptions {
     attributesProperty: string;

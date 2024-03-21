@@ -1,8 +1,8 @@
-import BaseAppFilesCacheManager from "../cache/baseAppFilesCacheManager";
-import HTML5RepoManager from "../repositories/html5RepoManager";
-import { IConfiguration } from "../model/types";
-import IProcessor from "./processor";
-import { validateObject } from "../util/commonUtil";
+import BaseAppFilesCacheManager from "../cache/baseAppFilesCacheManager.js";
+import HTML5RepoManager from "../repositories/html5RepoManager.js";
+import { IConfiguration } from "../model/types.js";
+import IProcessor from "./processor.js";
+import { validateObject } from "../util/commonUtil.js";
 
 export default class CFProcessor implements IProcessor {
 

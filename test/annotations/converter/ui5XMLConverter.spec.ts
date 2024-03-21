@@ -1,4 +1,4 @@
-import ui5XmlConverter from "../../../src/annotations/converter/ui5XmlConverter";
+import ui5XmlConverter from "../../../src/annotations/converter/ui5XmlConverter.js";
 import { expect } from "chai"
 
 
@@ -10,7 +10,7 @@ describe("When converting v2 metadata into internal json", () => {
             <edmx:Reference Uri="https://mysystem/sap/opu/odata/iwfnd/catalogservice;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_COMMON',Version='0001',SAP__Origin='LOCAL')/$value" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
                 <edmx:Include Namespace="com.sap.vocabularies.Common.v1" Alias="Common"/>
             </edmx:Reference>
-        
+
             <edmx:DataServices m:DataServiceVersion="2.0">
                 <Schema Namespace="service_namespace" xml:lang="en" sap:schema-version="1" xmlns="http://schemas.microsoft.com/ado/2008/09/edm">
                     <EntityType Name="EntityType1" sap:label="Old sap:label Annotation" sap:value-list="true" sap:content-version="1">
@@ -21,7 +21,7 @@ describe("When converting v2 metadata into internal json", () => {
                         <Property Name="PropertyWitSAPAndV4Annotation" Type="Edm.String" MaxLength="40" sap:label="Name" sap:quickinfo="Old sap:quickinfo Annotation" sap:creatable="false" sap:updatable="false"/>
                         <Property Name="PropertyWithoutSAPAnnotations" Type="Edm.String" MaxLength="40"/>
                     </EntityType>
-        
+
                     <Annotation Term="Core.SchemaVersion" String="1.0.0" xmlns="http://docs.oasis-open.org/odata/ns/edm"/>
 
                     <Annotations Target="service_namespace.EntityType1/V4AnnotationOnly" xmlns="http://docs.oasis-open.org/odata/ns/edm">
@@ -76,7 +76,7 @@ describe("When converting v2 metadata into internal json", () => {
                         },
                         "@com.sap.vocabularies.Common.v1.Label": "Priority"
                     },
-                    
+
                 }
             },
             "service_namespace.EntityType1": {

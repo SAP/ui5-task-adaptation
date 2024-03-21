@@ -1,5 +1,5 @@
-import DataSource from "./dataSource";
-import TraverseReferences from "../transformers/traverseReferences";
+import DataSource from "./dataSource.js";
+import TraverseReferences from "../transformers/traverseReferences.js";
 
 export default class DataSourceODataAnnotation extends DataSource {
 

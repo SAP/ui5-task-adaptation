@@ -1,4 +1,4 @@
-import CacheManager from "./cacheManager";
+import CacheManager from "./cacheManager.js";
 
 export default class BaseAppFilesCacheManager extends CacheManager {
 

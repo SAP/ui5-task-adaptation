@@ -1,10 +1,10 @@
-import AbapRepoManager from "../repositories/abapRepoManager";
-import AnnotationManager from "../annotationManager";
-import BaseAppFilesCacheManager from "../cache/baseAppFilesCacheManager";
-import { IConfiguration } from "../model/types";
-import IProcessor from "./processor";
-import { validateObject } from "../util/commonUtil";
-import Language from "../model/language";
+import AbapRepoManager from "../repositories/abapRepoManager.js";
+import AnnotationManager from "../annotationManager.js";
+import BaseAppFilesCacheManager from "../cache/baseAppFilesCacheManager.js";
+import { IConfiguration } from "../model/types.js";
+import IProcessor from "./processor.js";
+import { validateObject } from "../util/commonUtil.js";
+import Language from "../model/language.js";
 
 export default class AbapProcessor implements IProcessor {
 

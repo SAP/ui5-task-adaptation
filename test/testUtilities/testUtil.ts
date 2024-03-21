@@ -2,9 +2,9 @@ import * as convert from "xml-js";
 import * as fs from "fs";
 import * as util from "util";
 
-import AppVariantManager from "../../src/appVariantManager";
-import Language from "../../src/model/language";
-import ResourceUtil from "../../src/util/resourceUtil";
+import AppVariantManager from "../../src/appVariantManager.js";
+import Language from "../../src/model/language.js";
+import ResourceUtil from "../../src/util/resourceUtil.js";
 import { glob } from "glob";
 import { minimatch } from "minimatch";
 import { posix as path } from "path";
@@ -40,6 +40,23 @@ export default class TestUtil {
     }
 
     static async getWorkspace(projectName: string, namespace: string) {
+        // TODO: switch to this if BuilContext made public again
+        // const cwd = path.join(process.cwd(), "test", "resources", projectName);
+        // const projectGraph = await graphFromPackageDependencies({ cwd });
+        // const project = projectGraph.getProject(projectName);
+        // const workspace = resourceFactory.createWorkspace({
+        //     reader: createReader({
+        //         fsBasePath: cwd,
+        //         virBasePath: `/resources/${namespace}/`,
+        //         name: `Source reader for application project ${projectName}`,
+        //         project
+        //     })
+        // });
+        // const buildContext = new BuildContext(projectGraph, {});
+        // const taskUtil = new TaskUtil({
+        //     projectBuildContext: buildContext.createProjectContext({ project })
+        // });
+        // return { workspace, taskUtil };
         const folder = path.join(process.cwd(), "test", "resources", projectName);
         return { workspace: new Workspace(folder, namespace), taskUtil: new TaskUtil() };
     }
@@ -111,12 +128,12 @@ class Workspace {
         this.namespace = namespace;
     }
     async byGlob(pattern: string) {
-        const webappFolder = path.join(this.folder, "webapp");
         if (this.resources.size === 0) {
+            const webappFolder = path.join(this.folder, "webapp");
             const files = await glob(webappFolder + "/**/*.*");
             for (const file of files) {
                 if (fs.statSync(file).isFile()) {
-                    const relativePath = path.relative(this.folder, file).substring(7); // webapp.length = 7
+                    const relativePath = path.relative(webappFolder, file);
                     const content = fs.readFileSync(file, { encoding: "utf-8" });
                     const resource = ResourceUtil.createResource(relativePath, this.namespace, content);
                     this.resources.set(resource.getPath(), resource);

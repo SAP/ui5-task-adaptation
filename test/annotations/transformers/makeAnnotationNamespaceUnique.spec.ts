@@ -1,12 +1,12 @@
 import * as sinon from "sinon";
 
-import Language from "../../../src/model/language";
-import MakeAnnotationNamespaceUnique from "../../../src/annotations/transformers/makeAnnotationNamespaceUnique";
-import ServiceRequestor from "../../../src/annotations/serviceRequestor";
+import Language from "../../../src/model/language.js";
+import MakeAnnotationNamespaceUnique from "../../../src/annotations/transformers/makeAnnotationNamespaceUnique.js";
+import ServiceRequestor from "../../../src/annotations/serviceRequestor.js";
 import { SinonSandbox } from "sinon";
-import XmlUtil from "../../../src/util/xmlUtil";
+import XmlUtil from "../../../src/util/xmlUtil.js";
 import { expect } from "chai";
-import { metadataV4Xml } from "../../testUtilities/testUtil";
+import { metadataV4Xml } from "../../testUtilities/testUtil.js";
 
 describe("MakeAnnotationNamespaceUnique", () => {
 

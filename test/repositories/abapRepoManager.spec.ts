@@ -1,9 +1,9 @@
 import * as sinon from "sinon";
 
-import AbapRepoManager from "../../src/repositories/abapRepoManager"
-import { IProjectOptions } from "../../src/model/types";
+import AbapRepoManager from "../../src/repositories/abapRepoManager.js"
+import { IProjectOptions } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
-import TestUtil from "../testUtilities/testUtil";
+import TestUtil from "../testUtilities/testUtil.js";
 import axios from "axios";
 import { expect } from "chai";
 

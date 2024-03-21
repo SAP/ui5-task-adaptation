@@ -1,8 +1,8 @@
 import * as fs from "fs";
+import * as resourceFactory from "@ui5/fs/resourceFactory";
 
 import { posix as path } from "path";
 
-const resourceFactory = require("@ui5/fs/lib/resourceFactory");
 const UTF8 = "utf8";
 
 export default class ResourceUtil {

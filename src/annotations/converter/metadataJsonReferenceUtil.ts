@@ -1,4 +1,4 @@
-import MetadataJsonUtil, { MetadataInclude } from "./metadataJsonUtil";
+import MetadataJsonUtil, { MetadataInclude } from "./metadataJsonUtil.js";
 
 export default class MetadataJsonReferenceUtil {
     private json: any;

@@ -1,13 +1,14 @@
-import { IAppVariantInfo, IBaseAppInfo, IChange, IProjectOptions } from "./model/types";
-import { dotToUnderscore, removePropertiesExtension } from "./util/commonUtil";
+import { Applier, Change, RegistrationBuild } from "../dist/bundle.js";
+import { IAppVariantInfo, IBaseAppInfo, IChange, IProjectOptions } from "./model/types.js";
+import { dotToUnderscore, removePropertiesExtension } from "./util/commonUtil.js";
 
-import BuildStrategy from "./buildStrategy";
-import IProcessor from "./processors/processor";
-import ResourceUtil from "./util/resourceUtil";
-import { renameResources } from "./util/commonUtil";
+import BuildStrategy from "./buildStrategy.js";
+import IProcessor from "./processors/processor.js";
+import ResourceUtil from "./util/resourceUtil.js";
+import { getLogger } from "@ui5/logger";
+import { renameResources } from "./util/commonUtil.js";
 
-const { RegistrationBuild, Applier, Change } = require("../dist/bundle");
-const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::BaseAppManager");
+const log = getLogger("@ui5/task-adaptation::BaseAppManager");
 
 export interface IBaseAppResources {
     resources: any[];
@@ -130,7 +131,7 @@ export default class BaseAppManager {
 
     static async applyDescriptorChanges(baseAppManifest: any, { layer, changes, id }: IAppVariantInfo) {
         log.verbose("Applying appVariant changes");
-        const changesContent = new Array<typeof Change>();
+        const changesContent = new Array<Change>();
         const i18nBundleName = dotToUnderscore(id);
         for (const change of structuredClone(changes)) {
             if (layer) {

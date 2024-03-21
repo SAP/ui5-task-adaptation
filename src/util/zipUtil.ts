@@ -1,5 +1,4 @@
-import AdmZip = require("adm-zip");
-
+import AdmZip from "adm-zip";
 
 export async function unzipZipEntries(zip: Buffer): Promise<Map<string, string>> {
     let admZip;

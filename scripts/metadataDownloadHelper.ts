@@ -1,7 +1,8 @@
 import * as dotenv from "dotenv";
 import * as fs from "fs/promises";
+
 import { Agent } from "https";
-import RequestUtil from "../src/util/requestUtil";
+import RequestUtil from "../src/util/requestUtil.js";
 
 dotenv.config();
 const httpsAgent = new Agent({ rejectUnauthorized: false });
@@ -75,13 +76,13 @@ const hostArgIndex = args.findIndex(arg => arg.startsWith('--host='));
 
 // If the `--host=` argument is found
 if (hostArgIndex !== -1) {
-  // Extract the value of the `--host=` argument
-  const hostArg = args[hostArgIndex];
-  let host = hostArg.split('=')[1];
-  host = host.endsWith("/") ? host.substring(0, host.lastIndexOf("/")) : host;
+    // Extract the value of the `--host=` argument
+    const hostArg = args[hostArgIndex];
+    let host = hostArg.split('=')[1];
+    host = host.endsWith("/") ? host.substring(0, host.lastIndexOf("/")) : host;
 
-  // Use the `host` variable as needed
-  MetadataDownloadHelper.fetchAllUrls(host);
+    // Use the `host` variable as needed
+    MetadataDownloadHelper.fetchAllUrls(host);
 } else {
     console.info("Please provide missing host parameter");
 }

@@ -1,9 +1,9 @@
-import I18nManager from "../../i18nManager";
-import { IAnnotationDownloadParams } from "./dataSourceOData";
-import Language from "../../model/language";
-import ServiceRequestor from "../serviceRequestor";
-import Transformer from "../transformers/transformer";
-import XmlUtil from "../../util/xmlUtil";
+import I18nManager from "../../i18nManager.js";
+import { IAnnotationDownloadParams } from "./dataSourceOData.js";
+import Language from "../../model/language.js";
+import ServiceRequestor from "../serviceRequestor.js";
+import Transformer from "../transformers/transformer.js";
+import XmlUtil from "../../util/xmlUtil.js";
 
 export default class DataSource {
 
@@ -21,6 +21,7 @@ export default class DataSource {
     /**
      * Update the json of the dataSources in manifest.json
      */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     updateManifest(_: any) {
         // to be overriden in children
     }

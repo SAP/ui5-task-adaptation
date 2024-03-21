@@ -1,12 +1,12 @@
 import * as chai from "chai";
 import * as sinon from "sinon";
 
-import { IAppVariantInfo, IAppVariantManifest } from "../src/model/types";
+import { IAppVariantInfo, IAppVariantManifest } from "../src/model/types.js";
 
-import AppVariantManager from "../src/appVariantManager";
-import ResourceUtil from "../src/util/resourceUtil";
+import AppVariantManager from "../src/appVariantManager.js";
+import ResourceUtil from "../src/util/resourceUtil.js";
 import { SinonSandbox } from "sinon";
-import TestUtil from "./testUtilities/testUtil";
+import TestUtil from "./testUtilities/testUtil.js";
 
 const { byIsOmited } = TestUtil;
 

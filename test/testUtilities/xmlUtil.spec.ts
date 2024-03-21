@@ -1,4 +1,4 @@
-import XmlUtil from "../../src/util/xmlUtil";
+import XmlUtil from "../../src/util/xmlUtil.js";
 import { expect } from "chai";
 
 describe("XmlUtil", () => {

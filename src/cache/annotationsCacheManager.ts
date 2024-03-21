@@ -1,5 +1,5 @@
-import CacheManager from "./cacheManager";
-import { IConfiguration } from "../model/types";
+import CacheManager from "./cacheManager.js";
+import { IConfiguration } from "../model/types.js";
 
 export default class AnnotationsCacheManager extends CacheManager {
 

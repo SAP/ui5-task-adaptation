@@ -1,5 +1,5 @@
-import { Diff } from "./comparator";
-import DiffCase from "./diffCase";
+import { Diff } from "./comparator.js";
+import DiffCase from "./diffCase.js";
 
 export default class InterchangableCase implements DiffCase {
 

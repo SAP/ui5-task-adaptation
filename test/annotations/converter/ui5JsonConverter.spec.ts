@@ -1,13 +1,13 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import AnnotationUtil from "../../testUtilities/annotationUtil";
-import MetadataJsonUtil from "../../../src/annotations/converter/metadataJsonUtil";
-import TestUtil from "../../testUtilities/testUtil";
-import UI5JsonParser from "../../../src/annotations/converter/ui5MetadataJsonUtil";
-import UI5ToInternalJsonConverter from "../../../src/annotations/converter/ui5JsonConverter";
-import UI5XmlToJsonConverter from "../../../src/annotations/converter/ui5XmlConverter";
-import XmlUtil from "../../../src/util/xmlUtil";
+import AnnotationUtil from "../../testUtilities/annotationUtil.js";
+import MetadataJsonUtil from "../../../src/annotations/converter/metadataJsonUtil.js";
+import TestUtil from "../../testUtilities/testUtil.js";
+import UI5JsonParser from "../../../src/annotations/converter/ui5MetadataJsonUtil.js";
+import UI5ToInternalJsonConverter from "../../../src/annotations/converter/ui5JsonConverter.js";
+import UI5XmlToJsonConverter from "../../../src/annotations/converter/ui5XmlConverter.js";
+import XmlUtil from "../../../src/util/xmlUtil.js";
 import { expect } from "chai"
 
 const TARGET = "com.sap.gateway.srvd.m2_sd_travel_mduu.v0001.BookingSupplementType/SupplementID";

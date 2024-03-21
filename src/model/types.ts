@@ -1,4 +1,4 @@
-import Language from "./language";
+import Language from "./language.js";
 
 export interface IConfiguration {
     writeTempFiles?: any;

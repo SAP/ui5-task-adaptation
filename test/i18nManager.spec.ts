@@ -1,8 +1,8 @@
 import * as chai from "chai";
 
-import I18nManager, { I18nFileContent, PropertyValue } from "../src/i18nManager";
+import I18nManager, { I18nFileContent, PropertyValue } from "../src/i18nManager.js";
 
-import Language from "../src/model/language";
+import Language from "../src/model/language.js";
 
 const { expect } = chai;
 

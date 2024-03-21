@@ -1,17 +1,17 @@
 import * as dotenv from "dotenv";
 
-import { logBetaUsage, logBuilderVersion } from "./util/commonUtil";
+import { logBetaUsage, logBuilderVersion } from "./util/commonUtil.js";
 
-import AppVariantManager from "./appVariantManager";
-import BaseAppManager from "./baseAppManager";
-import I18NMerger from "./util/i18nMerger";
-import { ITaskParameters } from "./model/types";
-import { determineProcessor } from "./processors/processor";
+import AppVariantManager from "./appVariantManager.js";
+import BaseAppManager from "./baseAppManager.js";
+import I18NMerger from "./util/i18nMerger.js";
+import { ITaskParameters } from "./model/types.js";
+import { determineProcessor } from "./processors/processor.js";
 
 /**
  * Creates an appVariant bundle from the provided resources.
  */
-module.exports = ({ workspace, options, taskUtil }: ITaskParameters) => {
+export default ({ workspace, options, taskUtil }: ITaskParameters) => {
 
     dotenv.config();
 

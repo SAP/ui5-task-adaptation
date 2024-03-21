@@ -1,13 +1,10 @@
 import * as fs from "fs";
 import * as path from "path";
 
-import { IConfiguration, IMetadata } from "../model/types";
+import { IConfiguration, IMetadata } from "../model/types.js";
 
-import ResourceUtil from "../util/resourceUtil";
-
-import rimraf = require("rimraf");
-const tempFolder = require('temp-dir');
-
+import ResourceUtil from "../util/resourceUtil.js";
+import tempFolder from "temp-dir";
 
 export default abstract class CacheManager {
 
@@ -78,7 +75,7 @@ export default abstract class CacheManager {
 
 
     deleteTemp(): void {
-        rimraf.sync(this.getTempFolder());
+        fs.rmSync(this.getTempFolder(), { recursive: true, force: true });
     }
 
 

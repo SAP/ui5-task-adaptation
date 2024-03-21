@@ -3,14 +3,14 @@ import * as sinon from "sinon";
 
 import { assert, expect } from "chai";
 
-import AbapRepoManager from "../src/repositories/abapRepoManager";
-import AnnotationManager from "../src/annotationManager";
-import { IProjectOptions } from "../src/model/types";
-import Language from "../src/model/language";
-import MockServer from "./testUtilities/mockServer";
+import AbapRepoManager from "../src/repositories/abapRepoManager.js";
+import AnnotationManager from "../src/annotationManager.js";
+import { IProjectOptions } from "../src/model/types.js";
+import Language from "../src/model/language.js";
+import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";
-import TestUtil from "./testUtilities/testUtil";
-import { renameResources } from "../src/util/commonUtil";
+import TestUtil from "./testUtilities/testUtil.js";
+import { renameResources } from "../src/util/commonUtil.js";
 
 let sandbox: SinonSandbox = sinon.createSandbox();
 const options: IProjectOptions = {

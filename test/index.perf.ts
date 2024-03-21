@@ -61,6 +61,7 @@ describe("Performance test", () => {
         const baseAppFiles = new Map([
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
+
         ]);
         await ResourceUtil.writeTemp(OPTIONS.configuration, baseAppFiles);
         sandbox.stub(HTML5RepoManager, "getMetadata").callsFake(() => Promise.resolve({ changedOn: "2100.01.01" }));

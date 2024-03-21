@@ -6,7 +6,7 @@ metadata:
   allowSapInternal: true
 framework:
   name: SAPUI5
-  version: "1.115.0"
+  version: 0.0.0
   libraries:
     - name: sap.ui.fl
     - name: sap.suite.ui.generic.template

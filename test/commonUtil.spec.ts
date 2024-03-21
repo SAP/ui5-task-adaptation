@@ -1,8 +1,8 @@
 import * as chai from "chai";
 
-import { IConfiguration } from "../src/model/types";
-import { renameResources } from "../src/util/commonUtil";
-import { validateObject } from "../src/util/commonUtil";
+import { IConfiguration } from "../src/model/types.js";
+import { renameResources } from "../src/util/commonUtil.js";
+import { validateObject } from "../src/util/commonUtil.js";
 
 const { assert, expect } = chai;
 

@@ -1,16 +1,11 @@
 import * as chai from "chai";
-import * as chaiAsPromised from "chai-as-promised";
-import * as crypto from "crypto";
-import * as fs from "fs";
-import * as path from "path";
 import * as sinon from "sinon";
-import * as util from "util";
 
 import { SinonSandbox } from "sinon";
-import TestUtil from "../testUtilities/testUtil";
-import ui5Resolve from "../../scripts/rollup/ui5Resolve";
-
-const { resourceFactory } = require("@ui5/fs");
+import TestUtil from "../testUtilities/testUtil.js";
+import chaiAsPromised from "chai-as-promised";
+import esmock from "esmock";
+import ui5Resolve from "../../scripts/rollup/ui5Resolve.js";
 
 const { expect } = chai;
 chai.use(chaiAsPromised);
@@ -31,41 +26,13 @@ describe("UI5Resolve", () => {
         });
 
         it("should replace requireAsync.bind", async () => {
-            //@ts-ignore
-            sandbox.stub(crypto, "randomBytes").returns(Buffer.from(""));
-            expect(ui5Resolve({}).transform(TestUtil.getResource("registration-bind.js"), "id")).
+            expect((await mockUI5Resolve())({}).transform(TestUtil.getResource("registration-bind.js"), "id")).
                 to.eql(TestUtil.getResource("registration-bind-expected.js"));
         });
 
         it("should replace requireAsync", async () => {
-            //@ts-ignore
-            sandbox.stub(crypto, "randomBytes").returns(Buffer.from(""));
-            expect(ui5Resolve({}).transform(TestUtil.getResource("registration.js"), "id")).
+            expect((await mockUI5Resolve())({}).transform(TestUtil.getResource("registration.js"), "id")).
                 to.eql(TestUtil.getResource("registration-expected.js"));
-        });
-    });
-
-    describe("when buildStart", () => {
-        it("should stream the resource", async () => {
-            const createWriteStreamStub = sandbox.stub(fs, "createWriteStream");
-            sandbox.stub(resourceFactory, "createCollectionsForTree").returns({
-                dependencies: {
-                    byGlob: () => Promise.resolve(
-                        resourceFactory.createResource({
-                            path: "/path",
-                            string: TestUtil.getResource("registration-expected.js")
-                        })
-                    )
-                }
-            });
-            const pipeStub = sandbox.stub(util, "promisify").returns(() => undefined);
-            await ui5Resolve({
-                assets: [
-                    "/resources/sap/ui/fl/**"
-                ]
-            }).buildStart({});
-            expect(pipeStub.getCalls().length).to.equal(1);
-            expect(createWriteStreamStub.getCalls()[0].args[0]).to.equal("./dist/path");
         });
     });
 
@@ -84,56 +51,12 @@ describe("UI5Resolve", () => {
         });
     });
 
-    describe("when load", () => {
-        it("should resolve bundle definition", async () => {
-            sandbox.stub(resourceFactory, "createCollectionsForTree").returns({
-                dependencies: {
-                    byPath: () => Promise.resolve(
-                        resourceFactory.createResource({
-                            path: "/path",
-                            string: TestUtil.getResource("registration-expected.js")
-                        })
-                    )
-                }
-            });
-            const expected = fs.readFileSync(path.join(process.cwd(),
-                "scripts/rollup/bundleDefinition.js"), { encoding: "utf-8" });
-            expect(await ui5Resolve({}).load("bundleDefinition.js")).to.eql(expected);
-        });
-
-        it("should resolve relative path", async () => {
-            sandbox.stub(resourceFactory, "createCollectionsForTree").returns({
-                dependencies: {
-                    byPath: () => Promise.resolve(
-                        resourceFactory.createResource({
-                            path: "/path",
-                            string: TestUtil.getResource("registration-expected.js")
-                        })
-                    )
-                }
-            });
-            expect(await ui5Resolve({}).load("id")).to.eql(TestUtil.getResource("registration-expected.js"));
-        });
-
-        it("should resolve relative path", async () => {
-            stubDependencies(sandbox);
-            const expected = fs.readFileSync(path.join(process.cwd(),
-                "scripts/rollup/overrides/sap/ui/performance/Measurement.js"), { encoding: "utf-8" });
-            expect(await ui5Resolve({}).load("sap/ui/performance/Measurement")).to.eql(expected);
-        });
-    });
-
 });
-function stubDependencies(sandbox: sinon.SinonSandbox) {
-    sandbox.stub(resourceFactory, "createCollectionsForTree").returns({
-        dependencies: {
-            byPath: () => Promise.resolve(
-                resourceFactory.createResource({
-                    path: "/path",
-                    string: TestUtil.getResource("registration-expected.js")
-                })
-            )
+
+function mockUI5Resolve() {
+    return esmock("../../scripts/rollup/ui5Resolve.js", {}, {
+        "crypto": {
+            randomBytes: () => Buffer.from("")
         }
     });
 }
-

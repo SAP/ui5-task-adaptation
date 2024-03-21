@@ -1,13 +1,15 @@
 import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
-import * as stream from "stream";
 
-import { promisify } from "util";
+//@ts-ignore
+import convertAMDtoES6 from "@buxlabs/amd-to-es6";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { getLogger } from "@ui5/logger";
 
-const convertAMDtoES6 = require("@buxlabs/amd-to-es6");
-const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-adaptation");
-const { resourceFactory } = require("@ui5/fs");
+const log = getLogger("rollup-plugin-ui5-resolve-task-adaptation");
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 
 interface TransformCase {
@@ -29,34 +31,11 @@ class UriTransformCase implements TransformCase {
 
 export default function (options: any) {
 
-    let dependencies: any;
-
     const skipTransformation = (id: string) => !options.skipTransformation?.includes(id);
 
     return {
 
         name: "ui5-resolve",
-
-        buildStart: async (_: any) => {
-
-            dependencies = resourceFactory.createCollectionsForTree(options.project, {}).dependencies;
-
-            const pipe = promisify(stream.pipeline);
-            const resources: any[] = await Promise.all(options.assets.map((asset: string) => dependencies.byGlob(asset)));
-            const writePromises = [].concat(...resources).map((resource: any) => {
-                const file = `./dist${resource.getPath()}`;
-                const folder = path.dirname(file);
-                if (!fs.existsSync(folder)) {
-                    fs.mkdirSync(folder, { recursive: true });
-                }
-                if (fs.existsSync(file)) {
-                    fs.unlinkSync(file);
-                }
-                return pipe(resource.getStream(), fs.createWriteStream(file));
-            });
-            await Promise.all(writePromises);
-        },
-
 
         /*
          * Right before writing result to dist
@@ -79,13 +58,9 @@ export default function (options: any) {
         load: async (id: string) => {
             log.verbose(`load: ${id}`);
 
-            if (!dependencies) {
-                dependencies = resourceFactory.createCollectionsForTree(options.project, {}).dependencies;
-            }
-
             const localFile = path.join(__dirname, id);
             if (fs.existsSync(localFile)) {
-                log.info(`Using local file "${id}"`);
+                log.info(`Bundle definition "${id}"`);
                 return fs.readFileSync(localFile, {
                     encoding: "utf8"
                 });
@@ -93,12 +68,13 @@ export default function (options: any) {
 
             const localOverride = path.resolve(__dirname, "overrides", id + ".js");
             if (fs.existsSync(localOverride)) {
-                log.info(`Using local override for "${id}"`);
+                log.info(`Override with "${id}"`);
                 return fs.readFileSync(localOverride, { encoding: "utf8" });
             }
-
-            const resource = await dependencies.byPath(`/resources/${id}.js`);
-            return resource.getString();
+            const filepath = `/resources/${id}.js`;
+            if (options.resources.has(filepath)) {
+                return await options.resources.get(filepath).getString();
+            }
         },
 
 

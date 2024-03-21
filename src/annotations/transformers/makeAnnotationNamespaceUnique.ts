@@ -1,6 +1,6 @@
-import Transformer, { TransformerInput } from "./transformer";
+import Transformer, { TransformerInput } from "./transformer.js";
 
-import MetadataJsonUtil from "../converter/metadataJsonUtil";
+import MetadataJsonUtil from "../converter/metadataJsonUtil.js";
 import crc16 from "crc/crc16";
 
 export default class MakeAnnotationNamespaceUnique implements Transformer {
