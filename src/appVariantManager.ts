@@ -1,7 +1,7 @@
-import { IAppVariantInfo } from "./model/types";
-import ResourceUtil from "./util/resourceUtil";
+import { IAppVariantInfo } from "./model/types.js";
+import ResourceUtil from "./util/resourceUtil.js";
 import { posix as path } from "path";
-import { renameResources } from "./util/commonUtil";
+import { renameResources } from "./util/commonUtil.js";
 
 const EXTENSIONS_TO_PROCESS = "js,json,xml,html,properties,change,appdescr_variant,ctrl_variant,ctrl_variant_change,ctrl_variant_management_change,variant,fioriversion,codeChange,xmlViewChange,context";
 

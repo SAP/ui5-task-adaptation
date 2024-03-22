@@ -1,10 +1,11 @@
-import I18NMerger from "../../src/util/i18nMerger";
-import { IAppVariantInfo } from "../../src/model/types";
-import ResourceUtil from "../../src/util/resourceUtil";
-import TestUtil from "../testUtilities/testUtil";
+import I18NMerger from "../../src/util/i18nMerger.js";
+import { IAppVariantInfo } from "../../src/model/types.js";
+import ResourceUtil from "../../src/util/resourceUtil.js";
+import TestUtil from "../testUtilities/testUtil.js";
 import { expect } from "chai";
 
 const { byIsOmited } = TestUtil;
+
 
 const appVariantInfo: IAppVariantInfo = {
     id: "customer.com.sap.application.variant.id",

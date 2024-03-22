@@ -1,21 +1,18 @@
-import * as chai from "chai";
 import * as sinon from "sinon";
 
-import BaseAppManager, { IManifestInfo } from "../src/baseAppManager";
-import { IAppVariantInfo, IProjectOptions } from "../src/model/types";
+import { Applier, Change } from "../dist/bundle.js";
+import BaseAppManager, { IManifestInfo } from "../src/baseAppManager.js";
+import { IAppVariantInfo, IProjectOptions } from "../src/model/types.js";
+import { assert, expect } from "chai";
 
-import AbapProcessor from "../src/processors/abapProcessor";
-import AbapRepoManager from "../src/repositories/abapRepoManager";
-import AnnotationManager from "../src/annotationManager";
-import BaseAppFilesCacheManager from "../src/cache/baseAppFilesCacheManager";
-import CFProcessor from "../src/processors/cfProcessor"
-import MockServer from "./testUtilities/mockServer";
+import AbapProcessor from "../src/processors/abapProcessor.js";
+import AbapRepoManager from "../src/repositories/abapRepoManager.js";
+import AnnotationManager from "../src/annotationManager.js";
+import BaseAppFilesCacheManager from "../src/cache/baseAppFilesCacheManager.js";
+import CFProcessor from "../src/processors/cfProcessor.js"
+import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";
-import TestUtil from "./testUtilities/testUtil";
-
-const { Applier, Change } = require("../dist/bundle");
-
-const { assert, expect } = chai;
+import TestUtil from "./testUtilities/testUtil.js";
 
 describe("BaseAppManager getManifestInfo", () => {
 
@@ -208,7 +205,7 @@ describe("BaseAppManager CF", () => {
         const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const stub = sandbox.stub(Applier, "applyChanges")!;
         await BaseAppManager.process(baseAppFiles, appVariantInfo, options, new CFProcessor(options.configuration, baseAppCacheManager));
-        const layers = stub.getCall(0).args[1].map((change: typeof Change) => change.getLayer());
+        const layers = stub.getCall(0).args[1].map((change: Change) => change.getLayer());
         expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
 
@@ -218,7 +215,7 @@ describe("BaseAppManager CF", () => {
         const appVariantInfo = await TestUtil.getAppVariantInfo("appVariant1", options.projectNamespace);
         delete appVariantInfo["layer"];
         await BaseAppManager.process(baseAppFiles, appVariantInfo, options, new CFProcessor(options.configuration, baseAppCacheManager));
-        const definitionKeys = stub.getCall(0).args[1].map((change: typeof Change) => Object.keys(change._oDefinition));
+        const definitionKeys = stub.getCall(0).args[1].map((change: Change) => Object.keys(change._oDefinition));
         expect(definitionKeys.every((key: string[]) => !key.includes("layer"))).to.be.true;
     });
 
@@ -393,7 +390,7 @@ describe("BaseAppManager Abap", () => {
         const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const stub = sandbox.stub(Applier, "applyChanges")!;
         await BaseAppManager.process(baseAppFiles, appVariantInfo, options, abapProcessor);
-        const layers = stub.getCall(0).args[1].map((change: typeof Change) => change.getLayer());
+        const layers = stub.getCall(0).args[1].map((change: Change) => change.getLayer());
         expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
 
@@ -403,7 +400,7 @@ describe("BaseAppManager Abap", () => {
         const appVariantInfo = await TestUtil.getAppVariantInfo("appVariant1", options.projectNamespace);
         delete appVariantInfo["layer"];
         await BaseAppManager.process(baseAppFiles, appVariantInfo, options, abapProcessor);
-        const definitionKeys = stub.getCall(0).args[1].map((change: typeof Change) => Object.keys(change._oDefinition));
+        const definitionKeys = stub.getCall(0).args[1].map((change: Change) => Object.keys(change._oDefinition));
         expect(definitionKeys.every((key: string[]) => !key.includes("layer"))).to.be.true;
     });
 

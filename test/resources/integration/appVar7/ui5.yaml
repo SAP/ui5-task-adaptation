@@ -2,4 +2,4 @@
 specVersion: "2.2"
 type: application
 metadata:
-  name: rollup
+  name: integration/appVar7

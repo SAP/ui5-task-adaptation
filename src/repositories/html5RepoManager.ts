@@ -1,12 +1,13 @@
 import * as AdmZip from "adm-zip";
 
-import { IConfiguration, ICreateServiceInstanceParams, ICredentials, IGetServiceInstanceParams, IHTML5RepoInfo } from "./../model/types";
+import { IConfiguration, ICreateServiceInstanceParams, ICredentials, IGetServiceInstanceParams, IHTML5RepoInfo } from "./../model/types.js";
 
-import CFUtil from "./../util/cfUtil";
-import RequestUtil from "./../util/requestUtil";
-import { unzipZipEntries } from "./../util/zipUtil";
+import CFUtil from "./../util/cfUtil.js";
+import RequestUtil from "./../util/requestUtil.js";
+import { getLogger } from "@ui5/logger";
+import { unzipZipEntries } from "./../util/zipUtil.js";
 
-const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::HTML5RepoManager");
+const log = getLogger("@ui5/task-adaptation::HTML5RepoManager");
 
 export default class HTML5RepoManager {
 

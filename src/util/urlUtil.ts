@@ -1,4 +1,4 @@
-const { URI } = require("../../dist/bundle-odata");
+import { URI } from "../../dist/bundle.js";
 
 export default class UrlUtil {
 
@@ -13,9 +13,9 @@ export default class UrlUtil {
         return new URI(relativeUrl).absoluteTo(parentUrl.replace(/\/$/, "")).toString();
     }
 
-    static getResourcePath(url: string | undefined) {
+    static getResourcePath(url: string) {
         // Trim urls domain/host.
-        return url && URI.parse(url).path;
+        return URI.parse(url).path;
     }
 
 }

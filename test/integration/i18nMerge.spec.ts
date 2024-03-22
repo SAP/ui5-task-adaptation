@@ -1,16 +1,13 @@
-import * as processor from "../../src/processors/processor";
 import * as sinon from "sinon";
 
-import BaseAppFilesCacheManager from "../../src/cache/baseAppFilesCacheManager";
-import CFProcessor from "../../src/processors/cfProcessor";
-import { IProjectOptions } from "../../src/model/types";
+import { IProjectOptions } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
-import TestUtil from "./../testUtilities/testUtil";
+import TestUtil from "./../testUtilities/testUtil.js";
+import esmock from "esmock";
 import { expect } from "chai";
 
 const { byIsOmited } = TestUtil;
 
-const index = require("../../src/index");
 
 const OPTIONS: IProjectOptions = {
     projectNamespace: "ns",
@@ -358,9 +355,12 @@ describe("i18nMerge", () => {
     });
 
     async function test({ baseAppFiles, appVariantFolder, expectLength, expectIncluded, expectExcluded }: ITestParams) {
-        const cfProcessor = new CFProcessor({}, new BaseAppFilesCacheManager(OPTIONS.configuration));
-        sandbox.stub(cfProcessor, "getBaseAppFiles").resolves(baseAppFiles);
-        sandbox.stub(processor, "determineProcessor").returns(cfProcessor);
+        const CFProcessor = await esmock("../../src/processors/cfProcessor.js");
+        const index = await esmock("../../src/index.js", {}, {
+            "../../src/processors/processor.js": {
+                determineProcessor: () => new CFProcessor({}, { getFiles: () => Promise.resolve(baseAppFiles) })
+            }
+        });
         const { workspace, taskUtil } = await TestUtil.getWorkspace(appVariantFolder, OPTIONS.projectNamespace);
         await index({ workspace, options: OPTIONS, taskUtil });
         const files = await workspace.byGlob("/**/*")

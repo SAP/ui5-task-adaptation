@@ -1,8 +1,8 @@
 import * as chai from "chai";
 
-import BaseAppFilesCacheManager from "../../src/cache/baseAppFilesCacheManager";
-import { IProjectOptions } from "../../src/model/types";
-import ResourceUtil from "../../src/util/resourceUtil";
+import BaseAppFilesCacheManager from "../../src/cache/baseAppFilesCacheManager.js";
+import { IProjectOptions } from "../../src/model/types.js";
+import ResourceUtil from "../../src/util/resourceUtil.js";
 
 const { expect } = chai;
 

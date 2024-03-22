@@ -1,11 +1,11 @@
-import ConvertV2ToV4 from "../transformers/convertV2ToV4";
-import DataSource from "./dataSource";
-import Language from "../../model/language";
-import MakeAnnotationNamespaceUnique from "../transformers/makeAnnotationNamespaceUnique";
-import RemoveAllSchemaNodesExceptAnnotations from "../transformers/removeAllSchemaNodesExceptAnnotations";
-import ServiceRequestor from "../serviceRequestor";
-import TraverseReferences from "../transformers/traverseReferences";
-import { getUniqueName } from "../../util/commonUtil";
+import ConvertV2ToV4 from "../transformers/convertV2ToV4.js";
+import DataSource from "./dataSource.js";
+import Language from "../../model/language.js";
+import MakeAnnotationNamespaceUnique from "../transformers/makeAnnotationNamespaceUnique.js";
+import RemoveAllSchemaNodesExceptAnnotations from "../transformers/removeAllSchemaNodesExceptAnnotations.js";
+import ServiceRequestor from "../serviceRequestor.js";
+import TraverseReferences from "../transformers/traverseReferences.js";
+import { getUniqueName } from "../../util/commonUtil.js";
 
 export interface IAnnotationDownloadParams {
     uri: string;

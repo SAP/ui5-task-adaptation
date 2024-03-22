@@ -1,8 +1,8 @@
-import MetadataJsonUtil, { MetadataReference } from "../converter/metadataJsonUtil";
-import Transformer, { TransformerInput } from "../transformers/transformer";
+import MetadataJsonUtil, { MetadataReference } from "../converter/metadataJsonUtil.js";
+import Transformer, { TransformerInput } from "../transformers/transformer.js";
 
-import DataSourceODataAnnotation from "../dataSource/dataSourceODataAnnotation";
-import UrlUtil from "../../util/urlUtil";
+import DataSourceODataAnnotation from "../dataSource/dataSourceODataAnnotation.js";
+import UrlUtil from "../../util/urlUtil.js";
 
 export default class TraverseReferences implements Transformer {
 
@@ -16,7 +16,8 @@ export default class TraverseReferences implements Transformer {
         const references = MetadataJsonUtil.getReferences(json).filter(TraverseReferences.isTraversable);
         const promises = [];
         for (const { includes, uri: relativeUrl } of references) {
-            const absoluteUrl = UrlUtil.join(UrlUtil.getResourcePath(relativeUrl), parentUrl);
+            const resourcePath = UrlUtil.getResourcePath(relativeUrl);
+            const absoluteUrl = UrlUtil.join(resourcePath, parentUrl);
             if (this.shouldIgnoreUrl(absoluteUrl, [parentUrl, this.metadataUrl])) {
                 // If reference to metadata or its parent, don't traverse
                 continue;
@@ -35,7 +36,7 @@ export default class TraverseReferences implements Transformer {
 
 
     private shouldIgnoreUrl(referenceUrl: string, urlsToIgnore: Array<string | undefined>) {
-        const toResourcePath = (url: string | undefined) => UrlUtil.getResourcePath(url);
+        const toResourcePath = (url: string | undefined) => url && UrlUtil.getResourcePath(url);
         const isEqual = (a?: string, b?: string) => a && b && a.toLowerCase() === b.toLowerCase();
         return urlsToIgnore.map(toResourcePath).some(url => isEqual(referenceUrl, url));
     }

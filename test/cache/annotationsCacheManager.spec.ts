@@ -1,13 +1,13 @@
 import * as chai from "chai";
 import * as sinon from "sinon";
 
-import AbapRepoManager from "../../src/repositories/abapRepoManager";
-import AnnotationManager from "../../src/annotationManager";
-import AnnotationsCacheManager from "../../src/cache/annotationsCacheManager";
-import { IConfiguration } from "../../src/model/types";
+import AbapRepoManager from "../../src/repositories/abapRepoManager.js";
+import AnnotationManager from "../../src/annotationManager.js";
+import AnnotationsCacheManager from "../../src/cache/annotationsCacheManager.js";
+import { IConfiguration } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
-import TestUtil from "../testUtilities/testUtil";
-import Language from "../../src/model/language";
+import TestUtil from "../testUtilities/testUtil.js";
+import Language from "../../src/model/language.js";
 
 const { expect } = chai;
 

@@ -1,6 +1,6 @@
-import Transformer, { TransformerInput } from "./transformer";
+import Transformer, { TransformerInput } from "./transformer.js";
 
-import MetadataJsonUtil from "../converter/metadataJsonUtil";
+import MetadataJsonUtil from "../converter/metadataJsonUtil.js";
 
 export default class RemoveAllSchemaNodesExceptAnnotations implements Transformer {
     transform({ json }: TransformerInput): any {

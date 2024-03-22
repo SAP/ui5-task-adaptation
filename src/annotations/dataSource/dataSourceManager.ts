@@ -1,10 +1,10 @@
-import DataSource from "./dataSource";
-import DataSourceOData from "./dataSourceOData";
-import DataSourceODataAnnotation from "./dataSourceODataAnnotation";
-import I18nManager from "../../i18nManager";
-import Language from "../../model/language";
-import ServiceRequestor from "../serviceRequestor";
-import { posix as path } from "path";
+import DataSource from "./dataSource.js";
+import DataSourceOData from "./dataSourceOData.js";
+import DataSourceODataAnnotation from "./dataSourceODataAnnotation.js";
+import I18nManager from "../../i18nManager.js";
+import Language from "../../model/language.js";
+import ServiceRequestor from "../serviceRequestor.js";
+import path from "path/posix";
 
 export default class DataSourceManager {
 

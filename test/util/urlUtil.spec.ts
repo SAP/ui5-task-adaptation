@@ -1,4 +1,4 @@
-import UrlUtil from "../../src/util/urlUtil";
+import UrlUtil from "../../src/util/urlUtil.js";
 import { expect } from "chai";
 
 describe("should have the same result if", () => {

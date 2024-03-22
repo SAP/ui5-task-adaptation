@@ -1,11 +1,12 @@
-import AbapRepoManager from "../repositories/abapRepoManager";
-import AnnotationsCacheManager from "../cache/annotationsCacheManager";
-import { IConfiguration } from "../model/types";
-import Language from "../model/language";
-import ServerError from "../model/serverError";
-import { writeTempAnnotations } from "../util/commonUtil";
+import AbapRepoManager from "../repositories/abapRepoManager.js";
+import AnnotationsCacheManager from "../cache/annotationsCacheManager.js";
+import { IConfiguration } from "../model/types.js";
+import Language from "../model/language.js";
+import ServerError from "../model/serverError.js";
+import { getLogger } from "@ui5/logger";
+import { writeTempAnnotations } from "../util/commonUtil.js";
 
-const log = require("@ui5/logger").getLogger("@ui5/task-adaptation::ServiceRequestor");
+const log = getLogger("@ui5/task-adaptation::ServiceRequestor");
 
 function retryOnError(maxRetries: number): MethodDecorator {
     return (_target: any, _propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
@@ -15,8 +16,7 @@ function retryOnError(maxRetries: number): MethodDecorator {
             let retries = 0;
             while (true) {
                 try {
-                    const result = await originalMethod.apply(this, args);
-                    return result;
+                    return await originalMethod.apply(this, args);
                 } catch (error: any) {
                     if (error instanceof ServerError) {
                         if (retries === maxRetries) {
@@ -42,6 +42,9 @@ export default class ServiceRequestor {
         this.configuration = configuration;
     }
 
+    //@ts-ignore tsx (esbuild) is not yet implemented the new decorators, but
+    //old decorators are already subject of compiler error, but it works. So we
+    //wait till esbuild implement it correctly.
     @retryOnError(1)
     async downloadAnnotation(uri: string, name: string, language: Language): Promise<string> {
         let cacheName = name;

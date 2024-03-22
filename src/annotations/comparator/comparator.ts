@@ -1,10 +1,10 @@
-import { insertInArray, traverse } from "../../util/commonUtil";
+import { insertInArray, traverse } from "../../util/commonUtil.js";
 
-import AnnotationDiffStructureError from "../../model/annotationDiffStructureError";
-import DiffCase from "./diffCase";
-import InterchangableCase from "./interchangableCase";
-import MetadataJsonUtil from "../converter/metadataJsonUtil";
-import XmlUtil from "../../util/xmlUtil";
+import AnnotationDiffStructureError from "../../model/annotationDiffStructureError.js";
+import DiffCase from "./diffCase.js";
+import InterchangableCase from "./interchangableCase.js";
+import MetadataJsonUtil from "../converter/metadataJsonUtil.js";
+import XmlUtil from "../../util/xmlUtil.js";
 
 export interface IDiffProperty {
     object: any;

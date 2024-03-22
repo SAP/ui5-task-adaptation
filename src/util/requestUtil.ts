@@ -1,8 +1,8 @@
 import axios, { AxiosError, AxiosResponse } from "axios";
 
-import { IAuth } from "../model/types";
-import NoAuthorizationProvidedError from "../model/noAuthorizationProvidedError";
-import ServerError from "../model/serverError";
+import { IAuth } from "../model/types.js";
+import NoAuthorizationProvidedError from "../model/noAuthorizationProvidedError.js";
+import ServerError from "../model/serverError.js";
 
 export default class RequestUtil {
 

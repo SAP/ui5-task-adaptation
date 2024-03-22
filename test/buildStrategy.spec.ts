@@ -1,8 +1,8 @@
 import * as chai from "chai";
 
-import BuildStrategy from "../src/buildStrategy";
+import BuildStrategy from "../src/buildStrategy.js";
+import { RegistrationBuild } from "../dist/bundle.js";
 
-const { RegistrationBuild } = require("../dist/bundle");
 const { expect } = chai;
 
 describe("BuildStrategy", () => {

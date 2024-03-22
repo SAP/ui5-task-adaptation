@@ -6,5 +6,5 @@
     "include": [
         "*",
         "../types"
-, "rollup/bundler.ts"    ]
+    ]
 }

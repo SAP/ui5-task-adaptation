@@ -1,10 +1,10 @@
 import * as chai from "chai";
 import * as sinon from "sinon";
 
-import BaseAppFilesCacheManager from "../../src/cache/baseAppFilesCacheManager";
-import CFProcessor from "../../src/processors/cfProcessor";
-import HTML5RepoManager from "../../src/repositories/html5RepoManager";
-import { IProjectOptions } from "../../src/model/types";
+import BaseAppFilesCacheManager from "../../src/cache/baseAppFilesCacheManager.js";
+import CFProcessor from "../../src/processors/cfProcessor.js";
+import HTML5RepoManager from "../../src/repositories/html5RepoManager.js";
+import { IProjectOptions } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
 
 const { expect } = chai;

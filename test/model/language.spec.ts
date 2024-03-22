@@ -1,5 +1,5 @@
 import * as chai from "chai";
-import Language from "../../src/model/language";
+import Language from "../../src/model/language.js";
 const { expect } = chai;
 
 

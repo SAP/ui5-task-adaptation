@@ -1,9 +1,9 @@
-import Comparator, { IDiffProperty } from "./annotations/comparator/comparator";
-import { IJsonPerLanguage, IJsonPromisePerLanguage } from "./model/types";
+import Comparator, { IDiffProperty } from "./annotations/comparator/comparator.js";
+import { IJsonPerLanguage, IJsonPromisePerLanguage } from "./model/types.js";
 
-import AnnotationDiffStructureError from "./model/annotationDiffStructureError";
-import Language from "./model/language";
-import { getUniqueName } from "./util/commonUtil";
+import AnnotationDiffStructureError from "./model/annotationDiffStructureError.js";
+import Language from "./model/language.js";
+import { getUniqueName } from "./util/commonUtil.js";
 import { join } from "path/posix"; // Ensure standardized dir separators to ensure Windows compatibility
 
 // To generate keys, english language is more common, so compare all other

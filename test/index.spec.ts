@@ -1,16 +1,16 @@
 import * as chai from "chai";
 import * as sinon from "sinon";
 
-import AppVariantManager from "../src/appVariantManager";
-import BaseAppFilesCacheManager from "../src/cache/baseAppFilesCacheManager";
-import HTML5RepoManager from "../src/repositories/html5RepoManager";
-import { IProjectOptions } from "../src/model/types";
+import AppVariantManager from "../src/appVariantManager.js";
+import BaseAppFilesCacheManager from "../src/cache/baseAppFilesCacheManager.js";
+import HTML5RepoManager from "../src/repositories/html5RepoManager.js";
+import { IProjectOptions } from "../src/model/types.js";
 import { SinonSandbox } from "sinon";
-import TestUtil from "./testUtilities/testUtil";
+import TestUtil from "./testUtilities/testUtil.js";
+import index from "../src/index.js";
 
-const {byIsOmited} = TestUtil;
+const { byIsOmited } = TestUtil;
 
-const index = require("../src/index");
 const { expect } = chai;
 const OPTIONS: IProjectOptions = {
     projectNamespace: "ns",
@@ -71,17 +71,21 @@ describe("Index", () => {
     });
 
     [
-        { testName: "string", manifestModification: () => {} },
-        { testName: "bundleUrl", manifestModification: (baseAppFiles: Map<string, string>) => {
-            const manifestJson = JSON.parse(baseAppFiles.get("manifest.json")!);
-            manifestJson["sap.app"]["i18n"] = { "bundleUrl": "i18n/i18n.properties" };
-            baseAppFiles.set("manifest.json", JSON.stringify(manifestJson));
-        }},
-        { testName: "bundleName", manifestModification: (baseAppFiles: Map<string, string>) => {
-            const manifestJson = JSON.parse(baseAppFiles.get("manifest.json")!);
-            manifestJson["sap.app"]["i18n"] = { "bundleName": "com.sap.base.app.id.i18n.i18n" };
-            baseAppFiles.set("manifest.json", JSON.stringify(manifestJson));
-        }}]
+        { testName: "string", manifestModification: () => { } },
+        {
+            testName: "bundleUrl", manifestModification: (baseAppFiles: Map<string, string>) => {
+                const manifestJson = JSON.parse(baseAppFiles.get("manifest.json")!);
+                manifestJson["sap.app"]["i18n"] = { "bundleUrl": "i18n/i18n.properties" };
+                baseAppFiles.set("manifest.json", JSON.stringify(manifestJson));
+            }
+        },
+        {
+            testName: "bundleName", manifestModification: (baseAppFiles: Map<string, string>) => {
+                const manifestJson = JSON.parse(baseAppFiles.get("manifest.json")!);
+                manifestJson["sap.app"]["i18n"] = { "bundleName": "com.sap.base.app.id.i18n.i18n" };
+                baseAppFiles.set("manifest.json", JSON.stringify(manifestJson));
+            }
+        }]
         .forEach((test) => {
             it(`should merge i18n files from base app and variant with given i18n manifest ${test.testName}`, async () => {
                 const baseAppFiles = new Map([
@@ -96,9 +100,9 @@ describe("Index", () => {
                 const { workspace, taskUtil } = await getWorkspace(OPTIONS);
                 const appVariantResources = await AppVariantManager.getAppVariantResourcesToProcess(workspace);
                 sandbox.stub(AppVariantManager, "getAppVariantResourcesToProcess").callsFake(() => Promise.resolve(appVariantResources));
-                
+
                 await index({ workspace, options: OPTIONS, taskUtil });
-                
+
                 const resources: any[] = (await workspace.byGlob("/**/*")).filter(byIsOmited(taskUtil));
                 const resourcePaths = resources.map(r => r.getPath());
                 const resourcePathMembers = [
@@ -129,7 +133,7 @@ describe("Index", () => {
 
                 expect(html5RepoManagerStub.getCalls().length).to.equal(1);
             });
-    });
+        });
 });
 
 const getWorkspace = async (options: IProjectOptions) => {
@@ -143,7 +147,7 @@ const checkResourcePathsAndTempResources = (resourcePaths: any[], resourcePathsM
 }
 
 const runUi5TaskAdaptation = async (options: IProjectOptions, hasEnhanceWithForI18NModel: boolean) => {
-    const {workspace, taskUtil } = await getWorkspace(options);
+    const { workspace, taskUtil } = await getWorkspace(options);
     await index({ workspace, options: options, taskUtil });
     const resources: any[] = (await workspace.byGlob("/**/*")).filter(byIsOmited(taskUtil));
     const resourcePaths = resources.map(r => r.getPath());

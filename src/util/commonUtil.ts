@@ -1,10 +1,11 @@
+import * as Log from "@ui5/logger";
 import * as fs from "fs";
 
-import { IConfiguration } from "../model/types";
-import Language from "../model/language";
+import { IConfiguration } from "../model/types.js";
+import Language from "../model/language.js";
 import { posix as path } from "path";
 
-const log = require("@ui5/logger").getLogger("rollup-plugin-ui5-resolve-task-adaptation");
+const log = Log.getLogger("rollup-plugin-ui5-resolve-task-adaptation");
 
 
 export function dotToUnderscore(value: string) {
@@ -30,7 +31,7 @@ export function renameResources(files: Map<string, string>, search: string, repl
     // more complete alternative: /((?<!newIdStart)|(?!newIdEnd))oldId/g
     let escapedSearch: string;
     if (replacement.includes(search)) {
-        const [before, _] = replacement.split(search);
+        const [before] = replacement.split(search);
         // Matches a position in the string that is not immediately preceded by
         // the string "before". Since we won't replace anyway, we should also
         // ignore one with the slashes.

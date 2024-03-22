@@ -1,12 +1,12 @@
 import * as sinon from "sinon";
 
-import AbapProcessor from "../../src/processors/abapProcessor"
-import AbapRepoManager from "../../src/repositories/abapRepoManager";
-import AnnotationManager from "../../src/annotationManager";
-import BaseAppFilesCacheManager from "../../src/cache/baseAppFilesCacheManager";
-import { IProjectOptions } from "../../src/model/types";
+import AbapProcessor from "../../src/processors/abapProcessor.js"
+import AbapRepoManager from "../../src/repositories/abapRepoManager.js";
+import AnnotationManager from "../../src/annotationManager.js";
+import BaseAppFilesCacheManager from "../../src/cache/baseAppFilesCacheManager.js";
+import { IProjectOptions } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
-import TestUtil from "../testUtilities/testUtil";
+import TestUtil from "../testUtilities/testUtil.js";
 import axios from "axios";
 import { expect } from "chai";
 

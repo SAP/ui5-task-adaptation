@@ -1,10 +1,10 @@
-import AbapRepoManager from "./repositories/abapRepoManager";
-import BaseAppManager from "./baseAppManager";
-import DataSourceManager from "./annotations/dataSource/dataSourceManager";
-import I18nManager from "./i18nManager";
-import { IConfiguration } from "./model/types";
-import Language from "./model/language";
-import ServiceRequestor from "./annotations/serviceRequestor";
+import AbapRepoManager from "./repositories/abapRepoManager.js";
+import BaseAppManager from "./baseAppManager.js";
+import DataSourceManager from "./annotations/dataSource/dataSourceManager.js";
+import I18nManager from "./i18nManager.js";
+import { IConfiguration } from "./model/types.js";
+import Language from "./model/language.js";
+import ServiceRequestor from "./annotations/serviceRequestor.js";
 import { posix as path } from "path";
 
 const I18N_DEFAULT_PATH = "i18n/annotations";

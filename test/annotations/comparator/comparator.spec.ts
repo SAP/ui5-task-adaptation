@@ -1,6 +1,6 @@
-import Comparator from "../../../src/annotations/comparator/comparator";
-import DataSourceOData from "../../../src/annotations/dataSource/dataSourceOData";
-import XmlUtil from "../../../src/util/xmlUtil";
+import Comparator from "../../../src/annotations/comparator/comparator.js";
+import DataSourceOData from "../../../src/annotations/dataSource/dataSourceOData.js";
+import XmlUtil from "../../../src/util/xmlUtil.js";
 import { expect } from "chai";
 
 describe("Comparator", () => {

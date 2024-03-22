@@ -1,5 +1,5 @@
-import Language from "../../model/language";
-import ServiceRequestor from "../serviceRequestor";
+import Language from "../../model/language.js";
+import ServiceRequestor from "../serviceRequestor.js";
 
 export interface TransformerInput {
     uri: string;

@@ -1,9 +1,9 @@
-import AbapProcessor from "./abapProcessor";
-import AbapRepoManager from "../repositories/abapRepoManager";
-import AnnotationManager from "../annotationManager";
-import BaseAppFilesCacheManager from "../cache/baseAppFilesCacheManager";
-import CFProcessor from "./cfProcessor";
-import { IConfiguration } from "../model/types";
+import AbapProcessor from "./abapProcessor.js";
+import AbapRepoManager from "../repositories/abapRepoManager.js";
+import AnnotationManager from "../annotationManager.js";
+import BaseAppFilesCacheManager from "../cache/baseAppFilesCacheManager.js";
+import CFProcessor from "./cfProcessor.js";
+import { IConfiguration } from "../model/types.js";
 
 export default interface IProcessor {
 

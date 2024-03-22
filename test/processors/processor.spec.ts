@@ -1,6 +1,6 @@
-import AbapProcessor from "../../src/processors/abapProcessor"
-import CFProcessor from "../../src/processors/cfProcessor";
-import { determineProcessor } from "../../src/processors/processor"
+import AbapProcessor from "../../src/processors/abapProcessor.js"
+import CFProcessor from "../../src/processors/cfProcessor.js";
+import { determineProcessor } from "../../src/processors/processor.js"
 import { expect } from "chai";
 
 describe("Processor", () => {

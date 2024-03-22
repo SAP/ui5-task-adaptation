@@ -1,5 +1,4 @@
 language: node_js
 node_js:
- - 17
-before_install:
-- npm install -g ts-node typescript nyc mocha
+ - 18.14.2
+dist: jammy

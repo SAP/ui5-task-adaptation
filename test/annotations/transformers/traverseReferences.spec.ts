@@ -1,13 +1,13 @@
 import * as sinon from "sinon";
 
-import TestUtil, { metadataV4Xml } from "../../testUtilities/testUtil";
+import TestUtil, { metadataV4Xml } from "../../testUtilities/testUtil.js";
 
-import AbapRepoManager from "../../../src/repositories/abapRepoManager";
-import DataSourceManager from "../../../src/annotations/dataSource/dataSourceManager";
-import I18nManager from "../../../src/i18nManager";
-import { IProjectOptions } from "../../../src/model/types";
-import Language from "../../../src/model/language";
-import ServiceRequestor from "../../../src/annotations/serviceRequestor";
+import AbapRepoManager from "../../../src/repositories/abapRepoManager.js";
+import DataSourceManager from "../../../src/annotations/dataSource/dataSourceManager.js";
+import I18nManager from "../../../src/i18nManager.js";
+import { IProjectOptions } from "../../../src/model/types.js";
+import Language from "../../../src/model/language.js";
+import ServiceRequestor from "../../../src/annotations/serviceRequestor.js";
 import { SinonSandbox } from "sinon";
 import { expect } from "chai";
 

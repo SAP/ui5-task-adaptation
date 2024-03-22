@@ -1,5 +1,5 @@
-import MetadataJsonReferenceUtil from "../../src/annotations/converter/metadataJsonReferenceUtil";
-import { traverse } from "../../src/util/commonUtil";
+import MetadataJsonReferenceUtil from "../../src/annotations/converter/metadataJsonReferenceUtil.js";
+import { traverse } from "../../src/util/commonUtil.js";
 
 export default class AnnotationUtil {
 
