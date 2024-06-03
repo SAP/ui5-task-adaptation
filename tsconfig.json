@@ -28,7 +28,8 @@
             "./types",
             "./node_modules/@types",
             "./dist/bundle.d.ts"
-        ]
+        ],
+        "skipLibCheck": true
     },
     "include": [
         "src/**/*",

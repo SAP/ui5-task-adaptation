@@ -3,8 +3,10 @@ import * as fs from "fs";
 
 import { IConfiguration } from "../model/types.js";
 import Language from "../model/language.js";
+import { fileURLToPath } from "url";
 import { posix as path } from "path";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const log = Log.getLogger("rollup-plugin-ui5-resolve-task-adaptation");
 
 
@@ -104,17 +106,17 @@ export function traverse(json: any, paths: string[], callback: (json: any, key: 
     }
 }
 
-export async function logBuilderVersion() {
+export function logBuilderVersion() {
     try {
-        // @ts-ignore
-        const packageJSON = await import("../../package.json");
-        log.info(`Running app-variant-bundler-build with version ${packageJSON.version}`);
+        const packageJson = fs.readFileSync(path.join(__dirname, "../../package.json"), { encoding: "utf-8" });
+        const packageJsonVersion = JSON.parse(packageJson).version;
+        log.info(`Running app-variant-bundler-build with version ${packageJsonVersion}`);
     } catch (e: any) {
         // do nothing
     }
 }
 
-export async function logBetaUsage() {
+export function logBetaUsage() {
     log.info("Beta features enabled");
 }
 
