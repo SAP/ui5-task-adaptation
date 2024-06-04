@@ -16,7 +16,7 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
     dotenv.config();
 
     async function process(workspace: any, taskUtil: any) {
-        await logBuilderVersion();
+        logBuilderVersion();
         logBetaUsage();
         const processor = determineProcessor(options.configuration);
         const appVariantResources = await AppVariantManager.getAppVariantResourcesToProcess(workspace);

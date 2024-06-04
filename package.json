@@ -6,8 +6,8 @@
     "scripts": {
         "test": "npm run lint && npm run build && npm run coverage",
         "lint": "npx eslint ./src",
-        "dev": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --experimental-loader=tsx --loader=esmock 'test/**/*.spec.ts'",
-        "perf": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --experimental-loader=tsx --loader=esmock 'test/**/*.perf.ts'",
+        "dev": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --import=tsx --loader=esmock 'test/**/*.spec.ts'",
+        "perf": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --import=tsx --loader=esmock 'test/**/*.perf.ts'",
         "coverage": "npx c8 npm run dev",
         "preversion": "npm test",
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",
@@ -113,8 +113,5 @@
         "lines": 85
     },
     "types": "dist/index.d.ts",
-    "type": "module",
-    "engines": {
-        "node": "18.14.2"
-    }
+    "type": "module"
 }
