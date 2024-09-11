@@ -21,7 +21,10 @@ const OPTIONS: IProjectOptions = {
         appVersion: "appVersion",
         spaceGuid: "spaceGuid",
         orgGuid: "orgGuid",
-        sapCloudService: "sapCloudService"
+        sapCloudService: "sapCloudService",
+        connections: [{
+            url: "https://example.sap.com"
+        }]
     }
 };
 const cacheManager = new BaseAppFilesCacheManager(OPTIONS.configuration);
@@ -148,7 +151,7 @@ const checkResourcePathsAndTempResources = (resourcePaths: any[], resourcePathsM
 
 const runUi5TaskAdaptation = async (options: IProjectOptions, hasEnhanceWithForI18NModel: boolean) => {
     const { workspace, taskUtil } = await getWorkspace(options);
-    await index({ workspace, options: options, taskUtil });
+    await index({ workspace, options, taskUtil });
     const resources: any[] = (await workspace.byGlob("/**/*")).filter(byIsOmited(taskUtil));
     const resourcePaths = resources.map(r => r.getPath());
 

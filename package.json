@@ -9,7 +9,7 @@
         "dev": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --import=tsx --loader=esmock 'test/**/*.spec.ts'",
         "perf": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --import=tsx --loader=esmock 'test/**/*.perf.ts'",
         "coverage": "npx c8 npm run dev",
-        "preversion": "npm run build",
+        "preversion": "npm test",
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",
         "prepublishOnly": "git push --follow-tags",
         "release-note": "git-chglog -c .chglog/release-config.yml v$npm_package_version",
@@ -33,6 +33,10 @@
     "author": "SAP SE",
     "license": "Apache-2.0",
     "dependencies": {
+        "@sap-ux/axios-extension": "^1.13.1",
+        "@sap-ux/btp-utils": "^0.14.4",
+        "@sap-ux/store": "^0.6.0",
+        "@sap-ux/system-access": "^0.4.2",
         "@sap/cf-tools": "^3.2.0",
         "@ui5/fs": "^3.0.5",
         "@ui5/logger": "^3.0.0",
@@ -104,7 +108,8 @@
             "scripts/git/octokitUtil.ts",
             "*/**/*.d.ts",
             "src/annotations/comparator/diffCase.ts",
-            "src/annotations/transformers/transformer.ts"
+            "src/annotations/transformers/transformer.ts",
+            "src/model/configuration.ts"
         ],
         "check-coverage": true,
         "statements": 85,

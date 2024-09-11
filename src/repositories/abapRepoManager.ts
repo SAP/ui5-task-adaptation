@@ -1,6 +1,6 @@
-import { IAuth, IConfiguration, IMetadata } from "../model/types.js";
+import { IConfiguration, IMetadata } from "../model/types.js";
 
-import RequestUtil from "../util/requestUtil.js";
+import AbapProvider from "./abapProvider.js";
 import { getLogger } from "@ui5/logger";
 import { unzipZipEntries } from "../util/zipUtil.js";
 
@@ -21,92 +21,67 @@ const REQUEST_OPTIONS_JSON = {
 
 export default class AbapRepoManager {
 
-    private auth?: IAuth;
     private configuration: IConfiguration;
+    private abapProvider: AbapProvider;
 
 
-    constructor(configuration: IConfiguration) {
+    constructor(configuration: IConfiguration, abapProvider?: AbapProvider) {
         this.configuration = configuration;
+        this.abapProvider = abapProvider ? abapProvider : new AbapProvider();
     }
 
 
     async getAnnotationMetadata(uri: string): Promise<IMetadata> {
-        const header = await RequestUtil.retryWithAuth<any>(
-            () => RequestUtil.head(uri),
-            () => RequestUtil.head(uri, this.getAuth()));
-        return { changedOn: header.modified };
+        const provider = await this.abapProvider.get(this.configuration);
+        const response = await provider.head(uri);
+        return { changedOn: response.data.modified };
     }
 
 
     async downloadAnnotationFile(uri: string) {
-        const annotationUri = `https://${this.configuration.destination}.dest${uri}`;
-        const annotation = await RequestUtil.retryWithAuth<string>(
-            () => RequestUtil.get(annotationUri, REQUEST_OPTIONS_XML),
-            () => RequestUtil.get(annotationUri, REQUEST_OPTIONS_XML, this.getAuth()));
-        return new Map([["annotation.xml", annotation]]);
+        const provider = await this.abapProvider.get(this.configuration);
+        const response = await provider.get(uri, {
+            headers: REQUEST_OPTIONS_XML.headers
+        });
+        return new Map([["annotation.xml", response.data]]);
     }
 
 
-    getMetadata(baseAppId: string): Promise<IMetadata> {
-        return RequestUtil.retryWithAuth<IMetadata>(
-            () => this.getMetadataRequest(baseAppId),
-            () => this.getMetadataRequest(baseAppId, this.getAuth()));
-    }
-
-
-    downloadBaseAppFiles(): Promise<Map<string, string>> {
-        return RequestUtil.retryWithAuth(
-            () => this.downloadBaseAppFilesRequest(),
-            () => this.downloadBaseAppFilesRequest(this.getAuth()));
-    }
-
-
-    private async getMetadataRequest(id: string, auth?: IAuth): Promise<IMetadata | undefined> {
-        let uri = `https://${this.configuration.destination}.dest/sap/bc/ui2/app_index/ui5_app_info_json?id=${id}`;
-        const data = await RequestUtil.get(uri, REQUEST_OPTIONS_JSON, auth);
-        if (data && data[id]) {
-            return {
-                changedOn: data[id].url,
-                id
-            };
+    async getMetadata(id: string): Promise<IMetadata> {
+        const provider = await this.abapProvider.get(this.configuration);
+        const appIndex = provider.getAppIndex();
+        const response = await appIndex.get("/ui5_app_info_json", {
+            params: { id },
+            headers: REQUEST_OPTIONS_JSON.headers
+        });
+        const data = JSON.parse(response.data);
+        if (!data || !data[id]) {
+            log.warn(`UI5AppInfoJson request doesn't contain cache buster token for sap.app/id '${id}'. Fallback to download.`);
         }
-        log.warn(`UI5AppInfoJson request doesn't contain cache buster token for sap.app/id '${id}'. Fallback to download.`);
+        return {
+            changedOn: data && data[id] && data[id].url,
+            id
+        };
     }
 
 
-    private async downloadBaseAppFilesRequest(auth?: IAuth): Promise<Map<string, string>> {
+    async downloadBaseAppFiles(): Promise<Map<string, string>> {
         const { destination, appName } = this.configuration;
         const encodedAppName = encodeURIComponent(appName!);
-        const uri = `https://${destination}.dest/sap/opu/odata/UI5/ABAP_REPOSITORY_SRV/Repositories('${encodedAppName}')?DownloadFiles=RUNTIME&CodePage=UTF8`;
-        const data = await RequestUtil.get(uri, {}, auth);
-        if (data?.d?.ZipArchive.length > 0) {
+        const provider = await this.abapProvider.get(this.configuration);
+        const ui5Repo = provider.getUi5AbapRepository();
+        const response = await ui5Repo.get(`/Repositories('${encodedAppName}')`, {
+            params: {
+                DownloadFiles: "RUNTIME",
+                CodePage: "UTF8",
+                "$format": "json"
+            }
+        });
+        const data = JSON.parse(response.data);
+        if (data.d?.ZipArchive.length > 0) {
             const buffer = Buffer.from(data.d.ZipArchive, "base64");
             return unzipZipEntries(buffer);
         }
-        throw new Error(`App '${appName}' from destination '${destination}' doesn't contain files`);
-    }
-
-
-    private getAuth(): IAuth | undefined {
-        if (!this.auth) {
-            if (this.configuration?.credentials) {
-                let { username, password } = this.configuration?.credentials;
-                if (username && password) {
-                    const ENV_PREFIX = "env:";
-                    username = username.substring(ENV_PREFIX.length);
-                    password = password.substring(ENV_PREFIX.length);
-                    if (process.env[username] && process.env[password]) {
-                        this.auth = {
-                            username: process.env[username]!,
-                            password: process.env[password]!
-                        };
-                    }
-                }
-            }
-        }
-        if (!this.auth) {
-            throw new Error("Please provide ABAP System credentials in .env file of the project: https://help.sap.com/docs/SAP_FIORI_tools/17d50220bcd848aa854c9c182d65b699/1c859274b511435ab6bd45f70e7f9af2.html.");
-        }
-        return this.auth;
+        throw new Error(`App '${appName}' from '${destination}' doesn't contain files`);
     }
 }
