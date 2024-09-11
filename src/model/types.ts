@@ -1,21 +1,5 @@
+import { IConfiguration } from "./configuration.js";
 import Language from "./language.js";
-
-export interface IConfiguration {
-    writeTempFiles?: any;
-    appHostId?: string;
-    appId?: string;
-    appName?: string;
-    appVersion?: string;
-    spaceGuid?: string;
-    orgGuid?: string;
-    sapCloudService?: string;
-    destination?: string;
-    credentials?: IAuth;
-    type?: "cf" | "abap";
-    languages?: any[] | undefined;
-    enableAnnotationCache?: boolean;
-    enableBetaFeatures?: boolean;
-}
 
 export interface IProjectOptions {
     configuration: IConfiguration;
@@ -137,3 +121,5 @@ export interface IJsonPromisePerLanguage {
     language: Language;
     json: Promise<any>;
 }
+
+export { IConfiguration };

@@ -1,11 +1,15 @@
 import * as sinon from "sinon";
 
+import { AbapServiceProvider, AppIndexService, Ui5AbapRepositoryService } from "@sap-ux/axios-extension";
+
+import AbapProvider from "../../src/repositories/abapProvider.js";
 import AbapRepoManager from "../../src/repositories/abapRepoManager.js"
 import { IProjectOptions } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "../testUtilities/testUtil.js";
-import axios from "axios";
 import { expect } from "chai";
+
+class AppIndexServiceMock extends AppIndexService { }
 
 describe("AbapRepoManager", () => {
     let sandbox: SinonSandbox;
@@ -13,33 +17,41 @@ describe("AbapRepoManager", () => {
         projectNamespace: "ns",
         configuration: {
             destination: "abc",
-            appName: "app/Name",
+            appName: "app/Name"
         }
     };
 
-    let RESPONSE_DATA = JSON.parse(TestUtil.getResource("abap-response-archive.json"));
+    let RESPONSE_DATA = { data: TestUtil.getResource("abap-response-archive.json") };
 
     beforeEach(async () => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
 
     it("should return map of files from archive", async () => {
-        const axiosStub = sandbox.stub(axios, "get").resolves(RESPONSE_DATA);
-        const baseAppFiles = await new AbapRepoManager(options.configuration).downloadBaseAppFiles();
+        const { abapRepoManager, ui5AbapRepositoryServiceStub } = prepareServiceStubs(RESPONSE_DATA);
+        const baseAppFiles = await abapRepoManager.downloadBaseAppFiles();
         expect([...baseAppFiles.keys()]).to.have.members(["i18n.properties", "manifest.json"]);
-        expect(axiosStub.getCall(0).args[0]).to.eql("https://abc.dest/sap/opu/odata/UI5/ABAP_REPOSITORY_SRV/Repositories('app%2FName')?DownloadFiles=RUNTIME&CodePage=UTF8");
+        expect(ui5AbapRepositoryServiceStub.getCall(0).args[0]).to.eql("/Repositories('app%2FName')");
     });
 
     it("should throw exception when archive is empty", async () => {
-        const responseClone = JSON.parse(JSON.stringify(RESPONSE_DATA));
-        responseClone.data.d.ZipArchive = "";
-        sandbox.stub(axios, "get").resolves(responseClone);
-        await expect(new AbapRepoManager(options.configuration).downloadBaseAppFiles())
-            .to.be.rejectedWith("App 'app/Name' from destination 'abc' doesn't contain files");
+        const responseClone = JSON.parse(RESPONSE_DATA.data);
+        responseClone.d.ZipArchive = "";
+        const { abapRepoManager } = prepareServiceStubs({ data: JSON.stringify(responseClone) });
+        await expect(abapRepoManager.downloadBaseAppFiles())
+            .to.be.rejectedWith("App 'app/Name' from 'abc' doesn't contain files");
     });
 
-    it("should create a correct repo uri", async () => {
-        const axiosStub = sandbox.stub(axios, "get").resolves({ changedOn: "" });
-        await new AbapRepoManager(options.configuration).getMetadata("appId1");
-        expect(axiosStub.getCall(0).args[0]).to.eql("https://abc.dest/sap/bc/ui2/app_index/ui5_app_info_json?id=appId1");
-    });
+    function prepareServiceStubs(response: any) {
+        const appIndexService = new AppIndexServiceMock();
+        const ui5AbapRepositoryService = new Ui5AbapRepositoryService();
+        const abapServiceProvider = new AbapServiceProvider();
+        const abapProvider = new AbapProvider();
+        const abapRepoManager = new AbapRepoManager(options.configuration, abapProvider);
+        sandbox.stub(abapServiceProvider, "getAppIndex").returns(appIndexService);
+        sandbox.stub(abapServiceProvider, "getUi5AbapRepository").returns(ui5AbapRepositoryService);
+        const createProvider = sandbox.stub(abapProvider, "createProvider" as any).resolves(abapServiceProvider);
+        const validateAndGetTargetConfiguration = sandbox.spy(AbapProvider, "validateAndGetTargetConfiguration");
+        const ui5AbapRepositoryServiceStub = sandbox.stub(ui5AbapRepositoryService, "get").resolves(response);
+        return { abapRepoManager, ui5AbapRepositoryServiceStub, validateAndGetTargetConfiguration, createProvider };
+    }
 });

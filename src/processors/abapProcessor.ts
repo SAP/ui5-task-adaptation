@@ -3,8 +3,8 @@ import AnnotationManager from "../annotationManager.js";
 import BaseAppFilesCacheManager from "../cache/baseAppFilesCacheManager.js";
 import { IConfiguration } from "../model/types.js";
 import IProcessor from "./processor.js";
-import { validateObject } from "../util/commonUtil.js";
 import Language from "../model/language.js";
+import { validateObject } from "../util/commonUtil.js";
 
 export default class AbapProcessor implements IProcessor {
 
@@ -31,7 +31,9 @@ export default class AbapProcessor implements IProcessor {
 
 
     validateConfiguration(): void {
-        validateObject(this.configuration, ["destination", "appName"], "should be specified in ui5.yaml configuration");
+        // validate general app config
+        const properties: Array<keyof IConfiguration> = ["appName"];
+        validateObject(this.configuration, properties, "should be specified in ui5.yaml configuration");
     }
 
 
