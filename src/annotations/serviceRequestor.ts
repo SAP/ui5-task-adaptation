@@ -24,7 +24,8 @@ function retryOnError(maxRetries: number): MethodDecorator {
                         }
                         retries++;
                     } else {
-                        throw new Error(`Failed to fetch annotation by '${args[0]}': ${error.message}`);
+                        const message = error?.response?.data ?? error.message;
+                        throw new Error(`Failed to fetch annotation by '${args[0]}': ${message}`);
                     }
                 }
             }

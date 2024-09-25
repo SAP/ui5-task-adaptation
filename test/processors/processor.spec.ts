@@ -11,9 +11,9 @@ describe("Processor", () => {
         const processor = determineProcessor({
             type: "abap",
             appName: "appName",
-            connections: [{
+            target: {
                 url: "abc"
-            }]
+            }
         });
         expect(processor instanceof AbapProcessor);
     });
@@ -21,9 +21,9 @@ describe("Processor", () => {
     it("should determine ABAP config by properties", () => {
         const processor = determineProcessor({
             appName: "appName",
-            connections: [{
+            target: {
                 url: "abc"
-            }]
+            }
         });
         expect(processor instanceof AbapProcessor);
     });

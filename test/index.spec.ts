@@ -22,9 +22,9 @@ const OPTIONS: IProjectOptions = {
         spaceGuid: "spaceGuid",
         orgGuid: "orgGuid",
         sapCloudService: "sapCloudService",
-        connections: [{
+        target: {
             url: "https://example.sap.com"
-        }]
+        }
     }
 };
 const cacheManager = new BaseAppFilesCacheManager(OPTIONS.configuration);

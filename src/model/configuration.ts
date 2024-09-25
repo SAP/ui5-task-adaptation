@@ -14,7 +14,7 @@ export interface IConfiguration {
     enableAnnotationCache?: boolean;
     enableBetaFeatures?: boolean;
     writeTempFiles?: any;
-    connections?: (AbapTarget & IAbapTargetMeta)[]
+    target?: AbapTarget & IAbapTargetMeta;
 }
 
 export interface IAbapTargetMeta {

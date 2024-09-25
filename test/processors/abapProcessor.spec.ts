@@ -22,9 +22,9 @@ describe("AbapProcessor", () => {
         configuration: {
             destination: "system",
             appName: "appName",
-            connections: [{
+            target: {
                 url: "https://example.sap.com"
-            }]
+            }
         }
     };
 
