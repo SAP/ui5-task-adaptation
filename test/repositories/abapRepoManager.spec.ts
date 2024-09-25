@@ -49,9 +49,8 @@ describe("AbapRepoManager", () => {
         const abapRepoManager = new AbapRepoManager(options.configuration, abapProvider);
         sandbox.stub(abapServiceProvider, "getAppIndex").returns(appIndexService);
         sandbox.stub(abapServiceProvider, "getUi5AbapRepository").returns(ui5AbapRepositoryService);
-        const createProvider = sandbox.stub(abapProvider, "createProvider" as any).resolves(abapServiceProvider);
-        const validateAndGetTargetConfiguration = sandbox.spy(AbapProvider, "validateAndGetTargetConfiguration");
+        sandbox.stub(abapProvider, "get" as any).resolves(abapServiceProvider);
         const ui5AbapRepositoryServiceStub = sandbox.stub(ui5AbapRepositoryService, "get").resolves(response);
-        return { abapRepoManager, ui5AbapRepositoryServiceStub, validateAndGetTargetConfiguration, createProvider };
+        return { abapRepoManager, ui5AbapRepositoryServiceStub };
     }
 });

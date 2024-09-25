@@ -8,15 +8,18 @@ A custom task for [ui5-builder](https://github.com/SAP/ui5-builder) that allows 
 
 ### Configuration
 #### ABAP Connection
-The following connection configuration format is used to connect to ABAP repository on SAP BAS and IDE:
+The following connection configuration format is used to connect to ABAP repository in IDE:
 ```yaml
-connections:
-    - url: example.com,
-      authenticationType: basic | reentranceTicket,
-      ignoreCertErrors: true | false
-    - destination: abc
+target:
+  url: example.com,
+  authenticationType: basic | reentranceTicket,
+  ignoreCertErrors: true | false
 ```
-In case multiple connection configuration are present, then the current environment configuration will be used. For example in above case `destination` for SAP BAS or `url` for IDE will be automaticaly used.
+and in SAP Business Application Studio:
+```yaml
+target:
+  destination: abc
+```
 OnPremise ABAP repository requires `authenticationType: basic`, credentials should be provided in project root `.env` file:
 ```
 FIORI_TOOLS_USER=<username>
