@@ -84,6 +84,9 @@ export function removePropertiesExtension(filePath: string) {
 }
 
 export function traverse(json: any, paths: string[], callback: (json: any, key: string | number, paths: string[]) => void) {
+    if (!json) {
+        return;
+    }
     for (const key of Object.keys(json)) {
         const internPaths = [...paths];
         internPaths.push(key);
