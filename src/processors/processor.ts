@@ -1,26 +1,25 @@
 import AbapProcessor from "./abapProcessor.js";
 import AbapRepoManager from "../repositories/abapRepoManager.js";
 import AnnotationManager from "../annotationManager.js";
-import BaseAppFilesCacheManager from "../cache/baseAppFilesCacheManager.js";
 import CFProcessor from "./cfProcessor.js";
+import IAppVariantIdHierarchyItem from "../model/appVariantIdHierarchyItem.js"
 import { IConfiguration } from "../model/types.js";
 
 export default interface IProcessor {
+    getAppVariantIdHierarchy(appId: string): Promise<IAppVariantIdHierarchyItem[]>;
+    fetch(repoName: string, cachebusterToken: string): Promise<Map<string, string>>;
 
     createAppVariantHierarchyItem(appVariantId: string, version: string): void;
-    getBaseAppFiles(baseAppId: string): Promise<Map<string, string>>;
-    updateLandscapeSpecificContent(renamedBaseAppManifest: any, baseAppFiles?: Map<string, string>): Promise<void>;
-
+    updateLandscapeSpecificContent(renamedBaseAppManifest: any, baseAppFiles?: ReadonlyMap<string, string>): Promise<void>;
 }
 
 
 export function determineProcessor(configuration: IConfiguration): IProcessor {
-    const cacheManager = new BaseAppFilesCacheManager(configuration);
     const abapRepoManager = new AbapRepoManager(configuration);
     const annotationManager = new AnnotationManager(configuration, abapRepoManager);
     const processors = [
-        new CFProcessor(configuration, cacheManager),
-        new AbapProcessor(configuration, cacheManager, abapRepoManager, annotationManager)
+        new CFProcessor(configuration),
+        new AbapProcessor(configuration, abapRepoManager, annotationManager)
     ];
     let processor = processors.find(processor => processor.getConfigurationType() === configuration.type);
     if (processor) {
@@ -31,7 +30,7 @@ export function determineProcessor(configuration: IConfiguration): IProcessor {
             try {
                 processor.validateConfiguration();
                 return processor;
-            } catch (error) {
+            } catch (_error) {
                 continue;
             }
         }

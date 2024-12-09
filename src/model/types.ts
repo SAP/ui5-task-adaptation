@@ -71,6 +71,7 @@ export interface IChange {
     texts?: IChangeText;
     layer?: string;
     content?: IChangeContent;
+    filename: string;
 }
 
 export interface IChangeText {
@@ -78,6 +79,7 @@ export interface IChangeText {
 }
 
 export interface IChangeContent {
+    dataSource?: any;
     bundleUrl?: string;
     fallbackLocale?: string;
     modelId?: string;

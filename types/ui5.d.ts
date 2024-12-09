@@ -18,6 +18,11 @@ declare class Resource {
     setString(string: string): void;
 }
 
+declare interface IWorkspace {
+    write(resource: Resource): Promise<void>;
+    byGlob(pattern: string): Promise<Resource[]>;
+}
+
 declare module "@ui5/fs/Resource" {
     export function getPath(): string;
     export function clone(): Resource;
@@ -39,6 +44,11 @@ declare module "@ui5/project/build/helpers/BuildContext" {
 
 declare module "@ui5/project/build/helpers/TaskUtil" {
     export default class TaskUtil {
+        STANDARD_TAGS: any;
+        setTag(resource: Resource, OmitFromBuildResult: any, omit: boolean);
         constructor(options: any);
     }
+}
+
+declare module "@ui5/builder/internal/taskRepository" {
 }

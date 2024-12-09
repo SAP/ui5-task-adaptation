@@ -1,7 +1,7 @@
 {
     "compileOnSave": true,
     "compilerOptions": {
-        "target": "ES2022",
+        "target": "ES2023",
         "module": "ES2022",
         "moduleResolution": "Bundler",
         "rootDir": "./src",
@@ -33,9 +33,12 @@
     },
     "include": [
         "src/**/*",
-        "types"
+        "types",
+        "eslint.config.js"
     ],
     "exclude": [
-        "node_modules"
+        "node_modules",
+        "dist/**/*.js",
+        "scripts/**/*.js",
     ]
 }

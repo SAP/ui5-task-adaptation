@@ -1,0 +1,14 @@
+{
+    "fileType": "appdescr_variant",
+    "reference": "com.sap.base.app.id",
+    "id": "customer.com.sap.application.variant.id",
+    "content": [
+        {
+            "changeType": "appdescr_app_setTitle",
+            "content": {},
+            "texts": {
+                "i18n": "foo/bar.properties"
+            }
+        }
+    ]
+}

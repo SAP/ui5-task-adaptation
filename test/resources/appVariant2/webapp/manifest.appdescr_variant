@@ -1,0 +1,31 @@
+{
+    "fileName": "manifest",
+    "layer": "CUSTOMER_BASE",
+    "fileType": "appdescr_variant",
+    "reference": "customer.com.sap.application.variant.id",
+    "id": "customer.app.variant.2.id",
+    "namespace": "apps/customer.com.sap.application.variant.id/appVariants/customer.app.variant.2.id/",
+    "content": [
+        {
+            "changeType": "appdescr_app_setTitle",
+            "content": {},
+            "texts": {
+                "i18n": "i18n/i18n.properties"
+            }
+        },
+        {
+            "changeType": "appdescr_app_addNewInbound",
+            "content": {
+                "inbound": {
+                    "customer.app.variant.2.inbound": {
+                        "semanticObject": "Contact",
+                        "action": "create",
+                        "icon": "sap-icon://add-contact",
+                        "title": "Title AppVariant 2",
+                        "subTitle": "SubTitle AppVariant 2"
+                    }
+                }
+            }
+        }
+    ]
+}
