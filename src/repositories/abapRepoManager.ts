@@ -1,6 +1,7 @@
 import { IConfiguration, IMetadata } from "../model/types.js";
 
 import AbapProvider from "./abapProvider.js";
+import IAppVariantIdHierarchyItem from "../model/appVariantIdHierarchyItem.js";
 import { getLogger } from "@ui5/logger";
 import { unzipZipEntries } from "../util/zipUtil.js";
 
@@ -28,6 +29,27 @@ export default class AbapRepoManager {
     constructor(configuration: IConfiguration, abapProvider?: AbapProvider) {
         this.configuration = configuration;
         this.abapProvider = abapProvider ? abapProvider : new AbapProvider();
+    }
+
+
+    async getAppVariantIdHierarchy(id: string): Promise<IAppVariantIdHierarchyItem[]> {
+        const provider = await this.abapProvider.get(this.configuration);
+        const lrep = provider.getLayeredRepository();
+        const response = await lrep.get("/dta_folder/app_info", {
+            params: { id }
+        });
+        if (response.status === 200) {
+            return JSON.parse(response.data);
+        } else if (this.configuration.appName) {
+            // Fallback to old API on old ABAP backend or CF for backward compatibility
+            const metadataResponse = await this.getMetadata(id);
+            return [{
+                repoName: this.configuration.appName,
+                appVariantId: id,
+                cachebusterToken: metadataResponse.changedOn
+            }];
+        }
+        throw new Error(`App variant id hierarchy for app id '${id}' is not provided`);
     }
 
 
@@ -65,12 +87,11 @@ export default class AbapRepoManager {
     }
 
 
-    async downloadBaseAppFiles(): Promise<Map<string, string>> {
-        const { destination, appName } = this.configuration;
-        const encodedAppName = encodeURIComponent(appName!);
+    async fetch(repoName: string): Promise<Map<string, string>> {
+        const encodedRepoName = encodeURIComponent(repoName);
         const provider = await this.abapProvider.get(this.configuration);
         const ui5Repo = provider.getUi5AbapRepository();
-        const response = await ui5Repo.get(`/Repositories('${encodedAppName}')`, {
+        const response = await ui5Repo.get(`/Repositories('${encodedRepoName}')`, {
             params: {
                 DownloadFiles: "RUNTIME",
                 CodePage: "UTF8",
@@ -82,6 +103,6 @@ export default class AbapRepoManager {
             const buffer = Buffer.from(data.d.ZipArchive, "base64");
             return unzipZipEntries(buffer);
         }
-        throw new Error(`App '${appName}' from '${destination}' doesn't contain files`);
+        throw new Error(`App '${repoName}' doesn't contain files`);
     }
 }

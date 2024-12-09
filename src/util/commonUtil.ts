@@ -15,7 +15,7 @@ export function dotToUnderscore(value: string) {
 }
 
 
-export function validateObject<T extends Object>(options: T, properties: Array<keyof T>, message: string) {
+export function validateObject<T extends object>(options: T, properties: Array<keyof T>, message: string) {
     for (const property of properties) {
         if (!options[property]) {
             throw new Error(`'${String(property)}' ${message}`);
@@ -27,7 +27,17 @@ export function escapeRegex(update: string) {
     return update.replaceAll(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 
-export function renameResources(files: Map<string, string>, search: string, replacement: string): Map<string, string> {
+export function renameResources(files: ReadonlyMap<string, string>, search: string, replacement: string): Map<string, string> {
+    const replaces = getReplaceRegex(search, replacement);
+    const renamedFiles = new Map<string, string>();
+    files.forEach((content: string, filepath: string) => {
+        renamedFiles.set(filepath, replaces.reduce((p, c) => p.replace(c.regexp, c.replacement), content));
+    });
+    return renamedFiles;
+}
+
+
+function getReplaceRegex(search: string, replacement: string): { regexp: RegExp, replacement: string }[] {
     // The current regex works if the old Id is contained in the new Id, given
     // that they do not have the same beginning.
     // more complete alternative: /((?<!newIdStart)|(?!newIdEnd))oldId/g
@@ -44,7 +54,7 @@ export function renameResources(files: Map<string, string>, search: string, repl
     }
 
     const dotToSlash = (update: string) => update.replaceAll(".", "\/");
-    const replaces = [
+    return [
         {
             regexp: new RegExp(escapedSearch, "g"),
             replacement
@@ -54,12 +64,14 @@ export function renameResources(files: Map<string, string>, search: string, repl
             replacement: dotToSlash(replacement)
         }
     ];
-    files.forEach((content: string, filepath: string, map: Map<string, string>) => {
-        map.set(filepath, replaces.reduce((p, c) => p.replace(c.regexp, c.replacement), content));
-    });
-
-    return files;
 }
+
+
+export function rename(content: string, search: string, replacement: string): string {
+    const replaces = getReplaceRegex(search, replacement);
+    return replaces.reduce((p, c) => p.replace(c.regexp, c.replacement), content);
+}
+
 
 export function insertInArray<T>(array: T[], index: number, insert: T) {
     array.splice(index, 0, insert);
@@ -78,9 +90,8 @@ export function writeTempAnnotations({ writeTempFiles }: IConfiguration, name: s
     }
 }
 
-export function removePropertiesExtension(filePath: string) {
-    const lastIndexOf = filePath.lastIndexOf(".properties");
-    return filePath.substring(0, lastIndexOf);
+export function trimExtension(filePath: string) {
+    return filePath.replace(/\.[^/.]+$/, "");
 }
 
 export function traverse(json: any, paths: string[], callback: (json: any, key: string | number, paths: string[]) => void) {
@@ -114,6 +125,7 @@ export function logBuilderVersion() {
         const packageJson = fs.readFileSync(path.join(__dirname, "../../package.json"), { encoding: "utf-8" });
         const packageJsonVersion = JSON.parse(packageJson).version;
         log.info(`Running app-variant-bundler-build with version ${packageJsonVersion}`);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e: any) {
         // do nothing
     }

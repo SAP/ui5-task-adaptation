@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, AxiosRequestConfig } from "axios";
 
 import ServerError from "../model/serverError.js";
 
@@ -14,7 +14,7 @@ export default class RequestUtil {
     }
 
 
-    static async request(url: string, method: Function, options?: any): Promise<any> {
+    static async request(url: string, method: (url: string, config?: AxiosRequestConfig) => any, options?: any): Promise<any> {
         try {
             return await method(url, options);
         } catch (error: any) {
