@@ -1,5 +1,4 @@
 import AbapRepoManager from "../repositories/abapRepoManager.js";
-import AnnotationsCacheManager from "../cache/annotationsCacheManager.js";
 import { IConfiguration } from "../model/types.js";
 import Language from "../model/language.js";
 import ServerError from "../model/serverError.js";
@@ -53,16 +52,8 @@ export default class ServiceRequestor {
             uri += `?sap-language=${language.sap}`;
             cacheName += `-${language.sap}`;
         }
-        const cacheManager = new AnnotationsCacheManager(this.configuration, cacheName);
         log.verbose(`Getting annotation '${cacheName}' ${language} by '${uri}'`);
-        let files;
-        if (this.configuration.enableAnnotationCache) {
-            files = await cacheManager.getFiles(
-                () => this.abapRepoManager.getAnnotationMetadata(uri),
-                () => this.abapRepoManager.downloadAnnotationFile(uri));
-        } else {
-            files = await this.abapRepoManager.downloadAnnotationFile(uri);
-        }
+        let files = await this.abapRepoManager.downloadAnnotationFile(uri);
         if (!files || files.size === 0) {
             throw new Error(`No files were fetched for '${name}' by '${uri}'`);
         }

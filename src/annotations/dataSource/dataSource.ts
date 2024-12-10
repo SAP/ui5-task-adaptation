@@ -21,7 +21,6 @@ export default class DataSource {
     /**
      * Update the json of the dataSources in manifest.json
      */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     updateManifest(_: any) {
         // to be overriden in children
     }

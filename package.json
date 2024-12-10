@@ -5,9 +5,10 @@
     "main": "index.js",
     "scripts": {
         "test": "npm run lint && npm run build && npm run coverage",
-        "lint": "npx eslint ./src",
-        "dev": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --import=tsx --loader=esmock 'test/**/*.spec.ts'",
-        "perf": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --import=tsx --loader=esmock 'test/**/*.perf.ts'",
+        "lint": "npx eslint ./src ./test/lib",
+        "dev": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --import=tsx --loader=esmock 'test/lib/**/*.spec.ts'",
+        "perf": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --import=tsx --loader=esmock 'test/lib/**/*.perf.ts'",
+        "integration": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --import=tsx --loader=esmock 'test/lib/**/*.int.ts'",
         "coverage": "npx c8 npm run dev",
         "preversion": "npm test",
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",
@@ -15,7 +16,8 @@
         "release-note": "git-chglog -c .chglog/release-config.yml v$npm_package_version",
         "rollup": "tsx scripts/rollup.ts",
         "build": "npm run rollup && tsc -p ./",
-        "download-metadata": "tsx scripts/metadataDownloadHelper.ts"
+        "download-metadata": "tsx scripts/metadataDownloadHelper.ts",
+        "integration-setup": "scripts/test-integration-prep.sh"
     },
     "repository": {
         "type": "git",
@@ -44,15 +46,15 @@
         "axios": "^1.6.2",
         "crc": "^4.3.2",
         "dotenv": "^16.0.3",
+        "filenamify": "^6.0.0",
         "jsdom": "^23.0.1",
-        "meriyah": "^6.0.3",
         "temp-dir": "^2.0.0",
         "xml-js": "^1.6.11"
     },
     "devDependencies": {
         "@buxlabs/amd-to-es6": "^0.16.3",
         "@istanbuljs/nyc-config-typescript": "^1.0.1",
-        "@rollup/plugin-node-resolve": "^15.2.3",
+        "@rollup/plugin-node-resolve": "^15.3.0",
         "@types/adm-zip": "^0.4.34",
         "@types/chai": "^4.2.21",
         "@types/chai-as-promised": "^7.1.4",
@@ -62,30 +64,30 @@
         "@types/mocha": "^9.1.0",
         "@types/semver": "^7.3.8",
         "@types/sinon": "^10.0.16",
+        "@ui5/builder": "^4.0.3",
         "@ui5/project": "^4.0.3",
         "amdextract": "^3.0.0",
         "builtin-modules": "^3.2.0",
         "c8": "^9.1.0",
         "chai": "^4.3.4",
         "chai-as-promised": "^7.1.1",
-        "chalk": "^4.1.2",
-        "eslint": "^8.57.0",
+        "eslint": "^9.12.0",
         "eslint-plugin-import": "^2.29.1",
         "esmock": "^2.6.3",
         "glob": "^10.3.10",
         "js-yaml": "^4.1.0",
-        "lodash": "^4.17.21",
+        "meriyah": "^6.0.3",
         "minimatch": "^9.0.3",
         "mocha": "^10.2.0",
         "mock-require": "^3.0.3",
         "nyc": "^15.1.0",
-        "rollup": "^4.9.6",
+        "rollup": "^4.24.0",
         "semver": "^7.3.5",
         "sinon": "^18.0.1",
         "source-map-support": "^0.5.19",
         "tsx": "^4.7.1",
         "typescript": "^5.4.2",
-        "typescript-eslint": "^7.2.0"
+        "typescript-eslint": "^8.8.1"
     },
     "c8": {
         "src": "./src",
@@ -110,7 +112,8 @@
             "*/**/*.d.ts",
             "src/annotations/comparator/diffCase.ts",
             "src/annotations/transformers/transformer.ts",
-            "src/model/configuration.ts"
+            "src/model/configuration.ts",
+            "src/model/appVariantIdHierarchyItem.ts"
         ],
         "check-coverage": true,
         "statements": 85,
@@ -119,5 +122,9 @@
         "lines": 85
     },
     "types": "dist/index.d.ts",
-    "type": "module"
+    "type": "module",
+    "optionalDependencies": {
+        "@rollup/rollup-linux-x64-gnu": "^4.28.1",
+        "@rollup/rollup-linux-x64-musl": "^4.28.1"
+    }
 }
