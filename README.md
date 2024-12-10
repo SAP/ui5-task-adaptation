@@ -1,6 +1,6 @@
 # ui5-task-adaptation
 [![REUSE status](https://api.reuse.software/badge/github.com/SAP/ui5-task-adaptation)](https://api.reuse.software/info/github.com/SAP/ui5-task-adaptation)
-[![Build Status](https://app.travis-ci.com/SAP/ui5-task-adaptation.svg?branch=main)](https://app.travis-ci.com/github/SAP/ui5-task-adaptation)
+[![Node.js CI](https://github.com/SAP/ui5-task-adaptation/actions/workflows/node.js.yml/badge.svg)](https://github.com/SAP/ui5-task-adaptation/actions/workflows/node.js.yml)
 [![npm version](https://badge.fury.io/js/@ui5%2Ftask-adaptation.svg)](https://badge.fury.io/js/@ui5%2Ftask-adaptation)
 
 ## Description
