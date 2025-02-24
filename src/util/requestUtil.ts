@@ -10,7 +10,7 @@ export default class RequestUtil {
 
 
     static async get(url: string, options?: any): Promise<any> {
-        return this.request(url, axios.get, options);
+        return this.request(url, axios.get, options).then(response => response.data);
     }
 
 
