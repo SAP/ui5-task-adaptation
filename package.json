@@ -41,15 +41,16 @@
         "@ui5/fs": "^4.0.1",
         "@ui5/logger": "^4.0.1",
         "adm-zip": "^0.5.5",
-        "axios": "^1.6.2",
+        "axios": "^1.7.9",
         "crc": "^4.3.2",
         "dotenv": "^16.0.3",
         "jsdom": "^23.0.1",
+        "meriyah": "^6.0.3",
         "temp-dir": "^2.0.0",
         "xml-js": "^1.6.11"
     },
     "devDependencies": {
-        "@buxlabs/amd-to-es6": "^0.16.1",
+        "@buxlabs/amd-to-es6": "^0.16.3",
         "@istanbuljs/nyc-config-typescript": "^1.0.1",
         "@rollup/plugin-node-resolve": "^15.2.3",
         "@types/adm-zip": "^0.4.34",

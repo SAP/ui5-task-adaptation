@@ -4,6 +4,7 @@ import * as path from "path";
 
 //@ts-ignore
 import convertAMDtoES6 from "@buxlabs/amd-to-es6";
+import convertAMDtoESM from "./amdToEsm.js";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getLogger } from "@ui5/logger";
@@ -93,7 +94,11 @@ export default function (options: any) {
                 .replace(/\, \/\* bExport\= \*\/ true\)/g, ")")
                 .replace(/},.*(true|false)\);$/g, "});")
                 .replace(/},.*(true|false)\);(\n\/\/# sourceMappingURL=)*/g, "});\n//# sourceMappingURL=");
-            return convertAMDtoES6(code);
+            try {
+                return convertAMDtoES6(code);
+            } catch (_: any) {
+                return convertAMDtoESM(code);
+            }
         }
 
     };
