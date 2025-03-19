@@ -15,7 +15,7 @@ export function dotToUnderscore(value: string) {
 }
 
 
-export function validateObject<T extends Object>(options: T, properties: Array<keyof T>, message: string) {
+export function validateObject<T extends object>(options: T, properties: Array<keyof T>, message: string) {
     for (const property of properties) {
         if (!options[property]) {
             throw new Error(`'${String(property)}' ${message}`);
@@ -114,7 +114,7 @@ export function logBuilderVersion() {
         const packageJson = fs.readFileSync(path.join(__dirname, "../../package.json"), { encoding: "utf-8" });
         const packageJsonVersion = JSON.parse(packageJson).version;
         log.info(`Running app-variant-bundler-build with version ${packageJsonVersion}`);
-    } catch (e: any) {
+    } catch (_error: any) {
         // do nothing
     }
 }
