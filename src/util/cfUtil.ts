@@ -43,9 +43,9 @@ export default class CFUtil {
     static async createService(params: ICreateServiceInstanceParams) {
         log.verbose(`Creating a service instance with parameters: ${JSON.stringify(params)}`);
         const resources = await this.requestCfApi(`/v3/service_plans?names=${params.planName}&space_guids=${params.spaceGuid}`);
-        const publicPlan = resources.find(resource => resource.visibility_type === "public");
+        const publicPlan = resources.find(resource => ["public", "organization"].includes(resource.visibility_type));
         if (!publicPlan) {
-            throw new Error(`Cannot find a public plan by name '${params.serviceName}' in space '${params.spaceGuid}'`);
+            throw new Error(`Cannot find a public or organization plan by service name '${params.serviceName}' in space '${params.spaceGuid}'`);
         }
         try {
             await cfCreateService(publicPlan.guid, params.serviceName, params.parameters, params.tags);
@@ -83,7 +83,7 @@ export default class CFUtil {
     private static async createServiceKey(serviceInstanceName: string, serviceKeyName: string) {
         try {
             return this.cfExecute(["create-service-key", serviceInstanceName, serviceKeyName]);
-        } catch (error: any) {
+        } catch (_error: any) {
             throw new Error(`Couldn't create a service key for instance: ${serviceInstanceName}`);
         }
     }

@@ -1,4 +1,3 @@
-import * as _ from "lodash";
 import * as chai from "chai";
 import * as sinon from "sinon";
 
