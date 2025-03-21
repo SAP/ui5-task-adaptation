@@ -83,8 +83,8 @@ export default class CFUtil {
     private static async createServiceKey(serviceInstanceName: string, serviceKeyName: string) {
         try {
             return this.cfExecute(["create-service-key", serviceInstanceName, serviceKeyName]);
-        } catch (_error: any) {
-            throw new Error(`Couldn't create a service key for instance: ${serviceInstanceName}`);
+        } catch (error: any) {
+            throw new Error(`Couldn't create a service key for instance ${serviceInstanceName}: ${error.message}`);
         }
     }
 
