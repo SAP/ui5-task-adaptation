@@ -1,13 +1,12 @@
 export declare const RegistrationBuild: () => void;
 
 export declare class Applier {
-    static applyChanges(manifest: any, changes: Change[], strategy: any): Promise<void>;
+    static applyChanges(manifest: any, changes: AppDescriptorChange[], strategy: any): Promise<void>;
 }
 
-export declare class Change {
+export declare class AppDescriptorChange {
     constructor(change: any);
     getLayer(): string;
-    _oDefinition: any;
 }
 
 export declare class V2MetadataConverter {

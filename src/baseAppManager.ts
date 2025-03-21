@@ -1,4 +1,4 @@
-import { Applier, Change, RegistrationBuild } from "../dist/bundle.js";
+import { Applier, AppDescriptorChange, RegistrationBuild } from "../dist/bundle.js";
 import { IAppVariantInfo, IBaseAppInfo, IChange, IProjectOptions } from "./model/types.js";
 import { dotToUnderscore, removePropertiesExtension } from "./util/commonUtil.js";
 
@@ -131,13 +131,13 @@ export default class BaseAppManager {
 
     static async applyDescriptorChanges(baseAppManifest: any, { layer, changes, id }: IAppVariantInfo) {
         log.verbose("Applying appVariant changes");
-        const changesContent = new Array<Change>();
+        const changesContent = new Array<AppDescriptorChange>();
         const i18nBundleName = dotToUnderscore(id);
         for (const change of structuredClone(changes)) {
             if (layer) {
                 change.layer = layer;
             }
-            changesContent.push(new Change(change));
+            changesContent.push(new AppDescriptorChange(change));
             this.adjustAddNewModelEnhanceWith(change, i18nBundleName);
         }
         if (changesContent.length > 0) {
