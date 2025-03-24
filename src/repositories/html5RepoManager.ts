@@ -24,7 +24,7 @@ export default class HTML5RepoManager {
 
 
     private static async getHtml5RepoInfo(configuration: IConfiguration): Promise<IHTML5RepoInfo> {
-        const spaceGuid = await CFUtil.getSpaceGuid(configuration?.spaceGuid);
+        const spaceGuid = await CFUtil.getSpaceGuid(configuration?.space);
         const credentials = await this.getHTML5Credentials(spaceGuid);
         const token = await this.getToken(credentials);
         return {

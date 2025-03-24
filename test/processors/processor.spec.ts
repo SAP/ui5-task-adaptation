@@ -34,8 +34,8 @@ describe("Processor", () => {
             appId: "appId",
             appName: "appName",
             appVersion: "appVersion",
-            spaceGuid: "spaceGuid",
-            orgGuid: "orgGuid",
+            space: "spaceGuid",
+            org: "orgGuid",
             sapCloudService: "sapCloudService"
         });
         expect(processor instanceof CFProcessor)

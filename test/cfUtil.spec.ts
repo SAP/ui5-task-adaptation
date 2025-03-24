@@ -404,27 +404,16 @@ describe("CFUtil", () => {
 
     describe("when getting space", () => {
         it("should get space from cf if not specified in options", async () => {
-            const CFUtil = await esmock("../src/util/cfUtil.js", {}, {
-                "@sap/cf-tools/out/src/cli.js": {
-                    Cli: {
-                        execute: (args: string[]) => {
-                            if (args[1] === `/v3/spaces?names=${SPACE_NAME}`) {
-                                return TestUtil.getStdOut(TestUtil.getResource("spaces.json"))
-                            }
-                        }
-                    }
-                },
-                "@sap/cf-tools/out/src/cf-local.js": {
-                    cfGetTarget: () => Promise.resolve({ space: SPACE_NAME, "api endpoint": "apiEndpoint", "api version": "apiVersion", user: "user" })
+            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, {
+                "@sap/cf-tools/out/src/utils.js": {
+                    getSpaceGuidThrowIfUndefined: () => Promise.resolve("spaceGuid1")
                 }
             });
-            const SPACE_NAME = "spaceName1"
-            const spaceGuid = await CFUtil.getSpaceGuid();
-            expect(spaceGuid).to.equal("spaceGuid1");
+            expect(await CFUtil.getSpaceGuid()).to.equal("spaceGuid1");
         });
 
         it("should return space guid specified in options", async () => {
-            expect(await CFUtil.getSpaceGuid("spaceGuid1")).to.equal("spaceGuid1");
+            expect(await CFUtil.getSpaceGuid("spaceGuid2")).to.equal("spaceGuid2");
         });
     });
 
