@@ -46,7 +46,8 @@ export default class HTML5RepoManager {
         const createParams: ICreateServiceInstanceParams = {
             spaceGuid,
             planName: PLAN_NAME,
-            serviceName: SERVIСE_INSTANCE_NAME,
+            serviceName: "html5-apps-repo",
+            serviceInstanceName: SERVIСE_INSTANCE_NAME,
             tags: ["html5-apps-repo-rt"]
         };
         const serviceKeys = await CFUtil.getServiceInstanceKeys(getParams, createParams);
