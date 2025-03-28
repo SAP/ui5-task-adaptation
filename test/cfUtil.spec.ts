@@ -404,7 +404,7 @@ describe("CFUtil", () => {
 
     describe("when getting space", () => {
         it("should get space from cf if not specified in options", async () => {
-            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, {
+            const CFUtil = await esmock("../src/util/cfUtil.js", {}, {
                 "@sap/cf-tools/out/src/utils.js": {
                     getSpaceGuidThrowIfUndefined: () => Promise.resolve("spaceGuid1")
                 }
