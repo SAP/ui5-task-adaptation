@@ -1,6 +1,6 @@
 import * as sinon from "sinon";
 
-import { Applier, Change } from "../dist/bundle.js";
+import { Applier, AppDescriptorChange } from "../dist/bundle.js";
 import BaseAppManager, { IManifestInfo } from "../src/baseAppManager.js";
 import { IAppVariantInfo, IProjectOptions } from "../src/model/types.js";
 import { assert, expect } from "chai";
@@ -205,7 +205,7 @@ describe("BaseAppManager CF", () => {
         const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const stub = sandbox.stub(Applier, "applyChanges")!;
         await BaseAppManager.process(baseAppFiles, appVariantInfo, options, new CFProcessor(options.configuration, baseAppCacheManager));
-        const layers = stub.getCall(0).args[1].map((change: Change) => change.getLayer());
+        const layers = stub.getCall(0).args[1].map((change: AppDescriptorChange) => change.getLayer());
         expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
 
@@ -215,7 +215,7 @@ describe("BaseAppManager CF", () => {
         const appVariantInfo = await TestUtil.getAppVariantInfo("appVariant1", options.projectNamespace);
         delete appVariantInfo["layer"];
         await BaseAppManager.process(baseAppFiles, appVariantInfo, options, new CFProcessor(options.configuration, baseAppCacheManager));
-        const definitionKeys = stub.getCall(0).args[1].map((change: Change) => Object.keys(change._oDefinition));
+        const definitionKeys = stub.getCall(0).args[1].map((change: AppDescriptorChange) => Object.keys(change));
         expect(definitionKeys.every((key: string[]) => !key.includes("layer"))).to.be.true;
     });
 
@@ -390,7 +390,7 @@ describe("BaseAppManager Abap", () => {
         const baseAppFiles = new Map([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const stub = sandbox.stub(Applier, "applyChanges")!;
         await BaseAppManager.process(baseAppFiles, appVariantInfo, options, abapProcessor);
-        const layers = stub.getCall(0).args[1].map((change: Change) => change.getLayer());
+        const layers = stub.getCall(0).args[1].map((change: AppDescriptorChange) => change.getLayer());
         expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
 
@@ -400,7 +400,7 @@ describe("BaseAppManager Abap", () => {
         const appVariantInfo = await TestUtil.getAppVariantInfo("appVariant1", options.projectNamespace);
         delete appVariantInfo["layer"];
         await BaseAppManager.process(baseAppFiles, appVariantInfo, options, abapProcessor);
-        const definitionKeys = stub.getCall(0).args[1].map((change: Change) => Object.keys(change._oDefinition));
+        const definitionKeys = stub.getCall(0).args[1].map((change: AppDescriptorChange) => Object.keys(change));
         expect(definitionKeys.every((key: string[]) => !key.includes("layer"))).to.be.true;
     });
 
