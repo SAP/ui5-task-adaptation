@@ -1,5 +1,3 @@
-// @ts-check
-
 import * as eslintimport from "eslint-plugin-import";
 
 import eslint from "@eslint/js";
@@ -11,7 +9,11 @@ export default tseslint.config(
     {
         languageOptions: {
             parserOptions: {
-                project: true,
+                project: [
+                    "./tsconfig.json",
+                    "./test/lib/tsconfig.json",
+                    "./scripts/tsconfig.json"
+                ],
                 tsconfigRootDir: import.meta.dirname,
             },
         },
@@ -45,6 +47,14 @@ export default tseslint.config(
                 "ignorePackages",
                 {
                     "js": "always"
+                }
+            ],
+            "@typescript-eslint/no-unused-vars": [
+                "warn", // or "error"
+                {
+                    "argsIgnorePattern": "^_",
+                    "varsIgnorePattern": "^_",
+                    "caughtErrorsIgnorePattern": "^_"
                 }
             ]
         }

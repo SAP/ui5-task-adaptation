@@ -31,7 +31,7 @@ export function determineProcessor(configuration: IConfiguration): IProcessor {
             try {
                 processor.validateConfiguration();
                 return processor;
-            } catch (error) {
+            } catch (_error: any) {
                 continue;
             }
         }
