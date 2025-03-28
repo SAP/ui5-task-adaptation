@@ -1,5 +1,6 @@
 import { ICreateServiceInstanceParams, IGetServiceInstanceParams, IResource, IServiceInstance, IServiceKeys, KeyedMap } from "../model/types.js";
-import { cfCreateService, cfGetInstanceCredentials, cfGetTarget } from "@sap/cf-tools/out/src/cf-local.js";
+import { cfCreateService, cfGetInstanceCredentials } from "@sap/cf-tools/out/src/cf-local.js";
+import { getSpaceGuidThrowIfUndefined } from "@sap/cf-tools/out/src/utils.js";
 
 import { Cli } from "@sap/cf-tools/out/src/cli.js";
 import { eFilters } from "@sap/cf-tools/out/src/types.js";
@@ -42,15 +43,19 @@ export default class CFUtil {
 
     static async createService(params: ICreateServiceInstanceParams) {
         log.verbose(`Creating a service instance with parameters: ${JSON.stringify(params)}`);
-        const resources = await this.requestCfApi(`/v3/service_plans?names=${params.planName}&space_guids=${params.spaceGuid}`);
-        const publicPlan = resources.find(resource => resource.visibility_type === "public");
-        if (!publicPlan) {
-            throw new Error(`Cannot find a public plan by name '${params.serviceName}' in space '${params.spaceGuid}'`);
+        const serviceOfferings = await this.requestCfApi(`/v3/service_offerings?names=${params.serviceName}`);
+        if (serviceOfferings.length === 0) {
+            throw new Error(`Cannot find a service offering by name '${params.serviceName}'`);
+        }
+        const plans = await this.requestCfApi(`/v3/service_plans?service_offering_guids=${serviceOfferings[0].guid}`);
+        const plan = plans.find(plan => plan.name === params.planName);
+        if (!plan) {
+            throw new Error(`Cannot find a plan by name '${params.planName}' for service '${params.serviceName}'`);
         }
         try {
-            await cfCreateService(publicPlan.guid, params.serviceName, params.parameters, params.tags);
+            await cfCreateService(plan.guid, params.serviceInstanceName, params.parameters, params.tags);
         } catch (error: any) {
-            throw new Error(`Cannot create a service instance '${params.serviceName}' in space '${params.spaceGuid}': ${error.message}`);
+            throw new Error(`Cannot create a service instance '${params.serviceInstanceName}' in space '${params.spaceGuid}': ${error.message}`);
         }
     }
 
@@ -176,19 +181,8 @@ export default class CFUtil {
      * @memberof CFUtil
      */
     static async getSpaceGuid(spaceGuid?: string): Promise<string> {
-        if (spaceGuid == null) {
-            const spaceName = (await cfGetTarget())?.space;
-            if (spaceName) {
-                const resources = await this.requestCfApi(`/v3/spaces?names=${spaceName}`);
-                for (const resource of resources) {
-                    spaceGuid = resource.guid;
-                    break;
-                }
-            }
-        }
-        if (spaceGuid == null) {
-            throw new Error("Please login to Cloud Foundry with 'cf login' and try again");
-        }
-        return spaceGuid;
+        return spaceGuid ?? getSpaceGuidThrowIfUndefined().catch((e: any) => {
+            throw new Error("Please specify space and org guids in ui5.yaml or login to Cloud Foundry with 'cf login' and try again: " + e.message);
+        });
     }
 }

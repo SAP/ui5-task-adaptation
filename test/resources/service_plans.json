@@ -3,30 +3,91 @@
         "total_results": 2,
         "total_pages": 1,
         "first": {
-            "href": "/v3/service_plans?names=app-runtime&page=1&per_page=50&space_guids=spaceGuid1"
+            "href": "https://api.btp.sap.com/v3/service_plans?page=1\u0026per_page=50\u0026service_offering_guids=B8F4D0AC-9F30-4C18-B808-D8C1C6E2646E"
         },
         "last": {
-            "href": "/v3/service_plans?names=app-runtime&page=1&per_page=50&space_guids=spaceGuid1"
+            "href": "https://api.btp.sap.com/v3/service_plans?page=1\u0026per_page=50\u0026service_offering_guids=B8F4D0AC-9F30-4C18-B808-D8C1C6E2646E"
         },
         "next": null,
         "previous": null
     },
     "resources": [
         {
-            "guid": "planGuid1",
+            "guid": "22222222-2222-2222-2222-222222222222",
             "created_at": "2017-12-14T15:27:22Z",
-            "updated_at": "2021-03-10T11:58:26Z",
+            "updated_at": "2025-03-20T10:26:40Z",
+            "name": "app-host",
+            "visibility_type": "organization",
+            "available": true,
+            "free": true,
+            "costs": [],
+            "description": "Use this service plan to deploy HTML5 applications to the repository.",
+            "maintenance_info": {},
+            "broker_catalog": {
+                "id": "33333333-3333-3333-3333-333333333333",
+                "metadata": {
+                    "sm_plan_id": "44444444-4444-4444-4444-444444444444"
+                },
+                "maximum_polling_duration": null,
+                "features": {
+                    "bindable": true,
+                    "plan_updateable": false
+                }
+            },
+            "schemas": {
+                "service_instance": {
+                    "create": {
+                        "parameters": {}
+                    },
+                    "update": {
+                        "parameters": {}
+                    }
+                },
+                "service_binding": {
+                    "create": {
+                        "parameters": {}
+                    }
+                }
+            },
+            "relationships": {
+                "service_offering": {
+                    "data": {
+                        "guid": "B8F4D0AC-9F30-4C18-B808-D8C1C6E2646E"
+                    }
+                }
+            },
+            "metadata": {
+                "labels": {},
+                "annotations": {}
+            },
+            "links": {
+                "self": {
+                    "href": "https://api.btp.sap.com/v3/service_plans/22222222-2222-2222-2222-222222222222"
+                },
+                "service_offering": {
+                    "href": "https://api.btp.sap.com/v3/service_offerings/B8F4D0AC-9F30-4C18-B808-D8C1C6E2646E"
+                },
+                "visibility": {
+                    "href": "https://api.btp.sap.com/v3/service_plans/22222222-2222-2222-2222-222222222222/visibility"
+                }
+            }
+        },
+        {
+            "guid": "55555555-5555-5555-5555-555555555555",
+            "created_at": "2017-12-14T15:27:22Z",
+            "updated_at": "2025-03-20T10:26:40Z",
             "name": "app-runtime",
-            "visibility_type": "public",
+            "visibility_type": "organization",
             "available": true,
             "free": true,
             "costs": [],
             "description": "Use this service plan to consume HTML5 applications stored in the repository.",
             "maintenance_info": {},
             "broker_catalog": {
-                "id": "brokerCatalogId1",
+                "id": "66666666-6666-6666-6666-666666666666",
                 "metadata": {
-                    "metadata": {}
+                    "metadata": {},
+                    "sm_plan_id": "77777777-7777-7777-7777-777777777777"
                 },
                 "maximum_polling_duration": null,
                 "features": {
@@ -36,17 +97,23 @@
             },
             "schemas": {
                 "service_instance": {
-                    "create": {},
-                    "update": {}
+                    "create": {
+                        "parameters": {}
+                    },
+                    "update": {
+                        "parameters": {}
+                    }
                 },
                 "service_binding": {
-                    "create": {}
+                    "create": {
+                        "parameters": {}
+                    }
                 }
             },
             "relationships": {
                 "service_offering": {
                     "data": {
-                        "guid": "serviceOffering1"
+                        "guid": "B8F4D0AC-9F30-4C18-B808-D8C1C6E2646E"
                     }
                 }
             },
@@ -56,73 +123,13 @@
             },
             "links": {
                 "self": {
-                    "href": "/v3/service_plans/planGuid1"
+                    "href": "https://api.btp.sap.com/v3/service_plans/55555555-5555-5555-5555-555555555555"
                 },
                 "service_offering": {
-                    "href": "/v3/service_offerings/serviceOffering1"
+                    "href": "https://api.btp.sap.com/v3/service_offerings/B8F4D0AC-9F30-4C18-B808-D8C1C6E2646E"
                 },
                 "visibility": {
-                    "href": "/v3/service_plans/planGuid1/visibility"
-                }
-            }
-        },
-        {
-            "guid": "planGuid2",
-            "created_at": "2018-03-29T14:29:48Z",
-            "updated_at": "2018-03-29T14:29:48Z",
-            "name": "app-runtime",
-            "visibility_type": "space",
-            "available": true,
-            "free": true,
-            "costs": [],
-            "description": "Enables the runtime environment for HTML5 applications. Used to consume content of HTML5 applications.",
-            "maintenance_info": {},
-            "broker_catalog": {
-                "id": "brokerCatalogId1-something",
-                "metadata": {},
-                "maximum_polling_duration": null,
-                "features": {
-                    "bindable": true,
-                    "plan_updateable": false
-                }
-            },
-            "schemas": {
-                "service_instance": {
-                    "create": {},
-                    "update": {}
-                },
-                "service_binding": {
-                    "create": {}
-                }
-            },
-            "relationships": {
-                "service_offering": {
-                    "data": {
-                        "guid": "serviceOffering2"
-                    }
-                },
-                "space": {
-                    "data": {
-                        "guid": "spaceGuid1"
-                    }
-                }
-            },
-            "metadata": {
-                "labels": {},
-                "annotations": {}
-            },
-            "links": {
-                "self": {
-                    "href": "/v3/service_plans/planGuid2"
-                },
-                "service_offering": {
-                    "href": "/v3/service_offerings/serviceOffering2"
-                },
-                "visibility": {
-                    "href": "/v3/service_plans/planGuid2/visibility"
-                },
-                "space": {
-                    "href": "/v3/spaces/spaceGuid1"
+                    "href": "https://api.btp.sap.com/v3/service_plans/55555555-5555-5555-5555-555555555555/visibility"
                 }
             }
         }
