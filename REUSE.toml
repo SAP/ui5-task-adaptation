@@ -1,10 +1,10 @@
 version = 1
 SPDX-PackageName = "ui5-task-adaptation"
-SPDX-PackageSupplier = "Aleksandr Suvorov <aleksandr.suvorov@sap.com>, Silke Arians <silke.arians@sap.com>, Matthias Schmalz <matthias.schmalz@sap.com>"
+SPDX-PackageSupplier = "Aleksandr Suvorov <aleksandr.suvorov@sap.com>, Matthias Schmalz <matthias.schmalz@sap.com>"
 SPDX-PackageDownloadLocation = "https://github.com/SAP/ui5-task-adaptation"
 
 [[annotations]]
 path = "**.**"
 precedence = "aggregate"
-SPDX-FileCopyrightText = "2009-2020 SAP SE or an SAP affiliate company"
+SPDX-FileCopyrightText = "2009-2025 SAP SE or an SAP affiliate company"
 SPDX-License-Identifier = "Apache-2.0"
