@@ -19,8 +19,8 @@ const OPTIONS: IProjectOptions = {
         appId: "appId",
         appName: "appName",
         appVersion: "appVersion",
-        spaceGuid: "spaceGuid",
-        orgGuid: "orgGuid",
+        space: "spaceGuid",
+        org: "orgGuid",
         sapCloudService: "sapCloudService",
         target: {
             url: "https://example.sap.com"

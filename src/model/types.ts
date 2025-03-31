@@ -10,7 +10,7 @@ export interface ICreateServiceInstanceParams {
     spaceGuid: string;
     planName: string;
     serviceName: string;
-    serviceInstanceName?: string;
+    serviceInstanceName: string;
     tags: string[];
     parameters?: any;
 }
