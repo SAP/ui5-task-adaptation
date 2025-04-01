@@ -107,9 +107,21 @@ export default class CFUtil {
     }
 
 
+    static processErrors(json: any) {
+        if (json?.errors?.length > 0) {
+            const message = JSON.stringify(json.errors);
+            if (json?.errors?.some((e: any) => e.title === "CF-NotAuthenticated" || e.code === 10002)) {
+                throw new Error(`Authentication error. Use 'cf login' to authenticate in Cloud Foundry: ${message}`);
+            }
+            throw new Error(`Failed sending request to Cloud Foundry: ${message}`);
+        }
+    }
+
+
     static async requestCfApi(url: string): Promise<IResource[]> {
         const response = await this.cfExecute(["curl", url]);
         const json = this.parseJson(response);
+        this.processErrors(json);
         const resources: IResource[] = json?.resources;
         const totalPages = json?.pagination?.total_pages;
         if (totalPages > 1) {
@@ -120,7 +132,7 @@ export default class CFUtil {
                 return this.parseJson(response)?.resources || [];
             })).then(resources => [].concat(...resources)));
         }
-        return resources;
+        return resources ?? [];
     }
 
 
