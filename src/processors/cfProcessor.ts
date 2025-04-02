@@ -35,7 +35,7 @@ export default class CFProcessor implements IProcessor {
     private updateCloudPlatform(renamedBaseAppManifest: any) {
         const sapCloudService = renamedBaseAppManifest["sap.cloud"]?.service;
         const sapPlatformCf = renamedBaseAppManifest["sap.platform.cf"];
-        if (sapPlatformCf && sapCloudService) {
+        if (sapPlatformCf?.oAuthScopes && sapCloudService) {
             sapPlatformCf.oAuthScopes = sapPlatformCf.oAuthScopes.map((scope: string) =>
                 scope.replace(`$XSAPPNAME.`, `$XSAPPNAME('${sapCloudService}').`));
         }
