@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-expressions */
 import { expect } from "chai";
 import CFProcessor from "../../src/processors/cfProcessor.js";
 import BaseAppFilesCacheManager from "../../src/cache/baseAppFilesCacheManager.js";

@@ -5,9 +5,8 @@
     "main": "index.js",
     "scripts": {
         "test": "npm run lint && npm run build && npm run coverage",
-        "lint": "eslint ./src ./test/lib",
-        "dev": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --import=tsx --loader=esmock 'test/lib/**/*.spec.ts'",
-        "perf": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --import=tsx --loader=esmock 'test/lib/**/*.perf.ts'",
+        "lint": "eslint ./src ./test",
+        "dev": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --import=tsx --loader=esmock 'test/**/*.spec.ts'",
         "coverage": "c8 npm run dev",
         "preversion": "npm test",
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",

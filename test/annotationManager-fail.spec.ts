@@ -18,11 +18,7 @@ describe("AnnotationManager Failed Request", () => {
         projectNamespace: "ns",
         configuration: {
             destination: "system",
-            appName: "appName",
-            credentials: {
-                username: "env:ABAP_USERNAME",
-                password: "env:ABAP_PASSWORD"
-            }
+            appName: "appName"
         }
     };
 

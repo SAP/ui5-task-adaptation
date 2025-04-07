@@ -1,7 +1,6 @@
-import * as sinon from "sinon";
+import sinon, { SinonSandbox } from "sinon";
 
 import { IProjectOptions } from "../../src/model/types.js";
-import { SinonSandbox } from "sinon";
 import TestUtil from "./../testUtilities/testUtil.js";
 import esmock from "esmock";
 import { expect } from "chai";
