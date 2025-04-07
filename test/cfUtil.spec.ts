@@ -417,6 +417,42 @@ describe("CFUtil", () => {
         });
     });
 
+
+    describe("when sending CF request", () => {
+        it("throws all errors if there is Authentication error", async () => {
+            sandbox.stub(CFUtil, "cfExecute" as any).resolves(JSON.stringify({
+                "errors": [{
+                    "detail": "Authentication error",
+                    "title": "CF-NotAuthenticated",
+                    "code": 10002,
+                }, {
+                    "detail": "Other error",
+                    "title": "CF-Other",
+                    "code": 10001,
+                }]
+            }));
+            await expect(CFUtil.requestCfApi("")).to.rejectedWith(`Authentication error. Use 'cf login' to authenticate in Cloud Foundry: [{"detail":"Authentication error","title":"CF-NotAuthenticated","code":10002},{"detail":"Other error","title":"CF-Other","code":10001}]`);
+        });
+        it("throws errors if there are other errors", async () => {
+            sandbox.stub(CFUtil, "cfExecute" as any).resolves(JSON.stringify({
+                "errors": [{
+                    "detail": "Other error",
+                    "title": "CF-Other",
+                    "code": 10001,
+                }]
+            }));
+            await expect(CFUtil.requestCfApi("")).to.rejectedWith(`Failed sending request to Cloud Foundry: [{"detail":"Other error","title":"CF-Other","code":10001}]`);
+        });
+        it("returns empty resource list if no resources", async () => {
+            sandbox.stub(CFUtil, "cfExecute" as any).resolves(JSON.stringify([]));
+            expect(await CFUtil.requestCfApi("")).to.eql([]);
+        });
+        it("returns empty resource list if resources undefined", async () => {
+            sandbox.stub(CFUtil, "cfExecute" as any).resolves(JSON.stringify({}));
+            expect(await CFUtil.requestCfApi("")).to.eql([]);
+        });
+    });
+
 });
 
 const spyCFToolsCliCliExecute = async (sandbox: SinonSandbox, params: IGetServiceInstanceParams, expected: string) => {
