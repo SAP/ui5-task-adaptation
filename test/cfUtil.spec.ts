@@ -325,10 +325,25 @@ describe("CFUtil", () => {
     describe("when creating service", () => {
         const SPACE_GUID = "spaceGuid1";
         const NON_EXISTING_SERVICE_INSTANCE = "nonExistingServiceInstance";
+        const SERVICE = "service1";
         const SERVICE_INSTANCE = "serviceInstance1";
-        const PLAN = "serviceInstancePlan";
+        const PLAN = "app-runtime";
 
-        it("should create a service with parameters", async () => {
+        it("should create a service", async () => {
+            await createService(TestUtil.getResource("service_offerings.json"), TestUtil.getResource("service_plans.json"));
+        });
+
+        it("shouldn't find a plan by name", async () => {
+            await expect(createService(TestUtil.getResource("service_offerings.json"), JSON.stringify({ resources: [{ name: "app-something" }] })))
+                .to.be.rejectedWith("Cannot find a plan by name 'app-runtime' for service 'service1'");
+        });
+
+        it("ahouldn't find service offering", async () => {
+            await expect(createService(JSON.stringify({ resources: [] }), TestUtil.getResource("service_plans.json")))
+                .to.be.rejectedWith("Cannot find a service offering by name 'service1'");
+        });
+
+        async function createService(serviceOfferings: string, plans: string) {
             let call = 0;
             const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
             const CFUtil = await esmock("../src/util/cfUtil.js", {}, {
@@ -342,8 +357,10 @@ describe("CFUtil", () => {
                                 } else {
                                     return TestUtil.getStdOut(TestUtil.getResource("service_instances_bs.json"));
                                 }
-                            } else if (args[1] === `/v3/service_plans?names=${PLAN}&space_guids=${SPACE_GUID}`) {
-                                return TestUtil.getStdOut(TestUtil.getResource("service_plans.json"));
+                            } else if (args[1] === `/v3/service_offerings?names=${SERVICE}`) {
+                                return TestUtil.getStdOut(serviceOfferings);
+                            } else if (args[1] === `/v3/service_plans?service_offering_guids=B8F4D0AC-9F30-4C18-B808-D8C1C6E2646E`) {
+                                return TestUtil.getStdOut(plans);
                             }
                         }
                     }
@@ -368,7 +385,8 @@ describe("CFUtil", () => {
                 spaceGuids: [SPACE_GUID],
                 names: [NON_EXISTING_SERVICE_INSTANCE]
             }, {
-                serviceName: SERVICE_INSTANCE,
+                serviceName: SERVICE,
+                serviceInstanceName: SERVICE_INSTANCE,
                 planName: PLAN,
                 spaceGuid: SPACE_GUID,
                 tags: ["tag1"]
@@ -380,33 +398,22 @@ describe("CFUtil", () => {
                     name: "serviceInstance1"
                 }
             });
-        });
+        }
 
     });
 
     describe("when getting space", () => {
         it("should get space from cf if not specified in options", async () => {
             const CFUtil = await esmock("../src/util/cfUtil.js", {}, {
-                "@sap/cf-tools/out/src/cli.js": {
-                    Cli: {
-                        execute: (args: string[]) => {
-                            if (args[1] === `/v3/spaces?names=${SPACE_NAME}`) {
-                                return TestUtil.getStdOut(TestUtil.getResource("spaces.json"))
-                            }
-                        }
-                    }
-                },
-                "@sap/cf-tools/out/src/cf-local.js": {
-                    cfGetTarget: () => Promise.resolve({ space: SPACE_NAME, "api endpoint": "apiEndpoint", "api version": "apiVersion", user: "user" })
+                "@sap/cf-tools/out/src/utils.js": {
+                    getSpaceGuidThrowIfUndefined: () => Promise.resolve("spaceGuid1")
                 }
             });
-            const SPACE_NAME = "spaceName1"
-            const spaceGuid = await CFUtil.getSpaceGuid();
-            expect(spaceGuid).to.equal("spaceGuid1");
+            expect(await CFUtil.getSpaceGuid()).to.equal("spaceGuid1");
         });
 
         it("should return space guid specified in options", async () => {
-            expect(await CFUtil.getSpaceGuid("spaceGuid1")).to.equal("spaceGuid1");
+            expect(await CFUtil.getSpaceGuid("spaceGuid2")).to.equal("spaceGuid2");
         });
     });
 
