@@ -440,7 +440,7 @@ describe("CFUtil", () => {
             sandbox.stub(CFUtil, "cfExecute" as any).resolves(JSON.stringify([]));
             expect(await CFUtil.requestCfApi("")).to.eql([]);
         });
-        it("returns empty resource list if resources undefind", async () => {
+        it("returns empty resource list if resources undefined", async () => {
             sandbox.stub(CFUtil, "cfExecute" as any).resolves(JSON.stringify({}));
             expect(await CFUtil.requestCfApi("")).to.eql([]);
         });
