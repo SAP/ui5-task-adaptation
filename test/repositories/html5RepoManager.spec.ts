@@ -17,8 +17,8 @@ describe("Html5RepoManager", () => {
             appId: "appId",
             appName: "appName",
             appVersion: "appVersion",
-            spaceGuid: "spaceGuid",
-            orgGuid: "orgGuid",
+            space: "spaceGuid",
+            org: "orgGuid",
             sapCloudService: "sapCloudService"
         }
     };

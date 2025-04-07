@@ -5,8 +5,8 @@ export interface IConfiguration {
     appId?: string;
     appName?: string;
     appVersion?: string;
-    spaceGuid?: string;
-    orgGuid?: string;
+    space?: string;
+    org?: string;
     sapCloudService?: string;
     destination?: string;
     type?: "cf" | "abap";

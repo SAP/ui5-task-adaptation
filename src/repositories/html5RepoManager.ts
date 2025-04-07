@@ -24,7 +24,7 @@ export default class HTML5RepoManager {
 
 
     private static async getHtml5RepoInfo(configuration: IConfiguration): Promise<IHTML5RepoInfo> {
-        const spaceGuid = await CFUtil.getSpaceGuid(configuration?.spaceGuid);
+        const spaceGuid = await CFUtil.getSpaceGuid(configuration?.space);
         const credentials = await this.getHTML5Credentials(spaceGuid);
         const token = await this.getToken(credentials);
         return {
@@ -46,7 +46,8 @@ export default class HTML5RepoManager {
         const createParams: ICreateServiceInstanceParams = {
             spaceGuid,
             planName: PLAN_NAME,
-            serviceName: SERVIСE_INSTANCE_NAME,
+            serviceName: "html5-apps-repo",
+            serviceInstanceName: SERVIСE_INSTANCE_NAME,
             tags: ["html5-apps-repo-rt"]
         };
         const serviceKeys = await CFUtil.getServiceInstanceKeys(getParams, createParams);
