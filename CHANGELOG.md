@@ -2,7 +2,17 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task-adaptation/compare/v1.4.2...HEAD).
+A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task-adaptation/compare/v1.4.3...HEAD).
+
+<a name="v1.4.3"></a>
+## [v1.4.3] - 2025-04-07
+### Bug Fixes
+- Handling undefined oAuthScopes ([#122](https://github.com/SAP/ui5-task-adaptation/issues/122)) [`ea6296b`](https://github.com/SAP/ui5-task-adaptation/commit/ea6296b143e7fcbf8ce3902499be2d4c2fea61a5)
+- Better error handling in CF ([#121](https://github.com/SAP/ui5-task-adaptation/issues/121)) [`8ce564f`](https://github.com/SAP/ui5-task-adaptation/commit/8ce564fa847a512f4de341f14b1788bca3075da8)
+- Get space guid correctly ([#120](https://github.com/SAP/ui5-task-adaptation/issues/120)) [`64a28ee`](https://github.com/SAP/ui5-task-adaptation/commit/64a28eefc19ecded18bd363c65a8417180200945)
+- Create html5 repo service instance ([#118](https://github.com/SAP/ui5-task-adaptation/issues/118)) [`92a6769`](https://github.com/SAP/ui5-task-adaptation/commit/92a6769ea8704ad81bf7e65766c260bb710ab043)
+- Audit and eslint issues [`34508cb`](https://github.com/SAP/ui5-task-adaptation/commit/34508cb013f951d68527d7a733a409ed343fe43c)
+
 
 <a name="v1.4.2"></a>
 ## [v1.4.2] - 2025-02-25
@@ -106,6 +116,7 @@ A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task
 <a name="v1.0.0"></a>
 ## v1.0.0 - 2020-12-09
 
+[v1.4.3]: https://github.com/SAP/ui5-task-adaptation/compare/v1.4.2...v1.4.3
 [v1.4.2]: https://github.com/SAP/ui5-task-adaptation/compare/v1.4.0...v1.4.2
 [v1.4.0]: https://github.com/SAP/ui5-task-adaptation/compare/v1.3.3...v1.4.0
 [v1.3.3]: https://github.com/SAP/ui5-task-adaptation/compare/v1.3.2...v1.3.3
