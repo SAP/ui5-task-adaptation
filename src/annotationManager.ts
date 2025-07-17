@@ -1,5 +1,4 @@
 import AbapRepoManager from "./repositories/abapRepoManager.js";
-import BaseAppManager from "./baseAppManager.js";
 import DataSourceManager from "./annotations/dataSource/dataSourceManager.js";
 import I18nManager from "./i18nManager.js";
 import { IConfiguration } from "./model/types.js";
@@ -30,10 +29,7 @@ export default class AnnotationManager {
     public ANNOTATIONS_FOLDER = "annotations";
 
 
-    async process(renamedBaseAppManifest: any, languages: Language[]) {
-        const { id } = BaseAppManager.getIdVersion(renamedBaseAppManifest);
-        BaseAppManager.validateProperty(id, "sap.app/id");
-
+    async process(baseAppManifest: any, languages: Language[], id: string) {
         const normalisedId = this.normalizeAppVariantId(id);
 
         //TODO: switch to this after resolving @i18n custom model
@@ -43,12 +39,12 @@ export default class AnnotationManager {
         const serviceRequestor = new ServiceRequestor(this.configuration, this.abapRepoManager);
 
         const dataSourceManager = new DataSourceManager();
-        dataSourceManager.addDataSources(renamedBaseAppManifest["sap.app"]?.dataSources);
+        dataSourceManager.addDataSources(baseAppManifest["sap.app"]?.dataSources);
         const annotationFiles = await dataSourceManager.createAnnotationFiles(languages, i18nManager, serviceRequestor);
         const i18nFiles = i18nManager.createFiles(i18nPathName);
 
         if (i18nManager.hasTranslations()) {
-            this.updateManifestModel(renamedBaseAppManifest, modelName, i18nPathName);
+            this.updateManifestModel(baseAppManifest, modelName, i18nPathName);
         }
 
         return new Map([...annotationFiles, ...i18nFiles]);
@@ -60,9 +56,9 @@ export default class AnnotationManager {
     }
 
 
-    private updateManifestModel(renamedBaseAppManifest: any, modelName: string, i18nPathName: string) {
+    private updateManifestModel(baseAppManifest: any, modelName: string, i18nPathName: string) {
         const uri = `${i18nPathName}/i18n.properties`;
-        this.enhanceManifestModel(renamedBaseAppManifest, modelName, uri);
+        this.enhanceManifestModel(baseAppManifest, modelName, uri);
         //TODO: switch to this after resolving @i18n custom model
         //this.createManifestModel(renamedBaseAppManifest, modelName, uri);
     }

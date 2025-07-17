@@ -5,6 +5,7 @@ import AnnotationDiffStructureError from "./model/annotationDiffStructureError.j
 import Language from "./model/language.js";
 import { getUniqueName } from "./util/commonUtil.js";
 import { join } from "path/posix"; // Ensure standardized dir separators to ensure Windows compatibility
+import { slugify } from "transliteration";
 
 // To generate keys, english language is more common, so compare all other
 // languages with it
@@ -88,15 +89,18 @@ export class I18nFileContent {
         const files = new Map<string, string>();
         if (this.hasTranslations()) {
             this.properties.forEach((i18nLines, language) => {
-                let filename = "i18n";
-                if (language.i18n) {
-                    filename += "_" + language.i18n;
+                if (language.isDefault) {
+                    createI18nFile("i18n", i18nLines);
                 }
-                const filepath = join(i18nPathName, filename + ".properties");
-                files.set(filepath, [...i18nLines].map(([key, value]) => `${key}=${value}`).join("\n"));
+                createI18nFile("i18n_" + language.i18n, i18nLines);
             });
         }
         return files;
+
+        function createI18nFile(filename: string, i18nLines: Map<string, string>) {
+            const filepath = join(i18nPathName, filename + ".properties");
+            files.set(filepath, [...i18nLines].map(([key, value]) => `${key}=${value}`).toSorted().join("\n"));
+        }
     }
 }
 
@@ -153,7 +157,7 @@ export default class I18nManager {
         properties file again. And then compare with the next language and so on
         and so on */
         let defaultAnnotation = I18nManager.extractDefaultLanguageAnnotation(annotationJsons);
-        if (annotationJsons.size > 0 && defaultAnnotation) {
+        if (defaultAnnotation && annotationJsons.size > 0) {
             defaultAnnotation = await this.populate([...annotationJsons], defaultAnnotation);
         }
         return defaultAnnotation;
@@ -178,7 +182,6 @@ export default class I18nManager {
     }
 
     static extractDefaultLanguageAnnotation(annotationJsons: Map<Language, Promise<any>>): IJsonPromisePerLanguage {
-        let json = null;
         for (const [language, json] of annotationJsons) {
             if (language.isDefault) {
                 annotationJsons.delete(language);
@@ -186,7 +189,7 @@ export default class I18nManager {
             }
         }
         const language = [...annotationJsons.keys()][0];
-        json = annotationJsons.get(language)!;
+        let json = annotationJsons.get(language)!;
         annotationJsons.delete(language);
         return { json, language };
     }
@@ -217,7 +220,7 @@ export default class I18nManager {
         if (typeof value !== "string") {
             throw new Error("Failed to create unique key from: " + JSON.stringify(value));
         }
-        const propertyName = value.replace(/\W/gi, "_").toUpperCase();
+        const propertyName = slugify(value, { separator: "_", uppercase: true }).replace(/\W/gi, "_");
         const key = getUniqueName([...this.existingKeys.keys()], propertyName);
         this.existingKeys.add(key);
         return key;

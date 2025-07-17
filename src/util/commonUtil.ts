@@ -27,39 +27,121 @@ export function escapeRegex(update: string) {
     return update.replaceAll(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 
-export function renameResources(files: Map<string, string>, search: string, replacement: string): Map<string, string> {
-    // The current regex works if the old Id is contained in the new Id, given
-    // that they do not have the same beginning.
-    // more complete alternative: /((?<!newIdStart)|(?!newIdEnd))oldId/g
-    let escapedSearch: string;
-    if (replacement.includes(search)) {
-        const [before] = replacement.split(search);
-        // Matches a position in the string that is not immediately preceded by
-        // the string "before". Since we won't replace anyway, we should also
-        // ignore one with the slashes.
-        const escapedBefore = escapeRegex(before).replaceAll("\\.", "[\\./]");
-        escapedSearch = `(?<!${escapedBefore})${escapeRegex(search)}`;
-    } else {
-        escapedSearch = escapeRegex(search);
+
+export function renameResources(files: ReadonlyMap<string, string>, search: string[], replacement: string, ignoreInStrings: string[] = []): Map<string, string> {
+    return new Map([...files].map(([filepath, content]) => [filepath, rename(content, search, replacement, ignoreInStrings)]));
+}
+
+
+export function rename(content: string, searchTerms: string[], replacement: string, ignoreInStrings: string[] = []): string {
+    type Interval = {
+        start: number;
+        end: number;
     }
 
-    const dotToSlash = (update: string) => update.replaceAll(".", "\/");
-    const replaces = [
-        {
-            regexp: new RegExp(escapedSearch, "g"),
-            replacement
-        },
-        {
-            regexp: new RegExp(dotToSlash(escapedSearch), "g"),
-            replacement: dotToSlash(replacement)
-        }
-    ];
-    files.forEach((content: string, filepath: string, map: Map<string, string>) => {
-        map.set(filepath, replaces.reduce((p, c) => p.replace(c.regexp, c.replacement), content));
-    });
+    type Index = {
+        i: number;
+        replacement: string;
+        searchTerm: string;
+        inBetween?: Interval;
+    }
 
-    return files;
+    if (replacement.includes(".") && !searchTerms.some(searchTerm => searchTerm.includes("."))) {
+        throw new Error("Ambiguous reference and appVariantId: both should contains dots or both should not contain dots.");
+    }
+
+    if (!content || !searchTerms || searchTerms.length === 0) {
+        return content;
+    }
+
+    const dotToSlash = (str: string) => str.replaceAll(".", "\/");
+    const replacementSlash = dotToSlash(replacement);
+
+    // We don't want to replace in adaptation project ids
+    ignoreInStrings.push(replacement);
+    ignoreInStrings.push(replacementSlash);
+
+    let start = 0;
+    while (true) {
+        // If we don't replace some strings in the content - we find all of them
+        // and then don't replace inside their start and end indices.
+        const ignoredStrings = ignoreInStrings.map(string => {
+            return findAllOccurrences(content, string, start).map(i => ({ start: i, end: i + string.length }));
+        }).filter(arr => arr.length > 0) || [] as Interval[][];
+
+        // We find the next search index with dots and slashes. Then we replace
+        // the nearest one and start search again in the next loop step.
+        const indices = new Array<Index>();
+        for (const searchTerm of searchTerms) {
+            const searchTermSlash = dotToSlash(searchTerm);
+            indices.push({
+                i: content.indexOf(searchTerm, start),
+                replacement,
+                searchTerm
+            });
+            indices.push({
+                i: content.indexOf(searchTermSlash, start),
+                replacement: replacementSlash,
+                searchTerm: searchTermSlash
+            });
+        }
+
+        const found = indices.filter(({ i }) => i > -1);
+        if (found.length === 0) {
+            return content;
+        }
+
+        const inBetween = (intervals: Interval[][], i: number) => {
+            for (const interval of intervals) {
+                for (const { start, end } of interval) {
+                    if (i >= start && i <= end) {
+                        return { start, end };
+                    }
+                }
+            }
+        };
+        const getNotEmptyArray = (a: Index[], b: Index[]) => a.length > 0 ? a : b;
+        const findCurrentReplace = (found: Index[]) => {
+            const result = new Map<number, Index>();
+            for (const entry of found) {
+                const existing = result.get(entry.i);
+                if (!existing || entry.searchTerm.length >= existing.searchTerm.length) {
+                    result.set(entry.i, entry);
+                }
+            }
+            return [...result.values()].sort((a, b) => a.i - b.i)[0];
+        };
+
+        // Ignore if search is in i18n key: replace "id" in "{{id.key}}" with
+        // "customer.id" and we need only the next one in string
+        found.forEach(index => index.inBetween = inBetween(ignoredStrings, index.i));
+        const foundToReplace = getNotEmptyArray(found.filter(index => !index.inBetween), found);
+        const currentReplace = findCurrentReplace(foundToReplace);
+
+        if (currentReplace.inBetween) {
+            start = currentReplace.inBetween.end;
+        } else {
+            content = content.substring(0, currentReplace.i)
+                + currentReplace.replacement
+                + content.substring(currentReplace.i + currentReplace.searchTerm.length);
+            start = currentReplace.i + currentReplace.replacement.length;
+        }
+    }
 }
+
+
+const findAllOccurrences = (string: string, substring: string, start: number): number[] => {
+    if (!substring) {
+        return [];
+    }
+    const indices: number[] = [];
+    let index = start;
+    while ((index = string.indexOf(substring, index)) !== -1) {
+        indices.push(index);
+        index += substring.length; // shift from current finding
+    }
+    return indices;
+};
 
 export function insertInArray<T>(array: T[], index: number, insert: T) {
     array.splice(index, 0, insert);
@@ -78,9 +160,8 @@ export function writeTempAnnotations({ writeTempFiles }: IConfiguration, name: s
     }
 }
 
-export function removePropertiesExtension(filePath: string) {
-    const lastIndexOf = filePath.lastIndexOf(".properties");
-    return filePath.substring(0, lastIndexOf);
+export function trimExtension(filePath: string) {
+    return filePath.replace(/\.[^/.]+$/, "");
 }
 
 export function traverse(json: any, paths: string[], callback: (json: any, key: string | number, paths: string[]) => void) {
@@ -114,7 +195,8 @@ export function logBuilderVersion() {
         const packageJson = fs.readFileSync(path.join(__dirname, "../../package.json"), { encoding: "utf-8" });
         const packageJsonVersion = JSON.parse(packageJson).version;
         log.info(`Running app-variant-bundler-build with version ${packageJsonVersion}`);
-    } catch (_error: any) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e: any) {
         // do nothing
     }
 }
@@ -131,4 +213,20 @@ export function getUniqueName(existingNames: string[], template: string) {
         suffix++;
     } while (existingNames.includes(template + suffixString));
     return template + suffixString;
+}
+
+export function getI18nPropertyKeys(files: ReadonlyMap<string, string>) {
+    const keys = new Set<string>();
+    files.forEach((content, filename) => {
+        if (filename.endsWith(".properties")) {
+            const lines = content.split("\n").filter(line => !line.startsWith("#"));
+            for (const line of lines) {
+                const [key] = line.split("=");
+                if (key) {
+                    keys.add(key);
+                }
+            }
+        }
+    })
+    return [...keys];
 }

@@ -1,0 +1,82 @@
+{
+    "sap.app": {
+        "id": "customer.app.variant5",
+        "title": "{{customer.app.variant5_sap.app.title}}",
+        "description": "{{appDescription}}",
+        "crossNavigation": {
+            "inbounds": {
+                "TreasuryAlert-display": {
+                    "signature": {
+                        "parameters": {
+                            "sap-appvar-id": {
+                                "filter": {
+                                    "value": "customer.app.variant5"
+                                },
+                                "launcherValue": {
+                                    "value": "customer.app.variant5"
+                                }
+                            }
+                        }
+                    },
+                    "title": "{{customer.app.variant5_sap.app.crossNavigation.inbounds.TreasuryAlert-display.title}}"
+                }
+            }
+        }
+    },
+    "sap.ui5": {
+        "models": {
+            "i18n": {
+                "settings": {
+                    "enhanceWith": [
+                        {
+                            "bundleName": "customer.app.variant5.customer_app_variant5.i18n.i18n"
+                        }
+                    ]
+                }
+            },
+            "i18n|sap.suite.ui.generic.template.ListReport|AlertSet": {
+                "settings": {
+                    "enhanceWith": [
+                        {
+                            "bundleName": "fin.trm.display.treasury.alerts.av5.fin_trm_display_treasury_alerts_av5.i18n.ListReport.AlertSet.i18n"
+                        },
+                        {
+                            "bundleName": "customer.app.variant5.customer_app_variant5.i18n.ListReport.AlertSet.i18n"
+                        }
+                    ]
+                }
+            },
+            "@i18n": {
+                "settings": {
+                    "enhanceWith": [
+                        {
+                            "bundleUrl": "i18n/annotations/fintrmdisplaytreasuryalertsav5/i18n.properties"
+                        },
+                        {
+                            "bundleUrl": "i18n/annotations/customerappvariant5/i18n.properties"
+                        },
+                        {
+                            "bundleName": "customer.app.variant5.customer_app_variant5.i18n.i18n"
+                        }
+                    ]
+                }
+            }
+        },
+        "extends": {
+            "extensions": {
+                "sap.ui.viewExtensions": {
+                    "sap.suite.ui.generic.template.ListReport.view.ListReport": {
+                        "SmartFilterBarControlConfigurationExtension|AlertSet": {
+                            "fragmentName": "fin.trm.display.treasury.alerts.ext.fragment.customfilter"
+                        }
+                    }
+                },
+                "sap.ui.controllerExtensions": {
+                    "sap.suite.ui.generic.template.ListReport.view.ListReport": {
+                        "controllerName": "fin.trm.display.treasury.alerts.ext.controller.customfilter"
+                    }
+                }
+            }
+        }
+    }
+}

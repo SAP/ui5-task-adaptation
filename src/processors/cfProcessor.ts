@@ -1,24 +1,32 @@
-import BaseAppFilesCacheManager from "../cache/baseAppFilesCacheManager.js";
 import HTML5RepoManager from "../repositories/html5RepoManager.js";
+import IAppInfo from "../model/appVariantIdHierarchyItem.js";
 import { IConfiguration } from "../model/types.js";
 import IProcessor from "./processor.js";
+import { cached } from "../cache/cacheHolder.js";
 import { validateObject } from "../util/commonUtil.js";
 
 export default class CFProcessor implements IProcessor {
 
     private configuration: IConfiguration;
-    private cacheManager: BaseAppFilesCacheManager;
 
-    constructor(configuration: IConfiguration, cacheManager: BaseAppFilesCacheManager) {
+    constructor(configuration: IConfiguration) {
         this.configuration = configuration;
-        this.cacheManager = cacheManager;
     }
 
 
-    async getBaseAppFiles(): Promise<Map<string, string>> {
-        return this.cacheManager.getFiles(
-            () => HTML5RepoManager.getMetadata(this.configuration),
-            () => HTML5RepoManager.getBaseAppFiles(this.configuration));
+    async getAppVariantIdHierarchy(appId: string): Promise<IAppInfo[]> {
+        const metadata = await HTML5RepoManager.getMetadata(this.configuration);
+        return [{
+            repoName: this.configuration.appName!,
+            appVariantId: appId,
+            cachebusterToken: metadata.changedOn
+        }];
+    }
+
+
+    @cached()
+    fetch(_repoName: string, _cachebusterToken: string): Promise<Map<string, string>> {
+        return HTML5RepoManager.getBaseAppFiles(this.configuration);
     }
 
 
@@ -32,20 +40,20 @@ export default class CFProcessor implements IProcessor {
     }
 
 
-    private updateCloudPlatform(renamedBaseAppManifest: any) {
-        const sapCloudService = renamedBaseAppManifest["sap.cloud"]?.service;
-        const sapPlatformCf = renamedBaseAppManifest["sap.platform.cf"];
+    private updateCloudPlatform(baseAppManifest: any) {
+        const sapCloudService = baseAppManifest["sap.cloud"]?.service;
+        const sapPlatformCf = baseAppManifest["sap.platform.cf"];
         if (sapPlatformCf?.oAuthScopes && sapCloudService) {
             sapPlatformCf.oAuthScopes = sapPlatformCf.oAuthScopes.map((scope: string) =>
                 scope.replace(`$XSAPPNAME.`, `$XSAPPNAME('${sapCloudService}').`));
         }
         if (this.configuration.sapCloudService) {
-            if (renamedBaseAppManifest["sap.cloud"] == null) {
-                renamedBaseAppManifest["sap.cloud"] = {};
+            if (baseAppManifest["sap.cloud"] == null) {
+                baseAppManifest["sap.cloud"] = {};
             }
-            renamedBaseAppManifest["sap.cloud"].service = this.configuration.sapCloudService;
+            baseAppManifest["sap.cloud"].service = this.configuration.sapCloudService;
         } else {
-            delete renamedBaseAppManifest["sap.cloud"];
+            delete baseAppManifest["sap.cloud"];
         }
     }
 

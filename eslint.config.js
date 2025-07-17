@@ -11,7 +11,7 @@ export default tseslint.config(
             parserOptions: {
                 project: [
                     "./tsconfig.json",
-                    "./test/tsconfig.json",
+                    "./test/lib/tsconfig.json",
                     "./scripts/tsconfig.json"
                 ],
                 tsconfigRootDir: import.meta.dirname,
@@ -64,8 +64,5 @@ export default tseslint.config(
         rules: {
             "@typescript-eslint/no-unused-expressions": "off"
         },
-    },
-    {
-        ignores: ["test/resources/**"]
     }
 );
