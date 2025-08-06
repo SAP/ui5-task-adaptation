@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Copyright (C) 2009-2025 SAP SE or an SAP affiliate company. All rights reserved.
+
+-->
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+	<edmx:Reference Uri="/sap/bc/ui5_ui5/ui2/ushell/resources/sap/ushell/components/factsheet/vocabularies/UI.xml">
+		<edmx:Include Alias="UI" Namespace="com.sap.vocabularies.UI.v1"/>
+	</edmx:Reference>
+	<edmx:Reference Uri="/sap/opu/odata/sap/FAP_BANK_CHAIN_SRV/$metadata">
+		<edmx:Include Alias="FAP_BANK_CHAIN_SRV" Namespace="FAP_BANK_CHAIN_SRV"/>
+	</edmx:Reference>
+	<edmx:DataServices>
+		<Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="customer.application01.FAP_BANK_CHAIN_SRV">
+		    <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType/BkChnAcctNumberAtRecipientBank" >
+        		<Annotation Term="UI.Hidden"/>
+    		</Annotations>
+    		<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType/BankControlKey" >
+        		<Annotation Term="UI.Hidden"/>
+    		</Annotations>
+    		<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType/BankAccountReferenceText" >
+        		<Annotation Term="UI.Hidden"/>
+    		</Annotations>
+		</Schema>
+	</edmx:DataServices>
+</edmx:Edmx>

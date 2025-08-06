@@ -1,0 +1,12 @@
+{
+  "application": "customer.application01",
+  "version": "2508.0.3",
+  "buildNumber": "10",
+  "buildId": "10",
+  "branch": "s4ce-2507",
+  "revision": "f7038fbfc4a2e4b118d0dc1f710b9e0b6dd9d2eb",
+  "buildStatus": "P",
+  "translationComplete": "false",
+  "cidi": "",
+  "ciltsCM": ""
+}

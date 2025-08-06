@@ -1,0 +1,91 @@
+{
+  "fileName": "manifest",
+  "layer": "CUSTOMER_BASE",
+  "fileType": "appdescr_variant",
+  "reference": "fin.ap.bankchains",
+  "id": "customer.application01",
+  "namespace": "apps/fin.ap.bankchains/appVariants/customer.application01/",
+  "version": "0.1.0",
+  "content": [
+    {
+    "changeType": "appdescr_ui5_addNewModelEnhanceWith",
+    "content": {
+        "modelId": "i18n"
+    },
+    "texts": {
+        "i18n": "i18n/i18n.properties"
+    }
+},
+    {
+    "changeType": "appdescr_ui5_addNewModelEnhanceWith",
+    "content": {
+        "modelId": "@i18n"
+    },
+    "texts": {
+        "i18n": "i18n/i18n.properties"
+    }
+},
+    {
+    "changeType": "appdescr_ui5_addNewModelEnhanceWith",
+    "content": {
+        "modelId": "i18n|sap.suite.ui.generic.template.ListReport|C_BankChainHeaderTP"
+    },
+    "texts": {
+        "i18n": "i18n/ListReport/C_BankChainHeaderTP/i18n.properties"
+    }
+},
+    {
+    "changeType": "appdescr_ui5_addNewModelEnhanceWith",
+    "content": {
+        "modelId": "i18n|sap.suite.ui.generic.template.ObjectPage|C_BankChainHeaderTP"
+    },
+    "texts": {
+        "i18n": "i18n/ObjectPage/C_BankChainHeaderTP/i18n.properties"
+    }
+},
+    {
+    "changeType": "appdescr_app_addNewInbound",
+    "content": {
+        "inbound": {
+            "customer.application01.InboundID": {
+                "action": "action",
+                "semanticObject": "display",
+                "title": "{{customer.application01_sap.app.crossNavigation.inbounds.customer.application01.InboundID.title}}",
+                "signature": {
+                    "additionalParameters": "allowed",
+                    "parameters": {
+                        "sap-appvar-id": {
+                            "required": true,
+                            "filter": {
+                                "value": "customer.application01",
+                                "format": "plain"
+                            },
+                            "launcherValue": {
+                                "value": "customer.application01"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "texts": {
+        "i18n": "i18n/i18n.properties"
+    }
+},
+    {
+    "changeType": "appdescr_app_removeAllInboundsExceptOne",
+    "content": {
+        "inboundId": "customer.application01.InboundID"
+    },
+    "texts": {}
+},
+    {
+      "changeType": "appdescr_app_setTitle",
+      "content": {},
+      "texts": {
+        "i18n": "i18n/i18n.properties"
+      }
+    }
+  ]
+}

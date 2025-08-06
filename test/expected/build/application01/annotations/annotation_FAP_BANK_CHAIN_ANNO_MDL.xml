@@ -1,0 +1,861 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName=&apos;%2FIWBEP%2FVOC_COMMON&apos;,Version=&apos;0001&apos;,SAP__Origin=&apos;&apos;)/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.Common.v1" Alias="Common"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName=&apos;%2FIWBEP%2FVOC_UI&apos;,Version=&apos;0001&apos;,SAP__Origin=&apos;&apos;)/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.UI.v1" Alias="UI"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName=&apos;%2FIWBEP%2FVOC_COMMUNICATION&apos;,Version=&apos;0001&apos;,SAP__Origin=&apos;&apos;)/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.Communication.v1" Alias="Communication"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName=&apos;%2FIWBEP%2FVOC_PERSONALDATA&apos;,Version=&apos;0001&apos;,SAP__Origin=&apos;&apos;)/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.PersonalData.v1" Alias="PersonalData"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName=&apos;%2FIWBEP%2FVOC_VALIDATION&apos;,Version=&apos;0001&apos;,SAP__Origin=&apos;&apos;)/$value">
+        <edmx:Include Namespace="Org.OData.Validation.V1" Alias="Validation"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName=&apos;%2FIWBEP%2FVOC_ANALYTICS&apos;,Version=&apos;0001&apos;,SAP__Origin=&apos;&apos;)/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.Analytics.v1" Alias="Analytics"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName=&apos;%2FIWBEP%2FVOC_HTML5&apos;,Version=&apos;0001&apos;,SAP__Origin=&apos;&apos;)/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.HTML5.v1" Alias="HTML5"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../catalogservice;v=2/Vocabularies(TechnicalName=&apos;%2FIWBEP%2FVOC_ODM&apos;,Version=&apos;0001&apos;,SAP__Origin=&apos;&apos;)/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.ODM.v1" Alias="SAP__ODM"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="../../../sap/fap_bank_chain_srv/$metadata">
+        <edmx:Include Namespace="FAP_BANK_CHAIN_SRV" Alias="SAP"/>
+    </edmx:Reference>
+    <edmx:DataServices>
+        <Schema Namespace="fap_bank_chain_anno_mdl.v1" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType/BankIdentification">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType/BusinessPartner">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType/BPLastNameSearchHelp">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType/BPFirstNameSearchHelp">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType/BankAccount">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType/BkChnAcctNumberAtRecipientBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType/BankControlKey">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType/BankAccountReferenceText">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType/BankCountryKey">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType">
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnBP"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCountryKeyOfRecipientBank"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="CountryName"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnBankKeyOfRecipientBank"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BankName"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnBankAccountWithReference"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="PartnerBankIBAN"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="SWIFTCode"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.SelectionFields">
+                    <Collection>
+                        <PropertyPath>BkChnBP</PropertyPath>
+                        <PropertyPath>BkChnCountryKeyOfRecipientBank</PropertyPath>
+                        <PropertyPath>CountryName</PropertyPath>
+                        <PropertyPath>BkChnBankKeyOfRecipientBank</PropertyPath>
+                        <PropertyPath>BankName</PropertyPath>
+                        <PropertyPath>BkChnBankAccountWithReference</PropertyPath>
+                        <PropertyPath>PartnerBankIBAN</PropertyPath>
+                        <PropertyPath>SWIFTCode</PropertyPath>
+                    </Collection>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/ChangeDocObject">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/ChangeDocObjectClass">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/DatabaseTable">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/ChangeDocTableKey">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/ChangeDocDatabaseTableField">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/ABAPLongFieldLabel">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/CreationDate">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/CreationTime">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/BkChnCountryKeyOfRecipientBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/BkChnBankKeyOfRecipientBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/BkChnAcctNumberAtRecipientBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/BkChnCurrencyKey">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/BkChnCountryKeyOfSenderBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/BkChnBankKeyOfSenderBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/BkChnPaymentMethodSupplement">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/CreatedByUser">
+                <Annotation Term="Common.SemanticObject" String="User"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType/ChangeDocItemChangeType">
+                <Annotation Term="Common.Text" Path="ABAPLongFieldLabel">
+                    <Annotation Term="UI.TextArrangement" EnumMember="UI.TextArrangementType/TextLast"/>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainChangeDocumentType">
+                <Annotation Term="UI.HeaderInfo">
+                    <Record>
+                        <PropertyValue Property="TypeName" String="{@i18n>customer.application01_CHANGE_DOCUMENT}"/>
+                        <PropertyValue Property="TypeNamePlural" String="{@i18n>customer.application01_CHANGE_DOCUMENTS}"/>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="ChangeDocItemChangeType"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record>
+                                    <PropertyValue Property="width" String="12rem"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnIntermediaryBank"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record>
+                                    <PropertyValue Property="width" String="4rem"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="DatabaseTableFieldText"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record>
+                                    <PropertyValue Property="width" String="12rem"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="ChangeDocNewFieldValue"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record>
+                                    <PropertyValue Property="width" String="12rem"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="ChangeDocPreviousFieldValue"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record>
+                                    <PropertyValue Property="width" String="12rem"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="CreatedByUser"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record>
+                                    <PropertyValue Property="width" String="8rem"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="FullName"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record>
+                                    <PropertyValue Property="width" String="12rem"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="CreationDateTime"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record>
+                                    <PropertyValue Property="width" String="10rem"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.PresentationVariant">
+                    <Record>
+                        <PropertyValue Property="SortOrder">
+                            <Collection>
+                                <Record Type="Common.SortOrderType">
+                                    <PropertyValue Property="Property" PropertyPath="CreationDateTime"/>
+                                    <PropertyValue Property="Descending" Bool="true"/>
+                                </Record>
+                                <Record Type="Common.SortOrderType">
+                                    <PropertyValue Property="Property" PropertyPath="DatabaseTableFieldText"/>
+                                    <PropertyValue Property="Descending" Bool="false"/>
+                                </Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="Communication.Contact">
+                    <Record>
+                        <PropertyValue Property="fn" Path="FullName"/>
+                    </Record>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnAcctNmbrAtRcpntBkForEdit">
+                <Annotation Term="UI.HiddenFilter"/>
+                <Annotation Term="Common.SemanticObject" String="BkChnAcctNumberAtRecipientBank"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BusinessPartner">
+                <Annotation Term="UI.HiddenFilter"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/HasDraftEntity">
+                <Annotation Term="UI.HiddenFilter"/>
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/DraftUUID">
+                <Annotation Term="UI.HiddenFilter"/>
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/DraftEntityCreationDateTime">
+                <Annotation Term="UI.HiddenFilter"/>
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/DraftEntityLastChangeDateTime">
+                <Annotation Term="UI.HiddenFilter"/>
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/HasActiveEntity">
+                <Annotation Term="UI.HiddenFilter"/>
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/IsActiveEntity">
+                <Annotation Term="UI.HiddenFilter"/>
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnCountryKeyOfRecipientBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnBankKeyOfRecipientBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnAcctNumberAtRecipientBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnCurrencyKey">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnCountryKeyOfSenderBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnBankKeyOfSenderBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnPaymentMethodSupplement">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/CountryName">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BankName">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnPaytMethSuplmntInfo">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/Edit_ac">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnBkKeyOfSndrBkForEdit_fc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnCntryKeyOfSndrBkForEdit_fc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnCurrencyKeyForEdit_fc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnPaytMethSuplmntForEdit_fc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BusinessPartner_fc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/IBAN_fc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/Delete_mc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/Update_mc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/to_Item_oc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnCntryKeyOfRcpntBkForEdit">
+                <Annotation Term="Common.SemanticObject" String="BkChnCountryKeyOfRecipientBank"/>
+                <Annotation Term="Common.Text" Path="CountryName">
+                    <Annotation Term="UI.TextArrangement" EnumMember="UI.TextArrangementType/TextLast"/>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnBkKeyOfRcpntBkForEdit">
+                <Annotation Term="Common.SemanticObject" String="Bank"/>
+                <Annotation Term="Common.Text" Path="BankName">
+                    <Annotation Term="UI.TextArrangement" EnumMember="UI.TextArrangementType/TextLast"/>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnCurrencyKeyForEdit">
+                <Annotation Term="Common.SemanticObject" String="BkChnCurrencyKey"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnCntryKeyOfSndrBkForEdit">
+                <Annotation Term="Common.SemanticObject" String="BkChnCountryKeyOfSenderBank"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnPaytMethSuplmntForEdit">
+                <Annotation Term="Common.SemanticObject" String="BkChnPaymentMethodSupplement"/>
+                <Annotation Term="Common.Text" Path="BkChnPaytMethSuplmntInfo">
+                    <Annotation Term="UI.TextArrangement" EnumMember="UI.TextArrangementType/TextLast"/>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType">
+                <Annotation Term="UI.Facets">
+                    <Collection>
+                        <Record Type="UI.CollectionFacet">
+                            <PropertyValue Property="Label" String="{@i18n>customer.application01_BANK_DATA}"/>
+                            <PropertyValue Property="ID" String="BANKDATA"/>
+                            <PropertyValue Property="Facets">
+                                <Collection>
+                                    <Record Type="UI.ReferenceFacet">
+                                        <PropertyValue Property="Label" String="{@i18n>customer.application01_PARTNER_BANK_DATA}"/>
+                                        <PropertyValue Property="ID" String="DETAIL"/>
+                                        <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#Partner Bank Data"/>
+                                    </Record>
+                                    <Record Type="UI.ReferenceFacet">
+                                        <PropertyValue Property="Label" String="{@i18n>customer.application01_HOUSE_BANK_DATA}"/>
+                                        <PropertyValue Property="ID" String="DETAIL2"/>
+                                        <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#House Bank Data"/>
+                                    </Record>
+                                </Collection>
+                            </PropertyValue>
+                        </Record>
+                        <Record Type="UI.ReferenceFacet">
+                            <PropertyValue Property="Label" String="{@i18n>customer.application01_ITEMS}"/>
+                            <PropertyValue Property="ID" String="ITEMFACET"/>
+                            <PropertyValue Property="Target" AnnotationPath="to_Item/@UI.LineItem"/>
+                        </Record>
+                        <Record Type="UI.ReferenceFacet">
+                            <PropertyValue Property="Label" String="{@i18n>customer.application01_CHANGE_LOG}"/>
+                            <PropertyValue Property="ID" String="LOGFACET1"/>
+                            <PropertyValue Property="Target" AnnotationPath="to_BankChainChangeDocument/@UI.LineItem"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.FieldGroup" Qualifier="House Bank Data">
+                    <Record>
+                        <PropertyValue Property="Data">
+                            <Collection>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="BkChnCntryKeyOfSndrBkForEdit"/>
+                                    <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="BkChnBkKeyOfSndrBkForEdit"/>
+                                    <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="BkChnCurrencyKeyForEdit"/>
+                                    <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="BkChnPaytMethSuplmntForEdit"/>
+                                    <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                                </Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.FieldGroup" Qualifier="Partner Bank Data">
+                    <Record>
+                        <PropertyValue Property="Data">
+                            <Collection>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="BusinessPartner"/>
+                                    <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="BkChnCntryKeyOfRcpntBkForEdit"/>
+                                    <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="BkChnBkKeyOfRcpntBkForEdit"/>
+                                    <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="BkChnAcctNmbrAtRcpntBkForEdit"/>
+                                    <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="IBAN"/>
+                                    <Annotation Term="UI.Importance" EnumMember="UI.ImportanceType/High"/>
+                                </Record>
+                            </Collection>
+                        </PropertyValue>
+                        <PropertyValue Property="Label" String="{@i18n>customer.application01_PARTNER_BANK_DATA0}"/>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.HeaderInfo">
+                    <Record>
+                        <PropertyValue Property="TypeName" String="{@i18n>customer.application01_BANK_CHAIN}"/>
+                        <PropertyValue Property="TypeNamePlural" String="{@i18n>customer.application01_BANK_CHAINS}"/>
+                        <PropertyValue Property="Title">
+                            <Record Type="UI.DataField">
+                                <PropertyValue Property="Label" String="{@i18n>customer.application01_BANK_CHAIN_ASSIGNMENT}"/>
+                                <PropertyValue Property="Value" Path="BkChnAcctNmbrAtRcpntBkForEdit"/>
+                            </Record>
+                        </PropertyValue>
+                        <PropertyValue Property="Description">
+                            <Record Type="UI.DataField">
+                                <PropertyValue Property="Value" Path="BkChnCntryKeyOfRcpntBkForEdit"/>
+                            </Record>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.Identification">
+                    <Collection>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnAcctNmbrAtRcpntBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCntryKeyOfRcpntBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnBkKeyOfRcpntBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="IBAN"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCurrencyKeyForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnBkKeyOfSndrBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCntryKeyOfSndrBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnPaytMethSuplmntForEdit"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnAcctNmbrAtRcpntBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCntryKeyOfRcpntBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnBkKeyOfRcpntBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="IBAN"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCurrencyKeyForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnBkKeyOfSndrBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCntryKeyOfSndrBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnPaytMethSuplmntForEdit"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.SelectionFields">
+                    <Collection>
+                        <PropertyPath>BkChnBusinessPartnerListReport</PropertyPath>
+                        <PropertyPath>BkChnCntryKeyOfRcpntBkForEdit</PropertyPath>
+                        <PropertyPath>BkChnBkKeyOfRcpntBkForEdit</PropertyPath>
+                        <PropertyPath>BkChnBankAccountNumberForUI</PropertyPath>
+                        <PropertyPath>BkChnCntryKeyOfSndrBkForEdit</PropertyPath>
+                        <PropertyPath>BkChnBkKeyOfSndrBkForEdit</PropertyPath>
+                        <PropertyPath>BkChnCurrencyKeyForEdit</PropertyPath>
+                        <PropertyPath>BkChnPaytMethSuplmntForEdit</PropertyPath>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="Common.SemanticObject" String="BankChain"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderVHType/BkChnAcctNumberAtRecipientBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderVHType/BkChnCurrencyKey">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderVHType/BkChnCountryKeyOfSenderBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderVHType/BkChnBankKeyOfSenderBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderVHType/BkChnPaymentMethodSupplement">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHouseBankStdVHType">
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BankCountry"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BankInternalID"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="CompanyCode"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="HouseBank"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.SelectionFields">
+                    <Collection>
+                        <PropertyPath>BankCountry</PropertyPath>
+                        <PropertyPath>BankInternalID</PropertyPath>
+                        <PropertyPath>CompanyCode</PropertyPath>
+                        <PropertyPath>HouseBank</PropertyPath>
+                    </Collection>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/HasDraftEntity">
+                <Annotation Term="UI.HiddenFilter"/>
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/DraftUUID">
+                <Annotation Term="UI.HiddenFilter"/>
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/ParentDraftUUID">
+                <Annotation Term="UI.HiddenFilter"/>
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/DraftEntityCreationDateTime">
+                <Annotation Term="UI.HiddenFilter"/>
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/DraftEntityLastChangeDateTime">
+                <Annotation Term="UI.HiddenFilter"/>
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/HasActiveEntity">
+                <Annotation Term="UI.HiddenFilter"/>
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/IsActiveEntity">
+                <Annotation Term="UI.HiddenFilter"/>
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnCountryKeyOfRecipientBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnBankKeyOfRecipientBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnAcctNumberAtRecipientBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnCurrencyKey">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnCountryKeyOfSenderBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnBankKeyOfSenderBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnPaymentMethodSupplement">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnIntermediaryBank">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnCntryKeyOfRcpntBkForEdit">
+                <Annotation Term="UI.Hidden"/>
+                <Annotation Term="Common.SemanticObject" String="BkChnCountryKeyOfRecipientBank"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnBkKeyOfRcpntBkForEdit">
+                <Annotation Term="UI.Hidden"/>
+                <Annotation Term="Common.SemanticObject" String="BkChnBankKeyOfRecipientBank"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnAcctNmbrAtRcpntBkForEdit">
+                <Annotation Term="UI.Hidden"/>
+                <Annotation Term="Common.SemanticObject" String="BkChnAcctNumberAtRecipientBank"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnCurrencyKeyForEdit">
+                <Annotation Term="UI.Hidden"/>
+                <Annotation Term="Common.SemanticObject" String="BkChnCurrencyKey"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnCntryKeyOfSndrBkForEdit">
+                <Annotation Term="UI.Hidden"/>
+                <Annotation Term="Common.SemanticObject" String="BkChnCountryKeyOfSenderBank"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnBkKeyOfSndrBkForEdit">
+                <Annotation Term="UI.Hidden"/>
+                <Annotation Term="Common.SemanticObject" String="BkChnBankKeyOfSenderBank"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnPaytMethSuplmntForEdit">
+                <Annotation Term="UI.Hidden"/>
+                <Annotation Term="Common.SemanticObject" String="BkChnPaymentMethodSupplement"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnTypeOfBkInBkChnDesc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnAcctNmbrAtCorrespondBank_fc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnBkKeyOfCorrespondenceBank_fc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnCntryKeyOfCorrespondentBk_fc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnIntermediaryBankForEdit_fc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnTypeOfBankInBankChain_fc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/IBAN_fc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/Delete_mc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/Update_mc">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnIntermediaryBankForEdit">
+                <Annotation Term="Common.SemanticObject" String="BkChnIntermediaryBank"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnTypeOfBankInBankChain">
+                <Annotation Term="Common.Text" Path="BkChnTypeOfBkInBkChnDesc">
+                    <Annotation Term="UI.TextArrangement" EnumMember="UI.TextArrangementType/TextLast"/>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType">
+                <Annotation Term="UI.HeaderInfo">
+                    <Record>
+                        <PropertyValue Property="TypeName" String="{@i18n>customer.application01_INTERMEDIARY_BANK}"/>
+                        <PropertyValue Property="TypeNamePlural" String="{@i18n>customer.application01_INTERMEDIARY_BANKS}"/>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.Identification">
+                    <Collection>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnIntermediaryBankForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCntryKeyOfRcpntBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnTypeOfBankInBankChain"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnBkKeyOfRcpntBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCntryKeyOfCorrespondentBk"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnAcctNmbrAtRcpntBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnBkKeyOfCorrespondenceBank"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCurrencyKeyForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnAcctNmbrAtCorrespondBank"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCntryKeyOfSndrBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="IBAN"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnBkKeyOfSndrBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnPaytMethSuplmntForEdit"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnIntermediaryBankForEdit"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record>
+                                    <PropertyValue Property="width" String="4rem"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCntryKeyOfRcpntBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnTypeOfBankInBankChain"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record>
+                                    <PropertyValue Property="width" String="12rem"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnBkKeyOfRcpntBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCntryKeyOfCorrespondentBk"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record>
+                                    <PropertyValue Property="width" String="12rem"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnAcctNmbrAtRcpntBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnBkKeyOfCorrespondenceBank"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record>
+                                    <PropertyValue Property="width" String="12rem"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCurrencyKeyForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnAcctNmbrAtCorrespondBank"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record>
+                                    <PropertyValue Property="width" String="12rem"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnCntryKeyOfSndrBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="IBAN"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record>
+                                    <PropertyValue Property="width" String="12rem"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnBkKeyOfSndrBkForEdit"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Value" Path="BkChnPaytMethSuplmntForEdit"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType/DraftUUID">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType/DraftEntityType">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType/DraftAccessType">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType/ProcessingStartDateTime">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType/InProcessByUser">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType/DraftIsKeptByUser">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType/EnqueueStartDateTime">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType/DraftIsCreatedByMe">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType/DraftIsLastChangedByMe">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType/DraftIsProcessedByMe">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType/CreatedByUserDescription">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType/LastChangedByUserDescription">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType/InProcessByUserDescription">
+                <Annotation Term="UI.Hidden"/>
+            </Annotations>
+            <Annotations Target="_Entities"/>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

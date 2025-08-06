@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" xmlns="http://docs.oasis-open.org/odata/ns/edm">
-    <edmx:Reference Uri="/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/Vocabularies(TechnicalName=&apos;%2FIWBEP%2FVOC_COMMUNICATION&apos;,Version=&apos;0001&apos;,SAP__Origin=&apos;ER9CLNT500&apos;)/$value">
+    <edmx:Reference Uri="/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_COMMUNICATION',Version='0001',SAP__Origin='ER9CLNT500')/$value">
         <edmx:Include Namespace="com.sap.vocabularies.Communication.v1" Alias="Communication"/>
     </edmx:Reference>
     <edmx:Reference Uri="/sap/opu/odata4/m2_sd_travel_mduu/$metadata">
@@ -17,18 +17,18 @@
             <Annotations Target="SAP__self.M2_C_BookSup_MDUU/Price">
                 <Annotation Term="SAP__measures.ISOCurrency" Path="CurrencyCode"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_PRODUCT_PRICE}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__SUPPLEMENT_PRICE}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_SUPPLEMENT_PRICE}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelAgencyType/AgencyID">
                 <Annotation Term="SAP__common.Text" Path="Name"/>
                 <Annotation Term="SAP__common.IsDigitSequence"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_AGENCY_ID}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__AGENCY_ID}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_AGENCY_ID}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelAgencyType/PostalCode">
                 <Annotation Term="SAP__common.IsUpperCase"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_POSTAL_CODE}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__POSTAL_CODE}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_POSTAL_CODE}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelAgencyType/CountryCode">
                 <Annotation Term="SAP__common.IsUpperCase"/>
@@ -46,7 +46,7 @@
                 <Annotation Term="Communication.IsPhoneNumber"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_PHONE_NO_}"/>
                 <Annotation Term="SAP__common.Heading" String="{@i18n>customer.com.sap.application.variant.id_PHONE_NUMBER}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__PHONE_NUMBER}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_PHONE_NUMBER}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelAgencyType/Attachment">
                 <Annotation Term="SAP__core.ContentDisposition">
@@ -177,38 +177,38 @@
                 <Annotation Term="SAP__core.Computed"/>
                 <Annotation Term="SAP__UI.Hidden"/>
                 <Annotation Term="SAP__common.Label" String="UUID"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_16_BYTE_UUID_IN_16_BYTES__RAW_FORMAT_}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_16_BYTE_UUID_IN_16_BYTES_RAW_FORMAT}"/>
             </Annotations>
             <Annotations Target="SAP__self.BookingSupplementType/BookingUUID">
                 <Annotation Term="SAP__core.Computed"/>
                 <Annotation Term="SAP__UI.Hidden"/>
                 <Annotation Term="SAP__common.Label" String="UUID"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_16_BYTE_UUID_IN_16_BYTES__RAW_FORMAT_0}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_16_BYTE_UUID_IN_16_BYTES_RAW_FORMAT0}"/>
             </Annotations>
             <Annotations Target="SAP__self.BookingSupplementType/TravelUUID">
                 <Annotation Term="SAP__core.Computed"/>
                 <Annotation Term="SAP__UI.Hidden"/>
                 <Annotation Term="SAP__common.Label" String="UUID"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_16_BYTE_UUID_IN_16_BYTES__RAW_FORMAT_1}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_16_BYTE_UUID_IN_16_BYTES_RAW_FORMAT1}"/>
             </Annotations>
             <Annotations Target="SAP__self.BookingSupplementType/TravelID">
                 <Annotation Term="SAP__core.Computed"/>
                 <Annotation Term="SAP__common.IsDigitSequence"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_TRAVEL_ID}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__TRAVEL_ID}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_TRAVEL_ID}"/>
             </Annotations>
             <Annotations Target="SAP__self.BookingSupplementType/BookingID">
                 <Annotation Term="SAP__core.Computed"/>
                 <Annotation Term="SAP__common.IsDigitSequence"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_BOOKING_NUMBER}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__BOOKING_ID}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_BOOKING_ID}"/>
             </Annotations>
             <Annotations Target="SAP__self.BookingSupplementType/BookingSupplementID">
                 <Annotation Term="SAP__core.Computed"/>
                 <Annotation Term="SAP__common.IsDigitSequence"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_BOOK__SUPP__NUMBER}"/>
                 <Annotation Term="SAP__common.Heading" String="{@i18n>customer.com.sap.application.variant.id_BOOKING_SUPPLEMENT_NUMBER}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__BOOKING_SUPPLEMENT_ID}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_BOOKING_SUPPLEMENT_ID}"/>
             </Annotations>
             <Annotations Target="SAP__self.BookingSupplementType/SupplementID">
                 <Annotation Term="SAP__common.Text" Path="SupplementDescription">
@@ -222,17 +222,17 @@
                     </Collection>
                 </Annotation>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_PRODUCT_ID}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__SUPPLEMENT_ID}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_SUPPLEMENT_ID}"/>
             </Annotations>
             <Annotations Target="SAP__self.BookingSupplementType/SupplementDescription">
                 <Annotation Term="SAP__core.Computed"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_PRODUCT_NAME}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__SUPPLEMENT_DESCRIPTION}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_SUPPLEMENT_DESCRIPTION}"/>
             </Annotations>
             <Annotations Target="SAP__self.BookingSupplementType/Price">
                 <Annotation Term="SAP__measures.ISOCurrency" Path="CurrencyCode"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_PRODUCT_PRICE0}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__SUPPLEMENT_PRICE0}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_SUPPLEMENT_PRICE0}"/>
             </Annotations>
             <Annotations Target="SAP__self.BookingSupplementType/CurrencyCode">
                 <Annotation Term="SAP__common.IsCurrency"/>
@@ -285,13 +285,13 @@
                 <Annotation Term="SAP__core.Computed"/>
                 <Annotation Term="SAP__UI.Hidden"/>
                 <Annotation Term="SAP__common.Label" String="UUID"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_16_BYTE_UUID_IN_16_BYTES__RAW_FORMAT_2}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_16_BYTE_UUID_IN_16_BYTES_RAW_FORMAT2}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelType/TravelID">
                 <Annotation Term="SAP__core.Computed"/>
                 <Annotation Term="SAP__common.IsDigitSequence"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_TRAVEL_ID0}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__TRAVEL_ID0}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_TRAVEL_ID0}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelType/AgencyID">
                 <Annotation Term="SAP__common.Text" Path="AgencyName"/>
@@ -303,13 +303,13 @@
                     </Collection>
                 </Annotation>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_AGENCY_ID0}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__AGENCY_ID0}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_AGENCY_ID0}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelType/AgencyName">
                 <Annotation Term="SAP__core.Computed"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_AGENCY_NAME}"/>
                 <Annotation Term="SAP__common.Heading" String="{@i18n>customer.com.sap.application.variant.id_AGENCY}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__AGENCY_NAME}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_AGENCY_NAME}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelType/CustomerID">
                 <Annotation Term="SAP__common.Text" Path="CustomerName"/>
@@ -321,35 +321,35 @@
                     </Collection>
                 </Annotation>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_CUSTOMER_ID}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__CUSTOMER_ID}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_CUSTOMER_ID}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelType/CustomerName">
                 <Annotation Term="SAP__core.Computed"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_LAST_NAME}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__LAST_NAME}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_LAST_NAME}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelType/BeginDate">
                 <Annotation Term="SAP__common.FieldControl" EnumMember="SAP__common.FieldControlType/Mandatory"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_STARTING_DATE}"/>
                 <Annotation Term="SAP__common.Heading" String="{@i18n>customer.com.sap.application.variant.id_START_DATE}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__START_DATE}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_START_DATE}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelType/EndDate">
                 <Annotation Term="SAP__common.FieldControl" EnumMember="SAP__common.FieldControlType/Mandatory"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_END_DATE}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__END_DATE}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_END_DATE}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelType/BookingFee">
                 <Annotation Term="SAP__common.FieldControl" Path="__FieldControl/BookingFee"/>
                 <Annotation Term="SAP__measures.ISOCurrency" Path="CurrencyCode"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_BOOKING_FEE}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__BOOKING_FEE}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_BOOKING_FEE}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelType/TotalPrice">
                 <Annotation Term="SAP__core.Computed"/>
                 <Annotation Term="SAP__measures.ISOCurrency" Path="CurrencyCode"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_TOTAL_PRICE}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__TOTAL_PRICE}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_TOTAL_PRICE}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelType/CurrencyCode">
                 <Annotation Term="SAP__common.IsCurrency"/>
@@ -368,12 +368,12 @@
                 <Annotation Term="SAP__core.Computed"/>
                 <Annotation Term="SAP__common.IsUpperCase"/>
                 <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_TRAVEL_STATUS}"/>
-                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO__TRAVEL_STATUS}"/>
+                <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_FLIGHT_REFERENCE_SCENARIO_TRAVEL_STATUS}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelType/CreationDateTime">
                 <Annotation Term="SAP__common.Timezone" Path="CreationDateTimeTimezone"/>
-                <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_DATE___TIME}"/>
-                <Annotation Term="SAP__common.Heading" String="{@i18n>customer.com.sap.application.variant.id_CREATION_DATE___TIME}"/>
+                <Annotation Term="SAP__common.Label" String="{@i18n>customer.com.sap.application.variant.id_DATE_TIME}"/>
+                <Annotation Term="SAP__common.Heading" String="{@i18n>customer.com.sap.application.variant.id_CREATION_DATE_TIME}"/>
                 <Annotation Term="SAP__common.QuickInfo" String="{@i18n>customer.com.sap.application.variant.id_MK_TIMESTAMP}"/>
             </Annotations>
             <Annotations Target="SAP__self.TravelType/CreationDateTimeTimezone">

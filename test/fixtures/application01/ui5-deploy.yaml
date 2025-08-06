@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+
+specVersion: "3.0"
+metadata:
+  name: application01
+type: application
+builder:
+  resources:
+    excludes:
+      - /test/**
+      - /localService/**
+  customTasks:
+    - name: deploy-to-abap
+      afterTask: generateCachebusterInfo
+      configuration:
+        target:
+          url: https://xid-080.devsys.net.sap:443
+          authenticationType: reentranceTicket
+        app:
+          name: Z_d068595_FIN
+          description: ''
+          package: Z_D068595_CLOUD
+          transport: XIDK900410

@@ -1,0 +1,356 @@
+<?xml version="1.0" encoding="UTF-8"?><edmx:Edmx Version="1.0" xmlns:edmx="http://schemas.microsoft.com/ado/2007/06/edmx" xmlns:m="http://schemas.microsoft.com/ado/2007/08/dataservices/metadata" xmlns:sap="http://www.sap.com/Protocols/SAPData">
+<!--
+
+    Copyright (C) 2009-2025 SAP SE or an SAP affiliate company. All rights reserved.
+
+-->
+	<edmx:Reference Uri="./IWFND/CATALOGSERVICE;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_COMMON',Version='0001',SAP__Origin='LOCAL')/$value" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"><edmx:Include Alias="Common" Namespace="com.sap.vocabularies.Common.v1"/></edmx:Reference>
+	<edmx:Reference Uri="./IWFND/CATALOGSERVICE;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_CAPABILITIES',Version='0001',SAP__Origin='LOCAL')/$value" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"><edmx:Include Alias="Capabilities" Namespace="Org.OData.Capabilities.V1"/></edmx:Reference>
+	<edmx:Reference Uri="./IWFND/CATALOGSERVICE;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_COMMUNICATION',Version='0001',SAP__Origin='LOCAL')/$value" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"><edmx:Include Alias="Communication" Namespace="com.sap.vocabularies.Communication.v1"/></edmx:Reference>
+	<edmx:Reference Uri="./IWFND/CATALOGSERVICE;v=2/Vocabularies(TechnicalName='%2FIWBEP%2FVOC_AGGREGATION',Version='0001',SAP__Origin='LOCAL')/$value" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx"><edmx:Include Alias="Aggregation" Namespace="Org.OData.Aggregation.V1"/></edmx:Reference>
+	<edmx:DataServices m:DataServiceVersion="2.0">
+		<Schema Namespace="FAP_BANK_CHAIN_SRV" sap:schema-version="1" xml:lang="en">
+			<EntityType Name="C_BankChainBankDetailVHType" sap:content-version="1" sap:label="Supplier and Customer Bank Detail VH" sap:value-list="true">
+				<Key><PropertyRef Name="BkChnBP"/><PropertyRef Name="BkChnBPType"/><PropertyRef Name="BkChnCountryKeyOfRecipientBank"/><PropertyRef Name="BkChnBankKeyOfRecipientBank"/><PropertyRef Name="BkChnAcctNumberAtRecipientBank"/><PropertyRef Name="Customer"/><PropertyRef Name="BkChnSupplier"/></Key><Property MaxLength="10" Name="BkChnBP" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Name of Business Partner" sap:quickinfo="Business Partner Name"/><Property MaxLength="10" Name="BkChnBPType" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Type of Business Partner" sap:quickinfo="Business Partner Type"/><Property MaxLength="3" Name="BkChnCountryKeyOfRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Bank Country Key"/><Property MaxLength="15" Name="BkChnBankKeyOfRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Bank Key" sap:quickinfo="Bank Keys"/><Property MaxLength="18" Name="BkChnAcctNumberAtRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Bank Account" sap:quickinfo="Bank account number"/><Property MaxLength="10" Name="Customer" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Customer" sap:quickinfo="Customer Number"/><Property MaxLength="10" Name="BkChnSupplier" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Supplier" sap:quickinfo="Account Number of Supplier"/></EntityType>
+			<EntityType Name="C_BankChainCustomerVHType" sap:content-version="1" sap:label="Customer Bank Chain Value Help" sap:value-list="true">
+				<Key><PropertyRef Name="Customer"/><PropertyRef Name="BkChnCountryKeyOfRecipientBank"/><PropertyRef Name="BkChnBankKeyOfRecipientBank"/><PropertyRef Name="BkChnAcctNumberAtRecipientBank"/></Key><Property MaxLength="10" Name="Customer" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Customer" sap:quickinfo="Customer Number"/><Property MaxLength="3" Name="BkChnCountryKeyOfRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Bank Country Key"/><Property MaxLength="15" Name="BkChnBankKeyOfRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Bank Key" sap:quickinfo="Bank Keys"/><Property MaxLength="18" Name="BkChnAcctNumberAtRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Bank Account" sap:quickinfo="Bank account number"/></EntityType>
+			<EntityType Name="C_BankChainHeaderTPType" sap:content-version="1" sap:label="Bank Chain per Business Partner Account">
+				<Key><PropertyRef Name="BkChnCountryKeyOfRecipientBank"/><PropertyRef Name="BkChnBankKeyOfRecipientBank"/><PropertyRef Name="BkChnAcctNumberAtRecipientBank"/><PropertyRef Name="BkChnCurrencyKey"/><PropertyRef Name="BkChnCountryKeyOfSenderBank"/><PropertyRef Name="BkChnBankKeyOfSenderBank"/><PropertyRef Name="BkChnPaymentMethodSupplement"/><PropertyRef Name="BkChnSupplier"/><PropertyRef Name="Customer"/><PropertyRef Name="DraftUUID"/><PropertyRef Name="IsActiveEntity"/></Key><Property Name="Activation_ac" Type="Edm.Boolean" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Action Control" sap:sortable="false" sap:updatable="false"/><Property Name="Edit_ac" Type="Edm.Boolean" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Action Control" sap:sortable="false" sap:updatable="false"/><Property Name="Preparation_ac" Type="Edm.Boolean" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Action Control" sap:sortable="false" sap:updatable="false"/><Property Name="Validation_ac" Type="Edm.Boolean" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Action Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnAcctNumberAtRecBnkForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnAddInformationDescription_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnBankKeyOfRecBnkForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnBankKeyOfSenBnkForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnCntryKeyOfRecpBnkForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnCountryKeyOfSenBnkForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnCurrencyKeyForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnPaymentMethodSupForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnSupplierForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="CustomerForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property MaxLength="3" Name="BkChnCountryKeyOfRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Country Key of Recipient Bank"/><Property MaxLength="15" Name="BkChnBankKeyOfRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Bank Key of Recipient Bank"/><Property MaxLength="35" Name="BkChnAcctNumberAtRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Account Number at Recipient Bank"/><Property MaxLength="5" Name="BkChnCurrencyKey" Nullable="false" Type="Edm.String" sap:label="Currency" sap:semantics="currency-code"/><Property MaxLength="3" Name="BkChnCountryKeyOfSenderBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Country Key of Sender Bank"/><Property MaxLength="15" Name="BkChnBankKeyOfSenderBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Bank Key of Sender Bank"/><Property MaxLength="2" Name="BkChnPaymentMethodSupplement" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Payment Method Supplement" sap:quickinfo="Payment method supplement"/><Property MaxLength="10" Name="BkChnSupplier" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Supplier" sap:quickinfo="Account Number of Supplier"/><Property MaxLength="10" Name="Customer" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Customer" sap:quickinfo="Customer Number"/><Property MaxLength="10" Name="BkChnBP" Type="Edm.String" sap:display-format="UpperCase" sap:label="Name of Business Partner" sap:quickinfo="Business Partner Name"/><Property MaxLength="10" Name="BkChnBPType" Type="Edm.String" sap:display-format="UpperCase" sap:label="Type of Business Partner" sap:quickinfo="Business Partner Type"/><Property MaxLength="255" Name="BkChnAddInformationDescription" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnAddInformationDescription_fc" sap:label="Additional Information" sap:quickinfo="Additional Information for Bank Chain"/><Property MaxLength="10" Name="BkChnSupplierForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnSupplierForEdit_fc" sap:label="Supplier" sap:quickinfo="Account Number of Supplier" sap:value-list="standard"/><Property MaxLength="10" Name="CustomerForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="CustomerForEdit_fc" sap:label="Customer" sap:quickinfo="Customer Number" sap:value-list="standard"/><Property MaxLength="3" Name="BkChnCntryKeyOfRecpBnkForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnCntryKeyOfRecpBnkForEdit_fc" sap:label="Country Key of Recipient Bank" sap:value-list="standard"/><Property MaxLength="15" Name="BkChnBankKeyOfRecBnkForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnBankKeyOfRecBnkForEdit_fc" sap:filter-restriction="single-value" sap:label="Bank Key of Recipient Bank"/><Property MaxLength="35" Name="BkChnAcctNumberAtRecBnkForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnAcctNumberAtRecBnkForEdit_fc" sap:filter-restriction="single-value" sap:label="Account Number at Recipient Bank" sap:value-list="standard"/><Property MaxLength="5" Name="BkChnCurrencyKeyForEdit" Type="Edm.String" sap:field-control="BkChnCurrencyKeyForEdit_fc" sap:label="Currency" sap:quickinfo="Currency Key" sap:semantics="currency-code" sap:value-list="standard"/><Property MaxLength="3" Name="BkChnCountryKeyOfSenBnkForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnCountryKeyOfSenBnkForEdit_fc" sap:label="Country Key of Sender Bank" sap:value-list="standard"/><Property MaxLength="15" Name="BkChnBankKeyOfSenBnkForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnBankKeyOfSenBnkForEdit_fc" sap:filter-restriction="single-value" sap:label="Bank Key of Sender Bank"/><Property MaxLength="2" Name="BkChnPaymentMethodSupForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnPaymentMethodSupForEdit_fc" sap:filter-restriction="single-value" sap:label="Payment Method Supplement" sap:quickinfo="Payment method supplement"/><Property Name="HasDraftEntity" Type="Edm.Boolean" sap:creatable="false" sap:display-format="UpperCase" sap:label="Has Draft" sap:updatable="false"/><Property Name="DraftUUID" Nullable="false" Type="Edm.Guid" sap:creatable="false" sap:label="Key" sap:updatable="false"/><Property Name="DraftEntityCreationDateTime" Precision="7" Type="Edm.DateTimeOffset" sap:creatable="false" sap:label="Draft Created On" sap:updatable="false"/><Property Name="DraftEntityLastChangeDateTime" Precision="7" Type="Edm.DateTimeOffset" sap:creatable="false" sap:label="Draft Last Changed On" sap:updatable="false"/><Property Name="HasActiveEntity" Type="Edm.Boolean" sap:creatable="false" sap:display-format="UpperCase" sap:label="Has active" sap:updatable="false"/><Property Name="IsActiveEntity" Nullable="false" Type="Edm.Boolean" sap:creatable="false" sap:display-format="UpperCase" sap:label="Is active" sap:updatable="false"/><NavigationProperty FromRole="FromRole_assoc_96DA9AEC8699212122BEEA5DAED061F9" Name="DraftAdministrativeData" Relationship="FAP_BANK_CHAIN_SRV.assoc_96DA9AEC8699212122BEEA5DAED061F9" ToRole="ToRole_assoc_96DA9AEC8699212122BEEA5DAED061F9"/><NavigationProperty FromRole="FromRole_assoc_E64097451CA08E228781675C8B56AC1E" Name="SiblingEntity" Relationship="FAP_BANK_CHAIN_SRV.assoc_E64097451CA08E228781675C8B56AC1E" ToRole="ToRole_assoc_E64097451CA08E228781675C8B56AC1E"/><NavigationProperty FromRole="FromRole_assoc_4688E4157A2AEB6813001A14BD0E22C4" Name="to_Item" Relationship="FAP_BANK_CHAIN_SRV.assoc_4688E4157A2AEB6813001A14BD0E22C4" ToRole="ToRole_assoc_4688E4157A2AEB6813001A14BD0E22C4"/></EntityType>
+			<EntityType Name="C_BankChainItemTPType" sap:content-version="1" sap:label="TP Intermediary bank for Bank Chain">
+				<Key><PropertyRef Name="BkChnCountryKeyOfRecipientBank"/><PropertyRef Name="BkChnBankKeyOfRecipientBank"/><PropertyRef Name="BkChnAcctNumberAtRecipientBank"/><PropertyRef Name="BkChnCurrencyKey"/><PropertyRef Name="BkChnCountryKeyOfSenderBank"/><PropertyRef Name="BkChnBankKeyOfSenderBank"/><PropertyRef Name="BkChnPaymentMethodSupplement"/><PropertyRef Name="BkChnIntermediaryBank"/><PropertyRef Name="BkChnSupplier"/><PropertyRef Name="Customer"/><PropertyRef Name="DraftUUID"/><PropertyRef Name="IsActiveEntity"/></Key><Property Name="Preparation_ac" Type="Edm.Boolean" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Action Control" sap:sortable="false" sap:updatable="false"/><Property Name="Validation_ac" Type="Edm.Boolean" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Action Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnAcctNumberAtRecBnkForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnBankKeyOfRecBnkForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnBankKeyOfSenBnkForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnCntryKeyOfRecpBnkForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnCountryKeyOfSenBnkForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnCurrencyKeyForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnIntermediaryBankForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnPaymentMethodSupForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="BkChnSupplierForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property Name="CustomerForEdit_fc" Type="Edm.Byte" sap:creatable="false" sap:filterable="false" sap:label="Dyn. Field Control" sap:sortable="false" sap:updatable="false"/><Property MaxLength="3" Name="BkChnCountryKeyOfRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Country Key of Recipient Bank"/><Property MaxLength="15" Name="BkChnBankKeyOfRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Bank Key of Recipient Bank"/><Property MaxLength="35" Name="BkChnAcctNumberAtRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Account Number at Recipient Bank"/><Property MaxLength="5" Name="BkChnCurrencyKey" Nullable="false" Type="Edm.String" sap:label="Currency" sap:semantics="currency-code"/><Property MaxLength="3" Name="BkChnCountryKeyOfSenderBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Country Key of Sender Bank"/><Property MaxLength="15" Name="BkChnBankKeyOfSenderBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Bank Key of Sender Bank"/><Property MaxLength="2" Name="BkChnPaymentMethodSupplement" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Payment Method Supplement" sap:quickinfo="Payment method supplement"/><Property MaxLength="2" Name="BkChnIntermediaryBank" Nullable="false" Type="Edm.String" sap:display-format="NonNegative" sap:label="Number" sap:quickinfo="Current Number of a Bank in Bank Chain"/><Property MaxLength="10" Name="BkChnSupplier" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Supplier" sap:quickinfo="Account Number of Supplier"/><Property MaxLength="10" Name="Customer" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Customer" sap:quickinfo="Customer Number"/><Property MaxLength="10" Name="BkChnSupplierForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnSupplierForEdit_fc" sap:label="Supplier" sap:quickinfo="Account Number of Supplier"/><Property MaxLength="10" Name="CustomerForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="CustomerForEdit_fc" sap:label="Customer" sap:quickinfo="Customer Number"/><Property MaxLength="3" Name="BkChnCntryKeyOfRecpBnkForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnCntryKeyOfRecpBnkForEdit_fc" sap:label="Country Key of Recipient Bank"/><Property MaxLength="15" Name="BkChnBankKeyOfRecBnkForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnBankKeyOfRecBnkForEdit_fc" sap:label="Bank Key of Recipient Bank"/><Property MaxLength="35" Name="BkChnAcctNumberAtRecBnkForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnAcctNumberAtRecBnkForEdit_fc" sap:label="Account Number at Recipient Bank"/><Property MaxLength="5" Name="BkChnCurrencyKeyForEdit" Type="Edm.String" sap:field-control="BkChnCurrencyKeyForEdit_fc" sap:label="Currency" sap:semantics="currency-code"/><Property MaxLength="3" Name="BkChnCountryKeyOfSenBnkForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnCountryKeyOfSenBnkForEdit_fc" sap:label="Country Key of Sender Bank"/><Property MaxLength="15" Name="BkChnBankKeyOfSenBnkForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnBankKeyOfSenBnkForEdit_fc" sap:label="Bank Key of Sender Bank"/><Property MaxLength="2" Name="BkChnPaymentMethodSupForEdit" Type="Edm.String" sap:display-format="UpperCase" sap:field-control="BkChnPaymentMethodSupForEdit_fc" sap:label="Payment Method Supplement" sap:quickinfo="Payment method supplement"/><Property MaxLength="2" Name="BkChnIntermediaryBankForEdit" Type="Edm.String" sap:display-format="NonNegative" sap:field-control="BkChnIntermediaryBankForEdit_fc" sap:label="Number" sap:quickinfo="Current Number of a Bank in Bank Chain"/><Property MaxLength="1" Name="BkChnTypeOfBankInBankChain" Type="Edm.String" sap:display-format="UpperCase" sap:label="Type of Bank in a Bank Chain" sap:quickinfo="Type of Bank in a Bank Chain (Correspondent, Intermediary)"/><Property MaxLength="3" Name="BkChnCntryKeyOfCorrespondentBk" Type="Edm.String" sap:display-format="UpperCase" sap:label="Country Key of a Correspondent Bank" sap:value-list="standard"/><Property MaxLength="15" Name="BkChnBkKeyOfCorrespondenceBank" Type="Edm.String" sap:display-format="UpperCase" sap:label="Bank Key of a Correspondence Bank"/><Property MaxLength="35" Name="BkChnAcctNmbrAtCorrespondBank" Type="Edm.String" sap:display-format="UpperCase" sap:label="Account Number at Correspondent Bank"/><Property MaxLength="34" Name="iban" Type="Edm.String" sap:display-format="UpperCase" sap:label="IBAN" sap:quickinfo="IBAN (International Bank Account Number)"/><Property Name="HasDraftEntity" Type="Edm.Boolean" sap:creatable="false" sap:display-format="UpperCase" sap:label="Has Draft" sap:updatable="false"/><Property Name="DraftUUID" Nullable="false" Type="Edm.Guid" sap:creatable="false" sap:label="Key" sap:updatable="false"/><Property Name="ParentDraftUUID" Type="Edm.Guid" sap:creatable="false" sap:label="Key" sap:updatable="false"/><Property Name="DraftEntityCreationDateTime" Precision="7" Type="Edm.DateTimeOffset" sap:creatable="false" sap:label="Draft Created On" sap:updatable="false"/><Property Name="DraftEntityLastChangeDateTime" Precision="7" Type="Edm.DateTimeOffset" sap:creatable="false" sap:label="Draft Last Changed On" sap:updatable="false"/><Property Name="HasActiveEntity" Type="Edm.Boolean" sap:creatable="false" sap:display-format="UpperCase" sap:label="Has active" sap:updatable="false"/><Property Name="IsActiveEntity" Nullable="false" Type="Edm.Boolean" sap:creatable="false" sap:display-format="UpperCase" sap:label="Is active" sap:updatable="false"/><NavigationProperty FromRole="FromRole_assoc_25B1999C45284D61F6DD5BA87B598BFC" Name="DraftAdministrativeData" Relationship="FAP_BANK_CHAIN_SRV.assoc_25B1999C45284D61F6DD5BA87B598BFC" ToRole="ToRole_assoc_25B1999C45284D61F6DD5BA87B598BFC"/><NavigationProperty FromRole="FromRole_assoc_CD30299A28D429CC4B35A999DB93DE47" Name="SiblingEntity" Relationship="FAP_BANK_CHAIN_SRV.assoc_CD30299A28D429CC4B35A999DB93DE47" ToRole="ToRole_assoc_CD30299A28D429CC4B35A999DB93DE47"/></EntityType>
+			<EntityType Name="C_BankChainSupplierVHType" sap:content-version="1" sap:label="Supplier Bank Chain Value Help" sap:value-list="true">
+				<Key><PropertyRef Name="BkChnSupplier"/><PropertyRef Name="BkChnCountryKeyOfRecipientBank"/><PropertyRef Name="BkChnBankKeyOfRecipientBank"/><PropertyRef Name="BkChnAcctNumberAtRecipientBank"/></Key><Property MaxLength="10" Name="BkChnSupplier" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Supplier" sap:quickinfo="Account Number of Supplier"/><Property MaxLength="3" Name="BkChnCountryKeyOfRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Bank Country Key"/><Property MaxLength="15" Name="BkChnBankKeyOfRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Bank Key" sap:quickinfo="Bank Keys"/><Property MaxLength="18" Name="BkChnAcctNumberAtRecipientBank" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Bank Account" sap:quickinfo="Bank account number"/></EntityType>
+			<EntityType Name="I_CountryVHType" sap:content-version="1" sap:label="Country Value Help" sap:value-list="true">
+				<Key><PropertyRef Name="Country"/></Key><Property MaxLength="3" Name="Country" Nullable="false" Type="Edm.String" sap:display-format="UpperCase" sap:label="Country Key" sap:text="Country_Text"/><Property MaxLength="50" Name="Country_Text" Type="Edm.String" sap:creatable="false" sap:label="Country Name" sap:quickinfo="Country Name (Max. 50 Characters)" sap:updatable="false"/><Property MaxLength="50" Name="Description" Type="Edm.String" sap:label="Country Name" sap:quickinfo="Country Name (Max. 50 Characters)"/><Property MaxLength="3" Name="CountryThreeLetterISOCode" Type="Edm.String" sap:display-format="UpperCase" sap:label="ISO Code 3 Char" sap:quickinfo="ISO country code 3 char"/><Property MaxLength="3" Name="CountryThreeDigitISOCode" Type="Edm.String" sap:display-format="NonNegative" sap:label="ISO Code Num. 3" sap:quickinfo="ISO Country Code Numeric 3-Characters"/></EntityType>
+			<EntityType Name="I_CurrencyType" sap:content-version="1" sap:label="Currency" sap:value-list="true">
+				<Key><PropertyRef Name="Currency"/></Key><Property MaxLength="5" Name="Currency" Nullable="false" Type="Edm.String" sap:label="Currency" sap:quickinfo="Currency Key" sap:semantics="currency-code" sap:text="Currency_Text"/><Property MaxLength="40" Name="Currency_Text" Type="Edm.String" sap:creatable="false" sap:label="Description" sap:updatable="false"/><Property Name="Decimals" Type="Edm.Byte" sap:label="Decimal Places" sap:quickinfo="Number of decimal places"/><Property MaxLength="3" Name="CurrencyISOCode" Type="Edm.String" sap:display-format="UpperCase" sap:label="ISO Code" sap:quickinfo="ISO Currency Code"/><Property MaxLength="3" Name="AlternativeCurrencyKey" Type="Edm.String" sap:display-format="UpperCase" sap:label="Alternative Key"/><Property Name="IsPrimaryCurrencyForISOCrcy" Type="Edm.Boolean" sap:display-format="UpperCase" sap:label="Primary" sap:quickinfo="Primary SAP Currency Code for ISO Code"/></EntityType>
+			<EntityType Name="I_DraftAdministrativeDataType" sap:content-version="1" sap:label="Draft Administration Data">
+				<Key><PropertyRef Name="DraftUUID"/></Key><Property Name="DraftUUID" Nullable="false" Type="Edm.Guid" sap:label="Draft (Technical ID)"/><Property MaxLength="30" Name="DraftEntityType" Type="Edm.String" sap:display-format="UpperCase" sap:label="Draft Entity ID"/><Property Name="CreationDateTime" Precision="7" Type="Edm.DateTimeOffset" sap:label="Draft Created On"/><Property MaxLength="12" Name="CreatedByUser" Type="Edm.String" sap:display-format="UpperCase" sap:label="Draft Created By" sap:text="CreatedByUserDescription"/><Property Name="LastChangeDateTime" Precision="7" Type="Edm.DateTimeOffset" sap:label="Draft Last Changed On"/><Property MaxLength="12" Name="LastChangedByUser" Type="Edm.String" sap:display-format="UpperCase" sap:label="Draft Last Changed By" sap:text="LastChangedByUserDescription"/><Property MaxLength="1" Name="DraftAccessType" Type="Edm.String" sap:display-format="UpperCase" sap:label="Draft Access Type"/><Property Name="ProcessingStartDateTime" Precision="7" Type="Edm.DateTimeOffset" sap:label="Draft In Process Since"/><Property MaxLength="12" Name="InProcessByUser" Type="Edm.String" sap:display-format="UpperCase" sap:label="Draft In Process By" sap:text="InProcessByUserDescription"/><Property Name="DraftIsKeptByUser" Type="Edm.Boolean" sap:display-format="UpperCase" sap:label="Draft Is Kept By User"/><Property Name="EnqueueStartDateTime" Precision="7" Type="Edm.DateTimeOffset" sap:label="Draft Locked Since"/><Property Name="DraftIsCreatedByMe" Type="Edm.Boolean" sap:display-format="UpperCase" sap:label="Draft Created By Me"/><Property Name="DraftIsLastChangedByMe" Type="Edm.Boolean" sap:display-format="UpperCase" sap:label="Draft Last Changed By Me"/><Property Name="DraftIsProcessedByMe" Type="Edm.Boolean" sap:display-format="UpperCase" sap:label="Draft In Process By Me"/><Property MaxLength="80" Name="CreatedByUserDescription" Type="Edm.String" sap:label="Draft Created By (Description)"/><Property MaxLength="80" Name="LastChangedByUserDescription" Type="Edm.String" sap:label="Draft Last Changed By (Description)"/><Property MaxLength="80" Name="InProcessByUserDescription" Type="Edm.String" sap:label="Draft In Process By (Description)"/></EntityType>
+			<ComplexType Name="ValidationFunctionResult"><Property Name="IsValid" Type="Edm.Boolean" sap:label="Is valid"/></ComplexType>
+			<Association Name="assoc_25B1999C45284D61F6DD5BA87B598BFC" sap:content-version="1"><End Multiplicity="1" Role="FromRole_assoc_25B1999C45284D61F6DD5BA87B598BFC" Type="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType"/><End Multiplicity="0..1" Role="ToRole_assoc_25B1999C45284D61F6DD5BA87B598BFC" Type="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType"/></Association>
+			<Association Name="assoc_CD30299A28D429CC4B35A999DB93DE47" sap:content-version="1"><End Multiplicity="1" Role="FromRole_assoc_CD30299A28D429CC4B35A999DB93DE47" Type="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType"/><End Multiplicity="0..1" Role="ToRole_assoc_CD30299A28D429CC4B35A999DB93DE47" Type="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType"/></Association>
+			<Association Name="assoc_E64097451CA08E228781675C8B56AC1E" sap:content-version="1"><End Multiplicity="1" Role="FromRole_assoc_E64097451CA08E228781675C8B56AC1E" Type="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType"/><End Multiplicity="0..1" Role="ToRole_assoc_E64097451CA08E228781675C8B56AC1E" Type="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType"/></Association>
+			<Association Name="assoc_4688E4157A2AEB6813001A14BD0E22C4" sap:content-version="1">
+				<End Multiplicity="1" Role="FromRole_assoc_4688E4157A2AEB6813001A14BD0E22C4" Type="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType"><OnDelete Action="Cascade"/></End><End Multiplicity="*" Role="ToRole_assoc_4688E4157A2AEB6813001A14BD0E22C4" Type="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType"/>
+				<ReferentialConstraint>
+					<Principal Role="FromRole_assoc_4688E4157A2AEB6813001A14BD0E22C4"><PropertyRef Name="Customer"/><PropertyRef Name="BkChnSupplier"/><PropertyRef Name="BkChnPaymentMethodSupplement"/><PropertyRef Name="BkChnBankKeyOfSenderBank"/><PropertyRef Name="BkChnCountryKeyOfSenderBank"/><PropertyRef Name="BkChnCurrencyKey"/><PropertyRef Name="BkChnAcctNumberAtRecipientBank"/><PropertyRef Name="BkChnBankKeyOfRecipientBank"/><PropertyRef Name="BkChnCountryKeyOfRecipientBank"/></Principal>
+					<Dependent Role="ToRole_assoc_4688E4157A2AEB6813001A14BD0E22C4"><PropertyRef Name="Customer"/><PropertyRef Name="BkChnSupplier"/><PropertyRef Name="BkChnPaymentMethodSupplement"/><PropertyRef Name="BkChnBankKeyOfSenderBank"/><PropertyRef Name="BkChnCountryKeyOfSenderBank"/><PropertyRef Name="BkChnCurrencyKey"/><PropertyRef Name="BkChnAcctNumberAtRecipientBank"/><PropertyRef Name="BkChnBankKeyOfRecipientBank"/><PropertyRef Name="BkChnCountryKeyOfRecipientBank"/></Dependent>
+				</ReferentialConstraint>
+			</Association>
+			<Association Name="assoc_96DA9AEC8699212122BEEA5DAED061F9" sap:content-version="1"><End Multiplicity="1" Role="FromRole_assoc_96DA9AEC8699212122BEEA5DAED061F9" Type="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType"/><End Multiplicity="0..1" Role="ToRole_assoc_96DA9AEC8699212122BEEA5DAED061F9" Type="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType"/></Association>
+			<EntityContainer Name="FAP_BANK_CHAIN_SRV_Entities" m:IsDefaultEntityContainer="true" sap:supported-formats="atom json xlsx"><EntitySet EntityType="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType" Name="C_BankChainBankDetailVH" sap:content-version="1" sap:creatable="false" sap:deletable="false" sap:searchable="true" sap:updatable="false"/><EntitySet EntityType="FAP_BANK_CHAIN_SRV.C_BankChainCustomerVHType" Name="C_BankChainCustomerVH" sap:content-version="1" sap:creatable="false" sap:deletable="false" sap:searchable="true" sap:updatable="false"/><EntitySet EntityType="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType" Name="C_BankChainHeaderTP" sap:content-version="1" sap:searchable="true"/><EntitySet EntityType="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType" Name="C_BankChainItemTP" sap:content-version="1"/><EntitySet EntityType="FAP_BANK_CHAIN_SRV.C_BankChainSupplierVHType" Name="C_BankChainSupplierVH" sap:content-version="1" sap:creatable="false" sap:deletable="false" sap:searchable="true" sap:updatable="false"/><EntitySet EntityType="FAP_BANK_CHAIN_SRV.I_CountryVHType" Name="I_CountryVH" sap:content-version="1" sap:creatable="false" sap:deletable="false" sap:searchable="true" sap:updatable="false"/><EntitySet EntityType="FAP_BANK_CHAIN_SRV.I_CurrencyType" Name="I_Currency" sap:content-version="1" sap:creatable="false" sap:deletable="false" sap:searchable="true" sap:updatable="false"/><EntitySet EntityType="FAP_BANK_CHAIN_SRV.I_DraftAdministrativeDataType" Name="I_DraftAdministrativeData" sap:addressable="false" sap:content-version="1" sap:creatable="false" sap:deletable="false" sap:searchable="true" sap:updatable="false"/>
+				<AssociationSet Association="FAP_BANK_CHAIN_SRV.assoc_25B1999C45284D61F6DD5BA87B598BFC" Name="assoc_25B1999C45284D61F6DD5BA87B598BFC" sap:content-version="1" sap:creatable="false" sap:deletable="false" sap:updatable="false"><End EntitySet="C_BankChainItemTP" Role="FromRole_assoc_25B1999C45284D61F6DD5BA87B598BFC"/><End EntitySet="I_DraftAdministrativeData" Role="ToRole_assoc_25B1999C45284D61F6DD5BA87B598BFC"/></AssociationSet>
+				<AssociationSet Association="FAP_BANK_CHAIN_SRV.assoc_CD30299A28D429CC4B35A999DB93DE47" Name="assoc_CD30299A28D429CC4B35A999DB93DE47" sap:content-version="1" sap:creatable="false" sap:deletable="false" sap:updatable="false"><End EntitySet="C_BankChainItemTP" Role="FromRole_assoc_CD30299A28D429CC4B35A999DB93DE47"/><End EntitySet="C_BankChainItemTP" Role="ToRole_assoc_CD30299A28D429CC4B35A999DB93DE47"/></AssociationSet>
+				<AssociationSet Association="FAP_BANK_CHAIN_SRV.assoc_96DA9AEC8699212122BEEA5DAED061F9" Name="assoc_96DA9AEC8699212122BEEA5DAED061F9" sap:content-version="1" sap:creatable="false" sap:deletable="false" sap:updatable="false"><End EntitySet="C_BankChainHeaderTP" Role="FromRole_assoc_96DA9AEC8699212122BEEA5DAED061F9"/><End EntitySet="I_DraftAdministrativeData" Role="ToRole_assoc_96DA9AEC8699212122BEEA5DAED061F9"/></AssociationSet>
+				<AssociationSet Association="FAP_BANK_CHAIN_SRV.assoc_4688E4157A2AEB6813001A14BD0E22C4" Name="assoc_4688E4157A2AEB6813001A14BD0E22C4" sap:content-version="1" sap:creatable="false" sap:deletable="false" sap:updatable="false"><End EntitySet="C_BankChainHeaderTP" Role="FromRole_assoc_4688E4157A2AEB6813001A14BD0E22C4"/><End EntitySet="C_BankChainItemTP" Role="ToRole_assoc_4688E4157A2AEB6813001A14BD0E22C4"/></AssociationSet>
+				<AssociationSet Association="FAP_BANK_CHAIN_SRV.assoc_E64097451CA08E228781675C8B56AC1E" Name="assoc_E64097451CA08E228781675C8B56AC1E" sap:content-version="1" sap:creatable="false" sap:deletable="false" sap:updatable="false"><End EntitySet="C_BankChainHeaderTP" Role="FromRole_assoc_E64097451CA08E228781675C8B56AC1E"/><End EntitySet="C_BankChainHeaderTP" Role="ToRole_assoc_E64097451CA08E228781675C8B56AC1E"/></AssociationSet>
+				<FunctionImport EntitySet="C_BankChainHeaderTP" Name="C_BankChainHeaderTPActivation" ReturnType="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType" m:HttpMethod="POST" sap:action-for="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType" sap:applicable-path="Activation_ac"><Parameter MaxLength="3" Mode="In" Name="BkChnCountryKeyOfRecipientBank" Type="Edm.String"/><Parameter MaxLength="15" Mode="In" Name="BkChnBankKeyOfRecipientBank" Type="Edm.String"/><Parameter MaxLength="35" Mode="In" Name="BkChnAcctNumberAtRecipientBank" Type="Edm.String"/><Parameter MaxLength="5" Mode="In" Name="BkChnCurrencyKey" Type="Edm.String"/><Parameter MaxLength="3" Mode="In" Name="BkChnCountryKeyOfSenderBank" Type="Edm.String"/><Parameter MaxLength="15" Mode="In" Name="BkChnBankKeyOfSenderBank" Type="Edm.String"/><Parameter MaxLength="2" Mode="In" Name="BkChnPaymentMethodSupplement" Type="Edm.String"/><Parameter MaxLength="10" Mode="In" Name="BkChnSupplier" Type="Edm.String"/><Parameter MaxLength="10" Mode="In" Name="Customer" Type="Edm.String"/><Parameter Mode="In" Name="DraftUUID" Type="Edm.Guid"/><Parameter Mode="In" Name="IsActiveEntity" Type="Edm.Boolean"/></FunctionImport>
+				<FunctionImport EntitySet="C_BankChainHeaderTP" Name="C_BankChainHeaderTPEdit" ReturnType="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType" m:HttpMethod="POST" sap:action-for="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType" sap:applicable-path="Edit_ac"><Parameter MaxLength="3" Mode="In" Name="BkChnCountryKeyOfRecipientBank" Type="Edm.String"/><Parameter MaxLength="15" Mode="In" Name="BkChnBankKeyOfRecipientBank" Type="Edm.String"/><Parameter MaxLength="35" Mode="In" Name="BkChnAcctNumberAtRecipientBank" Type="Edm.String"/><Parameter MaxLength="5" Mode="In" Name="BkChnCurrencyKey" Type="Edm.String"/><Parameter MaxLength="3" Mode="In" Name="BkChnCountryKeyOfSenderBank" Type="Edm.String"/><Parameter MaxLength="15" Mode="In" Name="BkChnBankKeyOfSenderBank" Type="Edm.String"/><Parameter MaxLength="2" Mode="In" Name="BkChnPaymentMethodSupplement" Type="Edm.String"/><Parameter MaxLength="10" Mode="In" Name="BkChnSupplier" Type="Edm.String"/><Parameter MaxLength="10" Mode="In" Name="Customer" Type="Edm.String"/><Parameter Mode="In" Name="DraftUUID" Type="Edm.Guid"/><Parameter Mode="In" Name="IsActiveEntity" Type="Edm.Boolean"/><Parameter Mode="In" Name="PreserveChanges" Nullable="true" Type="Edm.Boolean"/></FunctionImport>
+				<FunctionImport EntitySet="C_BankChainHeaderTP" Name="C_BankChainHeaderTPPreparation" ReturnType="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType" m:HttpMethod="POST" sap:action-for="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType" sap:applicable-path="Preparation_ac"><Parameter MaxLength="3" Mode="In" Name="BkChnCountryKeyOfRecipientBank" Type="Edm.String"/><Parameter MaxLength="15" Mode="In" Name="BkChnBankKeyOfRecipientBank" Type="Edm.String"/><Parameter MaxLength="35" Mode="In" Name="BkChnAcctNumberAtRecipientBank" Type="Edm.String"/><Parameter MaxLength="5" Mode="In" Name="BkChnCurrencyKey" Type="Edm.String"/><Parameter MaxLength="3" Mode="In" Name="BkChnCountryKeyOfSenderBank" Type="Edm.String"/><Parameter MaxLength="15" Mode="In" Name="BkChnBankKeyOfSenderBank" Type="Edm.String"/><Parameter MaxLength="2" Mode="In" Name="BkChnPaymentMethodSupplement" Type="Edm.String"/><Parameter MaxLength="10" Mode="In" Name="BkChnSupplier" Type="Edm.String"/><Parameter MaxLength="10" Mode="In" Name="Customer" Type="Edm.String"/><Parameter Mode="In" Name="DraftUUID" Type="Edm.Guid"/><Parameter Mode="In" Name="IsActiveEntity" Type="Edm.Boolean"/><Parameter Mode="In" Name="SideEffectsQualifier" Nullable="true" Type="Edm.String"/></FunctionImport>
+				<FunctionImport Name="C_BankChainHeaderTPValidation" ReturnType="FAP_BANK_CHAIN_SRV.ValidationFunctionResult" m:HttpMethod="GET" sap:action-for="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType" sap:applicable-path="Validation_ac"><Parameter MaxLength="3" Mode="In" Name="BkChnCountryKeyOfRecipientBank" Type="Edm.String"/><Parameter MaxLength="15" Mode="In" Name="BkChnBankKeyOfRecipientBank" Type="Edm.String"/><Parameter MaxLength="35" Mode="In" Name="BkChnAcctNumberAtRecipientBank" Type="Edm.String"/><Parameter MaxLength="5" Mode="In" Name="BkChnCurrencyKey" Type="Edm.String"/><Parameter MaxLength="3" Mode="In" Name="BkChnCountryKeyOfSenderBank" Type="Edm.String"/><Parameter MaxLength="15" Mode="In" Name="BkChnBankKeyOfSenderBank" Type="Edm.String"/><Parameter MaxLength="2" Mode="In" Name="BkChnPaymentMethodSupplement" Type="Edm.String"/><Parameter MaxLength="10" Mode="In" Name="BkChnSupplier" Type="Edm.String"/><Parameter MaxLength="10" Mode="In" Name="Customer" Type="Edm.String"/><Parameter Mode="In" Name="DraftUUID" Type="Edm.Guid"/><Parameter Mode="In" Name="IsActiveEntity" Type="Edm.Boolean"/><Parameter Mode="In" Name="SideEffectsQualifier" Nullable="true" Type="Edm.String"/></FunctionImport>
+				<FunctionImport EntitySet="C_BankChainItemTP" Name="C_BankChainItemTPPreparation" ReturnType="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType" m:HttpMethod="POST" sap:action-for="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType" sap:applicable-path="Preparation_ac"><Parameter MaxLength="3" Mode="In" Name="BkChnCountryKeyOfRecipientBank" Type="Edm.String"/><Parameter MaxLength="15" Mode="In" Name="BkChnBankKeyOfRecipientBank" Type="Edm.String"/><Parameter MaxLength="35" Mode="In" Name="BkChnAcctNumberAtRecipientBank" Type="Edm.String"/><Parameter MaxLength="5" Mode="In" Name="BkChnCurrencyKey" Type="Edm.String"/><Parameter MaxLength="3" Mode="In" Name="BkChnCountryKeyOfSenderBank" Type="Edm.String"/><Parameter MaxLength="15" Mode="In" Name="BkChnBankKeyOfSenderBank" Type="Edm.String"/><Parameter MaxLength="2" Mode="In" Name="BkChnPaymentMethodSupplement" Type="Edm.String"/><Parameter MaxLength="2" Mode="In" Name="BkChnIntermediaryBank" Type="Edm.String"/><Parameter MaxLength="10" Mode="In" Name="BkChnSupplier" Type="Edm.String"/><Parameter MaxLength="10" Mode="In" Name="Customer" Type="Edm.String"/><Parameter Mode="In" Name="DraftUUID" Type="Edm.Guid"/><Parameter Mode="In" Name="IsActiveEntity" Type="Edm.Boolean"/><Parameter Mode="In" Name="SideEffectsQualifier" Nullable="true" Type="Edm.String"/></FunctionImport>
+				<FunctionImport Name="C_BankChainItemTPValidation" ReturnType="FAP_BANK_CHAIN_SRV.ValidationFunctionResult" m:HttpMethod="GET" sap:action-for="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType" sap:applicable-path="Validation_ac"><Parameter MaxLength="3" Mode="In" Name="BkChnCountryKeyOfRecipientBank" Type="Edm.String"/><Parameter MaxLength="15" Mode="In" Name="BkChnBankKeyOfRecipientBank" Type="Edm.String"/><Parameter MaxLength="35" Mode="In" Name="BkChnAcctNumberAtRecipientBank" Type="Edm.String"/><Parameter MaxLength="5" Mode="In" Name="BkChnCurrencyKey" Type="Edm.String"/><Parameter MaxLength="3" Mode="In" Name="BkChnCountryKeyOfSenderBank" Type="Edm.String"/><Parameter MaxLength="15" Mode="In" Name="BkChnBankKeyOfSenderBank" Type="Edm.String"/><Parameter MaxLength="2" Mode="In" Name="BkChnPaymentMethodSupplement" Type="Edm.String"/><Parameter MaxLength="2" Mode="In" Name="BkChnIntermediaryBank" Type="Edm.String"/><Parameter MaxLength="10" Mode="In" Name="BkChnSupplier" Type="Edm.String"/><Parameter MaxLength="10" Mode="In" Name="Customer" Type="Edm.String"/><Parameter Mode="In" Name="DraftUUID" Type="Edm.Guid"/><Parameter Mode="In" Name="IsActiveEntity" Type="Edm.Boolean"/><Parameter Mode="In" Name="SideEffectsQualifier" Nullable="true" Type="Edm.String"/></FunctionImport>
+			</EntityContainer>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.FAP_BANK_CHAIN_SRV_Entities/C_BankChainHeaderTP">
+				<Annotation Term="Common.DraftRoot">
+					<Record><PropertyValue Property="ActivationAction" String="FAP_BANK_CHAIN_SRV.FAP_BANK_CHAIN_SRV_Entities/C_BankChainHeaderTPActivation"/><PropertyValue Property="EditAction" String="FAP_BANK_CHAIN_SRV.FAP_BANK_CHAIN_SRV_Entities/C_BankChainHeaderTPEdit"/><PropertyValue Property="PreparationAction" String="FAP_BANK_CHAIN_SRV.FAP_BANK_CHAIN_SRV_Entities/C_BankChainHeaderTPPreparation"/><PropertyValue Property="ValidationFunction" String="FAP_BANK_CHAIN_SRV.FAP_BANK_CHAIN_SRV_Entities/C_BankChainHeaderTPValidation"/></Record>
+				</Annotation>
+				<Annotation Term="Capabilities.FilterRestrictions">
+					<Record>
+						<PropertyValue Property="NonFilterableProperties">
+							<Collection>
+								<PropertyPath>Activation_ac</PropertyPath>
+								<PropertyPath>Edit_ac</PropertyPath>
+								<PropertyPath>Preparation_ac</PropertyPath>
+								<PropertyPath>Validation_ac</PropertyPath>
+								<PropertyPath>BkChnAcctNumberAtRecBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnAddInformationDescription_fc</PropertyPath>
+								<PropertyPath>BkChnBankKeyOfRecBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnBankKeyOfSenBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnCntryKeyOfRecpBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnCountryKeyOfSenBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnCurrencyKeyForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnPaymentMethodSupForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnSupplierForEdit_fc</PropertyPath>
+								<PropertyPath>CustomerForEdit_fc</PropertyPath>
+							</Collection>
+						</PropertyValue>
+						<PropertyValue Property="FilterExpressionRestrictions">
+							<Collection>
+								<Record><PropertyValue Property="Property" PropertyPath="BkChnBankKeyOfRecBnkForEdit"/><PropertyValue Property="AllowedExpressions" String="SingleValue"/></Record>
+								<Record><PropertyValue Property="Property" PropertyPath="BkChnAcctNumberAtRecBnkForEdit"/><PropertyValue Property="AllowedExpressions" String="SingleValue"/></Record>
+								<Record><PropertyValue Property="Property" PropertyPath="BkChnBankKeyOfSenBnkForEdit"/><PropertyValue Property="AllowedExpressions" String="SingleValue"/></Record>
+								<Record><PropertyValue Property="Property" PropertyPath="BkChnPaymentMethodSupForEdit"/><PropertyValue Property="AllowedExpressions" String="SingleValue"/></Record>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+				<Annotation Term="Capabilities.SortRestrictions">
+					<Record>
+						<PropertyValue Property="NonSortableProperties">
+							<Collection>
+								<PropertyPath>Activation_ac</PropertyPath>
+								<PropertyPath>Edit_ac</PropertyPath>
+								<PropertyPath>Preparation_ac</PropertyPath>
+								<PropertyPath>Validation_ac</PropertyPath>
+								<PropertyPath>BkChnAcctNumberAtRecBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnAddInformationDescription_fc</PropertyPath>
+								<PropertyPath>BkChnBankKeyOfRecBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnBankKeyOfSenBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnCntryKeyOfRecpBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnCountryKeyOfSenBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnCurrencyKeyForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnPaymentMethodSupForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnSupplierForEdit_fc</PropertyPath>
+								<PropertyPath>CustomerForEdit_fc</PropertyPath>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.FAP_BANK_CHAIN_SRV_Entities/C_BankChainItemTP">
+				<Annotation Term="Common.DraftNode">
+					<Record><PropertyValue Property="PreparationAction" String="FAP_BANK_CHAIN_SRV.FAP_BANK_CHAIN_SRV_Entities/C_BankChainItemTPPreparation"/><PropertyValue Property="ValidationFunction" String="FAP_BANK_CHAIN_SRV.FAP_BANK_CHAIN_SRV_Entities/C_BankChainItemTPValidation"/></Record>
+				</Annotation>
+				<Annotation Term="Common.DraftActivationVia">
+					<Collection>
+						<String>FAP_BANK_CHAIN_SRV.FAP_BANK_CHAIN_SRV_Entities/C_BankChainHeaderTP</String>
+					</Collection>
+				</Annotation>
+				<Annotation Term="Capabilities.FilterRestrictions">
+					<Record>
+						<PropertyValue Property="NonFilterableProperties">
+							<Collection>
+								<PropertyPath>Preparation_ac</PropertyPath>
+								<PropertyPath>Validation_ac</PropertyPath>
+								<PropertyPath>BkChnAcctNumberAtRecBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnBankKeyOfRecBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnBankKeyOfSenBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnCntryKeyOfRecpBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnCountryKeyOfSenBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnCurrencyKeyForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnIntermediaryBankForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnPaymentMethodSupForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnSupplierForEdit_fc</PropertyPath>
+								<PropertyPath>CustomerForEdit_fc</PropertyPath>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+				<Annotation Term="Capabilities.SortRestrictions">
+					<Record>
+						<PropertyValue Property="NonSortableProperties">
+							<Collection>
+								<PropertyPath>Preparation_ac</PropertyPath>
+								<PropertyPath>Validation_ac</PropertyPath>
+								<PropertyPath>BkChnAcctNumberAtRecBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnBankKeyOfRecBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnBankKeyOfSenBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnCntryKeyOfRecpBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnCountryKeyOfSenBnkForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnCurrencyKeyForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnIntermediaryBankForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnPaymentMethodSupForEdit_fc</PropertyPath>
+								<PropertyPath>BkChnSupplierForEdit_fc</PropertyPath>
+								<PropertyPath>CustomerForEdit_fc</PropertyPath>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnSupplierForEdit">
+				<Annotation Term="Common.ValueList">
+					<Record><PropertyValue Property="Label" String="Supplier Bank Chain Value Help"/><PropertyValue Property="CollectionPath" String="C_BankChainSupplierVH"/><PropertyValue Bool="true" Property="SearchSupported"/>
+						<PropertyValue Property="Parameters">
+							<Collection>
+								<Record Type="Common.ValueListParameterInOut"><PropertyValue Property="LocalDataProperty" PropertyPath="BkChnSupplierForEdit"/><PropertyValue Property="ValueListProperty" String="BkChnSupplier"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="BkChnCountryKeyOfRecipientBank"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="BkChnBankKeyOfRecipientBank"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="BkChnAcctNumberAtRecipientBank"/></Record>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/CustomerForEdit">
+				<Annotation Term="Common.ValueList">
+					<Record><PropertyValue Property="Label" String="Customer Bank Chain Value Help"/><PropertyValue Property="CollectionPath" String="C_BankChainCustomerVH"/><PropertyValue Bool="true" Property="SearchSupported"/>
+						<PropertyValue Property="Parameters">
+							<Collection>
+								<Record Type="Common.ValueListParameterInOut"><PropertyValue Property="LocalDataProperty" PropertyPath="CustomerForEdit"/><PropertyValue Property="ValueListProperty" String="Customer"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="BkChnCountryKeyOfRecipientBank"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="BkChnBankKeyOfRecipientBank"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="BkChnAcctNumberAtRecipientBank"/></Record>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnCntryKeyOfRecpBnkForEdit">
+				<Annotation Term="Common.ValueList">
+					<Record><PropertyValue Property="Label" String="Country Value Help"/><PropertyValue Property="CollectionPath" String="I_CountryVH"/><PropertyValue Bool="true" Property="SearchSupported"/>
+						<PropertyValue Property="Parameters">
+							<Collection>
+								<Record Type="Common.ValueListParameterInOut"><PropertyValue Property="LocalDataProperty" PropertyPath="BkChnCntryKeyOfRecpBnkForEdit"/><PropertyValue Property="ValueListProperty" String="Country"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="Country_Text"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="Description"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="CountryThreeLetterISOCode"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="CountryThreeDigitISOCode"/></Record>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnAcctNumberAtRecBnkForEdit">
+				<Annotation Term="Common.ValueList">
+					<Record><PropertyValue Property="Label" String="Supplier and Customer Bank Detail VH"/><PropertyValue Property="CollectionPath" String="C_BankChainBankDetailVH"/><PropertyValue Bool="true" Property="SearchSupported"/>
+						<PropertyValue Property="Parameters">
+							<Collection>
+								<Record Type="Common.ValueListParameterInOut"><PropertyValue Property="LocalDataProperty" PropertyPath="BkChnBP"/><PropertyValue Property="ValueListProperty" String="BkChnBP"/></Record>
+								<Record Type="Common.ValueListParameterInOut"><PropertyValue Property="LocalDataProperty" PropertyPath="BkChnBPType"/><PropertyValue Property="ValueListProperty" String="BkChnBPType"/></Record>
+								<Record Type="Common.ValueListParameterInOut"><PropertyValue Property="LocalDataProperty" PropertyPath="BkChnCntryKeyOfRecpBnkForEdit"/><PropertyValue Property="ValueListProperty" String="BkChnCountryKeyOfRecipientBank"/></Record>
+								<Record Type="Common.ValueListParameterInOut"><PropertyValue Property="LocalDataProperty" PropertyPath="BkChnBankKeyOfRecBnkForEdit"/><PropertyValue Property="ValueListProperty" String="BkChnBankKeyOfRecipientBank"/></Record>
+								<Record Type="Common.ValueListParameterInOut"><PropertyValue Property="LocalDataProperty" PropertyPath="BkChnAcctNumberAtRecBnkForEdit"/><PropertyValue Property="ValueListProperty" String="BkChnAcctNumberAtRecipientBank"/></Record>
+								<Record Type="Common.ValueListParameterInOut"><PropertyValue Property="LocalDataProperty" PropertyPath="CustomerForEdit"/><PropertyValue Property="ValueListProperty" String="Customer"/></Record>
+								<Record Type="Common.ValueListParameterInOut"><PropertyValue Property="LocalDataProperty" PropertyPath="BkChnSupplierForEdit"/><PropertyValue Property="ValueListProperty" String="BkChnSupplier"/></Record>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnCurrencyKeyForEdit">
+				<Annotation Term="Common.ValueList">
+					<Record><PropertyValue Property="Label" String="Currency"/><PropertyValue Property="CollectionPath" String="I_Currency"/><PropertyValue Bool="true" Property="SearchSupported"/>
+						<PropertyValue Property="Parameters">
+							<Collection>
+								<Record Type="Common.ValueListParameterInOut"><PropertyValue Property="LocalDataProperty" PropertyPath="BkChnCurrencyKeyForEdit"/><PropertyValue Property="ValueListProperty" String="Currency"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="Currency_Text"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="Decimals"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="CurrencyISOCode"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="AlternativeCurrencyKey"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="IsPrimaryCurrencyForISOCrcy"/></Record>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType/BkChnCountryKeyOfSenBnkForEdit">
+				<Annotation Term="Common.ValueList">
+					<Record><PropertyValue Property="Label" String="Country Value Help"/><PropertyValue Property="CollectionPath" String="I_CountryVH"/><PropertyValue Bool="true" Property="SearchSupported"/>
+						<PropertyValue Property="Parameters">
+							<Collection>
+								<Record Type="Common.ValueListParameterInOut"><PropertyValue Property="LocalDataProperty" PropertyPath="BkChnCountryKeyOfSenBnkForEdit"/><PropertyValue Property="ValueListProperty" String="Country"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="Country_Text"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="Description"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="CountryThreeLetterISOCode"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="CountryThreeDigitISOCode"/></Record>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType/BkChnCntryKeyOfCorrespondentBk">
+				<Annotation Term="Common.ValueList">
+					<Record><PropertyValue Property="Label" String="Country Value Help"/><PropertyValue Property="CollectionPath" String="I_CountryVH"/><PropertyValue Bool="true" Property="SearchSupported"/>
+						<PropertyValue Property="Parameters">
+							<Collection>
+								<Record Type="Common.ValueListParameterInOut"><PropertyValue Property="LocalDataProperty" PropertyPath="BkChnCntryKeyOfCorrespondentBk"/><PropertyValue Property="ValueListProperty" String="Country"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="Country_Text"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="Description"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="CountryThreeLetterISOCode"/></Record>
+								<Record Type="Common.ValueListParameterDisplayOnly"><PropertyValue Property="ValueListProperty" String="CountryThreeDigitISOCode"/></Record>
+							</Collection>
+						</PropertyValue>
+					</Record>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.FAP_BANK_CHAIN_SRV_Entities">
+				<Annotation Term="Aggregation.ApplySupported">
+					<Record>
+						<PropertyValue Property="Transformations">
+							<Collection>
+								<String>aggregate</String>
+								<String>groupby</String>
+								<String>filter</String>
+							</Collection>
+						</PropertyValue><PropertyValue EnumMember="None" Property="Rollup"/></Record>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainBankDetailVHType">
+				<Annotation Term="Common.SemanticKey">
+					<Collection>
+						<PropertyPath>BkChnSupplier</PropertyPath>
+						<PropertyPath>BkChnAcctNumberAtRecipientBank</PropertyPath>
+						<PropertyPath>BkChnBankKeyOfRecipientBank</PropertyPath>
+						<PropertyPath>BkChnCountryKeyOfRecipientBank</PropertyPath>
+						<PropertyPath>Customer</PropertyPath>
+					</Collection>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainCustomerVHType">
+				<Annotation Term="Common.SemanticKey">
+					<Collection>
+						<PropertyPath>BkChnAcctNumberAtRecipientBank</PropertyPath>
+						<PropertyPath>BkChnBankKeyOfRecipientBank</PropertyPath>
+						<PropertyPath>BkChnCountryKeyOfRecipientBank</PropertyPath>
+						<PropertyPath>Customer</PropertyPath>
+					</Collection>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType">
+				<Annotation Term="Common.SemanticKey">
+					<Collection>
+						<PropertyPath>BkChnPaymentMethodSupplement</PropertyPath>
+						<PropertyPath>BkChnBankKeyOfSenderBank</PropertyPath>
+						<PropertyPath>BkChnCountryKeyOfSenderBank</PropertyPath>
+						<PropertyPath>BkChnCurrencyKey</PropertyPath>
+						<PropertyPath>BkChnAcctNumberAtRecipientBank</PropertyPath>
+						<PropertyPath>BkChnBankKeyOfRecipientBank</PropertyPath>
+						<PropertyPath>BkChnCountryKeyOfRecipientBank</PropertyPath>
+					</Collection>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainItemTPType">
+				<Annotation Term="Common.SemanticKey">
+					<Collection>
+						<PropertyPath>BkChnIntermediaryBank</PropertyPath>
+						<PropertyPath>BkChnPaymentMethodSupplement</PropertyPath>
+						<PropertyPath>BkChnBankKeyOfSenderBank</PropertyPath>
+						<PropertyPath>BkChnCountryKeyOfSenderBank</PropertyPath>
+						<PropertyPath>BkChnCurrencyKey</PropertyPath>
+						<PropertyPath>BkChnAcctNumberAtRecipientBank</PropertyPath>
+						<PropertyPath>BkChnBankKeyOfRecipientBank</PropertyPath>
+						<PropertyPath>BkChnCountryKeyOfRecipientBank</PropertyPath>
+					</Collection>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainSupplierVHType">
+				<Annotation Term="Common.SemanticKey">
+					<Collection>
+						<PropertyPath>BkChnAcctNumberAtRecipientBank</PropertyPath>
+						<PropertyPath>BkChnBankKeyOfRecipientBank</PropertyPath>
+						<PropertyPath>BkChnCountryKeyOfRecipientBank</PropertyPath>
+						<PropertyPath>BkChnSupplier</PropertyPath>
+					</Collection>
+				</Annotation>
+			</Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.I_CurrencyType/Currency"><Annotation Path="Decimals" Term="Common.UnitSpecificScale"/></Annotations>
+			<Annotations Target="FAP_BANK_CHAIN_SRV.C_BankChainHeaderTPType">
+				<Annotation Qualifier="FieldFill" Term="Common.SideEffects">
+					<Record>
+						<PropertyValue Property="SourceProperties">
+							<Collection>
+								<PropertyPath>BkChnAcctNumberAtRecBnkForEdit</PropertyPath>
+							</Collection>
+						</PropertyValue>
+						<PropertyValue Property="TargetProperties">
+							<Collection>
+								<PropertyPath>BkChnAddInformationDescription</PropertyPath>
+								<PropertyPath>BkChnBPType</PropertyPath>
+								<PropertyPath>BkChnBP</PropertyPath>
+							</Collection>
+						</PropertyValue><PropertyValue EnumMember="ValueChange ValidationMessage" Property="EffectTypes"/></Record>
+				</Annotation>
+			</Annotations><atom:link href="./sap/FAP_BANK_CHAIN_SRV/$metadata" rel="self" xmlns:atom="http://www.w3.org/2005/Atom"/><atom:link href="./sap/FAP_BANK_CHAIN_SRV/$metadata" rel="latest-version" xmlns:atom="http://www.w3.org/2005/Atom"/></Schema>
+	</edmx:DataServices>
+</edmx:Edmx>

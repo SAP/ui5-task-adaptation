@@ -1,5 +1,4 @@
 import AbapRepoManager from "./repositories/abapRepoManager.js";
-import BaseAppManager from "./baseAppManager.js";
 import DataSourceManager from "./annotations/dataSource/dataSourceManager.js";
 import I18nManager from "./i18nManager.js";
 import { IConfiguration } from "./model/types.js";
@@ -31,9 +30,7 @@ export default class AnnotationManager {
 
 
     async process(renamedBaseAppManifest: any, languages: Language[]) {
-        const { id } = BaseAppManager.getIdVersion(renamedBaseAppManifest);
-        BaseAppManager.validateProperty(id, "sap.app/id");
-
+        const { id } = renamedBaseAppManifest["sap.app"];
         const normalisedId = this.normalizeAppVariantId(id);
 
         //TODO: switch to this after resolving @i18n custom model

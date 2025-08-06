@@ -1,0 +1,122 @@
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+
+specVersion: "3.0"
+metadata:
+  name: application01
+type: application
+resources:
+  configuration:
+    propertiesFileSourceEncoding: UTF-8
+customConfiguration:
+  adp:
+    support:
+      id: '@adaptation-project/generator-adaptation-project'
+      version: 0.0.1995
+      toolsId: 07ed0da8-79dd-4b22-904b-e8d67aa024e5
+server:
+  customMiddleware:
+    - name: fiori-tools-appreload
+      afterMiddleware: compression
+      configuration:
+        port: 35729
+        path: webapp
+        delay: 300
+    - name: fiori-tools-preview
+      afterMiddleware: fiori-tools-appreload
+      configuration:
+        adp:
+          target:
+            url: https://xid-080.devsys.net.sap:443
+            authenticationType: reentranceTicket
+          ignoreCertErrors: false
+    - name: fiori-tools-proxy
+      afterMiddleware: fiori-tools-preview
+      configuration:
+        ignoreCertError: false # If set to true, certificate errors will be ignored. E.g. self-signed certificates will be accepted
+        backend:
+          - url: https://xid-080.devsys.net.sap:443
+            authenticationType: reentranceTicket # SAML support for vscode
+            path: /sap
+        ui5:
+          path:
+            - /resources
+            - /test-resources
+          url: https://ui5.sap.com
+          version: 1.129.0
+builder:
+  customTasks:
+    - name: app-variant-bundler-build
+      beforeTask: escapeNonAsciiCharacters
+      configuration:
+        type: abap
+        appName: FIN_BCH_MANAGE
+        languages:
+          - sap: ZH
+            i18n: zh_CN
+          - sap: TH
+            i18n: th
+          - sap: KO
+            i18n: ko
+          - sap: RO
+            i18n: ro
+          - sap: SL
+            i18n: sl
+          - sap: HR
+            i18n: hr
+          - sap: MS
+            i18n: ms
+          - sap: UK
+            i18n: uk
+          - sap: AR
+            i18n: ar
+          - sap: HE
+            i18n: iw
+          - sap: CS
+            i18n: cs
+          - sap: DE
+            i18n: de
+          - sap: EN
+            i18n: en
+          - sap: FR
+            i18n: fr
+          - sap: EL
+            i18n: el
+          - sap: HU
+            i18n: hu
+          - sap: IT
+            i18n: it
+          - sap: JA
+            i18n: ja
+          - sap: DA
+            i18n: da
+          - sap: PL
+            i18n: pl
+          - sap: ZF
+            i18n: zh_TW
+          - sap: NL
+            i18n: nl
+          - sap: NO
+            i18n: no
+          - sap: PT
+            i18n: pt
+          - sap: SK
+            i18n: sk
+          - sap: RU
+            i18n: ru
+          - sap: ES
+            i18n: es
+          - sap: TR
+            i18n: tr
+          - sap: FI
+            i18n: fi
+          - sap: SV
+            i18n: sv
+          - sap: BG
+            i18n: bg
+          - sap: SH
+            i18n: sh
+          - sap: KK
+            i18n: kk
+        target:
+          url: https://xid-080.devsys.net.sap:443
+          authenticationType: reentranceTicket

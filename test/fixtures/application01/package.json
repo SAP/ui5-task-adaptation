@@ -1,0 +1,25 @@
+{
+    "name": "application01",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Application01",
+    "keywords": [
+        "ui5",
+        "sapui5",
+        "adaptation-project"
+    ],
+    "dependencies": {},
+    "devDependencies": {
+        "@sap/ux-ui5-tooling": "1",
+        "@ui5/task-adaptation": "file:../../../",
+        "@ui5/cli": "^3.9.2"
+    },
+    "scripts": {
+        "build": "ui5 build --exclude-task generateFlexChangesBundle generateComponentPreload minify --clean-dest",
+        "start": "fiori run --open /test/flp.html#app-preview",
+        "start-editor": "fiori run --open /test/adaptation-editor.html",
+        "deploy": "ui5 build --config ui5-deploy.yaml --exclude-task deploy-to-abap generateFlexChangesBundle generateComponentPreload --clean-dest && fiori deploy --config ui5-deploy.yaml",
+        "undeploy": "fiori undeploy --config ui5-deploy.yaml --lrep \"apps/fin.ap.bankchains/appVariants/customer.application01/\"",
+        "deploy-test": "npm run build && fiori deploy --config ui5-deploy.yaml --testMode true"
+    }
+}

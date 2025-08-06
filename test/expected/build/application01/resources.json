@@ -1,0 +1,211 @@
+{
+	"_version": "1.1.0",
+	"resources": [
+		{
+			"name": "Component-dbg.js",
+			"module": "customer/application01/Component.js",
+			"size": 363,
+			"isDebug": true,
+			"required": [
+				"sap/m/library.js",
+				"sap/suite/ui/generic/template/ListReport/Component.js",
+				"sap/suite/ui/generic/template/ObjectPage/Component.js",
+				"sap/suite/ui/generic/template/library.js",
+				"sap/ui/comp/library.js",
+				"sap/ui/fl/library.js",
+				"sap/ui/generic/app/AppComponent.js",
+				"sap/ui/generic/app/library.js",
+				"sap/ui/model/odata/v2/ODataModel.js",
+				"sap/ui/model/resource/ResourceModel.js"
+			]
+		},
+		{
+			"name": "Component-preload.js",
+			"module": "customer/application01/Component-preload.js",
+			"size": 14673,
+			"merged": true,
+			"required": [
+				"sap/m/ListKeyboardMode.js",
+				"sap/m/library.js",
+				"sap/suite/ui/generic/template/ListReport/Component.js",
+				"sap/suite/ui/generic/template/ObjectPage/Component.js",
+				"sap/suite/ui/generic/template/library.js",
+				"sap/ui/base/Object.js",
+				"sap/ui/comp/library.js",
+				"sap/ui/comp/smartfilterbar/DisplayBehaviour.js",
+				"sap/ui/core/util/MockServer.js",
+				"sap/ui/fl/library.js",
+				"sap/ui/generic/app/AppComponent.js",
+				"sap/ui/generic/app/library.js",
+				"sap/ui/model/json/JSONModel.js",
+				"sap/ui/model/odata/v2/ODataModel.js",
+				"sap/ui/model/resource/ResourceModel.js"
+			],
+			"condRequired": [
+				"jquery.sap.xml.js"
+			],
+			"included": [
+				"customer/application01/ext/controller/ListReportExt.controller.js",
+				"customer/application01/ext/controller/ObjectPageExt.controller.js",
+				"customer/application01/localService/mockserver.js",
+				"customer/application01/Component.js",
+				"customer/application01/changes/flexibility-bundle.json",
+				"customer/application01/i18n/ListReport/C_BankChainHeaderTP/i18n.properties",
+				"customer/application01/i18n/ObjectPage/C_BankChainHeaderTP/i18n.properties",
+				"customer/application01/i18n/i18n.properties",
+				"customer/application01/manifest.json"
+			]
+		},
+		{
+			"name": "Component-preload.js.map",
+			"size": 9022,
+			"isDebug": true
+		},
+		{
+			"name": "Component.js",
+			"module": "customer/application01/Component.js",
+			"size": 383,
+			"required": [
+				"sap/m/library.js",
+				"sap/suite/ui/generic/template/ListReport/Component.js",
+				"sap/suite/ui/generic/template/ObjectPage/Component.js",
+				"sap/suite/ui/generic/template/library.js",
+				"sap/ui/comp/library.js",
+				"sap/ui/fl/library.js",
+				"sap/ui/generic/app/AppComponent.js",
+				"sap/ui/generic/app/library.js",
+				"sap/ui/model/odata/v2/ODataModel.js",
+				"sap/ui/model/resource/ResourceModel.js"
+			]
+		},
+		{
+			"name": "Component.js.map",
+			"size": 386,
+			"isDebug": true
+		},
+		{
+			"name": "annotations/annotations.xml",
+			"size": 1271
+		},
+		{
+			"name": "changes/flexibility-bundle.json",
+			"module": "customer/application01/changes/flexibility-bundle.json",
+			"size": 1065
+		},
+		{
+			"name": "ext/controller/ListReportExt-dbg.controller.js",
+			"module": "customer/application01/ext/controller/ListReportExt.controller.js",
+			"size": 2714,
+			"isDebug": true,
+			"required": [
+				"sap/ui/base/Object.js",
+				"sap/ui/comp/smartfilterbar/DisplayBehaviour.js"
+			]
+		},
+		{
+			"name": "ext/controller/ListReportExt.controller.js",
+			"module": "customer/application01/ext/controller/ListReportExt.controller.js",
+			"size": 1519,
+			"required": [
+				"sap/ui/base/Object.js",
+				"sap/ui/comp/smartfilterbar/DisplayBehaviour.js"
+			]
+		},
+		{
+			"name": "ext/controller/ListReportExt.controller.js.map",
+			"size": 2107,
+			"isDebug": true
+		},
+		{
+			"name": "ext/controller/ObjectPageExt-dbg.controller.js",
+			"module": "customer/application01/ext/controller/ObjectPageExt.controller.js",
+			"size": 4789,
+			"isDebug": true,
+			"required": [
+				"sap/m/ListKeyboardMode.js",
+				"sap/ui/base/Object.js",
+				"sap/ui/model/json/JSONModel.js"
+			]
+		},
+		{
+			"name": "ext/controller/ObjectPageExt.controller.js",
+			"module": "customer/application01/ext/controller/ObjectPageExt.controller.js",
+			"size": 3118,
+			"required": [
+				"sap/m/ListKeyboardMode.js",
+				"sap/ui/base/Object.js",
+				"sap/ui/model/json/JSONModel.js"
+			]
+		},
+		{
+			"name": "ext/controller/ObjectPageExt.controller.js.map",
+			"size": 3443,
+			"isDebug": true
+		},
+		{
+			"name": "i18n/ListReport/C_BankChainHeaderTP/i18n.properties",
+			"module": "customer/application01/i18n/ListReport/C_BankChainHeaderTP/i18n.properties",
+			"size": 1308
+		},
+		{
+			"name": "i18n/ObjectPage/C_BankChainHeaderTP/i18n.properties",
+			"module": "customer/application01/i18n/ObjectPage/C_BankChainHeaderTP/i18n.properties",
+			"size": 1436
+		},
+		{
+			"name": "i18n/i18n.properties",
+			"module": "customer/application01/i18n/i18n.properties",
+			"size": 303
+		},
+		{
+			"name": "localService/FAP_BANK_CHAIN_ANNO_MDL.xml",
+			"size": 27232
+		},
+		{
+			"name": "localService/metadata.xml",
+			"size": 62286
+		},
+		{
+			"name": "localService/mockserver-dbg.js",
+			"module": "customer/application01/localService/mockserver.js",
+			"size": 3624,
+			"isDebug": true,
+			"required": [
+				"sap/ui/core/util/MockServer.js"
+			],
+			"condRequired": [
+				"jquery.sap.xml.js"
+			]
+		},
+		{
+			"name": "localService/mockserver.js",
+			"module": "customer/application01/localService/mockserver.js",
+			"size": 1651,
+			"required": [
+				"sap/ui/core/util/MockServer.js"
+			],
+			"condRequired": [
+				"jquery.sap.xml.js"
+			]
+		},
+		{
+			"name": "localService/mockserver.js.map",
+			"size": 2642,
+			"isDebug": true
+		},
+		{
+			"name": "manifest.json",
+			"module": "customer/application01/manifest.json",
+			"size": 4320
+		},
+		{
+			"name": "resources.json",
+			"size": 5682
+		},
+		{
+			"name": "version.json",
+			"module": "customer/application01/version.json",
+			"size": 278
+		}
+	]
+}

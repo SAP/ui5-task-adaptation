@@ -1,0 +1,260 @@
+{
+	"_version": "1.8.0",
+	"sap.app": {
+		"id": "customer.application01",
+		"type": "application",
+		"i18n": {
+			"bundleUrl": "i18n/i18n.properties"
+		},
+		"applicationVersion": {
+			"version": "2508.0.3"
+		},
+		"title": "{{customer.application01_sap.app.title}}",
+		"description": "{{appDescription}}",
+		"tags": {
+			"keywords": []
+		},
+		"ach": "FI-BL-MD",
+		"resources": "resources.json",
+		"dataSources": {
+			"mainService": {
+				"uri": "/sap/opu/odata/sap/FAP_BANK_CHAIN_SRV/",
+				"type": "OData",
+				"settings": {
+					"annotations": [
+						"annotation_mainService",
+						"FAP_BANK_CHAIN_ANNO_MDL",
+						"localAnnotations"
+					],
+					"localUri": "localService/metadata.xml",
+					"ignoreAnnotationsFromMetadata": true
+				}
+			},
+			"FAP_BANK_CHAIN_ANNO_MDL": {
+				"uri": "annotations/annotation_FAP_BANK_CHAIN_ANNO_MDL.xml",
+				"type": "ODataAnnotation",
+				"settings": {
+					"localUri": "localService/FAP_BANK_CHAIN_ANNO_MDL.xml"
+				}
+			},
+			"localAnnotations": {
+				"uri": "annotations/annotations.xml",
+				"type": "ODataAnnotation",
+				"settings": {
+					"localUri": "annotations/annotations.xml"
+				}
+			},
+			"annotation_mainService": {
+				"type": "ODataAnnotation",
+				"uri": "annotations/annotation_mainService.xml"
+			}
+		},
+		"offline": false,
+		"sourceTemplate": {
+			"id": "ui5template.smartTemplate",
+			"version": "1.40.12"
+		},
+		"crossNavigation": {
+			"inbounds": {
+				"customer.application01.InboundID": {
+					"action": "action",
+					"semanticObject": "display",
+					"title": "{{customer.application01_sap.app.crossNavigation.inbounds.customer.application01.InboundID.title}}",
+					"signature": {
+						"additionalParameters": "allowed",
+						"parameters": {
+							"sap-appvar-id": {
+								"required": true,
+								"filter": {
+									"value": "customer.application01",
+									"format": "plain"
+								},
+								"launcherValue": {
+									"value": "customer.application01"
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"sap.ui": {
+		"technology": "UI5",
+		"icons": {
+			"icon": "",
+			"favIcon": "",
+			"phone": "",
+			"phone@2": "",
+			"tablet": "",
+			"tablet@2": ""
+		},
+		"deviceTypes": {
+			"desktop": true,
+			"tablet": true,
+			"phone": true
+		},
+		"supportedThemes": [
+			"sap_hcb",
+			"sap_belize"
+		]
+	},
+	"sap.ui5": {
+		"resources": {
+			"js": [],
+			"css": []
+		},
+		"dependencies": {
+			"minUI5Version": "1.135.0",
+			"libs": {
+				"sap.ui.generic.app": {
+					"lazy": false
+				},
+				"sap.suite.ui.generic.template": {
+					"lazy": false
+				},
+				"sap.m": {
+					"lazy": false
+				},
+				"sap.ui.comp": {
+					"lazy": false
+				},
+				"sap.ui.fl": {}
+			},
+			"components": {}
+		},
+		"models": {
+			"i18n": {
+				"type": "sap.ui.model.resource.ResourceModel",
+				"uri": "i18n/i18n.properties",
+				"settings": {
+					"enhanceWith": [
+						{
+							"bundleName": "customer.application01.customer_application01.i18n.i18n"
+						}
+					]
+				}
+			},
+			"@i18n": {
+				"type": "sap.ui.model.resource.ResourceModel",
+				"uri": "i18n/i18n.properties",
+				"settings": {
+					"enhanceWith": [
+						{
+							"bundleUrl": "i18n/annotations/customerapplication01/i18n.properties",
+							"bundleUrlRelativeTo": "component"
+						},
+						{
+							"bundleName": "customer.application01.customer_application01.i18n.i18n"
+						}
+					]
+				}
+			},
+			"i18n|sap.suite.ui.generic.template.ListReport|C_BankChainHeaderTP": {
+				"type": "sap.ui.model.resource.ResourceModel",
+				"uri": "i18n/ListReport/C_BankChainHeaderTP/i18n.properties",
+				"settings": {
+					"enhanceWith": [
+						{
+							"bundleName": "customer.application01.customer_application01.i18n.ListReport.C_BankChainHeaderTP.i18n"
+						}
+					]
+				}
+			},
+			"i18n|sap.suite.ui.generic.template.ObjectPage|C_BankChainHeaderTP": {
+				"type": "sap.ui.model.resource.ResourceModel",
+				"uri": "i18n/ObjectPage/C_BankChainHeaderTP/i18n.properties",
+				"settings": {
+					"enhanceWith": [
+						{
+							"bundleName": "customer.application01.customer_application01.i18n.ObjectPage.C_BankChainHeaderTP.i18n"
+						}
+					]
+				}
+			},
+			"": {
+				"dataSource": "mainService",
+				"preload": true,
+				"settings": {
+					"defaultBindingMode": "TwoWay",
+					"defaultCountMode": "Inline",
+					"refreshAfterChange": false
+				}
+			}
+		},
+		"extends": {
+			"extensions": {
+				"sap.ui.controllerExtensions": {
+					"sap.suite.ui.generic.template.ObjectPage.view.Details": {
+						"controllerName": "customer.application01.ext.controller.ObjectPageExt"
+					},
+					"sap.suite.ui.generic.template.ListReport.view.ListReport": {
+						"controllerName": "customer.application01.ext.controller.ListReportExt"
+					}
+				}
+			}
+		},
+		"contentDensities": {
+			"compact": true,
+			"cozy": true
+		},
+		"appVariantIdHierarchy": [
+			{
+				"appVariantId": "fin.ap.bankchains",
+				"version": "2508.0.3",
+				"layer": "VENDOR"
+			}
+		],
+		"isCloudDevAdaptation": true
+	},
+	"sap.ui.generic.app": {
+		"_version": "1.3.0",
+		"settings": {
+			"flexibleColumnLayout": {
+				"defaultTwoColumnLayoutType": "TwoColumnsMidExpanded",
+				"defaultThreeColumnLayoutType": "ThreeColumnsEndExpanded"
+			},
+			"forceGlobalRefresh": false,
+			"objectPageDynamicHeaderTitleWithVM": true
+		},
+		"pages": {
+			"ListReport|C_BankChainHeaderTP": {
+				"entitySet": "C_BankChainHeaderTP",
+				"component": {
+					"name": "sap.suite.ui.generic.template.ListReport",
+					"list": true,
+					"settings": {
+						"smartVariantManagement": false,
+						"multiSelect": true
+					}
+				},
+				"pages": {
+					"ObjectPage|C_BankChainHeaderTP": {
+						"entitySet": "C_BankChainHeaderTP",
+						"component": {
+							"name": "sap.suite.ui.generic.template.ObjectPage",
+							"settings": {
+								"sections": {
+									"ITEMFACET": {
+										"navigationProperty": "to_Item",
+										"entitySet": "C_BankChainItemTP",
+										"createMode": "inline"
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"sap.fiori": {
+		"registrationIds": [
+			"F4004"
+		],
+		"archeType": "transactional"
+	},
+	"sap.platform.hcp": {
+		"uri": ""
+	}
+}

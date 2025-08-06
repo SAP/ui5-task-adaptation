@@ -1,12 +1,14 @@
+const DEFAULT_LANGUAGE = "en";
+
 export default class Language {
-    sap: string;
-    i18n: string;
+    readonly sap: string;
+    readonly i18n: string;
     isDefault: boolean;
 
-    constructor(sap: string, i18n: string) {
+    constructor(sap: string, i18n: string, isDefault: boolean = false) {
         this.sap = sap;
         this.i18n = i18n;
-        this.isDefault = sap === "";
+        this.isDefault = isDefault;
     }
 
     /**
@@ -16,7 +18,6 @@ export default class Language {
      * followed by the passed config languages.
      */
     static create(languages: any[] | undefined): Language[] {
-        const defaultLanguage = new Language("", "");
         let configLanguages: Language[] = [];
         if (languages !== undefined) {
             configLanguages = languages.map(item => {
@@ -30,6 +31,12 @@ export default class Language {
                 }
             });
         }
-        return [defaultLanguage, ...configLanguages];
+        let defaultLanguage = configLanguages.find(language => language.sap.toLowerCase() === DEFAULT_LANGUAGE) ?? configLanguages[0];
+        if (defaultLanguage) {
+            defaultLanguage.isDefault = true;
+        } else {
+            return [new Language(DEFAULT_LANGUAGE.toUpperCase(), DEFAULT_LANGUAGE, true), ...configLanguages];
+        }
+        return configLanguages;
     };
 }

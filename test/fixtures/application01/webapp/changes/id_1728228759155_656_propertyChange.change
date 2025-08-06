@@ -1,0 +1,29 @@
+{
+  "changeType": "propertyChange",
+  "reference": "customer.application01",
+  "namespace": "apps/customer.application01/changes/",
+  "creation": "2024-10-06T15:33:47.034Z",
+  "projectId": "customer.application01",
+  "packageName": "$TMP",
+  "support": {
+    "generator": "@sap-ux/control-property-editor",
+    "sapui5Version": "1.129.0",
+    "command": "property"
+  },
+  "originalLanguage": "EN",
+  "layer": "CUSTOMER_BASE",
+  "fileType": "change",
+  "fileName": "id_1728228759155_656_propertyChange",
+  "content": {
+    "property": "hAlign",
+    "newValue": "Right"
+  },
+  "texts": {},
+  "selector": {
+    "id": "fin.ap.bankchains::sap.suite.ui.generic.template.ListReport.view.ListReport::C_BankChainHeaderTP--listReport-BkChnAcctNmbrAtRcpntBkForEdit",
+    "type": "sap.m.Column",
+    "idIsLocal": false
+  },
+  "dependentSelector": {},
+  "jsOnly": false
+}

@@ -1,28 +1,23 @@
-import * as Resource from "@ui5/fs/Resource";
+import { dotToUnderscore, escapeRegex, trimExtension } from "./commonUtil.js";
 
-import { dotToUnderscore, escapeRegex, removePropertiesExtension } from "./commonUtil.js";
-
-import { IAppVariantInfo } from "../model/types.js";
-import ResourceUtil from "./resourceUtil.js";
+import AppVariant from "../appVariantManager.js";
+import { IChange } from "../model/types.js";
 import { posix as path } from "path";
 
-type Resource = typeof Resource;
+export default class FileMerger {
 
-
-export default class I18NMerger {
-
-    static analyzeAppVariantManifestChanges(rootFolder: string, tranlsationRegexPattern: string, { changes }: IAppVariantInfo) {
+    static analyzeAppVariantManifestChanges(manifestChanges: ReadonlyArray<IChange>) {
         // check which files need to be copied and which files need to be merged and copied
         // this is necessary because lrep does not support multiple enhanceWith with multiple locations
+        const TRANSLATION_REGEX_PATTERN = "((_[a-z]{2,3})?(_[a-zA-Z]{2,3}(_[a-zA-Z]{2,20})?)?)\.properties$";
         const mergePaths = new Set<RegExp>();
         const copyPaths = new Set<RegExp>();
-        changes.forEach((change) => {
+        manifestChanges.forEach((change) => {
             const i18nPathWithExtension = change.content?.bundleUrl || change.texts?.i18n;
             if (i18nPathWithExtension) {
                 // build regex to match specific + language related files
-                const i18nPath = removePropertiesExtension(i18nPathWithExtension);
-                const resourcePath = path.join(rootFolder, i18nPath);
-                const regex = new RegExp(escapeRegex(resourcePath) + tranlsationRegexPattern);
+                const i18nPath = trimExtension(i18nPathWithExtension);
+                const regex = new RegExp("^" + escapeRegex(i18nPath) + TRANSLATION_REGEX_PATTERN);
                 if (change.changeType.includes("addNewModelEnhanceWith")) {
                     copyPaths.add(regex);
                 } else {
@@ -30,42 +25,50 @@ export default class I18NMerger {
                 }
             }
         });
-        return { mergePathsRegex: [...mergePaths.values()], copyPathsRegex: [...copyPaths.values()] };
+        return { mergePaths: Array.from(mergePaths), copyPaths: Array.from(copyPaths) };
     }
 
 
-    static async mergeI18NFiles(baseAppResources: any[], appVariantResources: any[], projectNamespace: string, baseAppManifestI18NPath: string, appVariantInfo: IAppVariantInfo, taskUtil: any) {
-        const aggregatedResourceFilesMap = new Map<string, Resource>(baseAppResources.map(baseAppResource => [baseAppResource.getPath(), baseAppResource]));
-        const i18nTargetFolder = dotToUnderscore(appVariantInfo.id);
-        const rootFolder = ResourceUtil.getRootFolder(projectNamespace);
-        const tranlsationRegexPattern = "((_[a-z]{2,3})?(_[a-zA-Z]{2,3}(_[a-zA-Z]{2,20})?)?)\.properties$";
-        const { copyPathsRegex: copyPathsValues, mergePathsRegex: mergePathsValues } = this.analyzeAppVariantManifestChanges(rootFolder, tranlsationRegexPattern, appVariantInfo);
-        for (const appVariantResource of appVariantResources) {
-            const appVariantResourcePath = appVariantResource.getPath();
-            if (appVariantResourcePath.endsWith(".properties")) {
+    static merge(baseAppFiles: ReadonlyMap<string, string>, i18nPath: string, appVariant: AppVariant): Map<string, string> {
+        const i18nTargetFolder = dotToUnderscore(appVariant.id);
+        const { copyPaths, mergePaths } = this.analyzeAppVariantManifestChanges(appVariant.getProcessedManifestChanges());
+        const files = new Map<string, string>(baseAppFiles);
+        for (const [filename, content] of Array.from(appVariant.getProcessedFiles())) {
+            if (filename.endsWith(".properties")) {
                 // merge/copy logic
                 // check if file matches with regex in merge/copy
-                const mergePathMatch = mergePathsValues.map(path => appVariantResourcePath.match(path)).find(match => match);
-                const shouldMergeFile = !!mergePathMatch;
-                const shouldCopyFile = copyPathsValues.map(path => appVariantResourcePath.match(path)).find(match => match);
-
-                if (shouldMergeFile) {
-                    let baseAppI18NPath = `${rootFolder}/${baseAppManifestI18NPath}${mergePathMatch[1] || ""}.properties`;
-                    await this.mergePropertiesFiles(aggregatedResourceFilesMap, appVariantResource, baseAppI18NPath);
+                const mergePathMatch = mergePaths.map(path => filename.match(path)).find(match => match);
+                const copyPathMatch = copyPaths.map(path => filename.match(path)).find(match => match);
+                if (mergePathMatch) {
+                    this.mergePropertiesFiles(files, i18nPath, content, mergePathMatch[1]);
                 }
-
-                // Resource for to be copied file already exists so we only have to adjust path
-                // Otherwise we have to omit it. We always change the path to avoid omitting a base app file
-                this.moveToAppVarSubfolder(appVariantResource, rootFolder, i18nTargetFolder);
-                if (!shouldCopyFile) {
-                    taskUtil.setTag(appVariantResource, taskUtil.STANDARD_TAGS.OmitFromBuildResult, true);
+                if (copyPathMatch) {
+                    files.set(path.join(i18nTargetFolder, filename), content);
                 }
+            } else {
+                files.set(filename, content);
             }
-            aggregatedResourceFilesMap.set(appVariantResource.getPath(), appVariantResource);
         }
-        return Array.from(aggregatedResourceFilesMap.values());
+        return files;
     }
 
+	/**
+	 * Filters out specific lines from the given string.
+	 * Removes lines matching:
+	 * - __ldi.translation.uuid\s*=\s*(.*)
+	 * - ABAP_TRANSLATION
+	 * - SAPUI5 TRANSLATION-KEY
+	 */
+	private static filterTranslationMetaLines(content: string): string {
+		const lines = content.split('\n');
+		const filtered = lines.filter(
+			line =>
+				!/^# __ldi\.translation\.uuid\s*=/.test(line) &&
+				!line.startsWith("# ABAP_TRANSLATION") &&
+				!line.startsWith("# SAPUI5 TRANSLATION-KEY")
+		);
+		return filtered.join('\n');
+	}
 
     /**
      *  Merge/Append base property file with property file from app variant
@@ -75,43 +78,14 @@ export default class I18NMerger {
      * app variant Id as prefix => If we filter on them we do not need to remove
      * existing overwritten keys (as there should be none)
      */
-    private static async mergePropertiesFiles(aggregatedResourceFilesMap: Map<string, Resource>, variantResource: Resource, baseAppI18NPath: string) {
-        const baseAppI18NFile = aggregatedResourceFilesMap.get(baseAppI18NPath);
-        if (baseAppI18NFile) {
-            await this.mergeFiles(baseAppI18NFile, variantResource);
-        } else {
-            // create the merge target file if it missing in base app. Maybe the language does not exist in the base app.
-            // Since the file might also be copied we do not just change the path of it but create another resource
-            await this.createFile(aggregatedResourceFilesMap, baseAppI18NPath, variantResource);
-        }
+    private static mergePropertiesFiles(files: Map<string, string>, i18nPath: string, appVariantFileContent: string, language: string = "") {
+		const baseAppI18nPath = i18nPath + language + ".properties";
+		const baseAppFileContent = files.get(baseAppI18nPath);
+		const filteredBaseContent = baseAppFileContent ? this.filterTranslationMetaLines(baseAppFileContent) : "";
+		const content = filteredBaseContent
+			? `${filteredBaseContent}\n\n#App variant specific text file\n\n${appVariantFileContent}`
+			: appVariantFileContent;
+		files.set(baseAppI18nPath, content);
     }
 
-
-    /**
-     * update the path of app variant property file so it will be copied into
-     <app_variant_id> folder
-     */
-    private static moveToAppVarSubfolder(variantResource: Resource, rootFolder: string, i18nBundleName: string) {
-        const relativeFilePath = variantResource.getPath().substring(rootFolder.length);
-        const newResourcePath = path.join(rootFolder, i18nBundleName, relativeFilePath);
-        variantResource.setPath(newResourcePath);
-    }
-
-
-    /**
-     * create new i18n file in case e.g. translation file does not exist in base
-     * app but in variant and copy of translation file is needed
-     */
-    private static async createFile(aggregatedResourceFilesMap: Map<string, Resource>, path: string, resource: Resource) {
-        const createdFile = await resource.clone();
-        createdFile.setPath(path);
-        aggregatedResourceFilesMap.set(path, createdFile);
-    }
-
-
-    private static async mergeFiles(baseFile: Resource, variantFile: Resource) {
-        const variantFileContent = await variantFile.getString();
-        const mergedFileContent = await baseFile.getString();
-        baseFile.setString(`${mergedFileContent}\n\n#App variant specific text file\n\n${variantFileContent}`);
-    }
 }
