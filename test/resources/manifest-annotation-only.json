@@ -1,6 +1,6 @@
 {
     "sap.app": {
-        "id": "com.sap.base.app.id",
+        "id": "org.sap.base.app.id",
         "dataSources": {
             "annotationName1": {
                 "type": "ODataAnnotation",

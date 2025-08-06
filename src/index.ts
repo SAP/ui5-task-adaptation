@@ -2,10 +2,11 @@ import * as dotenv from "dotenv";
 
 import { logBetaUsage, logBuilderVersion } from "./util/commonUtil.js";
 
-import AppVariantManager from "./appVariantManager.js";
-import BaseAppManager from "./baseAppManager.js";
-import I18NMerger from "./util/i18nMerger.js";
+import AppVariant from "./appVariantManager.js";
+import BaseApp from "./baseAppManager.js";
+import I18nMerger from "./util/i18nMerger.js";
 import { ITaskParameters } from "./model/types.js";
+import ResourceUtil from "./util/resourceUtil.js";
 import { determineProcessor } from "./processors/processor.js";
 
 /**
@@ -15,16 +16,39 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
 
     dotenv.config();
 
-    async function process(workspace: any, taskUtil: any) {
+    async function process(workspace: IWorkspace, taskUtil: any) {
         logBuilderVersion();
         logBetaUsage();
+
         const processor = determineProcessor(options.configuration);
-        const appVariantResources = await AppVariantManager.getAppVariantResourcesToProcess(workspace);
-        const appVariantInfo = await AppVariantManager.process(appVariantResources, options.projectNamespace, taskUtil);
-        const baseAppFiles = await processor.getBaseAppFiles(appVariantInfo.reference);
-        const { resources, manifestInfo } = await BaseAppManager.process(baseAppFiles, appVariantInfo, options, processor);
-        const mergedResources = await I18NMerger.mergeI18NFiles(resources, appVariantResources, options.projectNamespace, manifestInfo.i18nPath, appVariantInfo, taskUtil);
-        await Promise.all(mergedResources.map(resource => workspace.write(resource)));
+
+        const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
+        const appVariantIdHierarchy = await processor.getAppVariantIdHierarchy(adaptationProject.reference);
+
+        // appVariantIdHierarchy contains original application on bottom and the
+        // latest app variant on top. We reverse the list to process original
+        // application first and then app variants in chronological order.
+        const reversedHierarchy = appVariantIdHierarchy.toReversed();
+        const fetchFilesPromises: Promise<ReadonlyMap<string, string> | null>[] = reversedHierarchy.map(({ repoName, cachebusterToken }) => processor.fetch(repoName, cachebusterToken));
+        fetchFilesPromises.push(Promise.resolve(adaptationProject.files));
+
+        const adapt = async (baseAppFiles: ReadonlyMap<string, string> | null, appVariantFiles: ReadonlyMap<string, string> | null) => {
+            const baseApp = BaseApp.fromFiles(baseAppFiles!);
+            const appVariant = AppVariant.fromFiles(appVariantFiles!);
+            const adaptedFiles = await baseApp.adapt(appVariant, processor);
+            return I18nMerger.merge(adaptedFiles, baseApp.i18nPath, appVariant);
+        }
+
+        let files = await fetchFilesPromises.reduce(async (previousFiles, currentFiles) =>
+            adapt(await previousFiles, await currentFiles), fetchFilesPromises.shift()!);
+
+        adaptationProject.omitDeletedResources(files!, options.projectNamespace, taskUtil);
+        const writePromises = new Array<Promise<void>>();
+        files!.forEach((content, filename) => {
+            const resource = ResourceUtil.createResource(filename, options.projectNamespace, content);
+            writePromises.push(workspace.write(resource));
+        });
+        await Promise.all(writePromises);
     }
 
     return process(workspace, taskUtil);
