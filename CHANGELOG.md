@@ -6,6 +6,8 @@ A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task
 
 <a name="v1.5.1"></a>
 ## [v1.5.1] - 2025-08-06
+### Bug Fixes
+- Correct handling of manifest changes
 
 <a name="v1.4.3"></a>
 ## [v1.4.3] - 2025-04-17
