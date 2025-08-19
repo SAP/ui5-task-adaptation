@@ -10,7 +10,7 @@ import Language from "../../src/model/language.js";
 import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
-import { renameResources } from "../../src/util/commonUtil.js";
+import { renameResources } from "../../src/util/renamingUtil.js";
 
 let sandbox: SinonSandbox = sinon.createSandbox();
 const options: IProjectOptions = {
@@ -39,18 +39,18 @@ describe("AnnotationManager", () => {
         const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
         const MANIFEST_FILENAME = "manifest.json";
         const baseAppFiles = new Map<string, string>([[MANIFEST_FILENAME, manifestString]]);
-        const renamedFiles = renameResources(baseAppFiles, "com.sap.base.app.id", "customer.com.sap.application.variant.id");
+        const renamedFiles = renameResources(baseAppFiles, ["com.sap.base.app.id"], "customer.com.sap.application.variant.id");
         const manifest = JSON.parse(renamedFiles.get(MANIFEST_FILENAME)!);
-        const result = await annotationManager.process(manifest, Language.create(["EN", "DE", "FR"]));
+        const result = await annotationManager.process(manifest, Language.create(["EN", "DE", "FR"]), "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
         expect(result.get("annotations/annotation_annotationName1.xml")).to.be.eql(expectedAnnotationName1);
         expect(manifest).to.be.eql(JSON.parse(expectedManifest));
         expect([...result.keys()]).to.have.members([
             "annotations/annotation_annotationName1.xml",
             "annotations/annotation_annotationName2.xml",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n.properties",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n_en.properties",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n_de.properties",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n_fr.properties"
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n.properties",
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n_en.properties",
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n_de.properties",
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n_fr.properties"
         ]);
         expect(getI18ns(result, "i18n_en")).to.have.members([
             "customer.com.sap.application.variant.id_AIRLINE=Airline",
@@ -93,9 +93,9 @@ describe("AnnotationManager", () => {
             const getAnnotationI18nsSpy = sandbox.spy(annotationManager, "getAdaptedAnnotation" as any);
             const MANIFEST_FILENAME = "manifest.json";
             const baseAppFiles = new Map<string, string>([[MANIFEST_FILENAME, manifestString]]);
-            const renamedFiles = renameResources(baseAppFiles, "com.sap.base.app.id", "customer.com.sap.application.variant.id");
+            const renamedFiles = renameResources(baseAppFiles, ["com.sap.base.app.id"], "customer.com.sap.application.variant.id");
             const manifest = JSON.parse(renamedFiles.get(MANIFEST_FILENAME)!);
-            const result = await annotationManager.process(manifest, Language.create(["EN"]));
+            const result = await annotationManager.process(manifest, Language.create(["EN"]), "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
             expect(getAnnotationI18nsSpy.getCalls().length).to.eql(0);
             expect(result.get("annotations/annotation_annotationName1.xml")).to.be.eql(expectedAnnotationName1WithoutI18NModel);
             expect(manifest).to.be.eql(JSON.parse(expectedManifestForOneLanguage));
@@ -117,7 +117,7 @@ describe("AnnotationManager", () => {
                 models: {
                     "@i18n": {
                         type: "sap.ui.model.resource.ResourceModel",
-                        uri: "i18n/annotations/baseapp1/i18n.properties"
+                        uri: "customer_com_sap_application_variant_id/i18n/annotations/i18n.properties"
                     }
                 }
             }
@@ -137,7 +137,7 @@ describe("AnnotationManager", () => {
                 models: {
                     "@i18n": {
                         type: "sap.ui.model.resource.ResourceModel",
-                        uri: "i18n/annotations/baseapp1/i18n.properties"
+                        uri: "customer_com_sap_application_variant_id/i18n/annotations/i18n.properties"
                     },
                     "i18n": {
                         type: "sap.ui.model.resource.ResourceModel",
@@ -165,7 +165,7 @@ describe("AnnotationManager", () => {
                         "settings": {
                             "enhanceWith": [
                                 {
-                                    "bundleUrl": "i18n/annotations/baseapp1/i18n.properties",
+                                    "bundleUrl": "customer_com_sap_application_variant_id/i18n/annotations/i18n.properties",
                                     "bundleUrlRelativeTo": "component"
                                 }
                             ]
@@ -206,7 +206,7 @@ describe("AnnotationManager", () => {
             };
             const actual = { ...sapAppActual, ...sapUi5 };
             const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
-            await annotationManager.process(actual, Language.create(["EN", "DE", "FR"]));
+            await annotationManager.process(actual, Language.create(["EN", "DE", "FR"]), "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
             expect(actual).to.be.eql({ ...sapAppExpected, ...expectedSapUi5 });
         }
     });
@@ -257,18 +257,18 @@ async function processAnnotations(folder: string, languages = ["EN", "DE"], expe
             }
         }
     })]]);
-    const renamedFiles = renameResources(baseAppFiles, "com.sap.base.app.id", "customer.com.sap.application.variant.id");
+    const renamedFiles = renameResources(baseAppFiles, ["com.sap.base.app.id"], "customer.com.sap.application.variant.id");
     const manifest = JSON.parse(renamedFiles.get(MANIFEST_FILENAME)!);
-    const result = await annotationManager.process(manifest, Language.create(languages));
+    const result = await annotationManager.process(manifest, Language.create(languages), "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
     const expectedFolder = `${folder}-expected/metadata.xml`;
     if (fs.existsSync(TestUtil.getResourcePath(expectedFolder))) {
         const expected = TestUtil.getResourceXml(expectedFolder);
         expect(TestUtil.normalizeXml(result.get("annotations/annotation_mainService.xml")!)).to.be.eql(expected);
         expect([...result.keys()]).to.have.members([
             "annotations/annotation_mainService.xml",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n.properties",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n_en.properties",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n_de.properties",
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n.properties",
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n_en.properties",
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n_de.properties",
         ]);
     }
     if (expectedDownloadRequests) {
@@ -277,7 +277,7 @@ async function processAnnotations(folder: string, languages = ["EN", "DE"], expe
 }
 
 function getI18ns(files: Map<string, string>, fileName: string) {
-    return files.get(`i18n/annotations/customercomsapapplicationvariantid/${fileName}.properties`)!.split("\n");
+    return files.get(`customer_com_sap_application_variant_id/i18n/annotations/${fileName}.properties`)!.split("\n");
 }
 
 function stubAnnotations(abapRepoManager: AbapRepoManager) {

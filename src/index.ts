@@ -8,6 +8,7 @@ import I18nMerger from "./util/i18nMerger.js";
 import { ITaskParameters } from "./model/types.js";
 import ResourceUtil from "./util/resourceUtil.js";
 import { determineProcessor } from "./processors/processor.js";
+import FilesUtil from "./util/filesUtil.js";
 
 /**
  * Creates an appVariant bundle from the provided resources.
@@ -24,6 +25,9 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
 
         const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
         const appVariantIdHierarchy = await processor.getAppVariantIdHierarchy(adaptationProject.reference);
+        if (appVariantIdHierarchy.length === 0) {
+            throw new Error(`No app variant found for reference ${adaptationProject.reference}`);
+        }
 
         // appVariantIdHierarchy contains original application on bottom and the
         // latest app variant on top. We reverse the list to process original
@@ -31,10 +35,17 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
         const reversedHierarchy = appVariantIdHierarchy.toReversed();
         const fetchFilesPromises: Promise<ReadonlyMap<string, string> | null>[] = reversedHierarchy.map(({ repoName, cachebusterToken }) => processor.fetch(repoName, cachebusterToken));
         fetchFilesPromises.push(Promise.resolve(adaptationProject.files));
+        const appVariants = new Array<AppVariant>();
 
         const adapt = async (baseAppFiles: ReadonlyMap<string, string> | null, appVariantFiles: ReadonlyMap<string, string> | null) => {
-            const baseApp = BaseApp.fromFiles(baseAppFiles!);
-            const appVariant = AppVariant.fromFiles(appVariantFiles!);
+            let baseApp = BaseApp.fromFiles(baseAppFiles!);
+            let appVariant = AppVariant.fromFiles(appVariantFiles!);
+            // If the app variant is the same as the adaptation project, we use the
+            // adaptation project because it contains resources that should be updated.
+            if (appVariant.id === adaptationProject.id) {
+                appVariant = adaptationProject;
+            }
+            appVariants.push(appVariant);
             const adaptedFiles = await baseApp.adapt(appVariant, processor);
             return I18nMerger.merge(adaptedFiles, baseApp.i18nPath, appVariant);
         }
@@ -42,7 +53,11 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
         let files = await fetchFilesPromises.reduce(async (previousFiles, currentFiles) =>
             adapt(await previousFiles, await currentFiles), fetchFilesPromises.shift()!);
 
-        adaptationProject.omitDeletedResources(files!, options.projectNamespace, taskUtil);
+        const references = getReferences(appVariants, adaptationProject.id);
+        files = FilesUtil.filter(files!);
+        files = FilesUtil.rename(files, references);
+
+        adaptationProject.omitDeletedResources(files, options.projectNamespace, taskUtil);
         const writePromises = new Array<Promise<void>>();
         files!.forEach((content, filename) => {
             const resource = ResourceUtil.createResource(filename, options.projectNamespace, content);
@@ -53,4 +68,21 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
 
     return process(workspace, taskUtil);
 
+    /**
+     * 4p. Reference map contains searchTerm as key and replacement as value. Base
+     * id and app variant ids are renamed to adaptation project id.
+     */
+    function getReferences(appVariants: AppVariant[], adaptationProjectId: string): Map<string, string> {
+        const references = new Map<string, string>();
+        appVariants.forEach((variant, i) => {
+            if (i === 0) {
+                references.set(variant.reference, adaptationProjectId);
+            }
+            if (variant.id !== adaptationProjectId) {
+                references.set(variant.id, adaptationProjectId);
+            }
+            variant.getRenamingForMovedFiles().forEach((value, key) => references.set(key, value));
+        });
+        return references;
+    }
 }

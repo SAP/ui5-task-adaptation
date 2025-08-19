@@ -7,12 +7,13 @@ import AbapProcessor from "../../src/processors/abapProcessor.js";
 import AbapRepoManager from "../../src/repositories/abapRepoManager.js";
 import AnnotationManager from "../../src/annotationManager.js";
 import AppVariant from "../../src/appVariantManager.js";
-import BaseApp from "../../src/baseAppManager.js";
+import BaseApp, { preProcessFiles } from "../../src/baseAppManager.js";
 import CFProcessor from "../../src/processors/cfProcessor.js"
 import { IProjectOptions } from "../../src/model/types.js";
 import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
+import FilesUtil from "../../src/util/filesUtil.js";
 
 describe("BaseAppManager getManifestInfo", () => {
 
@@ -106,6 +107,36 @@ describe("BaseAppManager getBaseAppManifest", () => {
             expect(error.message).to.eql("Original application should have manifest.json in root folder");
         }
     });
+
+    it("should filter files correctly in constructor", () => {
+        const inputFiles = new Map([
+            ["manifest.json", TestUtil.getResource("manifest.json")],
+            ["manifest-bundle.zip", "zip content"],
+            ["Component-preload.js", "preload content"],
+            ["sap-ui-cachebuster-info.json", "cachebuster content"],
+            ["Component-dbg.js", "debug content"],
+            ["Component.js", "production content"],
+            ["Controller-dbg.js", "debug only content"],
+            ["regular-file.js", "regular content"]
+        ]);
+
+        const baseApp = BaseApp.fromFiles(inputFiles);
+
+        // Should include: manifest.json, Component.js (with debug content), Controller-dbg.js (no corresponding .js), regular-file.js
+        // Should exclude: manifest-bundle.zip, Component-preload.js, sap-ui-cachebuster-info.json, Component-dbg.js (deleted because Component.js exists)
+        const resultKeys = Array.from(baseApp.files.keys());
+        expect(resultKeys).to.have.members([
+            "manifest.json",
+            "Component.js",
+            "Controller-dbg.js",
+            "regular-file.js"
+        ]);
+
+        // Verify that Component.js content has been replaced with Component-dbg.js content
+        expect(baseApp.files.get("Component.js")).to.equal("debug content");
+        expect(baseApp.files.get("Controller-dbg.js")).to.equal("debug only content");
+        expect(baseApp.files.get("regular-file.js")).to.equal("regular content");
+    });
 });
 
 describe("BaseAppManager CF", () => {
@@ -133,7 +164,8 @@ describe("BaseAppManager CF", () => {
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
         ]));
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        const files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        let files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const actualManifest = JSON.parse(files.get("manifest.json")!);
         const actualCPreload = files.get("component-preload.js");
         expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected-cf.json")));
@@ -146,11 +178,15 @@ describe("BaseAppManager CF", () => {
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["manifest-bundle.zip", ""],
             ["Component-preload.js", ""],
-            ["sap-ui-cachebuster-info.json", ""]
+            ["sap-ui-cachebuster-info.json", ""],
+            ["Component-dbg.js", "debug content"],
+            ["Component.js", "production content"],
+            ["Controller-dbg.js", "debug only content"]
         ]));
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        const files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
-        expect(Array.from(files.keys())).to.have.members(["manifest.json"]);
+        let files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
+        expect(Array.from(files.keys())).to.have.members(["manifest.json", "Component.js", "Controller-dbg.js"]);
         assertManifestInfo(files);
     });
 
@@ -171,7 +207,8 @@ describe("BaseAppManager CF", () => {
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
         const optionsClone = { ...options, configuration: { ...options.configuration } };
         delete optionsClone.configuration["sapCloudService"];
-        const files = await baseApp.adapt(appVariant, new CFProcessor(optionsClone.configuration));
+        let files = await baseApp.adapt(appVariant, new CFProcessor(optionsClone.configuration));
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const manifest = JSON.parse(files.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.be.undefined;
         assertManifestInfo(files);
@@ -182,7 +219,8 @@ describe("BaseAppManager CF", () => {
         const baseAppManifest = TestUtil.getResourceJson("manifest.json");
         delete baseAppManifest["sap.cloud"];
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(baseAppManifest)]]));
-        const files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        let files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const manifest = JSON.parse(files.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.eql({ service: "sapCloudService" });
         assertManifestInfo(files);
@@ -228,6 +266,7 @@ describe("BaseAppManager CF", () => {
                     version: "1.0.0"
                 }
             ],
+            componentName: "com.sap.base.app.id",
             isCloudDevAdaptation: true
         });
     });
@@ -302,7 +341,8 @@ describe("BaseAppManager Abap", () => {
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
         ]));
-        const files = await baseApp.adapt(appVariant, abapProcessor);
+        let files = await baseApp.adapt(appVariant, abapProcessor);
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const actualManifest = JSON.parse(files.get("manifest.json")!);
         const actualCPreload = files.get("component-preload.js");
         expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected-abap.json")));
@@ -316,17 +356,23 @@ describe("BaseAppManager Abap", () => {
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["manifest-bundle.zip", ""],
             ["Component-preload.js", ""],
-            ["sap-ui-cachebuster-info.json", ""]
+            ["sap-ui-cachebuster-info.json", ""],
+            ["Component-dbg.js", "debug content"],
+            ["Component.js", "production content"],
+            ["Controller-dbg.js", "debug only content"]
         ]));
-        const files = await baseApp.adapt(appVariant, abapProcessor);
-        assertAnnotations(files, 7);
+        let files = await baseApp.adapt(appVariant, abapProcessor);
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
+        assertAnnotations(files, 9);
         expect(Array.from(files.keys())).to.have.members([
             "manifest.json",
+            "Component.js",
+            "Controller-dbg.js",
             "annotations/annotation_annotationName1.xml",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n.properties",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n_en.properties",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n_de.properties",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n_fr.properties",
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n.properties",
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n_en.properties",
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n_de.properties",
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n_fr.properties",
             "annotations/annotation_annotationName2.xml"
         ]);
         assertManifestInfo(files);
@@ -346,7 +392,8 @@ describe("BaseAppManager Abap", () => {
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
         const optionsClone = { ...options, configuration: { ...options.configuration } };
         delete optionsClone.configuration["sapCloudService"];
-        const files = await baseApp.adapt(appVariant, abapProcessor);
+        let files = await baseApp.adapt(appVariant, abapProcessor);
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const manifest = JSON.parse(files.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.eql({ service: "com.sap.manifest.default.service", public: true });
         assertAnnotations(files, 7);
@@ -357,7 +404,8 @@ describe("BaseAppManager Abap", () => {
         const baseAppManifest = JSON.parse(TestUtil.getResource("manifest.json"));
         delete baseAppManifest["sap.cloud"];
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(baseAppManifest)]]));
-        const files = await baseApp.adapt(appVariant, abapProcessor);
+        let files = await baseApp.adapt(appVariant, abapProcessor);
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const manifest = JSON.parse(files.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.be.undefined;
         assertAnnotations(files, 7);
@@ -404,10 +452,10 @@ function assertManifestInfo(files: ReadonlyMap<string, string>) {
 function assertAnnotations(files: ReadonlyMap<string, string>, resourceCountExpected: number) {
     const annotationName1Expected = TestUtil.getResourceXml("annotations/v2/annotation-1-v2-expected/annotationName1-expected.xml");
     const annotationName2Expected = TestUtil.getResourceXml("annotations/v2/annotation-2-v2-expected/annotationName2-expected.xml");
-    const name1i18nDf = files.get("i18n/annotations/customercomsapapplicationvariantid/i18n.properties");
-    const name1i18nEn = files.get("i18n/annotations/customercomsapapplicationvariantid/i18n_en.properties");
-    const name1i18nDe = files.get("i18n/annotations/customercomsapapplicationvariantid/i18n_de.properties");
-    const name1i18nFr = files.get("i18n/annotations/customercomsapapplicationvariantid/i18n_fr.properties");
+    const name1i18nDf = files.get("customer_com_sap_application_variant_id/i18n/annotations/i18n.properties");
+    const name1i18nEn = files.get("customer_com_sap_application_variant_id/i18n/annotations/i18n_en.properties");
+    const name1i18nDe = files.get("customer_com_sap_application_variant_id/i18n/annotations/i18n_de.properties");
+    const name1i18nFr = files.get("customer_com_sap_application_variant_id/i18n/annotations/i18n_fr.properties");
     const annotationName1Actual = files.get("annotations/annotation_annotationName1.xml");
     const annotationName2Actual = files.get("annotations/annotation_annotationName2.xml");
     expect(files.size).to.eql(resourceCountExpected);
@@ -477,4 +525,141 @@ describe("extractI18nPathFromManifest", () => {
         });
         expect(BaseApp.fromFiles(new Map([["manifest.json", manifest]])).i18nPath).to.be.equal(expected);
     }
+});
+
+
+describe("preProcessFiles", () => {
+
+    it("should replace .js file content with -dbg.js content and delete -dbg.js when both exist", () => {
+        const files = new Map([
+            ["Component.js", "production content"],
+            ["Component-dbg.js", "debug content"],
+            ["regular-file.js", "regular content"]
+        ]);
+
+        const result = preProcessFiles(files);
+
+        expect(result.get("Component.js")).to.equal("debug content");
+        expect(result.has("Component-dbg.js")).to.be.false; // Should be deleted
+        expect(result.get("regular-file.js")).to.equal("regular content");
+    });
+
+    it("should not modify .js files when no corresponding -dbg.js exists", () => {
+        const files = new Map([
+            ["Component.js", "production content"],
+            ["regular-file.js", "regular content"]
+        ]);
+
+        const result = preProcessFiles(files);
+
+        expect(result.get("Component.js")).to.equal("production content");
+        expect(result.get("regular-file.js")).to.equal("regular content");
+    });
+
+    it("should keep -dbg.js files when no corresponding .js exists", () => {
+        const files = new Map([
+            ["Component-dbg.js", "debug content"],
+            ["regular-file.js", "regular content"]
+        ]);
+
+        const result = preProcessFiles(files);
+
+        expect(result.get("Component-dbg.js")).to.equal("debug content");
+        expect(result.get("regular-file.js")).to.equal("regular content");
+    });
+
+    it("should handle multiple -dbg.js files correctly", () => {
+        const files = new Map([
+            ["Component.js", "production component"],
+            ["Component-dbg.js", "debug component"],
+            ["Controller.js", "production controller"],
+            ["Controller-dbg.js", "debug controller"],
+            ["View-dbg.js", "debug view only"],
+            ["regular-file.js", "regular content"]
+        ]);
+
+        const result = preProcessFiles(files);
+
+        expect(result.get("Component.js")).to.equal("debug component");
+        expect(result.has("Component-dbg.js")).to.be.false; // Should be deleted
+        expect(result.get("Controller.js")).to.equal("debug controller");
+        expect(result.has("Controller-dbg.js")).to.be.false; // Should be deleted
+        expect(result.get("View-dbg.js")).to.equal("debug view only"); // Kept (no corresponding .js)
+        expect(result.get("regular-file.js")).to.equal("regular content");
+    });
+
+    it("should handle nested file paths correctly", () => {
+        const files = new Map([
+            ["folder/Component.js", "production content"],
+            ["folder/Component-dbg.js", "debug content"],
+            ["folder/subfolder/Controller.js", "production controller"],
+            ["folder/subfolder/Controller-dbg.js", "debug controller"]
+        ]);
+
+        const result = preProcessFiles(files);
+
+        expect(result.get("folder/Component.js")).to.equal("debug content");
+        expect(result.has("folder/Component-dbg.js")).to.be.false; // Should be deleted
+        expect(result.get("folder/subfolder/Controller.js")).to.equal("debug controller");
+        expect(result.has("folder/subfolder/Controller-dbg.js")).to.be.false; // Should be deleted
+    });
+
+    it("should remove IGNORE_FILES", () => {
+        const files = new Map([
+            ["manifest.json", "manifest content"],
+            ["manifest-bundle.zip", "bundle content"],
+            ["Component-preload.js", "preload content"],
+            ["sap-ui-cachebuster-info.json", "cachebuster content"],
+            ["regular-file.js", "regular content"]
+        ]);
+
+        const result = preProcessFiles(files);
+
+        expect(result.get("manifest.json")).to.equal("manifest content");
+        expect(result.has("manifest-bundle.zip")).to.be.false; // Should be deleted
+        expect(result.has("Component-preload.js")).to.be.false; // Should be deleted
+        expect(result.has("sap-ui-cachebuster-info.json")).to.be.false; // Should be deleted
+        expect(result.get("regular-file.js")).to.equal("regular content");
+    });
+
+    it("should return a new Map and not modify the original", () => {
+        const files = new Map([
+            ["Component.js", "production content"],
+            ["Component-dbg.js", "debug content"]
+        ]);
+
+        const result = preProcessFiles(files);
+
+        // Original should be unchanged
+        expect(files.get("Component.js")).to.equal("production content");
+        expect(files.get("Component-dbg.js")).to.equal("debug content");
+        // Result should have the replaced content and deleted -dbg.js
+        expect(result.get("Component.js")).to.equal("debug content");
+        expect(result.has("Component-dbg.js")).to.be.false;
+        // Should be different Map instances
+        expect(result).to.not.equal(files);
+    });
+
+    it("should remove -dbg.js.map if corresponding .js file exists", () => {
+        const files = new Map([
+            ["Component.js", "production content"],
+            ["Component-dbg.js.map", "debug map content"],
+            ["Component-dbg.js", "debug content"],
+            ["regular-file.js", "regular content"],
+            ["regular-file-dbg.js.map", "debug map content 2"]
+        ]);
+
+        const result = preProcessFiles(files);
+
+        // -dbg.js.map should be removed if .js exists
+        expect(result.has("Component-dbg.js.map")).to.be.false;
+        // -dbg.js should be removed if .js exists
+        expect(result.has("Component-dbg.js")).to.be.false;
+        // .js should have debug content
+        expect(result.get("Component.js")).to.equal("debug content");
+        // regular-file-dbg.js.map should be removed (regular-file.js exists)
+        expect(result.has("regular-file-dbg.js.map")).to.be.false;
+        // regular-file.js should be untouched
+        expect(result.get("regular-file.js")).to.equal("regular content");
+    });
 });

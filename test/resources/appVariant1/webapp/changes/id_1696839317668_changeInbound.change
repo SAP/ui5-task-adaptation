@@ -1,6 +1,6 @@
 {
     "fileName": "id_1696839317668",
-    "namespace": "apps/customer.com.sap.application.variant.id/appVariants/customer.com.sap.application.variant.id/changes",
+    "namespace": "apps/com.sap.base.app.id/appVariants/customer.com.sap.application.variant.id/changes",
     "fileType": "change",
     "creation": "2023-10-09T08:15:17.668Z",
     "packageName": "$TMP",

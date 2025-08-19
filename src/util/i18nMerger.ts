@@ -1,4 +1,4 @@
-import { dotToUnderscore, escapeRegex, trimExtension } from "./commonUtil.js";
+import { escapeRegex, trimExtension } from "./commonUtil.js";
 
 import AppVariant from "../appVariantManager.js";
 import { IChange } from "../model/types.js";
@@ -30,7 +30,7 @@ export default class FileMerger {
 
 
     static merge(baseAppFiles: ReadonlyMap<string, string>, i18nPath: string, appVariant: AppVariant): Map<string, string> {
-        const i18nTargetFolder = dotToUnderscore(appVariant.id);
+        const i18nTargetFolder = appVariant.prefix;
         const { copyPaths, mergePaths } = this.analyzeAppVariantManifestChanges(appVariant.getProcessedManifestChanges());
         const files = new Map<string, string>(baseAppFiles);
         for (const [filename, content] of Array.from(appVariant.getProcessedFiles())) {
@@ -52,23 +52,23 @@ export default class FileMerger {
         return files;
     }
 
-	/**
-	 * Filters out specific lines from the given string.
-	 * Removes lines matching:
-	 * - __ldi.translation.uuid\s*=\s*(.*)
-	 * - ABAP_TRANSLATION
-	 * - SAPUI5 TRANSLATION-KEY
-	 */
-	private static filterTranslationMetaLines(content: string): string {
-		const lines = content.split('\n');
-		const filtered = lines.filter(
-			line =>
-				!/^# __ldi\.translation\.uuid\s*=/.test(line) &&
-				!line.startsWith("# ABAP_TRANSLATION") &&
-				!line.startsWith("# SAPUI5 TRANSLATION-KEY")
-		);
-		return filtered.join('\n');
-	}
+    /**
+     * Filters out specific lines from the given string.
+     * Removes lines matching:
+     * - __ldi.translation.uuid\s*=\s*(.*)
+     * - ABAP_TRANSLATION
+     * - SAPUI5 TRANSLATION-KEY
+     */
+    private static filterTranslationMetaLines(content: string): string {
+        const lines = content.split('\n');
+        const filtered = lines.filter(
+            line =>
+                !/^# __ldi\.translation\.uuid\s*=/.test(line) &&
+                !line.startsWith("# ABAP_TRANSLATION") &&
+                !line.startsWith("# SAPUI5 TRANSLATION-KEY")
+        );
+        return filtered.join('\n');
+    }
 
     /**
      *  Merge/Append base property file with property file from app variant
@@ -79,13 +79,13 @@ export default class FileMerger {
      * existing overwritten keys (as there should be none)
      */
     private static mergePropertiesFiles(files: Map<string, string>, i18nPath: string, appVariantFileContent: string, language: string = "") {
-		const baseAppI18nPath = i18nPath + language + ".properties";
-		const baseAppFileContent = files.get(baseAppI18nPath);
-		const filteredBaseContent = baseAppFileContent ? this.filterTranslationMetaLines(baseAppFileContent) : "";
-		const content = filteredBaseContent
-			? `${filteredBaseContent}\n\n#App variant specific text file\n\n${appVariantFileContent}`
-			: appVariantFileContent;
-		files.set(baseAppI18nPath, content);
+        const baseAppI18nPath = i18nPath + language + ".properties";
+        const baseAppFileContent = files.get(baseAppI18nPath);
+        const filteredBaseContent = baseAppFileContent ? this.filterTranslationMetaLines(baseAppFileContent) : "";
+        const content = filteredBaseContent
+            ? `${filteredBaseContent}\n\n#App variant specific text file\n\n${appVariantFileContent}`
+            : appVariantFileContent;
+        files.set(baseAppI18nPath, content);
     }
 
 }

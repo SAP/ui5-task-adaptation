@@ -95,5 +95,4 @@ export default class ResourceUtil {
         }
         return files;
     }
-
 }

@@ -83,11 +83,12 @@ describe("Index", () => {
                     "/resources/ns/i18n/i18n.properties",
                     "/resources/ns/changes/id_1696839317667_propertyChange.change",
                     "/resources/ns/i18n/i18n_de.properties",
-                    "/resources/ns/changes/fragments/AdlChart.fragment.xml",
-                    "/resources/ns/changes/coding/id_12345.js",
+                    "/resources/ns/changes/customer_com_sap_application_variant_id/fragments/AdlChart.fragment.xml",
+                    "/resources/ns/changes/customer_com_sap_application_variant_id/coding/id_12345.js",
                     "/resources/ns/changes/id_1707741869990_200_flVariant.ctrl_variant",
                     "/resources/ns/changes/id_1707749484507_210_setTitle.ctrl_variant_change",
                     "/resources/ns/changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
+                    "/resources/ns/changes/id_1753705046493_197_codeExt.change",
                     "/resources/ns/changes/notsupported.testfile"
                 ];
                 const tempResources = CacheHolder.read("repoName1", "2100.01.01");
@@ -139,11 +140,12 @@ const runUi5TaskAdaptation = async (options: IProjectOptions, hasEnhanceWithForI
         "/resources/ns/i18n/i18n_de.properties",
         "/resources/ns/changes/id_1696839317667_propertyChange.change",
         "/resources/ns/i18n/i18n.properties",
-        "/resources/ns/changes/fragments/AdlChart.fragment.xml",
-        "/resources/ns/changes/coding/id_12345.js",
+        "/resources/ns/changes/customer_com_sap_application_variant_id/fragments/AdlChart.fragment.xml",
+        "/resources/ns/changes/customer_com_sap_application_variant_id/coding/id_12345.js",
         "/resources/ns/changes/id_1707741869990_200_flVariant.ctrl_variant",
         "/resources/ns/changes/id_1707749484507_210_setTitle.ctrl_variant_change",
         "/resources/ns/changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
+        "/resources/ns/changes/id_1753705046493_197_codeExt.change",
         "/resources/ns/changes/notsupported.testfile"
     ];
     const tempResources = CacheHolder.read("repoName1", "010101");

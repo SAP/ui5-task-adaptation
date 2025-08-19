@@ -5,6 +5,7 @@ import AppVariant from "../../src/appVariantManager.js";
 import { IAppVariantManifest } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
+import FilesUtil from "../../src/util/filesUtil.js";
 
 const { expect } = chai;
 
@@ -27,12 +28,12 @@ describe("AppVariantManager", () => {
 
     describe("when process appvariant resources", () => {
 
-        const changes = TestUtil.getResourceJson("appVariant1-renamed/webapp/changes/manifest/id_1696839317668_changeInbound.change");
+        const changes = TestUtil.getResourceJson("appVariant1-renamed/webapp/changes/id_1696839317668_changeInbound.change");
         let files: ReadonlyMap<string, string>;
 
         before(async () => {
             appVariant = await AppVariant.fromWorkspace(workspace, NAMESPACE);
-            files = appVariant.getProcessedFiles();
+            files = FilesUtil.filter(appVariant.files);
         });
 
         it("should get appVariant info and adjsted manifest", () => {
@@ -47,7 +48,7 @@ describe("AppVariantManager", () => {
         it("should include also other changes", async () => {
             const expectedMembers = [
                 "changes/fragments/AdlChart.fragment.xml",
-                //"changes/manifest/id_1696839317668_changeInbound.change", => Merged and no longer needed
+                //"changes/id_1696839317668_changeInbound.change", => Merged and no longer needed
                 "i18n/i18n_de.properties",
                 "i18n/i18n.properties",
                 "changes/id_1696839317667_propertyChange.change", // Will be bundled and omitted later
@@ -56,8 +57,9 @@ describe("AppVariantManager", () => {
                 "changes/id_1707741869990_200_flVariant.ctrl_variant",
                 "changes/id_1707749484507_210_setTitle.ctrl_variant_change",
                 "changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
+                "changes/id_1753705046493_197_codeExt.change"
             ].toSorted();
-            expect([...appVariant.getProcessedFiles().keys()].toSorted()).to.have.members(expectedMembers);
+            expect([...files.keys()].toSorted()).to.have.members(expectedMembers);
         });
 
         describe("when omitting appVariant files", () => {
@@ -79,17 +81,19 @@ describe("AppVariantManager", () => {
         let processedFiles: ReadonlyMap<string, string>
         before(async () => {
             appVariant = await AppVariant.fromWorkspace(workspace, NAMESPACE);
-            processedFiles = appVariant.getProcessedFiles();
+            processedFiles = FilesUtil.rename(appVariant.files, new Map([["com.sap.base.app.id", appVariant.id]]));
+            processedFiles = FilesUtil.filter(processedFiles);
         });
 
         it("should adjust .properties path", async () => {
             // TODO Get all workspace files and do not prefilter
-            expect([...appVariant.getProcessedFiles().keys()]).to.have.members([
+            expect([...processedFiles.keys()]).to.have.members([
                 // "manifest.appdescr_variant", => Omitted
                 "i18n/i18n.properties",
                 "i18n/i18n_de.properties",
-                //"changes/manifest/id_1696839317668_changeInbound.change", => Merged and no longer needed
+                //"changes/id_1696839317668_changeInbound.change", => Merged and no longer needed
                 "changes/id_1696839317667_propertyChange.change", // Will be bundled and omitted later
+                "changes/id_1753705046493_197_codeExt.change",
                 "changes/fragments/AdlChart.fragment.xml",
                 "changes/coding/id_12345.js",
                 "changes/id_1707741869990_200_flVariant.ctrl_variant",
@@ -115,13 +119,13 @@ describe("AppVariantManager", () => {
 
     describe("when having change with url", () => {
         it("should adjust url when url to local file", async () => {
-            await assertChangeUrl("../annotations/annotation_1707246076536.xml", "changes/annotations/annotation_1707246076536.xml");
+            await assertChangeUrl("annotations/annotation_1707246076536.xml", "changes/customer_base_app_id_variant1/annotations/annotation_1707246076536.xml");
         });
         it("shouldn't adjust url when url to service", async () => {
             await assertChangeUrl("/sap/opu/odata4/f4_sd_airlines_mduu/", "/sap/opu/odata4/f4_sd_airlines_mduu/");
         });
         it("should adjust url when url to local file", async () => {
-            await assertChangeUrl("../annotation_1707246076536.xml", "changes/annotation_1707246076536.xml");
+            await assertChangeUrl("annotation_1707246076536.xml", "changes/customer_base_app_id_variant1/annotation_1707246076536.xml");
         });
     });
 
@@ -135,7 +139,7 @@ describe("AppVariantManager", () => {
         } as any;
         const appVariant = (manifest: any) => AppVariant.fromFiles(new Map([["manifest.appdescr_variant", JSON.stringify(manifest)]]));
         it("shouldn't contain processed files", () => {
-            expect(appVariant(manifest).getProcessedFiles().size).eq(0);
+            expect(FilesUtil.filter(appVariant(manifest).files).size).eq(0);
         });
         it("shouldn't fill change layer if layer is undefined", () => {
             expect(appVariant(manifest).getProcessedManifestChanges()[0].layer).to.be.undefined
@@ -155,14 +159,15 @@ describe("AppVariantManager", () => {
         it("should contain manifest change with correct path", () => {
             const appVariant = AppVariant.fromFiles(new Map([
                 ["manifest.appdescr_variant", JSON.stringify(manifest)],
-                ["changes/manifest/id.change", `{ "reference": "base.app.id", "changeType": "appdescr_setTitle" }`]
+                ["changes/id.change", `{ "changeType": "appdescr_change", "reference": "base.app.id" }`]
             ]));
-            expect(appVariant.getProcessedFiles().size).eq(0);
+            const files = FilesUtil.filter(appVariant.files);
+            expect(files.size).eq(0);
             const manifestChanges = appVariant.getProcessedManifestChanges();
             expect(manifestChanges.length).eq(1);
             expect(manifestChanges[0]).eql({
-                "changeType": "appdescr_setTitle",
-                "reference": "customer.base.app.id.variant1"
+                "changeType": "appdescr_change",
+                "reference": "base.app.id"
             });
         });
         it("shouldn't contain manifest changes with confusing path", () => {
@@ -170,10 +175,41 @@ describe("AppVariantManager", () => {
                 ["manifest.appdescr_variant", JSON.stringify(manifest)],
                 ["changes/manifestid.change", `{ "reference": "base.app.id" }`]
             ]));
-            const files = appVariant.getProcessedFiles();
+            let files = FilesUtil.filter(appVariant.files);
+            files = FilesUtil.rename(files, new Map([["base.app.id", appVariant.id]]));
             expect(files.size).eq(1);
             expect(files.get("changes/manifestid.change")).eql(`{ "reference": "customer.base.app.id.variant1" }`);
             expect(appVariant.getProcessedManifestChanges().length).eq(0);
+        });
+    });
+
+    describe("when processing moved files", () => {
+        let appVariant: AppVariant;
+        before(async () => {
+            appVariant = await AppVariant.fromWorkspace(workspace, NAMESPACE);
+            appVariant.prefix = "app_variant1";
+
+        });
+
+        it("should return moved files", () => {
+            const processedFiles = appVariant.getProcessedFiles();
+            expect(!processedFiles.has("changes/coding/id_12345.js"));
+            expect(processedFiles.has("changes/app_variant1/coding/id_12345.js"));
+
+            expect(!processedFiles.has("changes/fragments/AdlChart.fragment.xml"));
+            expect(processedFiles.has("changes/app_variant1/fragments/AdlChart.fragment.xml"));
+        });
+
+        it("should adjust paths for change files", () => {
+            const processedFiles = appVariant.getProcessedFiles();
+            const codeExtChange = processedFiles.get("changes/id_1753705046493_197_codeExt.change") || "";
+            expect(JSON.parse(codeExtChange).content.codeRef).eql("app_variant1/coding/id_12345.js");
+        });
+
+        it("should adjust namespaces for controller extensions", () => {
+            const processedFiles = appVariant.getProcessedFiles();
+            const content = processedFiles.get("changes/app_variant1/coding/id_12345.js")?.trim() || "";
+            expect(content).to.include(`ControllerExtension.extend("customer.com.sap.application.variant.id.app_variant1.Worklist.controller"`);
         });
     });
 });
@@ -196,10 +232,10 @@ async function assertChangeUrl(testUrl: string, expectedUrl: string) {
         "content": []
     });
     const resources = new Map([
-        ["changes/manifest/id_1707246076536_addAnnotationsToOData.change", changeResource],
+        ["changes/id_1707246076536_addAnnotationsToOData.change", changeResource],
         ["manifest.appdescr_variant", manifestResource]]);
     const appVariant = await AppVariant.fromFiles(resources);
-    const files = appVariant.getProcessedFiles();
+    const files = FilesUtil.filter(appVariant.files);
     expect(files.has("manifest.appdescr_variant")).to.be.false;
     const change = appVariant.getProcessedManifestChanges().find(change => change.changeType === "appdescr_app_addAnnotationsToOData") as any;
     expect(change.content.dataSource["customer.annotation.annotation_1707246076536"].uri)

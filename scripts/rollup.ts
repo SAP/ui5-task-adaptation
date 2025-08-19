@@ -119,8 +119,7 @@ export default class Builder {
             "bundleDefinition.js",
             "./dist/bundle.js",
             [
-                "sap/ui/performance/Measurement",
-                "sap/base/config"
+                "sap/ui/performance/Measurement"
             ]
         );
         this.copyTypeDefinition();
