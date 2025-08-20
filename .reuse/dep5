@@ -1,0 +1,8 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: ui5-task-adaptation
+Upstream-Contact: Aleksandr Suvorov <aleksandr.suvorov@sap.com>, Silke Arians <silke.arians@sap.com>, Matthias Schmalz <matthias.schmalz@sap.com>
+Source: https://github.com/SAP/ui5-task-adaptation
+
+Files: *.*
+Copyright: 2009-2020 SAP SE or an SAP affiliate company
+License: Apache-2.0
