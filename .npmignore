@@ -11,4 +11,3 @@ tsconfig.json
 dist/resources
 **/*.map
 .travis.yml
-.github/workflows/node.js.yml
