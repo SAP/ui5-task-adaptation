@@ -351,4 +351,27 @@ describe("CFProcessor", () => {
 
     });
 
+    it("should not throw if no valid endpoints are provided and new key also has no endpoints", async () => {
+        // Simulate CFUtil.getOrCreateServiceKeyWithEndpoints returning undefined or empty endpoints
+        cfUtilStub.resolves({ endpoints: {} });
+
+        const processor = new CFProcessor({
+            appName: "test-app",
+            serviceInstanceName: "test-service-instance"
+        });
+        const manifest = {};
+        const baseAppFiles = new Map<string, string>();
+        const routes = [{
+            source: "/api/(.*)",
+            destination: "test-destination",
+            authenticationType: "xsuaa"
+        }];
+        baseAppFiles.set("xs-app.json", JSON.stringify({ routes }));
+
+        await processor.updateLandscapeSpecificContent(manifest, baseAppFiles);
+        // xs-app.json should remain unchanged
+        const updated = JSON.parse(baseAppFiles.get("xs-app.json")!);
+        expect(updated.routes).to.deep.equal(routes);
+    });
+
 });

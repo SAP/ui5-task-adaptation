@@ -5,6 +5,9 @@ import IProcessor from "./processor.js";
 import { cached } from "../cache/cacheHolder.js";
 import { validateObject } from "../util/commonUtil.js";
 import CFUtil from "../util/cfUtil.js";
+import { getLogger } from "@ui5/logger";
+
+const log = getLogger("@ui5/task-adaptation::CFProcessor");
 
 export default class CFProcessor implements IProcessor {
 
@@ -61,9 +64,13 @@ export default class CFProcessor implements IProcessor {
             throw new Error(`Failed to get valid service keys for app '${this.configuration.appName}': ${error.message}`);
         }
 
-        const xsAppJson = JSON.parse(xsAppJsonContent);
-        xsAppJson.routes = this.enhanceRoutesWithEndpointAndService(serviceCredentials, xsAppJson.routes);
-        baseAppFiles.set("xs-app.json", JSON.stringify(xsAppJson, null, 2));
+        if (serviceCredentials) {
+            const xsAppJson = JSON.parse(xsAppJsonContent);
+            xsAppJson.routes = this.enhanceRoutesWithEndpointAndService(serviceCredentials, xsAppJson.routes);
+            baseAppFiles.set("xs-app.json", JSON.stringify(xsAppJson, null, 2));
+        } else {
+            log.warn(`No endpoints found for app '${this.configuration.appName}'. xs-app.json will not be updated.`);
+        }
     }
 
 
