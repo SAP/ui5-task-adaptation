@@ -40,7 +40,7 @@ export default class AbapProcessor implements IProcessor {
     }
 
 
-    async updateLandscapeSpecificContent(renamedBaseAppManifest: any, baseAppFiles?: Map<string, string>): Promise<void> {
+    async updateLandscapeSpecificContent(renamedBaseAppManifest: any, baseAppFiles: Map<string, string>): Promise<void> {
         const files = await this.annotationManager.process(renamedBaseAppManifest, Language.create(this.configuration.languages));
         if (baseAppFiles) {
             files.forEach((value, key) => baseAppFiles.set(key, value));

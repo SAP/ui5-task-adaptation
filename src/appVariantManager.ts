@@ -2,7 +2,7 @@ import { IChange } from "./model/types.js";
 import ResourceUtil from "./util/resourceUtil.js";
 import TaskUtil from "@ui5/project/build/helpers/TaskUtil";
 import { posix as path } from "path";
-import { rename } from "./util/commonUtil.js";
+import { rename } from "./util/renamingUtil.js";
 
 const CHANGES_DIR = "changes/";
 const CHANGES_EXT = ".change";
@@ -50,7 +50,7 @@ export default class AppVariant {
         this.files.forEach((content, filename) => {
             if (filename.startsWith(CHANGES_DIR)) {
                 if (!this.isManifestChange(filename, content)) {
-                    files.set(filename, rename(content, this.reference, this.id));
+                    files.set(filename, rename(content, [this.reference], this.id));
                 }
             } else if (filename !== "manifest.appdescr_variant") {
                 files.set(filename, content);
@@ -66,7 +66,7 @@ export default class AppVariant {
         const manifestChanges: Array<IChange> = structuredClone(this.content) ?? [];
         this.files.forEach((content, filename) => {
             if (this.isManifestChange(filename, content)) {
-                const change = JSON.parse(rename(content, this.reference, this.id))
+                const change = JSON.parse(rename(content, [this.reference], this.id))
                 this.updateRelativePaths(change, filename);
                 manifestChanges.push(change);
             }
@@ -97,8 +97,8 @@ export default class AppVariant {
         }
     }
 
-    private isManifestChange(filename: string, content: string): boolean{
-        if (filename.endsWith(CHANGES_EXT))  {
+    private isManifestChange(filename: string, content: string): boolean {
+        if (filename.endsWith(CHANGES_EXT)) {
             const change = JSON.parse(content);
             return change.changeType?.startsWith(MANIFEST_CHANGE);
         }

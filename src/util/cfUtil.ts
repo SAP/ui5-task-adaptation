@@ -93,6 +93,13 @@ export default class CFUtil {
         }
     }
 
+    private static deleteServiceKeyUnsafe(serviceInstanceName: string, serviceKeyName: string) {
+        // Fire and forget - async delete without waiting for result or handling errors
+        this.cfExecute(["delete-service-key", serviceInstanceName, serviceKeyName, "-f"]).catch(() => {
+            // Ignore any errors - this is intentionally unsafe
+        });
+    }
+
 
     private static async getServiceInstance(params: IGetServiceInstanceParams): Promise<IServiceInstance[]> {
         const PARAM_MAP: KeyedMap<IGetServiceInstanceParams, keyof IGetServiceInstanceParams, string> = {
@@ -183,6 +190,141 @@ export default class CFUtil {
         }
     }
 
+
+    /**
+     * Get service keys and return the first one with valid endpoints
+     * @private
+     * @static
+     * @param {string} serviceInstanceGuid the service instance guid
+     * @return {Promise<any>} the first service key with valid endpoints, or null if none found
+     * @memberof CFUtil
+     */
+    private static async getServiceKeyWithValidEndpoints(serviceInstanceGuid: string): Promise<any> {
+        try {
+            const serviceKeys = await this.getServiceKeys(serviceInstanceGuid);
+            // Find and return the first key with valid endpoints
+            return serviceKeys.find((key: any) => key.credentials?.endpoints && this.hasValidEndpoints(key.credentials.endpoints));
+        } catch (error: any) {
+            throw new Error("Failed to get service credentials: " + error.message);
+        }
+    }
+
+    /**
+     * Get service keys for a service instance by name. If the existing service key
+     * has endpoints as strings instead of objects, a new service key will be created.
+     * @static
+     * @param {string} serviceInstanceName name of the service instance
+     * @param {string} [spaceGuid] optional space guid, will use current space if not provided
+     * @return {Promise<any>} promise with service key credentials
+     * @memberof CFUtil
+     */
+    static async getOrCreateServiceKeyWithEndpoints(serviceInstanceName: string, spaceGuid?: string): Promise<any> {
+        const resolvedSpaceGuid = await this.getSpaceGuid(spaceGuid);
+
+        // Find service instance by name
+        const serviceInstances = await this.getServiceInstance({
+            names: [serviceInstanceName],
+            spaceGuids: [resolvedSpaceGuid]
+        });
+
+        if (!(serviceInstances?.length > 0)) {
+            throw new Error(`Cannot find service instance '${serviceInstanceName}' in space: ${resolvedSpaceGuid}`);
+        }
+
+        const serviceInstance = serviceInstances[0];
+        log.verbose(`Found service instance '${serviceInstance.name}' with guid: ${serviceInstance.guid}`);
+
+        // If no valid service key found, create a new one with unique name
+        const uniqueServiceKeyNamePromise = this.generateUniqueServiceKeyName(serviceInstance.name, serviceInstance.guid);
+
+        // Get service keys with credentials to find any with valid endpoints:
+        // object with url and destination instead of a single url string
+        const validKey = await this.getServiceKeyWithValidEndpoints(serviceInstance.guid);
+        if (validKey) {
+            log.verbose(`Using existing service key with valid endpoints structure`);
+            return validKey.credentials;
+        }
+
+        const uniqueServiceKeyName = await uniqueServiceKeyNamePromise;
+        log.info(`No valid service key found with proper endpoints structure. Creating new service key '${uniqueServiceKeyName}' for '${serviceInstance.name}'`);
+        await this.createServiceKey(serviceInstance.name, uniqueServiceKeyName);
+
+        // Get the newly created service key and validate its endpoints
+        const newValidKey = await this.getServiceKeyWithValidEndpoints(serviceInstance.guid);
+        if (newValidKey) {
+            log.verbose(`Using newly created service key with valid endpoints structure`);
+            return newValidKey.credentials;
+        }
+
+        // Clean up the created service key since it doesn't have valid
+        // endpoints. We don't throw an error here even if no valid endpoints
+        // found. We assume that there might be no coincidence between
+        // credential endpoints and xs-app.json destinations.
+        this.deleteServiceKeyUnsafe(serviceInstance.name, uniqueServiceKeyName);
+        log.verbose(`Created service key '${uniqueServiceKeyName}' does not have valid endpoints structure. Triggered deletion of invalid service key '${uniqueServiceKeyName}'`);
+    }
+
+
+
+
+    /**
+     * Check if endpoints object has at least one property that is an object
+     * @private
+     * @static
+     * @param {any} endpoints the endpoints object to validate
+     * @return {boolean} true if at least one property of endpoints is an object
+     * @memberof CFUtil
+     */
+    private static hasValidEndpoints(endpoints: any): boolean {
+        if (!endpoints || typeof endpoints !== 'object' || Array.isArray(endpoints)) {
+            return false;
+        }
+
+        // Check if at least one property of endpoints is an object
+        return Object.values(endpoints).some(value =>
+            value && typeof value === 'object' && !Array.isArray(value)
+        );
+    }
+
+    /**
+     * Get all service key names for a service instance
+     * @private
+     * @static
+     * @param {string} serviceInstanceGuid the service instance guid
+     * @return {Promise<string[]>} promise with array of service key names
+     * @memberof CFUtil
+     */
+    private static async getAllServiceKeyNames(serviceInstanceGuid: string): Promise<string[]> {
+        try {
+            const serviceKeys = await this.requestCfApi(`/v3/service_credential_bindings?type=key&service_instance_guids=${serviceInstanceGuid}`);
+            return serviceKeys.map((key: any) => key.name);
+        } catch (error: any) {
+            throw new Error(`Failed to get service key names: ${error.message}`);
+        }
+    }
+
+    /**
+     * Generate a unique service key name in format serviceInstanceName-key-N
+     * @static
+     * @param {string} serviceInstanceName the service instance name
+     * @param {string} serviceInstanceGuid the service instance guid
+     * @return {Promise<string>} promise with unique service key name
+     * @memberof CFUtil
+     */
+    static async generateUniqueServiceKeyName(serviceInstanceName: string, serviceInstanceGuid: string): Promise<string> {
+        const existingKeyNames = await this.getAllServiceKeyNames(serviceInstanceGuid);
+
+        let counter = 0;
+        let keyName: string;
+
+        do {
+            keyName = `${serviceInstanceName}-key-${counter}`;
+            counter++;
+        } while (existingKeyNames.includes(keyName));
+
+        log.verbose(`Generated unique service key name: ${keyName}`);
+        return keyName;
+    }
 
 
     /**

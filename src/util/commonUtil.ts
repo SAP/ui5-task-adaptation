@@ -27,52 +27,6 @@ export function escapeRegex(update: string) {
     return update.replaceAll(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 
-export function renameResources(files: ReadonlyMap<string, string>, search: string, replacement: string): Map<string, string> {
-    const replaces = getReplaceRegex(search, replacement);
-    const renamedFiles = new Map<string, string>();
-    files.forEach((content: string, filepath: string) => {
-        renamedFiles.set(filepath, replaces.reduce((p, c) => p.replace(c.regexp, c.replacement), content));
-    });
-    return renamedFiles;
-}
-
-
-function getReplaceRegex(search: string, replacement: string): { regexp: RegExp, replacement: string }[] {
-    // The current regex works if the old Id is contained in the new Id, given
-    // that they do not have the same beginning.
-    // more complete alternative: /((?<!newIdStart)|(?!newIdEnd))oldId/g
-    let escapedSearch: string;
-    if (replacement.includes(search)) {
-        const [before] = replacement.split(search);
-        // Matches a position in the string that is not immediately preceded by
-        // the string "before". Since we won't replace anyway, we should also
-        // ignore one with the slashes.
-        const escapedBefore = escapeRegex(before).replaceAll("\\.", "[\\./]");
-        escapedSearch = `(?<!${escapedBefore})${escapeRegex(search)}`;
-    } else {
-        escapedSearch = escapeRegex(search);
-    }
-
-    const dotToSlash = (update: string) => update.replaceAll(".", "\/");
-    return [
-        {
-            regexp: new RegExp(escapedSearch, "g"),
-            replacement
-        },
-        {
-            regexp: new RegExp(dotToSlash(escapedSearch), "g"),
-            replacement: dotToSlash(replacement)
-        }
-    ];
-}
-
-
-export function rename(content: string, search: string, replacement: string): string {
-    const replaces = getReplaceRegex(search, replacement);
-    return replaces.reduce((p, c) => p.replace(c.regexp, c.replacement), content);
-}
-
-
 export function insertInArray<T>(array: T[], index: number, insert: T) {
     array.splice(index, 0, insert);
 }

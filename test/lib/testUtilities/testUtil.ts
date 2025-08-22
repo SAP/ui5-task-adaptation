@@ -120,6 +120,45 @@ export default class TestUtil {
     static async wait(ms: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
+
+    static shuffleArray(array: any[]): any[] {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    static permuteArray<T>(nums: T[]): T[][] {
+        const results: T[][] = [];
+        nums.sort(); // sorting to remove duplicates
+        const used: boolean[] = new Array(nums.length).fill(false);
+
+        function backtrack(path: T[]) {
+            if (path.length === nums.length) {
+                results.push([...path]);
+                return;
+            }
+
+            for (let i = 0; i < nums.length; i++) {
+                if (used[i]) {
+                    continue;
+                }
+                // skip duplicates
+                if (i > 0 && nums[i] === nums[i - 1] && !used[i - 1]) {
+                    continue;
+                }
+                used[i] = true;
+                path.push(nums[i]);
+                backtrack(path);
+                path.pop();
+                used[i] = false;
+            }
+        }
+
+        backtrack([]);
+        return results;
+    }
 }
 
 class Workspace implements IWorkspace {

@@ -6,7 +6,7 @@ import BuildStrategy from "./buildStrategy.js";
 import { IChange } from "./model/types.js";
 import IProcessor from "./processors/processor.js";
 import { getLogger } from "@ui5/logger";
-import { renameResources } from "./util/commonUtil.js";
+import { renameResources } from "./util/renamingUtil.js";
 
 const log = getLogger("@ui5/task-adaptation::BaseAppManager");
 
@@ -30,6 +30,38 @@ const IGNORE_FILES = [
     "sap-ui-cachebuster-info.json"
 ];
 
+/**
+ * Processes files to replace .js file content with corresponding -dbg.js
+ * content and remove -dbg.js
+ * @param files - Map of all files
+ * @returns Map with .js files replaced by -dbg.js content where applicable
+ */
+export function preProcessFiles(files: ReadonlyMap<string, string>): Map<string, string> {
+    const processedFiles = new Map(files);
+
+    // Find all -dbg.js files that have corresponding .js files
+    for (const [filename, content] of files) {
+        if (filename.endsWith("-dbg.js")) {
+            const correspondingJsFile = filename.replace("-dbg.js", ".js");
+            if (files.has(correspondingJsFile)) {
+                // Replace the .js file content with the -dbg.js content
+                processedFiles.set(correspondingJsFile, content);
+                processedFiles.delete(filename);
+            }
+        } else if (filename.endsWith("-dbg.js.map")) {
+            const correspondingJsFile = filename.replace("-dbg.js.map", ".js");
+            if (files.has(correspondingJsFile)) {
+                processedFiles.delete(filename);
+            }
+        }
+        if (IGNORE_FILES.some(ignoredFile => ignoredFile === filename)) {
+            processedFiles.delete(filename);
+        }
+    }
+
+    return processedFiles;
+}
+
 export default class BaseApp {
 
     readonly id: string;
@@ -43,7 +75,7 @@ export default class BaseApp {
     }
 
     private constructor(files: ReadonlyMap<string, string>) {
-        this.files = new Map([...files].filter(([filename]) => !IGNORE_FILES.includes(filename)));
+        this.files = preProcessFiles(files);
         const manifestString = files.get("manifest.json");
         if (!manifestString) {
             throw new Error("Original application should have manifest.json in root folder");
@@ -57,7 +89,7 @@ export default class BaseApp {
     }
 
     async adapt(appVariant: AppVariant, processor: IProcessor): Promise<ReadonlyMap<string, string>> {
-        const files = renameResources(this.files, appVariant.reference, appVariant.id);
+        const files = renameResources(this.files, [appVariant.reference], appVariant.id);
         const manifest = JSON.parse(files.get("manifest.json")!);
         await processor.updateLandscapeSpecificContent(manifest, files);
         this.fillAppVariantIdHierarchy(processor, this.id, this.version, manifest);

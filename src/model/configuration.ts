@@ -15,6 +15,7 @@ export interface IConfiguration {
     enableBetaFeatures?: boolean;
     writeTempFiles?: any;
     target?: AbapTarget & IAbapTargetMeta;
+    serviceInstanceName?: string;
 }
 
 export interface IAbapTargetMeta {

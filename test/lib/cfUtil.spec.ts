@@ -1,5 +1,6 @@
 import * as chai from "chai";
 import * as sinon from "sinon";
+import chaiAsPromised from "chai-as-promised";
 
 import CFUtil from "../../src/util/cfUtil.js";
 import { Cli } from "@sap/cf-tools/out/src/cli.js";
@@ -9,6 +10,7 @@ import TestUtil from "./testUtilities/testUtil.js";
 import { eFilters } from "@sap/cf-tools/out/src/types.js";
 import esmock from "esmock";
 
+chai.use(chaiAsPromised);
 const { assert, expect } = chai;
 
 describe("CFUtil", () => {
@@ -16,6 +18,108 @@ describe("CFUtil", () => {
 
     beforeEach(() => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
+
+    // Helper function to create common CLI mocks for service key endpoint tests
+    const createServiceKeyEndpointMocks = (options: {
+        createKeyCallCount?: number;
+        deleteKeyCallCount?: number;
+        hasValidEndpoints?: boolean;
+        serviceExists?: boolean;
+        serviceInstanceName?: string;
+        spaceGuid?: string;
+    } = {}) => {
+        const {
+            createKeyCallCount = 0,
+            deleteKeyCallCount = 0,
+            hasValidEndpoints = true,
+            serviceExists = true,
+            serviceInstanceName = "test-service",
+            spaceGuid = "test-space"
+        } = options;
+
+        let createCallCount = createKeyCallCount;
+        let deleteCallCount = deleteKeyCallCount;
+
+        const credentialsWithValidEndpoints = {
+            credentials: {
+                endpoints: {
+                    "api-endpoint": {
+                        url: "https://api.example.com",
+                        destination: "api-dest"
+                    }
+                }
+            }
+        };
+
+        const credentialsWithInvalidEndpoints = {
+            credentials: {
+                endpoints: "invalid-string-endpoint"  // endpoints as string instead of object
+            }
+        };
+
+        return {
+            "@sap/cf-tools/out/src/cli.js": {
+                Cli: {
+                    execute: (args: string[]) => {
+                        if (args[1] === `/v3/service_instances?names=${serviceInstanceName}&space_guids=${spaceGuid}`) {
+                            if (serviceExists) {
+                                return TestUtil.getStdOut({
+                                    "resources": [{ "name": serviceInstanceName, "guid": "test-guid" }]
+                                });
+                            } else {
+                                return TestUtil.getStdOut({ "resources": [] });
+                            }
+                        } else if (args[1] === "/v3/service_credential_bindings?type=key&service_instance_guids=test-guid") {
+                            if (createCallCount === 0) {
+                                return TestUtil.getStdOut({ "resources": [] });
+                            } else {
+                                return TestUtil.getStdOut({ "resources": [{ "name": `${serviceInstanceName}-key-0` }] });
+                            }
+                        } else if (args[0] === "create-service-key" && args[1] === serviceInstanceName && args[2] === `${serviceInstanceName}-key-0`) {
+                            createCallCount++;
+                            return TestUtil.getStdOut("");
+                        } else if (args[0] === "delete-service-key" && args[1] === serviceInstanceName && args[2] === `${serviceInstanceName}-key-0` && args[3] === "-f") {
+                            deleteCallCount++;
+                            return TestUtil.getStdOut("");
+                        }
+                    }
+                }
+            },
+            "@sap/cf-tools/out/src/cf-local.js": {
+                cfGetInstanceCredentials: () => {
+                    if (createCallCount === 0) {
+                        return Promise.resolve([]);
+                    } else {
+                        return Promise.resolve([hasValidEndpoints ? credentialsWithValidEndpoints : credentialsWithInvalidEndpoints]);
+                    }
+                }
+            },
+            "@sap/cf-tools/out/src/utils.js": {
+                getSpaceGuidThrowIfUndefined: () => Promise.resolve(spaceGuid)
+            },
+            getCounters: () => ({ createCallCount, deleteCallCount }),
+            getCredentials: () => hasValidEndpoints ? credentialsWithValidEndpoints : credentialsWithInvalidEndpoints
+        };
+    };
+
+    // Helper function to create CLI mocks for service key name generation tests
+    const createServiceKeyNameMocks = (serviceKeyNames: string[] = [], shouldError = false) => {
+        return {
+            "@sap/cf-tools/out/src/cli.js": {
+                Cli: {
+                    execute: (args: string[]) => {
+                        if (args[1] === "/v3/service_credential_bindings?type=key&service_instance_guids=test-guid") {
+                            if (shouldError) {
+                                return TestUtil.getStdOut({}, 1, "CF API error");
+                            }
+                            const resources = serviceKeyNames.map(name => ({ name }));
+                            return TestUtil.getStdOut({ "resources": resources });
+                        }
+                    }
+                }
+            }
+        };
+    };
 
     describe("when execute a cf request", () => {
 
@@ -430,7 +534,7 @@ describe("CFUtil", () => {
                     "code": 10001,
                 }]
             }));
-            await expect(CFUtil.requestCfApi("")).to.rejectedWith(`Authentication error. Use 'cf login' to authenticate in Cloud Foundry: [{"detail":"Authentication error","title":"CF-NotAuthenticated","code":10002},{"detail":"Other error","title":"CF-Other","code":10001}]`);
+            await expect(CFUtil.requestCfApi("")).to.be.rejectedWith(`Authentication error. Use 'cf login' to authenticate in Cloud Foundry: [{"detail":"Authentication error","title":"CF-NotAuthenticated","code":10002},{"detail":"Other error","title":"CF-Other","code":10001}]`);
         });
         it("throws errors if there are other errors", async () => {
             sandbox.stub(CFUtil, "cfExecute" as any).resolves(JSON.stringify({
@@ -440,7 +544,7 @@ describe("CFUtil", () => {
                     "code": 10001,
                 }]
             }));
-            await expect(CFUtil.requestCfApi("")).to.rejectedWith(`Failed sending request to Cloud Foundry: [{"detail":"Other error","title":"CF-Other","code":10001}]`);
+            await expect(CFUtil.requestCfApi("")).to.be.rejectedWith(`Failed sending request to Cloud Foundry: [{"detail":"Other error","title":"CF-Other","code":10001}]`);
         });
         it("returns empty resource list if no resources", async () => {
             sandbox.stub(CFUtil, "cfExecute" as any).resolves(JSON.stringify([]));
@@ -449,6 +553,122 @@ describe("CFUtil", () => {
         it("returns empty resource list if resources undefind", async () => {
             sandbox.stub(CFUtil, "cfExecute" as any).resolves(JSON.stringify({}));
             expect(await CFUtil.requestCfApi("")).to.eql([]);
+        });
+    });
+
+    describe("when generating unique service key names", () => {
+
+        it("should get all service key names for a service instance", async () => {
+            const mocks = createServiceKeyNameMocks(["service-key-1", "service-key-2", "custom-key"]);
+            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, mocks);
+
+            const keyNames = await CFUtil["getAllServiceKeyNames"]("test-guid");
+            expect(keyNames).to.deep.equal(["service-key-1", "service-key-2", "custom-key"]);
+        });
+
+        it("should return empty array when no service keys exist", async () => {
+            const mocks = createServiceKeyNameMocks([]);
+            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, mocks);
+
+            const keyNames = await CFUtil["getAllServiceKeyNames"]("test-guid");
+            expect(keyNames).to.deep.equal([]);
+        });
+
+        it("should generate unique service key name when no existing keys", async () => {
+            const mocks = createServiceKeyNameMocks([]);
+            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, mocks);
+
+            const uniqueName = await CFUtil.generateUniqueServiceKeyName("my-service", "test-guid");
+            expect(uniqueName).to.equal("my-service-key-0");
+        });
+
+        it("should generate unique service key name avoiding existing names", async () => {
+            const mocks = createServiceKeyNameMocks(["my-service-key-0", "my-service-key-1", "custom-key"]);
+            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, mocks);
+
+            const uniqueName = await CFUtil.generateUniqueServiceKeyName("my-service", "test-guid");
+            expect(uniqueName).to.equal("my-service-key-2");
+        });
+
+        it("should generate unique service key name with gaps in existing names", async () => {
+            const mocks = createServiceKeyNameMocks(["my-service-key-0", "my-service-key-2", "other-key"]);
+            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, mocks);
+
+            const uniqueName = await CFUtil.generateUniqueServiceKeyName("my-service", "test-guid");
+            expect(uniqueName).to.equal("my-service-key-1");
+        });
+
+        it("should handle error when getting service key names", async () => {
+            const mocks = createServiceKeyNameMocks([], true);
+            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, mocks);
+            
+            await expect(CFUtil["getAllServiceKeyNames"]("test-guid"))
+                .to.be.rejectedWith("Failed to get service key names");
+        });
+    });
+
+    describe("when getting or creating service keys with endpoints", () => {
+
+        it("should use existing service key with valid endpoints", async () => {
+            const mocks = createServiceKeyEndpointMocks();
+            const credentials = mocks.getCredentials();
+
+            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, {
+                "@sap/cf-tools/out/src/cli.js": mocks["@sap/cf-tools/out/src/cli.js"],
+                "@sap/cf-tools/out/src/cf-local.js": {
+                    cfGetInstanceCredentials: () => Promise.resolve([credentials])
+                },
+                "@sap/cf-tools/out/src/utils.js": mocks["@sap/cf-tools/out/src/utils.js"]
+            });
+
+            const result = await CFUtil.getOrCreateServiceKeyWithEndpoints("test-service", "test-space");
+            expect(result).to.deep.equal(credentials.credentials);
+        });
+
+        it("should create new service key when no valid endpoints found", async () => {
+            const mocks = createServiceKeyEndpointMocks();
+            const credentials = mocks.getCredentials();
+
+            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, {
+                "@sap/cf-tools/out/src/cli.js": mocks["@sap/cf-tools/out/src/cli.js"],
+                "@sap/cf-tools/out/src/cf-local.js": mocks["@sap/cf-tools/out/src/cf-local.js"],
+                "@sap/cf-tools/out/src/utils.js": mocks["@sap/cf-tools/out/src/utils.js"]
+            });
+
+            const result = await CFUtil.getOrCreateServiceKeyWithEndpoints("test-service");
+            expect(result).to.deep.equal(credentials.credentials);
+            expect(mocks.getCounters().createCallCount).to.equal(1);
+        });
+
+        it("should throw error if service instance not found", async () => {
+            const mocks = createServiceKeyEndpointMocks({
+                serviceExists: false,
+                serviceInstanceName: "non-existent-service"
+            });
+
+            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, {
+                "@sap/cf-tools/out/src/cli.js": mocks["@sap/cf-tools/out/src/cli.js"],
+                "@sap/cf-tools/out/src/utils.js": mocks["@sap/cf-tools/out/src/utils.js"]
+            });
+
+            try {
+                await CFUtil.getOrCreateServiceKeyWithEndpoints("non-existent-service");
+                assert.fail(true, false, "Exception not thrown");
+            } catch (error: any) {
+                expect(error.message).to.include("Cannot find service instance 'non-existent-service' in space: test-space");
+            }
+        });
+
+        it("shouldn't throw error if created service key does not have valid endpoints", async () => {
+            const mocks = createServiceKeyEndpointMocks({ hasValidEndpoints: false });
+
+            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, {
+                "@sap/cf-tools/out/src/cli.js": mocks["@sap/cf-tools/out/src/cli.js"],
+                "@sap/cf-tools/out/src/cf-local.js": mocks["@sap/cf-tools/out/src/cf-local.js"],
+                "@sap/cf-tools/out/src/utils.js": mocks["@sap/cf-tools/out/src/utils.js"]
+            });
+
+            await CFUtil.getOrCreateServiceKeyWithEndpoints("test-service");
         });
     });
 

@@ -10,7 +10,7 @@ import Language from "../../src/model/language.js";
 import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
-import { renameResources } from "../../src/util/commonUtil.js";
+import { renameResources } from "../../src/util/renamingUtil.js";
 
 let sandbox: SinonSandbox = sinon.createSandbox();
 const options: IProjectOptions = {
@@ -39,7 +39,7 @@ describe("AnnotationManager", () => {
         const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
         const MANIFEST_FILENAME = "manifest.json";
         const baseAppFiles = new Map<string, string>([[MANIFEST_FILENAME, manifestString]]);
-        const renamedFiles = renameResources(baseAppFiles, "com.sap.base.app.id", "customer.com.sap.application.variant.id");
+        const renamedFiles = renameResources(baseAppFiles, ["com.sap.base.app.id"], "customer.com.sap.application.variant.id");
         const manifest = JSON.parse(renamedFiles.get(MANIFEST_FILENAME)!);
         const result = await annotationManager.process(manifest, Language.create(["EN", "DE", "FR"]));
         expect(result.get("annotations/annotation_annotationName1.xml")).to.be.eql(expectedAnnotationName1);
@@ -93,7 +93,7 @@ describe("AnnotationManager", () => {
             const getAnnotationI18nsSpy = sandbox.spy(annotationManager, "getAdaptedAnnotation" as any);
             const MANIFEST_FILENAME = "manifest.json";
             const baseAppFiles = new Map<string, string>([[MANIFEST_FILENAME, manifestString]]);
-            const renamedFiles = renameResources(baseAppFiles, "com.sap.base.app.id", "customer.com.sap.application.variant.id");
+            const renamedFiles = renameResources(baseAppFiles, ["com.sap.base.app.id"], "customer.com.sap.application.variant.id");
             const manifest = JSON.parse(renamedFiles.get(MANIFEST_FILENAME)!);
             const result = await annotationManager.process(manifest, Language.create(["EN"]));
             expect(getAnnotationI18nsSpy.getCalls().length).to.eql(0);
@@ -257,7 +257,7 @@ async function processAnnotations(folder: string, languages = ["EN", "DE"], expe
             }
         }
     })]]);
-    const renamedFiles = renameResources(baseAppFiles, "com.sap.base.app.id", "customer.com.sap.application.variant.id");
+    const renamedFiles = renameResources(baseAppFiles, ["com.sap.base.app.id"], "customer.com.sap.application.variant.id");
     const manifest = JSON.parse(renamedFiles.get(MANIFEST_FILENAME)!);
     const result = await annotationManager.process(manifest, Language.create(languages));
     const expectedFolder = `${folder}-expected/metadata.xml`;
