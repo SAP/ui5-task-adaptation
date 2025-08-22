@@ -104,6 +104,36 @@ describe("CFProcessor", () => {
     });
 
     describe("updateXsAppJson", () => {
+        it("should skip xs-app.json update if there are no routes", async () => {
+            const processor = new CFProcessor({
+                appName: "test-app",
+                serviceInstanceName: "test-service-instance"
+            });
+            const manifest = {};
+            const baseAppFiles = new Map<string, string>();
+            baseAppFiles.set("xs-app.json", JSON.stringify({}));
+            await processor.updateLandscapeSpecificContent(manifest, baseAppFiles);
+            expect(baseAppFiles.get("xs-app.json")).to.eql(JSON.stringify({}));
+            expect(cfUtilStub.notCalled).to.be.true;
+        });
+
+        it("should skip xs-app.json update if there are no routes with destination", async () => {
+            const processor = new CFProcessor({
+                appName: "test-app",
+                serviceInstanceName: "test-service-instance"
+            });
+            const manifest = {};
+            const baseAppFiles = new Map<string, string>();
+            const routes = [
+                { source: "/foo", authenticationType: "none" },
+                { source: "/bar", authenticationType: "none" }
+            ];
+            baseAppFiles.set("xs-app.json", JSON.stringify({ routes }));
+            await processor.updateLandscapeSpecificContent(manifest, baseAppFiles);
+            expect(baseAppFiles.get("xs-app.json")).to.eql(JSON.stringify({ routes }));
+            expect(cfUtilStub.notCalled).to.be.true;
+        });
+
         it("should throw error when serviceInstanceName is not provided", async () => {
             const processor = new CFProcessor({
                 appName: "test-app"
@@ -111,7 +141,10 @@ describe("CFProcessor", () => {
             });
             const manifest = {};
             const baseAppFiles = new Map<string, string>();
-            baseAppFiles.set("xs-app.json", JSON.stringify({ routes: [] }));
+            // Add a route with destination to trigger the error
+            baseAppFiles.set("xs-app.json", JSON.stringify({ 
+                routes: [{ source: "/api", destination: "api-dest" }] 
+            }));
 
             await expect(processor.updateLandscapeSpecificContent(manifest, baseAppFiles))
                 .to.be.rejectedWith("Service instance name must be specified in ui5.yaml configuration for app 'test-app'");
@@ -126,7 +159,10 @@ describe("CFProcessor", () => {
             });
             const manifest = {};
             const baseAppFiles = new Map<string, string>();
-            baseAppFiles.set("xs-app.json", JSON.stringify({ routes: [] }));
+            // Add a route with destination to trigger the service key function call
+            baseAppFiles.set("xs-app.json", JSON.stringify({ 
+                routes: [{ source: "/api", destination: "api-dest" }] 
+            }));
 
             await expect(processor.updateLandscapeSpecificContent(manifest, baseAppFiles))
                 .to.be.rejectedWith("Failed to get valid service keys for app 'test-app': Service not found");
@@ -227,7 +263,10 @@ describe("CFProcessor", () => {
             });
             const manifest = {};
             const baseAppFiles = new Map<string, string>();
-            baseAppFiles.set("xs-app.json", JSON.stringify({ routes: [] }));
+            // Add a route with destination to trigger the service key function call
+            baseAppFiles.set("xs-app.json", JSON.stringify({ 
+                routes: [{ source: "/api", destination: "api-dest" }] 
+            }));
 
             await processor.updateLandscapeSpecificContent(manifest, baseAppFiles);
 
