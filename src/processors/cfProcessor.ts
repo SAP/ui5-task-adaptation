@@ -39,8 +39,8 @@ export default class CFProcessor implements IProcessor {
     }
 
 
-    async updateLandscapeSpecificContent(renamedBaseAppManifest: any, baseAppFiles: Map<string, string>): Promise<void> {
-        this.updateCloudPlatform(renamedBaseAppManifest);
+    async updateLandscapeSpecificContent(baseAppManifest: any, baseAppFiles: Map<string, string>): Promise<void> {
+        this.updateCloudPlatform(baseAppManifest);
         await this.updateXsAppJson(baseAppFiles);
     }
 
@@ -107,20 +107,20 @@ export default class CFProcessor implements IProcessor {
     }
 
 
-    private updateCloudPlatform(renamedBaseAppManifest: any) {
-        const sapCloudService = renamedBaseAppManifest["sap.cloud"]?.service;
-        const sapPlatformCf = renamedBaseAppManifest["sap.platform.cf"];
+    private updateCloudPlatform(baseAppManifest: any) {
+        const sapCloudService = baseAppManifest["sap.cloud"]?.service;
+        const sapPlatformCf = baseAppManifest["sap.platform.cf"];
         if (sapPlatformCf?.oAuthScopes && sapCloudService) {
             sapPlatformCf.oAuthScopes = sapPlatformCf.oAuthScopes.map((scope: string) =>
                 scope.replace(`$XSAPPNAME.`, `$XSAPPNAME('${sapCloudService}').`));
         }
         if (this.configuration.sapCloudService) {
-            if (renamedBaseAppManifest["sap.cloud"] == null) {
-                renamedBaseAppManifest["sap.cloud"] = {};
+            if (baseAppManifest["sap.cloud"] == null) {
+                baseAppManifest["sap.cloud"] = {};
             }
-            renamedBaseAppManifest["sap.cloud"].service = this.configuration.sapCloudService;
+            baseAppManifest["sap.cloud"].service = this.configuration.sapCloudService;
         } else {
-            delete renamedBaseAppManifest["sap.cloud"];
+            delete baseAppManifest["sap.cloud"];
         }
     }
 

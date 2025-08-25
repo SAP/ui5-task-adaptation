@@ -8,6 +8,8 @@ import { posix as path } from "path";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const log = Log.getLogger("rollup-plugin-ui5-resolve-task-adaptation");
+const CHANGES_EXT = ".change";
+const MANIFEST_CHANGE = "appdescr_";
 
 
 export function dotToUnderscore(value: string) {
@@ -97,4 +99,12 @@ export function getUniqueName(existingNames: string[], template: string) {
         suffix++;
     } while (existingNames.includes(template + suffixString));
     return template + suffixString;
+}
+
+export function isManifestChange(filename: string, content: string): boolean {
+    if (filename.endsWith(CHANGES_EXT)) {
+        const change = JSON.parse(content);
+        return change.changeType?.startsWith(MANIFEST_CHANGE);
+    }
+    return false;
 }

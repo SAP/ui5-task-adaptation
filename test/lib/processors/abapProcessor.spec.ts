@@ -45,7 +45,7 @@ describe("AbapProcessor", () => {
         const annotationsProcessed = new Map([["annotation1", "annotationContent1"], ["annotation2", "annotationContent2"]]);
         const baseAppFiles = new Map([["baseAppFile1", "baseAppFileContent1"], ["baseAppFile2", "baseAppFileContent2"]]);
         const annotationManagerStub = sandbox.stub(annotationManager, "process").resolves(annotationsProcessed);
-        await new AbapProcessor(options.configuration, abapRepoManager, annotationManager).updateLandscapeSpecificContent({}, baseAppFiles);
+        await new AbapProcessor(options.configuration, abapRepoManager, annotationManager).updateLandscapeSpecificContent({}, baseAppFiles, "appVarId", "customer_com_sap_application_variant_id");
         expect(annotationManagerStub.getCalls().length).to.eql(1);
         expect([...baseAppFiles.keys()]).to.have.members(["annotation1", "annotation2", "baseAppFile1", "baseAppFile2"]);
     });

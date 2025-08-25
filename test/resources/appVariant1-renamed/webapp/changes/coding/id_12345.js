@@ -6,6 +6,6 @@ function (
     ControllerExtension, Worklist, MessageToast
 ) {
     "use strict";
-    // the path for Worklist will be renamed
-    return ControllerExtension.extend("customer.com.sap.application.variant.id.controller.Worklist.controller", {});
+    // the path for Worklist will be renamed appVariant1
+    return ControllerExtension.extend("customer.com.sap.application.variant.id.Worklist.controller", {});
 });

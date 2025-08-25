@@ -63,6 +63,7 @@ describe("FileMerger", () => {
 
             const expectedResources = [
                 "manifest.json",
+                "manifest.appdescr_variant", // we will filter it out later
                 "i18n/baseAppI18n.properties",
                 "i18n/baseAppI18n_de.properties",
                 "i18n/baseAppI18n_de_AU.properties",

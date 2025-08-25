@@ -203,6 +203,7 @@ describe("FileMerger Unit Test", () => {
                         "version": "1.0.0"
                     }
                 ],
+                "componentName": "customer.com.sap.application.variant.id",
                 "isCloudDevAdaptation": true,
                 "models": {
                     "i18n|sap.suite.ui.generic.template.ListObject": {

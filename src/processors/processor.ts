@@ -10,7 +10,7 @@ export default interface IProcessor {
     fetch(repoName: string, cachebusterToken: string): Promise<Map<string, string>>;
 
     createAppVariantHierarchyItem(appVariantId: string, version: string): void;
-    updateLandscapeSpecificContent(renamedBaseAppManifest: any, baseAppFiles: Map<string, string>): Promise<void>;
+    updateLandscapeSpecificContent(baseAppManifest: any, baseAppFiles: Map<string, string>, appVariantId: string, prefix: string): Promise<void>;
 }
 
 

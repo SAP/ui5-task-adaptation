@@ -13,6 +13,7 @@ import { IProjectOptions } from "../../src/model/types.js";
 import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
+import FilesUtil from "../../src/util/filesUtil.js";
 
 describe("BaseAppManager getManifestInfo", () => {
 
@@ -163,7 +164,8 @@ describe("BaseAppManager CF", () => {
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
         ]));
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        const files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        let files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const actualManifest = JSON.parse(files.get("manifest.json")!);
         const actualCPreload = files.get("component-preload.js");
         expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected-cf.json")));
@@ -182,9 +184,8 @@ describe("BaseAppManager CF", () => {
             ["Controller-dbg.js", "debug only content"]
         ]));
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        const files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
-        // Should include manifest.json, Component.js, and Controller-dbg.js (no corresponding .js)
-        // Should exclude manifest-bundle.zip, Component-preload.js, sap-ui-cachebuster-info.json, Component-dbg.js
+        let files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         expect(Array.from(files.keys())).to.have.members(["manifest.json", "Component.js", "Controller-dbg.js"]);
         assertManifestInfo(files);
     });
@@ -206,7 +207,8 @@ describe("BaseAppManager CF", () => {
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
         const optionsClone = { ...options, configuration: { ...options.configuration } };
         delete optionsClone.configuration["sapCloudService"];
-        const files = await baseApp.adapt(appVariant, new CFProcessor(optionsClone.configuration));
+        let files = await baseApp.adapt(appVariant, new CFProcessor(optionsClone.configuration));
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const manifest = JSON.parse(files.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.be.undefined;
         assertManifestInfo(files);
@@ -217,7 +219,8 @@ describe("BaseAppManager CF", () => {
         const baseAppManifest = TestUtil.getResourceJson("manifest.json");
         delete baseAppManifest["sap.cloud"];
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(baseAppManifest)]]));
-        const files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        let files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const manifest = JSON.parse(files.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.eql({ service: "sapCloudService" });
         assertManifestInfo(files);
@@ -263,6 +266,7 @@ describe("BaseAppManager CF", () => {
                     version: "1.0.0"
                 }
             ],
+            componentName: "com.sap.base.app.id",
             isCloudDevAdaptation: true
         });
     });
@@ -337,7 +341,8 @@ describe("BaseAppManager Abap", () => {
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
         ]));
-        const files = await baseApp.adapt(appVariant, abapProcessor);
+        let files = await baseApp.adapt(appVariant, abapProcessor);
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const actualManifest = JSON.parse(files.get("manifest.json")!);
         const actualCPreload = files.get("component-preload.js");
         expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected-abap.json")));
@@ -356,17 +361,18 @@ describe("BaseAppManager Abap", () => {
             ["Component.js", "production content"],
             ["Controller-dbg.js", "debug only content"]
         ]));
-        const files = await baseApp.adapt(appVariant, abapProcessor);
-        assertAnnotations(files, 9); // Updated count to include Component.js and Controller-dbg.js
+        let files = await baseApp.adapt(appVariant, abapProcessor);
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
+        assertAnnotations(files, 9);
         expect(Array.from(files.keys())).to.have.members([
             "manifest.json",
             "Component.js",
             "Controller-dbg.js",
             "annotations/annotation_annotationName1.xml",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n.properties",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n_en.properties",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n_de.properties",
-            "i18n/annotations/customercomsapapplicationvariantid/i18n_fr.properties",
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n.properties",
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n_en.properties",
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n_de.properties",
+            "customer_com_sap_application_variant_id/i18n/annotations/i18n_fr.properties",
             "annotations/annotation_annotationName2.xml"
         ]);
         assertManifestInfo(files);
@@ -386,7 +392,8 @@ describe("BaseAppManager Abap", () => {
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
         const optionsClone = { ...options, configuration: { ...options.configuration } };
         delete optionsClone.configuration["sapCloudService"];
-        const files = await baseApp.adapt(appVariant, abapProcessor);
+        let files = await baseApp.adapt(appVariant, abapProcessor);
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const manifest = JSON.parse(files.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.eql({ service: "com.sap.manifest.default.service", public: true });
         assertAnnotations(files, 7);
@@ -397,7 +404,8 @@ describe("BaseAppManager Abap", () => {
         const baseAppManifest = JSON.parse(TestUtil.getResource("manifest.json"));
         delete baseAppManifest["sap.cloud"];
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(baseAppManifest)]]));
-        const files = await baseApp.adapt(appVariant, abapProcessor);
+        let files = await baseApp.adapt(appVariant, abapProcessor);
+        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const manifest = JSON.parse(files.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.be.undefined;
         assertAnnotations(files, 7);
@@ -444,10 +452,10 @@ function assertManifestInfo(files: ReadonlyMap<string, string>) {
 function assertAnnotations(files: ReadonlyMap<string, string>, resourceCountExpected: number) {
     const annotationName1Expected = TestUtil.getResourceXml("annotations/v2/annotation-1-v2-expected/annotationName1-expected.xml");
     const annotationName2Expected = TestUtil.getResourceXml("annotations/v2/annotation-2-v2-expected/annotationName2-expected.xml");
-    const name1i18nDf = files.get("i18n/annotations/customercomsapapplicationvariantid/i18n.properties");
-    const name1i18nEn = files.get("i18n/annotations/customercomsapapplicationvariantid/i18n_en.properties");
-    const name1i18nDe = files.get("i18n/annotations/customercomsapapplicationvariantid/i18n_de.properties");
-    const name1i18nFr = files.get("i18n/annotations/customercomsapapplicationvariantid/i18n_fr.properties");
+    const name1i18nDf = files.get("customer_com_sap_application_variant_id/i18n/annotations/i18n.properties");
+    const name1i18nEn = files.get("customer_com_sap_application_variant_id/i18n/annotations/i18n_en.properties");
+    const name1i18nDe = files.get("customer_com_sap_application_variant_id/i18n/annotations/i18n_de.properties");
+    const name1i18nFr = files.get("customer_com_sap_application_variant_id/i18n/annotations/i18n_fr.properties");
     const annotationName1Actual = files.get("annotations/annotation_annotationName1.xml");
     const annotationName2Actual = files.get("annotations/annotation_annotationName2.xml");
     expect(files.size).to.eql(resourceCountExpected);

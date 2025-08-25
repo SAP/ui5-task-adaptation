@@ -1,12 +1,11 @@
 import { AppDescriptorChange, Applier, RegistrationBuild } from "../dist/bundle.js";
-import { dotToUnderscore, trimExtension } from "./util/commonUtil.js";
+import { trimExtension } from "./util/commonUtil.js";
 
 import AppVariant from "./appVariantManager.js";
 import BuildStrategy from "./buildStrategy.js";
 import { IChange } from "./model/types.js";
 import IProcessor from "./processors/processor.js";
 import { getLogger } from "@ui5/logger";
-import { renameResources } from "./util/renamingUtil.js";
 
 const log = getLogger("@ui5/task-adaptation::BaseAppManager");
 
@@ -89,14 +88,25 @@ export default class BaseApp {
     }
 
     async adapt(appVariant: AppVariant, processor: IProcessor): Promise<ReadonlyMap<string, string>> {
-        const files = renameResources(this.files, [appVariant.reference], appVariant.id);
+        const files = new Map(this.files)
         const manifest = JSON.parse(files.get("manifest.json")!);
-        await processor.updateLandscapeSpecificContent(manifest, files);
-        this.fillAppVariantIdHierarchy(processor, this.id, this.version, manifest);
+        manifest["sap.app"].id = appVariant.id;
+        await processor.updateLandscapeSpecificContent(manifest, files, appVariant.id, appVariant.prefix);
+        this.updateComponentName(manifest, this.id);
+        this.fillAppVariantIdHierarchy(processor, appVariant.reference, this.version, manifest);
         this.updateAdaptationProperties(manifest);
         await this.applyDescriptorChanges(manifest, appVariant);
         files.set("manifest.json", JSON.stringify(manifest));
         return files;
+    }
+
+    private updateComponentName(manifest: any, id: string) {
+        if (manifest["sap.ui5"] == null) {
+            manifest["sap.ui5"] = {};
+        }
+        if (manifest["sap.ui5"].componentName == null) {
+            manifest["sap.ui5"].componentName = id;
+        }
     }
 
     private updateAdaptationProperties(content: any) {
@@ -124,19 +134,6 @@ export default class BaseApp {
     }
 
 
-    private fillAppVariantIdHierarchy(processor: IProcessor, id: string, version: string, baseAppManifest: any) {
-        log.verbose("Filling up app variant hierarchy in manifest.json");
-        if (baseAppManifest["sap.ui5"] == null) {
-            baseAppManifest["sap.ui5"] = {};
-        }
-        if (baseAppManifest["sap.ui5"].appVariantIdHierarchy == null) {
-            baseAppManifest["sap.ui5"].appVariantIdHierarchy = [];
-        }
-        const appVariantIdHierarchyItem = processor.createAppVariantHierarchyItem(id, version);
-        baseAppManifest["sap.ui5"].appVariantIdHierarchy.unshift(appVariantIdHierarchyItem);
-    }
-
-
     private VALIDATION_RULES = new Map([["sap.app/id", (value: string) => {
         if (!value.includes(".")) {
             // https://help.sap.com/docs/bas/developing-sap-fiori-app-in-sap-business-application-studio/releasing-sap-fiori-application-to-be-extensible-in-adaptation-projects-on-sap-s-4hana-cloud
@@ -161,7 +158,7 @@ export default class BaseApp {
     private async applyDescriptorChanges(baseAppManifest: any, appVariant: AppVariant) {
         log.verbose("Applying appVariant changes");
         const changesContent = new Array<AppDescriptorChange>();
-        const i18nBundleName = dotToUnderscore(appVariant.id);
+        const i18nBundleName = appVariant.prefix;
         for (const change of appVariant.getProcessedManifestChanges()) {
             changesContent.push(new AppDescriptorChange(change));
             this.adjustAddNewModelEnhanceWith(change, i18nBundleName);
@@ -170,6 +167,19 @@ export default class BaseApp {
             const strategy = new BuildStrategy(RegistrationBuild);
             await Applier.applyChanges(baseAppManifest, changesContent, strategy);
         }
+    }
+
+
+    private fillAppVariantIdHierarchy(processor: IProcessor, id: string, version: string, baseAppManifest: any) {
+        log.verbose("Filling up app variant hierarchy in manifest.json");
+        if (baseAppManifest["sap.ui5"] == null) {
+            baseAppManifest["sap.ui5"] = {};
+        }
+        if (baseAppManifest["sap.ui5"].appVariantIdHierarchy == null) {
+            baseAppManifest["sap.ui5"].appVariantIdHierarchy = [];
+        }
+        const appVariantIdHierarchyItem = processor.createAppVariantHierarchyItem(id, version);
+        baseAppManifest["sap.ui5"].appVariantIdHierarchy.unshift(appVariantIdHierarchyItem);
     }
 
 

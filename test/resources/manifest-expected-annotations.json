@@ -147,7 +147,7 @@
                     "bundleName": "customer.com.sap.application.variant.id.i18n.i18n",
                     "enhanceWith": [
                         {
-                            "bundleUrl": "i18n/annotations/customercomsapapplicationvariantid/i18n.properties",
+                            "bundleUrl": "customer_com_sap_application_variant_id/i18n/annotations/i18n.properties",
                             "bundleUrlRelativeTo": "component"
                         }
                     ]

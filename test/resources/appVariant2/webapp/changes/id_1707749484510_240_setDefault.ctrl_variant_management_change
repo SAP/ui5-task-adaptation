@@ -6,7 +6,7 @@
 	"fileType": "ctrl_variant_management_change",
 	"fileName": "id_1707749484510_240_setDefault",
 	"selector": {
-		"id": "customer.com.sap.application.variant.id::FreightCostAllocationDocumentList--fe::PageVariantManagement",
+		"id": "com.sap.base.app.id::FreightCostAllocationDocumentList--fe::PageVariantManagement",
 		"idIsLocal": false
 	}
 }

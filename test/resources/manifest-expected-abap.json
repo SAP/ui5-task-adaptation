@@ -118,6 +118,7 @@
         ]
     },
     "sap.ui5": {
+        "componentName": "customer.com.sap.application.variant.id",
         "config": {
             "fullWidth": true
         },
@@ -150,7 +151,7 @@
                 "settings": {
                     "enhanceWith": [
                         {
-                            "bundleUrl": "i18n/annotations/customercomsapapplicationvariantid/i18n.properties",
+                            "bundleUrl": "customer_com_sap_application_variant_id/i18n/annotations/i18n.properties",
                             "bundleUrlRelativeTo": "component"
                         }
                     ],

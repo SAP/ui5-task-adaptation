@@ -108,6 +108,7 @@
             "dist/**",
             "src/model/types.ts",
             "src/util/requestUtil.ts",
+            "src/util/renamingHandlers/renamingHandler.ts",
             "scripts/**/*.js",
             "scripts/git/octokitUtil.ts",
             "*/**/*.d.ts",

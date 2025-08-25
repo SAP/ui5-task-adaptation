@@ -1,12 +1,12 @@
 import { IChange } from "./model/types.js";
+import { dotToUnderscore, isManifestChange } from "./util/commonUtil.js";
+import FilesUtil from "./util/filesUtil.js";
 import ResourceUtil from "./util/resourceUtil.js";
 import TaskUtil from "@ui5/project/build/helpers/TaskUtil";
 import { posix as path } from "path";
-import { rename } from "./util/renamingUtil.js";
+import { moveFile, moveFiles } from "./util/movingHandler/fileMoveHandler.js";
 
-const CHANGES_DIR = "changes/";
 const CHANGES_EXT = ".change";
-const MANIFEST_CHANGE = "appdescr_"
 
 export default class AppVariant {
 
@@ -16,6 +16,9 @@ export default class AppVariant {
     readonly reference: string;
     readonly layer: any;
     readonly content: any;
+    prefix: string = "";
+    private movedFiles = new Map<string, string>();
+    private renaming = new Map<string, string>();
 
 
     static async fromWorkspace(workspace: IWorkspace, projectNamespace: string): Promise<AppVariant> {
@@ -42,33 +45,47 @@ export default class AppVariant {
         this.id = id;
         this.layer = layer;
         this.content = content;
+
+        // Prefix is a subfolder for the app variant to store js, fragments,
+        // annotations and i18n files. It can be anything, but for convenience
+        // it is an app variant id.
+        this.prefix = dotToUnderscore(this.id);
     }
 
 
-    getProcessedFiles() {
-        const files = new Map<string, string>();
-        this.files.forEach((content, filename) => {
-            if (filename.startsWith(CHANGES_DIR)) {
-                if (!this.isManifestChange(filename, content)) {
-                    files.set(filename, rename(content, [this.reference], this.id));
-                }
-            } else if (filename !== "manifest.appdescr_variant") {
-                files.set(filename, content);
-            }
+    getProcessedFiles(): ReadonlyMap<string, string> {
+        const { files, renamingPaths } = moveFiles(this.files, this.prefix, this.id);
+        // Directly rename files that with new paths, this ensures no conflict in further renaming
+        // In later remaming it's not possible to find correct prefix of moved files
+        return FilesUtil.rename(files, renamingPaths);
+    };
+
+    /** 
+     * Since we moved files, we need to update paths where they were referenced.
+     * To do this we use renameMap function along with renaming ids.
+     */
+    getRenamingForMovedFiles(): Map<string, string> {
+        const renaming = new Map<string, string>();
+        const slashToDot = (str: string) => str.replaceAll("\/", ".");
+        this.renaming.forEach((newPath, oldPath) => {
+            renaming.set(slashToDot(oldPath), slashToDot(newPath));
         });
-        return files;
-    }
+        return renaming;
+    };
 
 
     getProcessedManifestChanges() {
-        // Order is important: apply manifest.json changes first, then *.change
-        // files. UI5 does the same.
+        // Order: manifest changes first, then *.change files
         const manifestChanges: Array<IChange> = structuredClone(this.content) ?? [];
+
         this.files.forEach((content, filename) => {
-            if (this.isManifestChange(filename, content)) {
-                const change = JSON.parse(rename(content, [this.reference], this.id))
-                this.updateRelativePaths(change, filename);
-                manifestChanges.push(change);
+            if (filename.endsWith(CHANGES_EXT)) {
+                const change = JSON.parse(content);
+                if (isManifestChange(filename, content)) {
+                    const { newFilename } = moveFile(filename, content, this.prefix, this.id);
+                    this.updateRelativePaths(change, newFilename);
+                    manifestChanges.push(change);
+                }
             }
         });
         if (this.layer) {
@@ -97,14 +114,12 @@ export default class AppVariant {
         }
     }
 
-    private isManifestChange(filename: string, content: string): boolean {
-        if (filename.endsWith(CHANGES_EXT)) {
-            const change = JSON.parse(content);
-            return change.changeType?.startsWith(MANIFEST_CHANGE);
-        }
-        return false;
-    }
-
+    /**
+     * 3p. We not only omit files, which were moved or deleted from the resulted
+     * file set, but also update existing adaptation project resources with
+     * renamed content, otherwise flexibility-bundle will contain not renamed
+     * content of files.
+     */
     omitDeletedResources(files: ReadonlyMap<string, string>, projectNamespace: string, taskUtil: TaskUtil) {
         if (!this.resources) {
             return;
@@ -113,6 +128,11 @@ export default class AppVariant {
             const relativePath = ResourceUtil.relativeToRoot(resource.getPath(), projectNamespace);
             if (!files.has(relativePath)) {
                 taskUtil.setTag(resource, taskUtil.STANDARD_TAGS.OmitFromBuildResult, true);
+                if (this.movedFiles.has(relativePath)) {
+                    const newPath = this.movedFiles.get(relativePath)!;
+                    const renamedContent = files.get(newPath)!;
+                    resource.setString(renamedContent);
+                }
             }
         }
     }

@@ -63,7 +63,8 @@ export default class TestUtil {
 
     static async getAppVariant(projectName: string, namespace: string) {
         const projectMeta = await TestUtil.getWorkspace(projectName, namespace);
-        return AppVariant.fromWorkspace(projectMeta.workspace, namespace);
+        const appVariant = AppVariant.fromWorkspace(projectMeta.workspace, namespace);
+        return appVariant;
     }
 
 

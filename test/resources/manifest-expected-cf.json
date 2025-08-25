@@ -118,6 +118,7 @@
         ]
     },
     "sap.ui5": {
+        "componentName": "customer.com.sap.application.variant.id",
         "config": {
             "fullWidth": true
         },

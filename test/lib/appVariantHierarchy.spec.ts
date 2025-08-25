@@ -77,7 +77,7 @@ describe("App Variant Hierarchy", () => {
     });
 
     it("should contain fragment renamed to appVariant2", () => {
-        const fragment = XmlUtil.xmlToJson(files.get("changes/fragments/AdlChart.fragment.xml")!);
+        const fragment = XmlUtil.xmlToJson(files.get("changes/customer_com_sap_application_variant_id/fragments/AdlChart.fragment.xml")!);
         expect(fragment.Popover.content["viz:VizFrame"]._attributes.appId).eql("customer.app.variant.2.id");
         expect(fragment.Popover.content["viz:VizFrame"]._attributes.appIdSlashes).eql("customer/app/variant/2/id");
     });
@@ -100,16 +100,22 @@ describe("App Variant Hierarchy", () => {
         expect([...files.keys()].toSorted()).to.have.members([
             "i18n/i18n_de.properties",
             "i18n/i18n.properties",
-            "changes/id_1707749484510_240_setDefault.ctrl_variant_management_change",
             "manifest.json",
-            "changes/coding/id_12345.js",
-            "changes/fragments/AdlChart.fragment.xml",
+            "changes/customer_app_variant_2_id/coding/id_12345.js",
+            "changes/customer_app_variant_2_id/fragments/AdlChart.fragment.xml",
+            "changes/customer_com_sap_application_variant_id/coding/id_12345.js",
+            "changes/customer_com_sap_application_variant_id/fragments/AdlChart.fragment.xml",
             "changes/id_1696839317667_propertyChange.change",
             "changes/id_1707741869990_200_flVariant.ctrl_variant",
             "changes/id_1707749484507_210_setTitle.ctrl_variant_change",
             "changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
-            "changes/notsupported.testfile"
+            "changes/id_1707749484510_240_setDefault.ctrl_variant_management_change",
+            "changes/id_1753705046493_197_codeExt.change",
+            "changes/customer_com_sap_application_variant_id/notsupported.testfile"
         ]);
+        // It has replaced id_12345 of appVariant1 with the appVariant2
+        expect(files.get("changes/customer_com_sap_application_variant_id/coding/id_12345.js")).to.include("appVariant1");
+        expect(files.get("changes/customer_app_variant_2_id/coding/id_12345.js")).to.include("appVariant2");
     });
 
     it("should merge i18n files of original app, appVariant1 and appVariant2", async () => {
@@ -120,7 +126,7 @@ describe("App Variant Hierarchy", () => {
         ]);
         expect(files.get("i18n/i18n_de.properties")!.split("\n")).to.include.members([
             "base=a_de", // was in original app
-            "customer.app.variant.2.id.title=UI5 Task Adaptation DE", // merged from appVariant1
+            "customer.com.sap.application.variant.id.title=UI5 Task Adaptation DE", // merged from appVariant1
             "app.variant.2=a_de" // merged from appVariant2
         ]);
     });
