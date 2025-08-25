@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv";
 
-import { logBetaUsage, logBuilderVersion } from "./util/commonUtil.js";
+import { logBuilderVersion } from "./util/commonUtil.js";
 
 import AppVariant from "./appVariantManager.js";
 import BaseApp from "./baseAppManager.js";
@@ -18,7 +18,6 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
 
     async function process(workspace: IWorkspace, taskUtil: any) {
         logBuilderVersion();
-        logBetaUsage();
 
         const processor = determineProcessor(options.configuration);
 
