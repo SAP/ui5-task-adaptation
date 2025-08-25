@@ -246,7 +246,7 @@ export default class CFUtil {
         }
 
         const uniqueServiceKeyName = await uniqueServiceKeyNamePromise;
-        log.info(`No valid service key found with proper endpoints structure. Creating new service key '${uniqueServiceKeyName}' for '${serviceInstance.name}'`);
+        log.verbose(`No valid service key found with proper endpoints structure. Creating new service key '${uniqueServiceKeyName}' for '${serviceInstance.name}'`);
         await this.createServiceKey(serviceInstance.name, uniqueServiceKeyName);
 
         // Get the newly created service key and validate its endpoints

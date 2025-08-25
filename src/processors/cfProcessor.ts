@@ -5,6 +5,9 @@ import IProcessor from "./processor.js";
 import { cached } from "../cache/cacheHolder.js";
 import { validateObject } from "../util/commonUtil.js";
 import CFUtil from "../util/cfUtil.js";
+import { getLogger } from "@ui5/logger";
+
+const log = getLogger("@ui5/task-adaptation::CFProcessor");
 
 export default class CFProcessor implements IProcessor {
 
@@ -47,6 +50,12 @@ export default class CFProcessor implements IProcessor {
         if (!xsAppJsonContent) {
             return;
         }
+        // Also skip if no routes or no routes with a destination property
+        const xsAppJson = JSON.parse(xsAppJsonContent);
+        if (!Array.isArray(xsAppJson.routes) || !xsAppJson.routes.some((route: any) => route.destination)) {
+            log.verbose(`No routes with 'destination' found in xs-app.json for app '${this.configuration.appName}'. Skipping xs-app.json update.`);
+            return;
+        }
 
         const { serviceInstanceName, space } = this.configuration;
         if (!serviceInstanceName) {
@@ -61,9 +70,12 @@ export default class CFProcessor implements IProcessor {
             throw new Error(`Failed to get valid service keys for app '${this.configuration.appName}': ${error.message}`);
         }
 
-        const xsAppJson = JSON.parse(xsAppJsonContent);
-        xsAppJson.routes = this.enhanceRoutesWithEndpointAndService(serviceCredentials, xsAppJson.routes);
-        baseAppFiles.set("xs-app.json", JSON.stringify(xsAppJson, null, 2));
+        if (serviceCredentials) {
+            xsAppJson.routes = this.enhanceRoutesWithEndpointAndService(serviceCredentials, xsAppJson.routes);
+            baseAppFiles.set("xs-app.json", JSON.stringify(xsAppJson, null, 2));
+        } else {
+            log.info(`No endpoints found for app '${this.configuration.appName}'. xs-app.json will not be updated.`);
+        }
     }
 
 
