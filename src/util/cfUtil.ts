@@ -5,6 +5,7 @@ import { getSpaceGuidThrowIfUndefined } from "@sap/cf-tools/out/src/utils.js";
 import { Cli } from "@sap/cf-tools/out/src/cli.js";
 import { eFilters } from "@sap/cf-tools/out/src/types.js";
 import { getLogger } from "@ui5/logger";
+import AuthenticationError from "../model/authenticationError.js";
 
 const log = getLogger("@ui5/task-adaptation::CFUtil");
 
@@ -118,22 +119,22 @@ export default class CFUtil {
         }));
     }
 
-
-    static processErrors(json: any) {
-        if (json?.errors?.length > 0) {
-            const message = JSON.stringify(json.errors);
-            if (json?.errors?.some((e: any) => e.title === "CF-NotAuthenticated" || e.code === 10002)) {
-                throw new Error(`Authentication error. Use 'cf login' to authenticate in Cloud Foundry: ${message}`);
-            }
-            throw new Error(`Failed sending request to Cloud Foundry: ${message}`);
+    static processCfErrors(errors?: ICfError[]) {
+        if (!errors || errors.length === 0) {
+            return;
         }
+        const authError = errors.find(e => e.title === "CF-NotAuthenticated" || e.code === 10002);
+        if (authError) {
+            throw new AuthenticationError(authError.detail);
+        }
+        throw new Error(`Failed sending request to Cloud Foundry: ${JSON.stringify(errors)}`);
     }
 
 
     static async requestCfApi(url: string): Promise<IResource[]> {
         const response = await this.cfExecute(["curl", url]);
         const json = this.parseJson(response);
-        this.processErrors(json);
+        this.processCfErrors(json?.errors);
         const resources: IResource[] = json?.resources;
         const totalPages = json?.pagination?.total_pages;
         if (totalPages > 1) {
@@ -164,10 +165,16 @@ export default class CFUtil {
                     if (errorValues?.length > 0) {
                         log.verbose(this.errorsToString(errorValues));
                     }
+                    if (response.stdout === "\n") {
+                        throw new AuthenticationError();
+                    }
                     return response.stdout;
                 }
                 errors.add(response.error || response.stderr);
             } catch (error: any) {
+                if (error instanceof AuthenticationError) {
+                    throw error;
+                }
                 errors.add(error.message);
             }
         }
@@ -339,4 +346,12 @@ export default class CFUtil {
             throw new Error("Please specify space and org guids in ui5.yaml or login to Cloud Foundry with 'cf login' and try again: " + e.message);
         });
     }
+}
+
+interface ICfError {
+    code: number;
+    title: string;
+    detail: string;
+    // Allow unexpected additional properties without failing type checks
+    [key: string]: any;
 }
