@@ -4,8 +4,7 @@ import * as sinon from "sinon";
 import { SinonSandbox } from "sinon";
 import TestUtil from "../testUtilities/testUtil.js";
 import chaiAsPromised from "chai-as-promised";
-import esmock from "esmock";
-import ui5Resolve from "../../../scripts/rollup/ui5Resolve.js";
+import ui5Resolve from "../../../rollup/ui5Resolve.js";
 
 const { expect } = chai;
 chai.use(chaiAsPromised);
@@ -53,8 +52,9 @@ describe("UI5Resolve", () => {
 
 });
 
-function mockUI5Resolve() {
-    return esmock("../../../scripts/rollup/ui5Resolve.js", {}, {
+async function mockUI5Resolve() {
+    const { default: esmock } = await import("esmock");
+    return esmock("../../../rollup/ui5Resolve.js", {}, {
         "crypto": {
             randomBytes: () => Buffer.from("")
         }

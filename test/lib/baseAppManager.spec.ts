@@ -1,6 +1,6 @@
 import * as sinon from "sinon";
 
-import { Applier, AppDescriptorChange } from "../../dist/bundle.js";
+import { RawApplier, AppDescriptorChange } from "../../dist/bundle.js";
 import { assert, expect } from "chai";
 
 import AbapProcessor from "../../src/processors/abapProcessor.js";
@@ -229,9 +229,9 @@ describe("BaseAppManager CF", () => {
     it("should fill change layer", async () => {
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
-        const stub = sandbox.stub(Applier, "applyChanges")!;
+        const stub = sandbox.stub(RawApplier, "applyChanges")!;
         await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
-        const layers = stub.getCall(0).args[1].map((change: AppDescriptorChange) => change.getLayer());
+        const layers = stub.getCall(0).args[2].map((change: AppDescriptorChange) => change.getLayer());
         expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
 
@@ -414,9 +414,9 @@ describe("BaseAppManager Abap", () => {
 
     it("should fill change layer", async () => {
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
-        const stub = sandbox.stub(Applier, "applyChanges")!;
+        const stub = sandbox.stub(RawApplier, "applyChanges")!;
         await baseApp.adapt(appVariant, abapProcessor);
-        const layers = stub.getCall(0).args[1].map((change: AppDescriptorChange) => change.getLayer());
+        const layers = stub.getCall(0).args[2].map((change: AppDescriptorChange) => change.getLayer());
         expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
 

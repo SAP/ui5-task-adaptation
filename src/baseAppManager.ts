@@ -1,4 +1,4 @@
-import { AppDescriptorChange, Applier, RegistrationBuild } from "../dist/bundle.js";
+import { AppDescriptorChange, RawApplier, RegistrationBuild } from "../dist/bundle.js";
 import { trimExtension } from "./util/commonUtil.js";
 
 import AppVariant from "./appVariantManager.js";
@@ -164,8 +164,8 @@ export default class BaseApp {
             this.adjustAddNewModelEnhanceWith(change, i18nBundleName);
         }
         if (changesContent.length > 0) {
-            const strategy = new BuildStrategy(RegistrationBuild);
-            await Applier.applyChanges(baseAppManifest, changesContent, strategy);
+            const changeHandlers = await Promise.all(changesContent.map(change => RegistrationBuild[change.getChangeType()]()));
+            await RawApplier.applyChanges(changeHandlers, baseAppManifest, changesContent, new BuildStrategy());
         }
     }
 

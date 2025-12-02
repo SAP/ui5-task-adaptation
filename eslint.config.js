@@ -3,7 +3,7 @@ import * as eslintimport from "eslint-plugin-import";
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 
-export default tseslint.config(
+export default tseslint.config([
     eslint.configs.recommended,
     ...tseslint.configs.recommendedTypeChecked,
     {
@@ -12,7 +12,8 @@ export default tseslint.config(
                 project: [
                     "./tsconfig.json",
                     "./test/lib/tsconfig.json",
-                    "./scripts/tsconfig.json"
+                    "./scripts/tsconfig.json",
+                    "./rollup/tsconfig.json"
                 ],
                 tsconfigRootDir: import.meta.dirname,
             },
@@ -65,4 +66,4 @@ export default tseslint.config(
             "@typescript-eslint/no-unused-expressions": "off"
         },
     }
-);
+]);

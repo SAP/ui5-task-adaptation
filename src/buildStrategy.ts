@@ -1,17 +1,4 @@
-
 export default class BuildStrategy {
-
-    private registrationBuild: any;
-
-    constructor(registrationBuild: any) {
-        this.registrationBuild = registrationBuild;
-    }
-
-
-    registry() {
-        return Promise.resolve(this.registrationBuild);
-    }
-
 
     handleError(error: any) {
         throw error;
