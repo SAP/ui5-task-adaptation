@@ -47,7 +47,7 @@ describe("App Variant Hierarchy", () => {
                 ["i18n/i18n.properties", "base=a"],
                 ["i18n/i18n_de.properties", "base=a_de"],
             ]))
-            .withArgs("REPO_NAME_1").resolves(ResourceUtil.read(appVariant1Path));
+            .withArgs("REPO_NAME_1").resolves(await ResourceUtil.byGlob(appVariant1Path, "**/*"));
         const abapRepoManager = new AbapRepoManager(options.configuration);
         const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
         const index = await esmock("../../src/index.js", {}, {

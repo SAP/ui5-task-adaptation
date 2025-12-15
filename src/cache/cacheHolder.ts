@@ -1,11 +1,11 @@
 import * as fs from "fs";
 import * as fsPromises from "fs/promises";
 import * as path from "path";
+import * as os from "node:os";
 
 import ResourceUtil from "../util/resourceUtil.js";
 import encodeFilename from "filenamify";
 import { getLogger } from "@ui5/logger";
-import tempDir from "temp-dir";
 
 const log = getLogger("@ui5/task-adaptation::CacheHolder");
 
@@ -14,14 +14,15 @@ export default class CacheHolder {
     private static TEMP_TASK_DIR = "ui5-task-adaptation";
 
     private static getTempDir(...paths: string[]) {
-        return path.join(tempDir, this.TEMP_TASK_DIR, ...paths.map(part => encodeFilename(part, { replacement: "_" })));
+        return path.join(os.tmpdir(), this.TEMP_TASK_DIR, ...paths.map(part => encodeFilename(part, { replacement: "_" })));
     }
 
-    static read(repoName: string, token: string) {
+    static read(repoName: string, token: string): Promise<Map<string, string>> {
         const directory = this.getTempDir(repoName, token);
         if (this.isValid(repoName, "repoName") && this.isValid(token, "token") && fs.existsSync(directory)) {
-            return ResourceUtil.read(directory);
+            return ResourceUtil.byGlob(directory, "**/*");
         }
+        return Promise.resolve(new Map<string, string>());
     }
 
     static async write(repoName: string, token: string, files: Map<string, string>): Promise<void> {
@@ -50,7 +51,7 @@ export default class CacheHolder {
      * Clears all cached files
      */
     static clear() {
-        this.deleteDir(path.join(tempDir, this.TEMP_TASK_DIR));
+        this.deleteDir(path.join(os.tmpdir(), this.TEMP_TASK_DIR));
     }
 
     private static deleteDir(directory: string) {
@@ -81,11 +82,12 @@ export function cached() {
     return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
         const originalValue = descriptor.value
         descriptor.value = async function (...args: any[]) {
-            let files = CacheHolder.read(args[0], args[1]);
+            let files = await CacheHolder.read(args[0], args[1]);
             CacheHolder.clearOutdatedExcept(args[0]);
-            if (files == null) {
+            if (files.size === 0) {
+                log.verbose(`Cache repo '${args[0]}' with token '${args[1]}' does not contain files. Fetching...`);
                 files = await originalValue.apply(this, args);
-                await CacheHolder.write(args[0], args[1], files!);
+                await CacheHolder.write(args[0], args[1], files);
             }
             return files;
         };

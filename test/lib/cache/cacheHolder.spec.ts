@@ -74,14 +74,14 @@ describe("CacheHolder", () => {
     describe("Abap Processor", () => {
         it("should get files from cache with same chacheBusterToken", async () => {
             assertManifest(await abapProcessor.fetch("repoName1", "010101"), "1.0.0");
-            assertManifest(CacheHolder.read("repoName1", "010101")!, "1.0.0");
+            assertManifest((await CacheHolder.read("repoName1", "010101"))!, "1.0.0");
             expect(fetchStub.getCalls().length).to.equal(0);
         });
 
         it("should download files with different chacheBusterToken", async () => {
             assertManifest(await abapProcessor.fetch("repoName1", "010102"), "1.0.1");
-            assertManifest(CacheHolder.read("repoName1", "010102")!, "1.0.1");
-            expect(CacheHolder.read("repoName1", "010101")).to.be.undefined; // old cache should be deleted
+            assertManifest((await CacheHolder.read("repoName1", "010102"))!, "1.0.1");
+            expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // old cache should be deleted
             expect(fetchStub.getCalls().length).to.equal(1);
         });
     });
@@ -90,15 +90,15 @@ describe("CacheHolder", () => {
         it("should get files from cache with same chacheBusterToken", async () => {
             sandbox.stub(HTML5RepoManager, "getMetadata").resolves({ applicationName: "repoName1", changedOn: "010101" });
             assertManifest(await cfProcessor.fetch("repoName1", "010101"), "1.0.0");
-            assertManifest(CacheHolder.read("repoName1", "010101")!, "1.0.0");
+            assertManifest((await CacheHolder.read("repoName1", "010101"))!, "1.0.0");
             expect(fetchStub.getCalls().length).to.equal(0);
         });
 
         it("should download files with different chacheBusterToken", async () => {
             sandbox.stub(HTML5RepoManager, "getMetadata").resolves({ applicationName: "repoName1", changedOn: "010102" });
             assertManifest(await cfProcessor.fetch("repoName1", "010102"), "1.0.1");
-            assertManifest(CacheHolder.read("repoName1", "010102")!, "1.0.1");
-            expect(CacheHolder.read("repoName1", "010101")).to.be.undefined; // old cache should be deleted
+            assertManifest((await CacheHolder.read("repoName1", "010102"))!, "1.0.1");
+            expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // old cache should be deleted
             expect(getBaseAppFilesStub.getCalls().length).to.equal(1);
         });
     });
@@ -112,38 +112,38 @@ describe("CacheHolder", () => {
             await CacheHolder.write("repoName1", "010101", manifest);
             await CacheHolder.write("repoName2", "010101", manifest);
             await CacheHolder.clearOutdatedExcept("repoName2", 50);
-            expect(CacheHolder.read("repoName1", "010101")!.size).to.eql(1);
-            expect(CacheHolder.read("repoName2", "010101")!.size).to.eql(1);
+            expect((await CacheHolder.read("repoName1", "010101"))!.size).to.eql(1);
+            expect((await CacheHolder.read("repoName2", "010101"))!.size).to.eql(1);
         });
         it("should clear outdated cache except one", async () => {
             await CacheHolder.write("repoName1", "010101", manifest);
             await CacheHolder.write("repoName2", "010101", manifest);
             await TestUtil.wait(5);
             await CacheHolder.clearOutdatedExcept("repoName2", 1);
-            expect(CacheHolder.read("repoName1", "010101")).to.be.undefined; // old cache should be deleted
+            expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // old cache should be deleted
         });
         it("should clear outdated cache even with non-existing cache folder", async () => {
             await CacheHolder.clear();
             await CacheHolder.clearOutdatedExcept(undefined, 1);
-            expect(CacheHolder.read("repoName1", "010101")).to.be.undefined; // cache shouldn't exist
-            expect(CacheHolder.read("repoName2", "010101")).to.be.undefined; // cache shouldn't exist
+            expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // cache shouldn't exist
+            expect((await CacheHolder.read("repoName2", "010101")).size).to.equal(0); // cache shouldn't exist
         });
         it("should clear all outdated cache", async () => {
             await CacheHolder.write("repoName1", "010101", manifest);
             await CacheHolder.write("repoName2", "010101", manifest);
             await TestUtil.wait(5);
             await CacheHolder.clearOutdatedExcept(undefined, 1);
-            expect(CacheHolder.read("repoName1", "010101")).to.be.undefined; // old cache should be deleted
-            expect(CacheHolder.read("repoName2", "010101")).to.be.undefined; // old cache should be deleted
+            expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // old cache should be deleted
+            expect((await CacheHolder.read("repoName2", "010101")).size).to.equal(0); // old cache should be deleted
         });
         it("should not cache with empty token", async () => {
             await CacheHolderMock.write("repoName1", "", manifest);
-            expect(CacheHolderMock.read("repoName1", "")).to.be.undefined;
+            expect((await CacheHolderMock.read("repoName1", "")).size).to.equal(0);
             expect(log.message).eql("No 'token' provided, skipping cache write");
         });
         it("should not cache with empty repoName", async () => {
             await CacheHolderMock.write("", "010101", manifest);
-            expect(CacheHolderMock.read("", "010101")).to.be.undefined;
+            expect((await CacheHolderMock.read("", "010101")).size).to.equal(0);
             expect(log.message).eql("No 'repoName' provided, skipping cache write");
         });
     });

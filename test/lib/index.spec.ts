@@ -91,7 +91,7 @@ describe("Index", () => {
                     "/resources/ns/changes/id_1753705046493_197_codeExt.change",
                     "/resources/ns/changes/notsupported.testfile"
                 ];
-                const tempResources = CacheHolder.read("repoName1", "2100.01.01");
+                const tempResources = await CacheHolder.read("repoName1", "2100.01.01");
                 const tempResourcesMembers = [
                     "i18n/i18n.properties",
                     "manifest.json"
@@ -148,6 +148,6 @@ const runUi5TaskAdaptation = async (options: IProjectOptions, hasEnhanceWithForI
         "/resources/ns/changes/id_1753705046493_197_codeExt.change",
         "/resources/ns/changes/notsupported.testfile"
     ];
-    const tempResources = CacheHolder.read("repoName1", "010101");
+    const tempResources = await CacheHolder.read("repoName1", "010101");
     checkResourcePathsAndTempResources(resourcePaths, resourcePathsMembers, tempResources!, ["manifest.json"]);
 }
