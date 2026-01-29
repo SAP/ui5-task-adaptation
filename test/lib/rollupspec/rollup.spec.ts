@@ -50,7 +50,7 @@ describe("Rollup", () => {
 
 async function testUi5YamlValidation(isFileExist: boolean, testUi5Yaml: string, project: any) {
     let rollupCaller = { called: 0 };
-    const rollupBuilder = await esmock("../../../scripts/rollup.js", {}, Object.assign({
+    const rollupBuilder = await esmock("../../../rollup/rollup.js", {}, Object.assign({
         "fs": {
             existsSync: () => isFileExist,
             readFileSync: () => TestUtil.getResource(testUi5Yaml)
@@ -65,7 +65,7 @@ async function testUi5YamlValidation(isFileExist: boolean, testUi5Yaml: string, 
 async function runRollupBuilder(bundleFilename: string, calls: number, project: any) {
     let fsCall = 0;
     let rollupCaller = { called: 0 };
-    const RollupBuilder = await esmock("../../../scripts/rollup.js", {}, Object.assign({
+    const RollupBuilder = await esmock("../../../rollup/rollup.js", {}, Object.assign({
         "fs": {
             existsSync: () => true,
             readFileSync: () => TestUtil.getResource(fsCall === 0 ? "ui5.yaml" : bundleFilename)

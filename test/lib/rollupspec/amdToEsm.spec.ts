@@ -1,4 +1,4 @@
-import convert from "../../../scripts/rollup/amdToEsm.js";
+import convert from "../../../rollup/amdToEsm.js";
 import { expect } from "chai";
 
 describe("Convert AMD to ESM", () => {

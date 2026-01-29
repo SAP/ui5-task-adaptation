@@ -1,0 +1,13 @@
+---
+specVersion: "2.2"
+type: application
+metadata:
+  name: rollup
+  allowSapInternal: true
+framework:
+  name: SAPUI5
+  version: 0.0.0
+  libraries:
+    - name: sap.ui.fl
+    - name: sap.suite.ui.generic.template
+    - name: sap.fe.core

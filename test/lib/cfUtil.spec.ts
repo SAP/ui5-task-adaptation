@@ -304,6 +304,17 @@ describe("CFUtil", () => {
         });
     });
 
+    it("should throw AuthenticationError when stdout is just newline", async () => {
+        const CFUtilWithMock = await esmock("../../src/util/cfUtil.js", {
+            "@sap/cf-tools/out/src/cli.js": {
+                Cli: {
+                    execute: () => ({ stdout: "\n", stderr: "", exitCode: 0 })
+                }
+            }
+        });
+        await expect(CFUtilWithMock.getOAuthToken()).to.be.rejectedWith("Authentication error. Use 'cf login' to authenticate in Cloud Foundry.");
+    });
+
     describe("when getting service keys", () => {
 
         it("should succesfully create and return service keys and serviceInstance info", async () => {
@@ -534,7 +545,7 @@ describe("CFUtil", () => {
                     "code": 10001,
                 }]
             }));
-            await expect(CFUtil.requestCfApi("")).to.be.rejectedWith(`Authentication error. Use 'cf login' to authenticate in Cloud Foundry: [{"detail":"Authentication error","title":"CF-NotAuthenticated","code":10002},{"detail":"Other error","title":"CF-Other","code":10001}]`);
+            await expect(CFUtil.requestCfApi("")).to.be.rejectedWith("Authentication error. Use 'cf login' to authenticate in Cloud Foundry: Authentication error");
         });
         it("throws errors if there are other errors", async () => {
             sandbox.stub(CFUtil, "cfExecute" as any).resolves(JSON.stringify({
@@ -601,7 +612,7 @@ describe("CFUtil", () => {
         it("should handle error when getting service key names", async () => {
             const mocks = createServiceKeyNameMocks([], true);
             const CFUtil = await esmock("../../src/util/cfUtil.js", {}, mocks);
-            
+
             await expect(CFUtil["getAllServiceKeyNames"]("test-guid"))
                 .to.be.rejectedWith("Failed to get service key names");
         });
@@ -669,6 +680,21 @@ describe("CFUtil", () => {
             });
 
             await CFUtil.getOrCreateServiceKeyWithEndpoints("test-service");
+        });
+    });
+
+    describe("processErrors direct unit tests", () => {
+        it("throws AuthenticationError when error title is CF-NotAuthenticated", () => {
+            const json = { errors: [{ title: "CF-NotAuthenticated", code: 12345, detail: "Auth issue" }] } as any;
+            expect(() => CFUtil.processCfErrors(json.errors)).to.throw("Authentication error. Use 'cf login' to authenticate in Cloud Foundry: Auth issue");
+        });
+        it("throws AuthenticationError when error code is 10002", () => {
+            const json = { errors: [{ title: "SomeOther", code: 10002, detail: "Auth code issue" }] } as any;
+            expect(() => CFUtil.processCfErrors(json.errors)).to.throw("Authentication error. Use 'cf login' to authenticate in Cloud Foundry: Auth code issue");
+        });
+        it("throws generic Error for non-auth errors", () => {
+            const json = { errors: [{ title: "CF-Other", code: 99999, detail: "Other issue" }] } as any;
+            expect(() => CFUtil.processCfErrors(json.errors)).to.throw("Failed sending request to Cloud Foundry: [{\"title\":\"CF-Other\",\"code\":99999,\"detail\":\"Other issue\"}]");
         });
     });
 

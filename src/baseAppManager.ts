@@ -1,4 +1,4 @@
-import { AppDescriptorChange, Applier, RegistrationBuild } from "../dist/bundle.js";
+import { AppDescriptorChange, RawApplier, RegistrationBuild } from "../dist/bundle.js";
 import { trimExtension } from "./util/commonUtil.js";
 
 import AppVariant from "./appVariantManager.js";
@@ -136,6 +136,9 @@ export default class BaseApp {
 
     private VALIDATION_RULES = new Map([["sap.app/id", (value: string) => {
         if (!value.includes(".")) {
+            // https://help.sap.com/docs/bas/developing-sap-fiori-app-in-sap-business-application-studio/releasing-sap-fiori-application-to-be-extensible-in-adaptation-projects-on-sap-s-4hana-cloud
+            // In the manifest.json file, make sure that the attribute
+            // sap.app/id has at least 2 segments.
             throw new Error(`The original application id '${value}' should consist of multiple segments split by dot, e.g.: original.id`);
         }
     }]]);
@@ -161,8 +164,8 @@ export default class BaseApp {
             this.adjustAddNewModelEnhanceWith(change, i18nBundleName);
         }
         if (changesContent.length > 0) {
-            const strategy = new BuildStrategy(RegistrationBuild);
-            await Applier.applyChanges(baseAppManifest, changesContent, strategy);
+            const changeHandlers = await Promise.all(changesContent.map(change => RegistrationBuild[change.getChangeType()]()));
+            await RawApplier.applyChanges(changeHandlers, baseAppManifest, changesContent, new BuildStrategy());
         }
     }
 
