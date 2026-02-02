@@ -28,6 +28,7 @@ describe("CacheHolder", () => {
     let sandbox: SinonSandbox;
     let fetchStub: sinon.SinonStub;
     let getBaseAppFilesStub: sinon.SinonStub;
+    let getReuseLibFilesStub: sinon.SinonStub;
     const abapProvider = new AbapProvider();
     const abapRepoManager = new AbapRepoManager(options.configuration, abapProvider);
     const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
@@ -45,9 +46,19 @@ describe("CacheHolder", () => {
                     }
                 }
             })]]);
+        const newReuseLibManifest =
+            new Map([["manifest.json", JSON.stringify({
+                "sap.app": {
+                    "id": "com.sap.reuse.lib.id",
+                    "applicationVersion": {
+                        "version": "1.0.2"
+                    }
+                }
+            })]]);
         sandbox = sinon.createSandbox();
         fetchStub = sandbox.stub(abapRepoManager, "fetch").resolves(newManifest);
         getBaseAppFilesStub = sandbox.stub(HTML5RepoManager, "getBaseAppFiles").resolves(newManifest);
+        getReuseLibFilesStub = sandbox.stub(HTML5RepoManager, "getReuseLibFiles").resolves(newReuseLibManifest);
         await CacheHolder.write("repoName1", "010101",
             new Map([["manifest.json", JSON.stringify({
                 "sap.app": {
@@ -56,7 +67,18 @@ describe("CacheHolder", () => {
                         "version": "1.0.0"
                     }
                 }
-            })]]));
+            })]])
+        );
+        await CacheHolder.write("libName1", "010103",
+            new Map([["manifest.json", JSON.stringify({
+                "sap.app": {
+                    "id": "com.sap.reuse.lib.id",
+                    "applicationVersion": {
+                        "version": "1.0.2"
+                    }
+                }
+            })]])
+        );
     });
 
     afterEach(() => {
@@ -68,6 +90,13 @@ describe("CacheHolder", () => {
         const manifestString = files.get("manifest.json")!;
         const manifest = JSON.parse(manifestString);
         expect(manifest["sap.app"].id).to.eql("com.sap.base.app.id");
+        expect(manifest["sap.app"].applicationVersion.version).to.eql(expectedVersion);
+    };
+
+    const assertReuseLibManifest = (files: Map<string, string>, expectedVersion: string) => {
+        const manifestString = files.get("manifest.json")!;
+        const manifest = JSON.parse(manifestString);
+        expect(manifest["sap.app"].id).to.eql("com.sap.reuse.lib.id");
         expect(manifest["sap.app"].applicationVersion.version).to.eql(expectedVersion);
     };
 
@@ -100,6 +129,21 @@ describe("CacheHolder", () => {
             assertManifest((await CacheHolder.read("repoName1", "010102"))!, "1.0.1");
             expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // old cache should be deleted
             expect(getBaseAppFilesStub.getCalls().length).to.equal(1);
+        });
+
+        it("should get reuse lib files from cache with same chacheBusterToken", async () => {
+            sandbox.stub(HTML5RepoManager, "getMetadata").resolves({ applicationName: "libName1", changedOn: "010103" });
+            assertReuseLibManifest(await cfProcessor.fetchReuseLib("libName1", "010103", {} as any), "1.0.2");
+            assertReuseLibManifest(await CacheHolder.read("libName1", "010103"), "1.0.2");
+            expect(fetchStub.getCalls().length).to.equal(0);
+        });
+
+        it("should download files with different chacheBusterToken", async () => {
+            sandbox.stub(HTML5RepoManager, "getMetadata").resolves({ applicationName: "libName1", changedOn: "010104" });
+            assertReuseLibManifest(await cfProcessor.fetchReuseLib("libName1", "010104", {} as any), "1.0.2");
+            assertReuseLibManifest(await CacheHolder.read("libName1", "010104"), "1.0.2");
+            expect((await CacheHolder.read("libName1", "010103")).size).to.equal(0); // old cache should be deleted
+            expect(getReuseLibFilesStub.getCalls().length).to.equal(1);
         });
     });
 

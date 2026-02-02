@@ -90,7 +90,7 @@ export default class ResourceUtil {
         return ResourceUtil.byGlob("./", pattern, [
             "/node_modules",
             "/dist",
-            "/.reuse"
+            "/.adp/reuse"
         ].concat(excludes));
     }
 

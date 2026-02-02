@@ -1,11 +1,12 @@
 import HTML5RepoManager from "../repositories/html5RepoManager.js";
 import IAppInfo from "../model/appVariantIdHierarchyItem.js";
-import { IConfiguration } from "../model/types.js";
+import { IConfiguration, IReuseLibInfo } from "../model/types.js";
 import IProcessor from "./processor.js";
 import { cached } from "../cache/cacheHolder.js";
 import { validateObject } from "../util/commonUtil.js";
 import CFUtil from "../util/cfUtil.js";
 import { getLogger } from "@ui5/logger";
+import PreviewManager from "../previewManager.js";
 
 const log = getLogger("@ui5/task-adaptation::CFProcessor");
 
@@ -33,6 +34,10 @@ export default class CFProcessor implements IProcessor {
         return HTML5RepoManager.getBaseAppFiles(this.configuration);
     }
 
+    @cached()
+    fetchReuseLib(_libName: string, _cachebusterToken: string, lib: IReuseLibInfo): Promise<Map<string, string>> {
+        return HTML5RepoManager.getReuseLibFiles(this.configuration, lib);
+    }
 
     validateConfiguration(): void {
         validateObject(this.configuration, ["appHostId", "appName", "appVersion"], "should be specified in ui5.yaml configuration");
@@ -41,7 +46,11 @@ export default class CFProcessor implements IProcessor {
 
     async updateLandscapeSpecificContent(baseAppManifest: any, baseAppFiles: Map<string, string>): Promise<void> {
         this.updateCloudPlatform(baseAppManifest);
-        await this.updateXsAppJson(baseAppFiles);
+        // Preview uses destinations and does not require xs-app.json updates
+        if (!PreviewManager.isPreviewRequested()) {
+            await this.updateXsAppJson(baseAppFiles);
+        }
+        
     }
 
 

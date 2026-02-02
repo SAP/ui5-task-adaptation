@@ -1,11 +1,17 @@
 import * as AdmZip from "adm-zip";
 
-import { IConfiguration, ICreateServiceInstanceParams, ICredentials, IGetServiceInstanceParams, IHTML5RepoInfo } from "./../model/types.js";
+import { IConfiguration, ICreateServiceInstanceParams, ICredentials, IGetServiceInstanceParams, IHTML5RepoInfo, IReuseLibInfo } from "./../model/types.js";
 
 import CFUtil from "./../util/cfUtil.js";
 import RequestUtil from "./../util/requestUtil.js";
 import { getLogger } from "@ui5/logger";
 import { unzipZipEntries } from "./../util/zipUtil.js";
+
+interface appData {
+    appName: string,
+    appVersion: string,
+    appHostId: string,
+}
 
 const log = getLogger("@ui5/task-adaptation::HTML5RepoManager");
 
@@ -13,7 +19,12 @@ export default class HTML5RepoManager {
 
     static async getBaseAppFiles(configuration: IConfiguration): Promise<Map<string, string>> {
         const { token, baseUri } = await this.getHtml5RepoInfo(configuration);
-        return this.getBaseAppZipEntries(configuration, baseUri, token);
+        const app: appData = {
+            appName: configuration.appName!,
+            appVersion: configuration.appVersion!,
+            appHostId: configuration.appHostId!
+        };
+        return this.getAppZipEntries(app, baseUri, token);
     }
 
 
@@ -22,6 +33,15 @@ export default class HTML5RepoManager {
         return this.requestMetadata(configuration, baseUri, token);
     }
 
+    static async getReuseLibFiles(configuration: IConfiguration, lib: IReuseLibInfo): Promise<Map<string, string>> {
+        const { token, baseUri } = await this.getHtml5RepoInfo(configuration);
+        const libAppData: appData = {
+            appName: lib.html5AppName,
+            appVersion: lib.html5AppVersion,
+            appHostId: lib.html5AppHostId
+        };
+        return this.getAppZipEntries(libAppData, baseUri, token);
+    }
 
     private static async getHtml5RepoInfo(configuration: IConfiguration): Promise<IHTML5RepoInfo> {
         const spaceGuid = await CFUtil.getSpaceGuid(configuration?.space);
@@ -84,13 +104,11 @@ export default class HTML5RepoManager {
     }
 
 
-    private static async getBaseAppZipEntries(options: IConfiguration, html5RepoBaseUri: string, token: string): Promise<Map<string, string>> {
-        const { appHostId, appName, appVersion } = options;
-        const uri = `${html5RepoBaseUri}/applications/content/${appName}-${appVersion}/`;
-        const zip = await this.download(token, appHostId!, uri);
+    private static async getAppZipEntries(app: appData, html5RepoBaseUri: string, token: string): Promise<Map<string, string>> {
+        const uri = `${html5RepoBaseUri}/applications/content/${app.appName}-${app.appVersion}/`;
+        const zip = await this.download(token, app.appHostId!, uri);
         return unzipZipEntries(zip);
     }
-
 
     private static async download(token: string, appHostId: string, uri: string): Promise<Buffer> {
         if (!token) {

@@ -102,6 +102,19 @@ export interface IHTML5RepoInfo {
     baseUri: string;
 }
 
+export interface IReuseLibInfo {
+	name: string;
+	lazy: boolean;
+	html5AppHostId: string;
+	html5AppName: string;
+	html5AppVersion: string;
+	html5CacheBusterToken: string;
+	url: {
+		uri: string;
+		final: boolean;
+	}
+}
+
 export interface IAuth {
     username: string;
     password: string;

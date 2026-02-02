@@ -4,7 +4,7 @@ import FilesUtil from "./util/filesUtil.js";
 import ResourceUtil from "./util/resourceUtil.js";
 import TaskUtil from "@ui5/project/build/helpers/TaskUtil";
 import { posix as path } from "path";
-import { moveFile, moveFiles } from "./util/movingHandler/fileMoveHandler.js";
+import { moveFile, moveFiles } from "./util/movingHandler/changeFileMoveHandler.js";
 
 const CHANGES_EXT = ".change";
 

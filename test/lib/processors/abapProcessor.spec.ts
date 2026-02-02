@@ -49,4 +49,13 @@ describe("AbapProcessor", () => {
         expect(annotationManagerStub.getCalls().length).to.eql(1);
         expect([...baseAppFiles.keys()]).to.have.members(["annotation1", "annotation2", "baseAppFile1", "baseAppFile2"]);
     });
+
+    it("should raise an error when downloading reuse libs in preview mode", async () => {
+        const abapProcessor = new AbapProcessor(options.configuration, abapRepoManager, annotationManager);
+        try {
+            await abapProcessor.fetchReuseLib();
+        } catch (error) {
+            expect((error as Error).message).to.eql("Preview is not available on SAP S/4HANA On-Premise or Cloud Systems. Please create a ticket on CA-UI5-FL-ADP-BAS component.");
+        }
+    });
 });
