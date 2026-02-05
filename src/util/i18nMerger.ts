@@ -45,6 +45,8 @@ export default class FileMerger {
                 if (copyPathMatch) {
                     files.set(path.join(i18nTargetFolder, filename), content);
                 }
+            } else if (filename === "xs-app.json") {
+                // xs-app.json take from base app files
             } else {
                 files.set(filename, content);
             }
