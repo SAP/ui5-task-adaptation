@@ -316,14 +316,14 @@ describe("PreviewManager adjust xs-app.json", () => {
 			}
 		} as any;
 
-		const ressourceWrite = sandbox.stub(ResourceUtil, "writeInProject");
+		const resourceWrite = sandbox.stub(ResourceUtil, "writeInProject");
 		sandbox.stub(ResourceUtil, "readInProject").returns(Promise.resolve(appInfoContent));
 
 		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processor);
 		await previewManager.processPreviewResources(baseFiles);
 
-		expect(ressourceWrite.called, "ResourceUtil.writeInProject should be called to write merged xs-app.json").to.be.true;
-		const mergedXsAppMap = ressourceWrite.getCall(0).args[1];
+		expect(resourceWrite.called, "ResourceUtil.writeInProject should be called to write merged xs-app.json").to.be.true;
+		const mergedXsAppMap = resourceWrite.getCall(0).args[1];
 		const mergedXsAppJson = mergedXsAppMap.get("xs-app.json")!;
 		const mergedXsApp = JSON.parse(mergedXsAppJson);
 

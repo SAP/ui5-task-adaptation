@@ -6,6 +6,8 @@ import IProcessor from "./processor.js";
 import Language from "../model/language.js";
 import { cached } from "../cache/cacheHolder.js";
 import { validateObject } from "../util/commonUtil.js";
+import { Adapter } from "../adapters/adapter.js";
+import AbapAdapter from "../adapters/abapAdapter.js";
 
 export default class AbapProcessor implements IProcessor {
 
@@ -24,6 +26,10 @@ export default class AbapProcessor implements IProcessor {
 
     getAppVariantIdHierarchy(appId: string): Promise<IAppVariantIdHierarchyItem[]> {
         return this.abapRepoManager.getAppVariantIdHierarchy(appId);
+    }
+
+    getAdapter(): Adapter {
+        return new AbapAdapter();
     }
 
 

@@ -7,6 +7,8 @@ import { validateObject } from "../util/commonUtil.js";
 import CFUtil from "../util/cfUtil.js";
 import { getLogger } from "@ui5/logger";
 import PreviewManager from "../previewManager.js";
+import { Adapter } from "../adapters/adapter.js";
+import CFAdapter from "../adapters/cfAdapter.js";
 
 const log = getLogger("@ui5/task-adaptation::CFProcessor");
 
@@ -16,6 +18,11 @@ export default class CFProcessor implements IProcessor {
 
     constructor(configuration: IConfiguration) {
         this.configuration = configuration;
+    }
+
+
+    getAdapter(): Adapter {
+        return new CFAdapter();
     }
 
 
@@ -50,7 +57,7 @@ export default class CFProcessor implements IProcessor {
         if (!PreviewManager.isPreviewRequested()) {
             await this.updateXsAppJson(baseAppFiles);
         }
-        
+
     }
 
 

@@ -4,12 +4,13 @@ import AnnotationManager from "../annotationManager.js";
 import CFProcessor from "./cfProcessor.js";
 import IAppVariantIdHierarchyItem from "../model/appVariantIdHierarchyItem.js"
 import { IConfiguration, IReuseLibInfo } from "../model/types.js";
+import { Adapter } from "../adapters/adapter.js";
 
 export default interface IProcessor {
     getAppVariantIdHierarchy(appId: string): Promise<IAppVariantIdHierarchyItem[]>;
     fetch(repoName: string, cachebusterToken: string): Promise<Map<string, string>>;
     fetchReuseLib(repoName: string, cachebusterToken: string, lib: IReuseLibInfo): Promise<Map<string, string>>;
-
+    getAdapter(): Adapter;
     createAppVariantHierarchyItem(appVariantId: string, version: string): void;
     updateLandscapeSpecificContent(baseAppManifest: any, baseAppFiles: Map<string, string>, appVariantId: string, prefix: string): Promise<void>;
 }

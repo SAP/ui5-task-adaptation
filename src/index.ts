@@ -22,6 +22,7 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
         logBuilderVersion();
 
         const processor = determineProcessor(options.configuration);
+        const adapter = processor.getAdapter();
 
         const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
         const previewManagerPromise = PreviewManager.createFromRoot(adaptationProject.reference, processor);
@@ -48,7 +49,8 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
                 appVariant = adaptationProject;
             }
             appVariants.push(appVariant);
-            const adaptedFiles = await baseApp.adapt(appVariant, processor);
+            let adaptedFiles = await baseApp.adapt(appVariant, processor);
+            adaptedFiles = await adapter.adapt(adaptedFiles, appVariantFiles!);
             return I18nMerger.merge(adaptedFiles, baseApp.i18nPath, appVariant);
         }
 

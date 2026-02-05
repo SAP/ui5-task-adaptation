@@ -3,6 +3,7 @@ import IProcessor from "./processors/processor.js";
 import { IReuseLibInfo } from "./model/types.js";
 import ResourceUtil from "./util/resourceUtil.js";
 import path from "path";
+import { merge, Route, XsApp } from "./util/cf/xsAppJsonUtil.js";
 
 type AppInfoMessage = {
 	message: string;
@@ -19,20 +20,6 @@ type AppInfo = {
 	messages: AppInfoMessage[];
 };
 
-type route = {
-	source: string;
-	target: string;
-	service?: string;
-	destination?: string;
-	authenticationType?: string;
-	localDir?: string;
-}
-
-type XsApp = {
-	welcomeFile?: string;
-	authenticationMethod: "none" | "route";
-	routes: route[];
-}
 
 const log = getLogger("@ui5/task-adaptation::PreviewManager");
 const REUSE_DIR = ".adp/reuse";
@@ -42,11 +29,11 @@ const XS_APP_JSON_FILE = "xs-app.json";
 export default class PreviewManager {
 
 	private readonly fetchLibsPromises: Map<string, Promise<ReadonlyMap<string, string>>> = new Map();
-	
+
 	static async createFromRoot(appId: string, processor: IProcessor): Promise<PreviewManager> {
 		let ui5AppInfo: string = "";
 
-		if(PreviewManager.isPreviewRequested()) {
+		if (PreviewManager.isPreviewRequested()) {
 			try {
 				ui5AppInfo = await ResourceUtil.readInProject(APP_INFO_FILE);
 			} catch (_err) {
@@ -54,7 +41,7 @@ export default class PreviewManager {
 				throw new Error(`ui5AppInfo.json is missing in project root, cannot process preview resources.`);
 			}
 		}
-		
+
 		return new PreviewManager(appId, ui5AppInfo, processor);
 	}
 
@@ -84,7 +71,7 @@ export default class PreviewManager {
 			Info: log.info,
 			debug: log.verbose
 		};
-		
+
 		appInfo.messages.forEach((message) => {
 			const logger = logMap[message.severity] || log.info;
 			logger(`ui5AppInfo.json: ${message.severity} Message: ${message.message} (Error Code: ${message.errorCode})`);
@@ -141,23 +128,10 @@ export default class PreviewManager {
 	}
 
 	private mergeXsAppJsonFiles(xsAppFiles: Map<string, string>, files: Map<string, string>): void {
-		// Start with empty xs-app.json
-		// welcomeFile is not needed for preview
-		const mergedXsAppJson: XsApp = {
-			authenticationMethod: "none",
-			routes: []
-		};
-
-		xsAppFiles.forEach((xsAppInfoContent) => {
-			const xsAppInfo = JSON.parse(xsAppInfoContent);
-			if (mergedXsAppJson.authenticationMethod === "none" && xsAppInfo.authenticationMethod) {
-				mergedXsAppJson.authenticationMethod = xsAppInfo.authenticationMethod;
-			}
-			if (Array.isArray(xsAppInfo.routes)) {
-				mergedXsAppJson.routes = mergedXsAppJson.routes.concat(xsAppInfo.routes);
-			}
-		});
-		files.set(XS_APP_JSON_FILE, JSON.stringify(mergedXsAppJson, null, 2));
+		const mergedXsAppJson = merge([...xsAppFiles.values()]);
+		if (mergedXsAppJson) {
+			files.set(XS_APP_JSON_FILE, mergedXsAppJson);
+		}
 	}
 
 	private static moveLibraryFiles(inputFiles: ReadonlyMap<string, string>, libraryName: string, libId: string): ReadonlyMap<string, string> {
@@ -177,7 +151,7 @@ export default class PreviewManager {
 
 	private static modifyRoutes(xsAppJson: string, libName: string, libId: string): string {
 		const xsApp: XsApp = JSON.parse(xsAppJson);
-		xsApp.routes = xsApp.routes.map((route: route) => {
+		xsApp.routes = xsApp.routes.map((route: Route) => {
 			route.source = route.source.replace(new RegExp("^\\^\\/?(resources/)?"), `^/resources/${libId.replaceAll(".", "/")}/`);
 			if (route.service === "html5-apps-repo-rt") {
 				route = {
