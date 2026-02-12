@@ -38,7 +38,7 @@ export default class PreviewManager {
 				ui5AppInfo = await ResourceUtil.readInProject(APP_INFO_FILE);
 			} catch (_err) {
 				log.verbose("Preview mode not requested (env variable ADP_BUILDER_MODE=preview is not set), skipping preview resources processing.");
-				throw new Error(`ui5AppInfo.json is missing in project root, cannot process preview resources.`);
+				throw new Error(`ui5AppInfo.json is missing in project root, cannot process preview resources: ${_err instanceof Error ? _err.message : String(_err)}`);
 			}
 		}
 

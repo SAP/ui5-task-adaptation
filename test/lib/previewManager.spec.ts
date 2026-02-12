@@ -74,7 +74,7 @@ describe("PreviewManager download reuse libraries", () => {
 		    await PreviewManager.createFromRoot("reuse.lib1", {} as any);
 			assert.fail(true, false, "Exception not thrown");
 		} catch (error: any) {
-			expect(error.message).to.equal("ui5AppInfo.json is missing in project root, cannot process preview resources.");
+			expect(error.message).to.match(/ui5AppInfo\.json is missing in project root, cannot process preview resources: ENOENT: no such file or directory, open '.*ui5AppInfo\.json'/);
 		}
 	});
 

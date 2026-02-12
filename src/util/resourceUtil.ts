@@ -103,7 +103,7 @@ export default class ResourceUtil {
      */
     static async readInProject(filepath: string): Promise<string> {
         try {
-            return await fs.readFile(path.resolve(process.cwd(), filepath), UTF8);
+            return await fs.readFile(path.join(process.cwd(), filepath), UTF8);
         } catch (error: any) {
             const isProjectRoot = await ResourceUtil.fileExists(path.join(process.cwd(), "ui5.yaml"));
             if (!isProjectRoot) {

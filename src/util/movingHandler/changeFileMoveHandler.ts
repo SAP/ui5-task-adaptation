@@ -1,4 +1,4 @@
-import path from "path";
+import path from "path/posix";
 import { isManifestChange } from "../commonUtil.js";
 
 const EXT_DIR = "ext/";
