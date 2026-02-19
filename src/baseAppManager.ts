@@ -74,6 +74,9 @@ export default class BaseApp {
     }
 
     private constructor(files: ReadonlyMap<string, string>) {
+        if (files.size === 0) {
+            throw new Error("Original application sources are empty");
+        }
         this.files = preProcessFiles(files);
         const manifestString = files.get("manifest.json");
         if (!manifestString) {

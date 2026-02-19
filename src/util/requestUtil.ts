@@ -9,8 +9,11 @@ export default class RequestUtil {
     }
 
 
-    static async get(url: string, options?: any): Promise<any> {
-        return this.request(url, axios.get, options).then(response => response.data);
+    static async get(url: string, options: any, expectedStatus: number = 200): Promise<any> {
+        return this.request(url, axios.get, {
+            ...options,
+            validateStatus: (status: number) => status === expectedStatus
+        }).then(response => response.data);
     }
 
 

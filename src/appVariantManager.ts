@@ -35,6 +35,9 @@ export default class AppVariant {
 
 
     private constructor(files: ReadonlyMap<string, string>, resources?: Resource[]) {
+        if (files.size === 0) {
+            throw new Error("Application variant sources are empty");
+        }
         this.files = files;
         this.resources = resources;
 
