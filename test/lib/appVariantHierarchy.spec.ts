@@ -111,7 +111,8 @@ describe("App Variant Hierarchy", () => {
             "changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
             "changes/id_1707749484510_240_setDefault.ctrl_variant_management_change",
             "changes/id_1753705046493_197_codeExt.change",
-            "changes/customer_com_sap_application_variant_id/notsupported.testfile"
+            "changes/customer_com_sap_application_variant_id/notsupported.testfile",
+            "xs-app.json"
         ]);
         // It has replaced id_12345 of appVariant1 with the appVariant2
         expect(files.get("changes/customer_com_sap_application_variant_id/coding/id_12345.js")).to.include("appVariant1");

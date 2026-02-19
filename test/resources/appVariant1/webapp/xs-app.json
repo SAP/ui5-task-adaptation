@@ -1,0 +1,10 @@
+{
+    "routes": [
+        {
+            "source": "^/sap/opu/odata/sap/ZTEST_SRV/",
+            "target": "/sap/opu/odata/sap/ZTEST_SRV/",
+            "authenticationType": "basic",
+            "destination": "OVERRIDE"
+        }
+    ]
+}

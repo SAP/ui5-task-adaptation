@@ -4,7 +4,6 @@ import { logBuilderVersion } from "./util/commonUtil.js";
 
 import AppVariant from "./appVariantManager.js";
 import BaseApp from "./baseAppManager.js";
-import I18nMerger from "./util/i18nMerger.js";
 import { ITaskParameters } from "./model/types.js";
 import ResourceUtil from "./util/resourceUtil.js";
 import { determineProcessor } from "./processors/processor.js";
@@ -21,6 +20,7 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
         logBuilderVersion();
 
         const processor = determineProcessor(options.configuration);
+        const adapter = processor.getAdapter();
 
         const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
         const appVariantIdHierarchy = await processor.getAppVariantIdHierarchy(adaptationProject.reference);
@@ -46,7 +46,9 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
             }
             appVariants.push(appVariant);
             const adaptedFiles = await baseApp.adapt(appVariant, processor);
-            return I18nMerger.merge(adaptedFiles, baseApp.i18nPath, appVariant);
+            const mergeCommandChain = adapter.createMergeCommandChain(baseApp, appVariant);
+            const mergedFiles = await mergeCommandChain.execute(adaptedFiles, appVariant.getProcessedFiles());
+            return mergedFiles;
         }
 
         let files = await fetchFilesPromises.reduce(async (previousFiles, currentFiles) =>

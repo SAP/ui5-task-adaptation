@@ -6,6 +6,8 @@ import { cached } from "../cache/cacheHolder.js";
 import { validateObject } from "../util/commonUtil.js";
 import CFUtil from "../util/cfUtil.js";
 import { getLogger } from "@ui5/logger";
+import { IAdapter } from "../adapters/adapter.js";
+import CFAdapter from "../adapters/cfAdapter.js";
 
 const log = getLogger("@ui5/task-adaptation::CFProcessor");
 
@@ -15,6 +17,11 @@ export default class CFProcessor implements IProcessor {
 
     constructor(configuration: IConfiguration) {
         this.configuration = configuration;
+    }
+
+
+    getAdapter(): IAdapter {
+        return new CFAdapter();
     }
 
 
