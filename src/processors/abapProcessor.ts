@@ -38,6 +38,10 @@ export default class AbapProcessor implements IProcessor {
         return this.abapRepoManager.fetch(repoName);
     }
 
+    fetchReuseLib(): Promise<Map<string, string>> {
+        throw new Error("Preview is not available on SAP S/4HANA On-Premise or Cloud Systems. Please create a ticket on CA-UI5-FL-ADP-BAS component.");
+    }
+
 
     validateConfiguration(): void {
         // validate general app config

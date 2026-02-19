@@ -111,4 +111,28 @@ describe("Html5RepoManager", () => {
         expect(metadata).to.eql(METADATA);
     });
 
+    it("should download reuse lib from htlm5 repo", async () => {
+        let requestUtilGetCall = 0;
+        const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
+        const Html5RepoManager = await esmock("../../../src/repositories/html5RepoManager.js", {}, {
+            "@sap/cf-tools/out/src/cli.js": {
+                Cli: {
+                    execute: () => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json"))
+                }
+            },
+            "@sap/cf-tools/out/src/cf-local.js": {
+                cfGetInstanceCredentials: () => Promise.resolve(credentialsJson)
+            },
+            "../../../src/util/requestUtil.js": {
+                default: {
+                    get: () => requestUtilGetCall++ == 0
+                        ? Promise.resolve({ "access_token": "accessToken1" })
+                        : Promise.resolve(TestUtil.getResourceBuffer("baseapp.zip"))
+                }
+            }
+        });
+        const reuseLibFiles = await Html5RepoManager.getReuseLibFiles(options.configuration, { name: "lib1" });
+        expect([...reuseLibFiles.keys()]).to.have.members(["i18n.properties", "manifest.json"]);
+    });
+
 });

@@ -8,6 +8,7 @@ import { ITaskParameters } from "./model/types.js";
 import ResourceUtil from "./util/resourceUtil.js";
 import { determineProcessor } from "./processors/processor.js";
 import FilesUtil from "./util/filesUtil.js";
+import PreviewManager from "./previewManager.js";
 
 /**
  * Creates an appVariant bundle from the provided resources.
@@ -23,6 +24,8 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
         const adapter = processor.getAdapter();
 
         const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
+        const previewManagerPromise = PreviewManager.createFromRoot(adaptationProject.reference, processor);
+
         const appVariantIdHierarchy = await processor.getAppVariantIdHierarchy(adaptationProject.reference);
         if (appVariantIdHierarchy.length === 0) {
             throw new Error(`No app variant found for reference ${adaptationProject.reference}`);
@@ -59,7 +62,10 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
         files = FilesUtil.rename(files, references);
 
         adaptationProject.omitDeletedResources(files, options.projectNamespace, taskUtil);
-        const writePromises = new Array<Promise<void>>();
+
+        // Read libs for preview
+        const previewManager = await previewManagerPromise;
+        const writePromises = new Array<Promise<void>>(previewManager.processPreviewResources(files));
         files!.forEach((content, filename) => {
             const resource = ResourceUtil.createResource(filename, options.projectNamespace, content);
             writePromises.push(workspace.write(resource));
