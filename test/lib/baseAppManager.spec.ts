@@ -3,17 +3,18 @@ import * as sinon from "sinon";
 import { RawApplier, AppDescriptorChange } from "../../dist/bundle.js";
 import { assert, expect } from "chai";
 
-import AbapProcessor from "../../src/processors/abapProcessor.js";
 import AbapRepoManager from "../../src/repositories/abapRepoManager.js";
 import AnnotationManager from "../../src/annotationManager.js";
 import AppVariant from "../../src/appVariantManager.js";
 import BaseApp, { preProcessFiles } from "../../src/baseAppManager.js";
-import CFProcessor from "../../src/processors/cfProcessor.js"
 import { IProjectOptions } from "../../src/model/types.js";
 import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
 import FilesUtil from "../../src/util/filesUtil.js";
+import CFAdapter from "../../src/adapters/cfAdapter.js";
+import AbapAdapter from "../../src/adapters/abapAdapter.js";
+import UpdateCloudDevAdaptationCommand from "../../src/adapters/commands/updateCloudDevAdaptationCommand.js";
 
 describe("BaseAppManager getManifestInfo", () => {
 
@@ -63,6 +64,7 @@ describe("BaseAppManager getBaseAppManifest", () => {
             sapCloudService: "sapCloudService"
         }
     };
+    const adapter = new CFAdapter(options.configuration);
 
     beforeEach(() => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
@@ -89,7 +91,7 @@ describe("BaseAppManager getBaseAppManifest", () => {
                 }
             })]
         ]));
-        const files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        const files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         const inbouds = JSON.parse(files.get("manifest.json")!)["sap.app"].crossNavigation.inbounds;
         expect(Object.keys(inbouds)).to.eql(["customer.ci.settleman.fcadoc.opgs1.InboundID"]);
         expect(inbouds["customer.ci.settleman.fcadoc.opgs1.InboundID"].title).to.eql("ak");
@@ -153,6 +155,7 @@ describe("BaseAppManager CF", () => {
             sapCloudService: "sapCloudService"
         }
     };
+    const adapter = new CFAdapter(options.configuration);
 
     beforeEach(async () => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
@@ -164,7 +167,7 @@ describe("BaseAppManager CF", () => {
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
         ]));
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        let files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const actualManifest = JSON.parse(files.get("manifest.json")!);
         const actualCPreload = files.get("component-preload.js");
@@ -184,7 +187,7 @@ describe("BaseAppManager CF", () => {
             ["Controller-dbg.js", "debug only content"]
         ]));
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        let files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         expect(Array.from(files.keys())).to.have.members(["manifest.json", "Component.js", "Controller-dbg.js"]);
         assertManifestInfo(files);
@@ -207,7 +210,8 @@ describe("BaseAppManager CF", () => {
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
         const optionsClone = { ...options, configuration: { ...options.configuration } };
         delete optionsClone.configuration["sapCloudService"];
-        let files = await baseApp.adapt(appVariant, new CFProcessor(optionsClone.configuration));
+        const adapter = new CFAdapter(optionsClone.configuration);
+        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const manifest = JSON.parse(files.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.be.undefined;
@@ -219,7 +223,7 @@ describe("BaseAppManager CF", () => {
         const baseAppManifest = TestUtil.getResourceJson("manifest.json");
         delete baseAppManifest["sap.cloud"];
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(baseAppManifest)]]));
-        let files = await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const manifest = JSON.parse(files.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.eql({ service: "sapCloudService" });
@@ -230,23 +234,23 @@ describe("BaseAppManager CF", () => {
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
         const stub = sandbox.stub(RawApplier, "applyChanges")!;
-        await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+        await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         const layers = stub.getCall(0).args[2].map((change: AppDescriptorChange) => change.getLayer());
         expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
 
-    it("shouldn't delete cloudDevAdaptationStatus if not in manifest", async () => {
-        const applyDescriptorChangesStub = await updateManifest((manifestJson) => {
-            delete manifestJson["sap.fiori"];
-        });
-        expect(applyDescriptorChangesStub.getCall(0).args[0]["sap.fiori"]).to.be.undefined;
+    it("shouldn't delete cloudDevAdaptationStatus if no sap.fiori", async () => {
+        const manifestJson = TestUtil.getResourceJson("manifest.json");
+        delete manifestJson["sap.fiori"];
+        new UpdateCloudDevAdaptationCommand().execute(manifestJson);
+        expect(manifestJson["sap.fiori"]).to.be.undefined;
     });
 
-    it("shouldn't delete cloudDevAdaptationStatus if not in manifest", async () => {
-        const applyDescriptorChangesStub = await updateManifest((manifestJson) => {
-            delete manifestJson["sap.fiori"].cloudDevAdaptationStatus;
-        });
-        expect(applyDescriptorChangesStub.getCall(0).args[0]["sap.fiori"]).to.eql({
+    it("shouldn't delete cloudDevAdaptationStatus if no sap.fiori/cloudDevAdaptationStatus", async () => {
+        const manifestJson = TestUtil.getResourceJson("manifest.json");
+        delete manifestJson["sap.fiori"].cloudDevAdaptationStatus;
+        new UpdateCloudDevAdaptationCommand().execute(manifestJson);
+        expect(manifestJson["sap.fiori"]).to.eql({
             abstract: true,
             archeType: "transactional",
             registrationIds: [
@@ -255,40 +259,22 @@ describe("BaseAppManager CF", () => {
         });
     });
 
-    it("shouldn't delete cloudDevAdaptationStatus if not in manifest", async () => {
-        const applyDescriptorChangesStub = await updateManifest((manifestJson) => {
-            delete manifestJson["sap.ui5"];
-        });
-        expect(applyDescriptorChangesStub.getCall(0).args[0]["sap.ui5"]).to.eql({
-            appVariantIdHierarchy: [
-                {
-                    appVariantId: "com.sap.base.app.id",
-                    version: "1.0.0"
-                }
-            ],
-            componentName: "com.sap.base.app.id",
-            isCloudDevAdaptation: true
-        });
+    it("shouldn't delete cloudDevAdaptationStatus if no sap.ui5", async () => {
+        const manifestJson = TestUtil.getResourceJson("manifest.json");
+        delete manifestJson["sap.ui5"];
+        new UpdateCloudDevAdaptationCommand().execute(manifestJson);
+        expect(manifestJson["sap.ui5"]).to.eql({ isCloudDevAdaptation: true });
     });
 
     const assertValidation = async (appVariant: AppVariant, options: IProjectOptions, expectedError: string, manifest: any) => {
         try {
             const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(manifest)]]));
-            await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
+            const adapter = new CFAdapter(options.configuration);
+            await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
             assert.fail(true, false, "Exception not thrown");
         } catch (error: any) {
             expect(error.message).to.equal(expectedError);
         }
-    }
-
-    async function updateManifest(action: (manifest: any) => void) {
-        const manifestJson = TestUtil.getResourceJson("manifest.json");
-        action(manifestJson);
-        const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(manifestJson)]]));
-        const applyDescriptorChangesStub = sandbox.stub(baseApp, "applyDescriptorChanges" as any);
-        const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        await baseApp.adapt(appVariant, new CFProcessor(options.configuration));
-        return applyDescriptorChangesStub;
     }
 });
 
@@ -308,7 +294,7 @@ describe("BaseAppManager Abap", () => {
     };
     const abapRepoManager = new AbapRepoManager(options.configuration);
     const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
-    const abapProcessor = new AbapProcessor(options.configuration, abapRepoManager, annotationManager);
+    const adapter = new AbapAdapter(options.configuration, annotationManager);
 
     beforeEach(async () => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
@@ -341,7 +327,7 @@ describe("BaseAppManager Abap", () => {
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
         ]));
-        let files = await baseApp.adapt(appVariant, abapProcessor);
+        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const actualManifest = JSON.parse(files.get("manifest.json")!);
         const actualCPreload = files.get("component-preload.js");
@@ -361,7 +347,7 @@ describe("BaseAppManager Abap", () => {
             ["Component.js", "production content"],
             ["Controller-dbg.js", "debug only content"]
         ]));
-        let files = await baseApp.adapt(appVariant, abapProcessor);
+        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         assertAnnotations(files, 9);
         expect(Array.from(files.keys())).to.have.members([
@@ -392,7 +378,7 @@ describe("BaseAppManager Abap", () => {
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
         const optionsClone = { ...options, configuration: { ...options.configuration } };
         delete optionsClone.configuration["sapCloudService"];
-        let files = await baseApp.adapt(appVariant, abapProcessor);
+        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const manifest = JSON.parse(files.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.eql({ service: "com.sap.manifest.default.service", public: true });
@@ -404,7 +390,7 @@ describe("BaseAppManager Abap", () => {
         const baseAppManifest = JSON.parse(TestUtil.getResource("manifest.json"));
         delete baseAppManifest["sap.cloud"];
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(baseAppManifest)]]));
-        let files = await baseApp.adapt(appVariant, abapProcessor);
+        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
         const manifest = JSON.parse(files.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.be.undefined;
@@ -415,7 +401,7 @@ describe("BaseAppManager Abap", () => {
     it("should fill change layer", async () => {
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
         const stub = sandbox.stub(RawApplier, "applyChanges")!;
-        await baseApp.adapt(appVariant, abapProcessor);
+        await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         const layers = stub.getCall(0).args[2].map((change: AppDescriptorChange) => change.getLayer());
         expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
@@ -433,7 +419,7 @@ describe("BaseAppManager Abap", () => {
     const assertValidation = async (appVariant: AppVariant, expectedError: string, manifest: any) => {
         try {
             const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(manifest)]]));
-            await baseApp.adapt(appVariant, abapProcessor);
+            await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
             assert.fail(true, false, "Exception not thrown");
         } catch (error: any) {
             expect(error.message).to.equal(expectedError);

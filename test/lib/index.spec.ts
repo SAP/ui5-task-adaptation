@@ -25,7 +25,8 @@ const OPTIONS: IProjectOptions = {
         target: {
             url: "https://example.sap.com"
         },
-        serviceInstanceName: "serviceInstanceName",
+        type: "cf",
+        serviceInstanceName: "serviceInstanceName"
     }
 };
 
@@ -139,8 +140,9 @@ describe("Index", () => {
         });
 });
 
-const getWorkspace = async (options: IProjectOptions) => {
-    const { workspace, taskUtil } = await TestUtil.getWorkspace("appVariant1", options.projectNamespace);
+
+const getWorkspace = async (options: IProjectOptions, appVariant: string = "appVariant1") => {
+    const { workspace, taskUtil } = await TestUtil.getWorkspace(appVariant, options.projectNamespace);
     return { workspace, taskUtil }
 }
 

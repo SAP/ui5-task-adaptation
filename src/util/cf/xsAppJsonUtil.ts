@@ -1,3 +1,7 @@
+import { getLogger } from "@ui5/logger";
+import { ServiceCredentials } from "../../model/types.js";
+const log = getLogger("@ui5/task-adaptation::XSAppJsonUtil");
+
 type XsApp = {
     welcomeFile?: string;
     authenticationMethod: "none" | "route";
@@ -58,4 +62,45 @@ export function merge(xsAppFiles: string[]): string | undefined {
     }
 
     return JSON.stringify(merged, null, 4);
+}
+
+
+export function enhanceRoutesWithEndpointAndService(xsAppJsonContent: string, serviceCredentials: ServiceCredentials): string {
+    // Also skip if no routes or no routes with a destination property
+    const xsAppJson = JSON.parse(xsAppJsonContent);
+    if (!Array.isArray(xsAppJson.routes) || !xsAppJson.routes.some((route: any) => route.destination)) {
+        log.verbose(`No routes with 'destination' found in xs-app.json. Skipping xs-app.json update.`);
+        return xsAppJsonContent;
+    }
+
+    xsAppJson.routes = enhanceRoutes(serviceCredentials, xsAppJson.routes);
+    return JSON.stringify(xsAppJson, null, 4);
+}
+
+
+export function enhanceRoutes(serviceCredentials: ServiceCredentials, baseRoutes: any) {
+    const endpoints = serviceCredentials.endpoints;
+    // Map destinations to endpoint names
+    const destinationToEndpoint = Object.entries(endpoints).reduce((acc: Record<string, string>, [endpointName, obj]) => {
+        if (obj && typeof obj === "object" && obj.destination) {
+            acc[obj.destination] = endpointName;
+        }
+        return acc;
+    }, {} as Record<string, string>);
+
+    return baseRoutes.map((route: any) => {
+        const endpointName = destinationToEndpoint[route.destination];
+        if (endpointName) {
+            // There is a matching endpoint: remove destination and add endpoint/service
+            const { destination: _destination, ...rest } = route;
+            return {
+                ...rest,
+                endpoint: endpointName,
+                service: serviceCredentials["sap.cloud.service"],
+            };
+        } else {
+            // No match: return route unchanged
+            return route;
+        }
+    });
 }

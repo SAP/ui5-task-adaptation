@@ -1,4 +1,4 @@
-import { ICreateServiceInstanceParams, IGetServiceInstanceParams, IResource, IServiceInstance, IServiceKeys, KeyedMap } from "../model/types.js";
+import { ICreateServiceInstanceParams, IGetServiceInstanceParams, IResource, IServiceInstance, IServiceKeys, KeyedMap, ServiceCredentials } from "../model/types.js";
 import { cfCreateService, cfGetInstanceCredentials } from "@sap/cf-tools/out/src/cf-local.js";
 import { getSpaceGuidThrowIfUndefined } from "@sap/cf-tools/out/src/utils.js";
 
@@ -203,7 +203,7 @@ export default class CFUtil {
      * @private
      * @static
      * @param {string} serviceInstanceGuid the service instance guid
-     * @return {Promise<any>} the first service key with valid endpoints, or null if none found
+     * @return {Promise<ServiceCredentials | null>} the first service key with valid endpoints, or null if none found
      * @memberof CFUtil
      */
     private static async getServiceKeyWithValidEndpoints(serviceInstanceGuid: string): Promise<any> {
@@ -216,6 +216,7 @@ export default class CFUtil {
         }
     }
 
+
     /**
      * Get service keys for a service instance by name. If the existing service key
      * has endpoints as strings instead of objects, a new service key will be created.
@@ -225,7 +226,7 @@ export default class CFUtil {
      * @return {Promise<any>} promise with service key credentials
      * @memberof CFUtil
      */
-    static async getOrCreateServiceKeyWithEndpoints(serviceInstanceName: string, spaceGuid?: string): Promise<any> {
+    static async getOrCreateServiceKeyWithEndpoints(serviceInstanceName: string, spaceGuid?: string): Promise<ServiceCredentials | undefined> {
         const resolvedSpaceGuid = await this.getSpaceGuid(spaceGuid);
 
         // Find service instance by name
@@ -270,8 +271,6 @@ export default class CFUtil {
         this.deleteServiceKeyUnsafe(serviceInstance.name, uniqueServiceKeyName);
         log.verbose(`Created service key '${uniqueServiceKeyName}' does not have valid endpoints structure. Triggered deletion of invalid service key '${uniqueServiceKeyName}'`);
     }
-
-
 
 
     /**

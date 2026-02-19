@@ -137,4 +137,9 @@ export interface IJsonPromisePerLanguage {
     json: Promise<any>;
 }
 
+export type ServiceCredentials = {
+    endpoints: Record<string, { destination: string } | string>;
+    "sap.cloud.service"?: string;
+}
+
 export { IConfiguration };

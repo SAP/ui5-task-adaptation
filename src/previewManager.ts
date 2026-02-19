@@ -3,6 +3,8 @@ import IProcessor from "./processors/processor.js";
 import { IReuseLibInfo } from "./model/types.js";
 import ResourceUtil from "./util/resourceUtil.js";
 import path from "path";
+import { merge } from "./util/cf/xsAppJsonUtil.js";
+import FsUtil from "./util/fsUtil.js";
 
 type AppInfoMessage = {
 	message: string;
@@ -48,7 +50,7 @@ export default class PreviewManager {
 
 		if (PreviewManager.isPreviewRequested()) {
 			try {
-				ui5AppInfo = await ResourceUtil.readInProject(APP_INFO_FILE);
+				ui5AppInfo = await FsUtil.readInProject(APP_INFO_FILE);
 			} catch (error) {
 				throw new Error(`ui5AppInfo.json is missing in project root, cannot process preview resources: ${error instanceof Error ? error.message : String(error)}`);
 			}
@@ -95,7 +97,7 @@ export default class PreviewManager {
 
 	async processPreviewResources(baseAppFiles: ReadonlyMap<string, string>): Promise<void> {
 		log.verbose(`Downloading reuse libraries to reuse folder`);
-		const xsAppFiles: Map<string, string> = new Map();
+		const xsAppFiles = new Array<string>();
 		if (this.fetchLibsPromises.size === 0) {
 			log.verbose("No reuse libraries defined in ui5AppInfo.json for preview");
 			return;
@@ -111,7 +113,7 @@ export default class PreviewManager {
 			for (const [filename, content] of libFiles) {
 				mergedFiles.set(filename, content);
 				if (filename.includes(XS_APP_JSON_FILE)) {
-					xsAppFiles.set(filename, content);
+					xsAppFiles.push(content);
 				}
 			}
 		}
@@ -133,33 +135,20 @@ export default class PreviewManager {
 		return promises;
 	}
 
-	private searchBaseAppXsAppJsonFile(xsAppFiles: Map<string, string>, baseAppFiles: ReadonlyMap<string, string>): void {
+	private searchBaseAppXsAppJsonFile(xsAppFiles: string[], baseAppFiles: ReadonlyMap<string, string>): void {
 		const xsAppJsonContent = baseAppFiles.get(XS_APP_JSON_FILE);
 		if (xsAppJsonContent) {
-			xsAppFiles.set(XS_APP_JSON_FILE, xsAppJsonContent);
+			xsAppFiles.push(xsAppJsonContent);
 		} else {
 			log.warn("xs-app.json is missing in the downloaded base app files for preview");
 		}
 	}
 
-	private mergeXsAppJsonFiles(xsAppFiles: Map<string, string>, files: Map<string, string>): void {
-		// Start with empty xs-app.json
-		// welcomeFile is not needed for preview
-		const mergedXsAppJson: XsApp = {
-			authenticationMethod: "none",
-			routes: []
-		};
-
-		xsAppFiles.forEach((xsAppInfoContent) => {
-			const xsAppInfo = JSON.parse(xsAppInfoContent);
-			if (mergedXsAppJson.authenticationMethod === "none" && xsAppInfo.authenticationMethod) {
-				mergedXsAppJson.authenticationMethod = xsAppInfo.authenticationMethod;
-			}
-			if (Array.isArray(xsAppInfo.routes)) {
-				mergedXsAppJson.routes = mergedXsAppJson.routes.concat(xsAppInfo.routes);
-			}
-		});
-		files.set(XS_APP_JSON_FILE, JSON.stringify(mergedXsAppJson, null, 2));
+	private mergeXsAppJsonFiles(xsAppFiles: string[], files: Map<string, string>): void {
+		const mergedXsAppJson = merge(xsAppFiles);
+		if (mergedXsAppJson) {
+			files.set(XS_APP_JSON_FILE, mergedXsAppJson);
+		}
 	}
 
 	private static moveLibraryFiles(inputFiles: ReadonlyMap<string, string>, libraryName: string, libId: string): ReadonlyMap<string, string> {

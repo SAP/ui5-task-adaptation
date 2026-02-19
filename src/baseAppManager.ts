@@ -1,13 +1,4 @@
-import { AppDescriptorChange, RawApplier, RegistrationBuild } from "../dist/bundle.js";
 import { trimExtension } from "./util/commonUtil.js";
-
-import AppVariant from "./appVariantManager.js";
-import BuildStrategy from "./buildStrategy.js";
-import { IChange } from "./model/types.js";
-import IProcessor from "./processors/processor.js";
-import { getLogger } from "@ui5/logger";
-
-const log = getLogger("@ui5/task-adaptation::BaseAppManager");
 
 export interface IBaseAppResources {
     resources: any[];
@@ -90,38 +81,6 @@ export default class BaseApp {
         this.i18nPath = this.extractI18nPathFromManifest(this.id, manifest["sap.app"]?.i18n);
     }
 
-    async adapt(appVariant: AppVariant, processor: IProcessor): Promise<ReadonlyMap<string, string>> {
-        const files = new Map(this.files)
-        const manifest = JSON.parse(files.get("manifest.json")!);
-        manifest["sap.app"].id = appVariant.id;
-        await processor.updateLandscapeSpecificContent(manifest, files, appVariant.id, appVariant.prefix);
-        this.updateComponentName(manifest, this.id);
-        this.fillAppVariantIdHierarchy(processor, appVariant.reference, this.version, manifest);
-        this.updateAdaptationProperties(manifest);
-        await this.applyDescriptorChanges(manifest, appVariant);
-        files.set("manifest.json", JSON.stringify(manifest));
-        return files;
-    }
-
-    private updateComponentName(manifest: any, id: string) {
-        if (manifest["sap.ui5"] == null) {
-            manifest["sap.ui5"] = {};
-        }
-        if (manifest["sap.ui5"].componentName == null) {
-            manifest["sap.ui5"].componentName = id;
-        }
-    }
-
-    private updateAdaptationProperties(content: any) {
-        if (content["sap.fiori"]?.cloudDevAdaptationStatus) {
-            delete content["sap.fiori"].cloudDevAdaptationStatus;
-        }
-        if (content["sap.ui5"] == null) {
-            content["sap.ui5"] = {};
-        }
-        content["sap.ui5"].isCloudDevAdaptation = true;
-    }
-
 
     private extractI18nPathFromManifest(sapAppId: string, i18nNode: any) {
         if (i18nNode) {
@@ -158,44 +117,4 @@ export default class BaseApp {
     }
 
 
-    private async applyDescriptorChanges(baseAppManifest: any, appVariant: AppVariant) {
-        log.verbose("Applying appVariant changes");
-        const changesContent = new Array<AppDescriptorChange>();
-        const i18nBundleName = appVariant.prefix;
-        for (const change of appVariant.getProcessedManifestChanges()) {
-            changesContent.push(new AppDescriptorChange(change));
-            this.adjustAddNewModelEnhanceWith(change, i18nBundleName);
-        }
-        if (changesContent.length > 0) {
-            const changeHandlers = await Promise.all(changesContent.map(change => RegistrationBuild[change.getChangeType()]()));
-            await RawApplier.applyChanges(changeHandlers, baseAppManifest, changesContent, new BuildStrategy());
-        }
-    }
-
-
-    private fillAppVariantIdHierarchy(processor: IProcessor, id: string, version: string, baseAppManifest: any) {
-        log.verbose("Filling up app variant hierarchy in manifest.json");
-        if (baseAppManifest["sap.ui5"] == null) {
-            baseAppManifest["sap.ui5"] = {};
-        }
-        if (baseAppManifest["sap.ui5"].appVariantIdHierarchy == null) {
-            baseAppManifest["sap.ui5"].appVariantIdHierarchy = [];
-        }
-        const appVariantIdHierarchyItem = processor.createAppVariantHierarchyItem(id, version);
-        baseAppManifest["sap.ui5"].appVariantIdHierarchy.unshift(appVariantIdHierarchyItem);
-    }
-
-
-    private adjustAddNewModelEnhanceWith(change: IChange, i18nBundleName: string) {
-        if (change.changeType === "appdescr_ui5_addNewModelEnhanceWith") {
-            if (change.texts == null) {
-                // We need to add texts properties to changes because not all
-                // have texts property. Changes without texts property can
-                // causes issues in bundle.js This is needed for now, and will
-                // be removed as soon as change merger in openUI5 is updated
-                change.texts = { i18n: change.content?.bundleUrl || "i18n/i18n.properties" };
-            }
-            change.texts.i18n = i18nBundleName + "/" + change.texts.i18n;
-        }
-    }
 }

@@ -1,7 +1,10 @@
 import { expect } from "chai";
 import sinon from "sinon";
-import CFProcessor from "../../../src/processors/cfProcessor.js";
 import CFUtil from "../../../src/util/cfUtil.js";
+import { enhanceRoutes, enhanceRoutesWithEndpointAndService } from "../../../src/util/cf/xsAppJsonUtil.js";
+import { ServiceCredentials } from "../../../src/model/types.js";
+import XsAppJsonEnhanceRoutesCommand from "../../../src/adapters/commands/xsAppJsonEnhanceRoutesCommand.js";
+import UpdateCloudPlatformCommand from "../../../src/adapters/commands/updateCloudPlatformCommand.js";
 
 describe("CFProcessor", () => {
 
@@ -17,15 +20,13 @@ describe("CFProcessor", () => {
 
     it("should not update oAuthScopes if empty", async () => {
         const manifest = { "sap.platform.cf": {} };
-        const baseAppFiles = new Map<string, string>();
-        await new CFProcessor({}).updateLandscapeSpecificContent(manifest, baseAppFiles);
+        new UpdateCloudPlatformCommand(undefined).execute(manifest);
         expect(manifest["sap.platform.cf"]).to.be.empty;
     });
 
     it("should not update oAuthScopes if no sap.platform.cf", async () => {
         const manifest = {} as any;
-        const baseAppFiles = new Map<string, string>();
-        await new CFProcessor({}).updateLandscapeSpecificContent(manifest, baseAppFiles);
+        new UpdateCloudPlatformCommand(undefined).execute(manifest);
         expect(manifest["sap.platform.cf"]).to.be.undefined;
     });
 
@@ -40,8 +41,7 @@ describe("CFProcessor", () => {
                 service: "testService"
             }
         };
-        const baseAppFiles = new Map<string, string>();
-        await new CFProcessor({}).updateLandscapeSpecificContent(manifest, baseAppFiles);
+        new UpdateCloudPlatformCommand(undefined).execute(manifest);
         expect(manifest["sap.platform.cf"].oAuthScopes[0]).to.eql("$XSAPPNAME('testService').scope1");
     });
 
@@ -53,8 +53,7 @@ describe("CFProcessor", () => {
                 ]
             }
         };
-        const baseAppFiles = new Map<string, string>();
-        await new CFProcessor({}).updateLandscapeSpecificContent(manifest, baseAppFiles);
+        new UpdateCloudPlatformCommand(undefined).execute(manifest);
         expect(manifest["sap.platform.cf"].oAuthScopes[0]).to.eql("$XSAPPNAME.scope1");
     });
 
@@ -69,8 +68,7 @@ describe("CFProcessor", () => {
                 service: "testService"
             }
         };
-        const baseAppFiles = new Map<string, string>();
-        await new CFProcessor({}).updateLandscapeSpecificContent(manifest, baseAppFiles);
+        new UpdateCloudPlatformCommand(undefined).execute(manifest);
         expect(manifest["sap.platform.cf"].oAuthScopes[0]).to.eql("scope1");
     });
 
@@ -80,15 +78,13 @@ describe("CFProcessor", () => {
                 service: "testService"
             }
         };
-        const baseAppFiles = new Map<string, string>();
-        await new CFProcessor({ sapCloudService: "sapCloudService1" }).updateLandscapeSpecificContent(manifest, baseAppFiles);
+        new UpdateCloudPlatformCommand("sapCloudService1").execute(manifest);
         expect(manifest["sap.cloud"].service).to.eql("sapCloudService1");
     });
 
     it("should create sap.cloud", async () => {
         const manifest = {} as any;
-        const baseAppFiles = new Map<string, string>();
-        await new CFProcessor({ sapCloudService: "sapCloudService1" }).updateLandscapeSpecificContent(manifest, baseAppFiles);
+        new UpdateCloudPlatformCommand("sapCloudService1").execute(manifest);
         expect(manifest["sap.cloud"].service).to.eql("sapCloudService1");
     });
 
@@ -98,73 +94,57 @@ describe("CFProcessor", () => {
                 service: "testService"
             }
         };
-        const baseAppFiles = new Map<string, string>();
-        await new CFProcessor({}).updateLandscapeSpecificContent(manifest, baseAppFiles);
+        new UpdateCloudPlatformCommand(undefined).execute(manifest);
         expect(manifest["sap.cloud"]).to.be.undefined
     });
 
     describe("updateXsAppJson", () => {
         it("should skip xs-app.json update if there are no routes", async () => {
-            const processor = new CFProcessor({
-                appName: "test-app",
-                serviceInstanceName: "test-service-instance"
-            });
-            const manifest = {};
-            const baseAppFiles = new Map<string, string>();
-            baseAppFiles.set("xs-app.json", JSON.stringify({}));
-            await processor.updateLandscapeSpecificContent(manifest, baseAppFiles);
-            expect(baseAppFiles.get("xs-app.json")).to.eql(JSON.stringify({}));
+            const result = enhanceRoutesWithEndpointAndService("{}", {} as any);
+            expect(result).to.eql("{}");
             expect(cfUtilStub.notCalled).to.be.true;
         });
 
         it("should skip xs-app.json update if there are no routes with destination", async () => {
-            const processor = new CFProcessor({
-                appName: "test-app",
-                serviceInstanceName: "test-service-instance"
-            });
-            const manifest = {};
-            const baseAppFiles = new Map<string, string>();
             const routes = [
                 { source: "/foo", authenticationType: "none" },
                 { source: "/bar", authenticationType: "none" }
             ];
-            baseAppFiles.set("xs-app.json", JSON.stringify({ routes }));
-            await processor.updateLandscapeSpecificContent(manifest, baseAppFiles);
-            expect(baseAppFiles.get("xs-app.json")).to.eql(JSON.stringify({ routes }));
+            const routesString = JSON.stringify({ routes })
+            const result = enhanceRoutesWithEndpointAndService(routesString, {} as any);
+            expect(result).to.eql(routesString);
             expect(cfUtilStub.notCalled).to.be.true;
         });
 
         it("should throw error when serviceInstanceName is not provided", async () => {
-            const processor = new CFProcessor({
+            const processor = new XsAppJsonEnhanceRoutesCommand({
                 appName: "test-app"
                 // serviceInstanceName is missing
             });
-            const manifest = {};
             const baseAppFiles = new Map<string, string>();
             // Add a route with destination to trigger the error
-            baseAppFiles.set("xs-app.json", JSON.stringify({ 
-                routes: [{ source: "/api", destination: "api-dest" }] 
+            baseAppFiles.set("xs-app.json", JSON.stringify({
+                routes: [{ source: "/api", destination: "api-dest" }]
             }));
 
-            await expect(processor.updateLandscapeSpecificContent(manifest, baseAppFiles))
+            await expect(processor.execute(baseAppFiles))
                 .to.be.rejectedWith("Service instance name must be specified in ui5.yaml configuration for app 'test-app'");
         });
 
         it("should throw error when CFUtil.getOrCreateServiceKeyWithEndpoints fails", async () => {
             cfUtilStub.rejects(new Error("Service not found"));
 
-            const processor = new CFProcessor({
+            const processor = new XsAppJsonEnhanceRoutesCommand({
                 appName: "test-app",
                 serviceInstanceName: "test-service-instance"
             });
-            const manifest = {};
             const baseAppFiles = new Map<string, string>();
             // Add a route with destination to trigger the service key function call
-            baseAppFiles.set("xs-app.json", JSON.stringify({ 
-                routes: [{ source: "/api", destination: "api-dest" }] 
+            baseAppFiles.set("xs-app.json", JSON.stringify({
+                routes: [{ source: "/api", destination: "api-dest" }]
             }));
 
-            await expect(processor.updateLandscapeSpecificContent(manifest, baseAppFiles))
+            await expect(processor.execute(baseAppFiles))
                 .to.be.rejectedWith("Failed to get valid service keys for app 'test-app': Service not found");
         });
 
@@ -227,14 +207,13 @@ describe("CFProcessor", () => {
                 ]
             };
 
-            const processor = new CFProcessor({
+            const processor = new XsAppJsonEnhanceRoutesCommand({
                 appName: "test-app",
                 serviceInstanceName: "test-service-instance"
             });
-            const manifest = {};
             const baseAppFiles = new Map<string, string>();
             baseAppFiles.set("xs-app.json", JSON.stringify(originalXsAppJson));
-            await processor.updateLandscapeSpecificContent(manifest, baseAppFiles);
+            await processor.execute(baseAppFiles);
             const updatedXsAppJson = JSON.parse(baseAppFiles.get("xs-app.json")!);
             expect(updatedXsAppJson.routes).to.deep.equal(expectedXsAppJson.routes);
         });
@@ -257,18 +236,17 @@ describe("CFProcessor", () => {
                 .stub(CFUtil, "generateUniqueServiceKeyName")
                 .resolves("test-service-instance-key-5");
 
-            const processor = new CFProcessor({
+            const processor = new XsAppJsonEnhanceRoutesCommand({
                 appName: "test-app",
                 serviceInstanceName: "test-service-instance"
             });
-            const manifest = {};
             const baseAppFiles = new Map<string, string>();
             // Add a route with destination to trigger the service key function call
-            baseAppFiles.set("xs-app.json", JSON.stringify({ 
-                routes: [{ source: "/api", destination: "api-dest" }] 
+            baseAppFiles.set("xs-app.json", JSON.stringify({
+                routes: [{ source: "/api", destination: "api-dest" }]
             }));
 
-            await processor.updateLandscapeSpecificContent(manifest, baseAppFiles);
+            await processor.execute(baseAppFiles);
 
             // Verify that getOrCreateServiceKeyWithEndpoints was called with the service instance name and space
             expect(cfUtilStub.calledWith("test-service-instance", undefined)).to.be.true;
@@ -329,8 +307,7 @@ describe("CFProcessor", () => {
                 }
             ];
 
-            const processor = new CFProcessor({});
-            const result = (processor as any).enhanceRoutesWithEndpointAndService(serviceCredentials, originalRoutes);
+            const result = enhanceRoutes(serviceCredentials, originalRoutes);
 
             expect(result).to.deep.equal(expectedRoutes);
         });
@@ -343,7 +320,7 @@ describe("CFProcessor", () => {
                     "ui-endpoint": "ui-dest"
                 },
                 "sap.cloud.service": "test-service"
-            };
+            } as ServiceCredentials;
 
             const originalRoutes = [
                 {
@@ -383,8 +360,7 @@ describe("CFProcessor", () => {
                 }
             ];
 
-            const processor = new CFProcessor({});
-            const result = (processor as any).enhanceRoutesWithEndpointAndService(serviceCredentials, originalRoutes);
+            const result = enhanceRoutes(serviceCredentials, originalRoutes);
             expect(result).to.deep.equal(expectedRoutes);
         });
 
@@ -394,11 +370,10 @@ describe("CFProcessor", () => {
         // Simulate CFUtil.getOrCreateServiceKeyWithEndpoints returning undefined or empty endpoints
         cfUtilStub.resolves({ endpoints: {} });
 
-        const processor = new CFProcessor({
+        const processor = new XsAppJsonEnhanceRoutesCommand({
             appName: "test-app",
             serviceInstanceName: "test-service-instance"
         });
-        const manifest = {};
         const baseAppFiles = new Map<string, string>();
         const routes = [{
             source: "/api/(.*)",
@@ -406,8 +381,9 @@ describe("CFProcessor", () => {
             authenticationType: "xsuaa"
         }];
         baseAppFiles.set("xs-app.json", JSON.stringify({ routes }));
+        baseAppFiles.set("manifest.json", "{}");
 
-        await processor.updateLandscapeSpecificContent(manifest, baseAppFiles);
+        await processor.execute(baseAppFiles);
         // xs-app.json should remain unchanged
         const updated = JSON.parse(baseAppFiles.get("xs-app.json")!);
         expect(updated.routes).to.deep.equal(routes);

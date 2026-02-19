@@ -117,7 +117,9 @@ describe("I18nPropertiesMergeCommand", () => {
         const OPTIONS: IProjectOptions = {
             projectNamespace: "ns",
             configuration: {
-                appName: "repoName1"
+                type: "cf",
+                appName: "repoName1",
+                serviceInstanceName: "serviceInstanceName"
             }
         };
         let sandbox: SinonSandbox;
@@ -479,6 +481,10 @@ describe("I18nPropertiesMergeCommand", () => {
         });
 
         async function test({ baseAppFiles, appVariantFolder, expectLength, expectIncluded, expectExcluded }: ITestParams) {
+            const cfUtilMock = {
+                getOrCreateServiceKeyWithEndpoints: () => Promise.resolve({})
+            };
+
             const CFProcessor = await esmock("../../../../src/processors/cfProcessor.js", {}, {
                 "../../../../src/repositories/html5RepoManager.ts": {
                     getBaseAppFiles: () => Promise.resolve(baseAppFiles),
@@ -486,11 +492,13 @@ describe("I18nPropertiesMergeCommand", () => {
                 },
                 "../../../../src/cache/cacheHolder": {
                     cached: () => { }
-                }
+                },
+                "../../../../src/util/cfUtil.ts": cfUtilMock
             });
+            const processor = new CFProcessor(OPTIONS.configuration);
             const index = await esmock("../../../../src/index.js", {}, {
                 "../../../../src/processors/processor.js": {
-                    determineProcessor: () => new CFProcessor(OPTIONS.configuration)
+                    determineProcessor: () => processor
                 }
             });
             const { workspace, taskUtil } = await TestUtil.getWorkspace(appVariantFolder, OPTIONS.projectNamespace);
