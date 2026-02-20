@@ -57,7 +57,8 @@ describe("AppVariantManager", () => {
                 "changes/id_1707741869990_200_flVariant.ctrl_variant",
                 "changes/id_1707749484507_210_setTitle.ctrl_variant_change",
                 "changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
-                "changes/id_1753705046493_197_codeExt.change"
+                "changes/id_1753705046493_197_codeExt.change",
+                "xs-app.json"
             ].toSorted();
             expect([...files.keys()].toSorted()).to.have.members(expectedMembers);
         });
@@ -98,7 +99,8 @@ describe("AppVariantManager", () => {
                 "changes/coding/id_12345.js",
                 "changes/id_1707741869990_200_flVariant.ctrl_variant",
                 "changes/id_1707749484507_210_setTitle.ctrl_variant_change",
-                "changes/id_1707749484509_240_setDefault.ctrl_variant_management_change"
+                "changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
+                "xs-app.json"
             ]);
         });
 

@@ -114,7 +114,8 @@
             "src/annotations/comparator/diffCase.ts",
             "src/annotations/transformers/transformer.ts",
             "src/model/configuration.ts",
-            "src/model/appVariantIdHierarchyItem.ts"
+            "src/model/appVariantIdHierarchyItem.ts",
+            "src/adapters/adapter.ts"
         ],
         "check-coverage": true,
         "statements": 85,

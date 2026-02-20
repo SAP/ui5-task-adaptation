@@ -4,7 +4,6 @@ import { logBuilderVersion } from "./util/commonUtil.js";
 
 import AppVariant from "./appVariantManager.js";
 import BaseApp from "./baseAppManager.js";
-import I18nMerger from "./util/i18nMerger.js";
 import { ITaskParameters } from "./model/types.js";
 import ResourceUtil from "./util/resourceUtil.js";
 import { determineProcessor } from "./processors/processor.js";
@@ -36,29 +35,33 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
         // latest app variant on top. We reverse the list to process original
         // application first and then app variants in chronological order.
         const reversedHierarchy = appVariantIdHierarchy.toReversed();
-        const fetchFilesPromises: Promise<ReadonlyMap<string, string> | null>[] = reversedHierarchy.map(({ repoName, cachebusterToken }) => processor.fetch(repoName, cachebusterToken));
+        const fetchFilesPromises: Promise<ReadonlyMap<string, string>>[] = reversedHierarchy.map(({ repoName, cachebusterToken }) => processor.fetch(repoName, cachebusterToken));
         fetchFilesPromises.push(Promise.resolve(adaptationProject.files));
         const appVariants = new Array<AppVariant>();
 
-        const adapt = async (baseAppFiles: ReadonlyMap<string, string> | null, appVariantFiles: ReadonlyMap<string, string> | null) => {
-            let baseApp = BaseApp.fromFiles(baseAppFiles!);
-            let appVariant = AppVariant.fromFiles(appVariantFiles!);
+        const adapt = async (baseAppFiles: ReadonlyMap<string, string>, appVariantFiles: ReadonlyMap<string, string>): Promise<ReadonlyMap<string, string>> => {
+            let baseApp = BaseApp.fromFiles(baseAppFiles);
+            let appVariant = AppVariant.fromFiles(appVariantFiles);
             // If the app variant is the same as the adaptation project, we use the
             // adaptation project because it contains resources that should be updated.
             if (appVariant.id === adaptationProject.id) {
                 appVariant = adaptationProject;
             }
             appVariants.push(appVariant);
-            let adaptedFiles = await baseApp.adapt(appVariant, processor);
-            adaptedFiles = await adapter.adapt(adaptedFiles, appVariantFiles!);
-            return I18nMerger.merge(adaptedFiles, baseApp.i18nPath, appVariant);
+            const adaptCommandChain = adapter.createAdaptCommandChain(baseApp, appVariant);
+            const mergeCommandChain = adapter.createMergeCommandChain(baseApp, appVariant);
+            const adaptedFiles = await adaptCommandChain.execute();
+            const mergedFiles = await mergeCommandChain.execute(adaptedFiles, appVariant.getProcessedFiles());
+            return mergedFiles;
         }
 
         let files = await fetchFilesPromises.reduce(async (previousFiles, currentFiles) =>
             adapt(await previousFiles, await currentFiles), fetchFilesPromises.shift()!);
 
+        files = await adapter.createPostCommandChain().execute(files);
+
         const references = getReferences(appVariants, adaptationProject.id);
-        files = FilesUtil.filter(files!);
+        files = FilesUtil.filter(files);
         files = FilesUtil.rename(files, references);
 
         adaptationProject.omitDeletedResources(files, options.projectNamespace, taskUtil);
@@ -66,7 +69,7 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
         // Read libs for preview
         const previewManager = await previewManagerPromise;
         const writePromises = new Array<Promise<void>>(previewManager.processPreviewResources(files));
-        files!.forEach((content, filename) => {
+        files.forEach((content, filename) => {
             const resource = ResourceUtil.createResource(filename, options.projectNamespace, content);
             writePromises.push(workspace.write(resource));
         });

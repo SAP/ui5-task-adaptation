@@ -2,6 +2,7 @@ import * as chai from "chai";
 import * as sinon from "sinon";
 
 import { IProjectOptions } from "../../../src/model/types.js";
+import ServerError from "../../../src/model/serverError.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "../testUtilities/testUtil.js";
 import esmock from "esmock";
@@ -135,4 +136,72 @@ describe("Html5RepoManager", () => {
         expect([...reuseLibFiles.keys()]).to.have.members(["i18n.properties", "manifest.json"]);
     });
 
+    describe("when downloading archive with various status codes", () => {
+        const downloadUrl = "html5Uri/applications/content/appName-appVersion/";
+        const tokenUrl = "html5UaaUrl/oauth/token?grant_type=client_credentials";
+
+        const statusCases = [
+            { status: 200, message: "Success", shouldError: false },
+            { status: 400, message: "Bad Request.", shouldError: true },
+            { status: 401, message: "Unauthorized", shouldError: true },
+            { status: 403, message: "Forbidden", shouldError: true },
+            { status: 404, message: "Resource not found.", shouldError: true },
+            { status: 500, message: "Internal Server Error.", shouldError: true },
+            { status: 503, message: "Application not found.", shouldError: true }
+        ];
+
+        statusCases.forEach(({ status, message, shouldError }) => {
+            it(`should handle HTTP ${status}`, async () => {
+                let expectedStatusUsed: number | undefined;
+                const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
+                const Html5RepoManager = await esmock("../../../src/repositories/html5RepoManager.js", {}, {
+                    "@sap/cf-tools/out/src/cli.js": {
+                        Cli: {
+                            execute: () => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json"))
+                        }
+                    },
+                    "@sap/cf-tools/out/src/cf-local.js": {
+                        cfGetInstanceCredentials: () => Promise.resolve(credentialsJson)
+                    },
+                    "../../../src/util/requestUtil.js": {
+                        default: {
+                            get: (url: string, _requestOptions: any, expectedStatus: number = 200) => {
+                                if (url === tokenUrl) {
+                                    return Promise.resolve({ "access_token": "accessToken1" });
+                                }
+                                if (url === downloadUrl) {
+                                    expectedStatusUsed = expectedStatus;
+                                    if (status === expectedStatus) {
+                                        return Promise.resolve(TestUtil.getResourceBuffer("baseapp.zip"));
+                                    }
+                                    if (status >= 500) {
+                                        throw new ServerError(url, { response: { status, data: ` ${message}` } });
+                                    }
+                                    throw new Error(`Unexpected response received from '${url}': ${status} ${message}`);
+                                }
+                                throw new Error(`Unexpected url '${url}'`);
+                            }
+                        }
+                    }
+                });
+
+                if (shouldError) {
+                    try {
+                        await Html5RepoManager.getBaseAppFiles(options.configuration);
+                        assert.fail(true, false, "Exception not thrown");
+                    } catch (error: any) {
+                        if (status >= 500) {
+                            expect(error.message).to.equal(`Request ${downloadUrl} failed with Server error: ${status} ${message}`);
+                        } else {
+                            expect(error.message).to.equal(`Unexpected response received from '${downloadUrl}': ${status} ${message}`);
+                        }
+                    }
+                } else {
+                    const baseAppFiles = await Html5RepoManager.getBaseAppFiles(options.configuration);
+                    expect([...baseAppFiles.keys()]).to.have.members(["i18n.properties", "manifest.json"]);
+                }
+                expect(expectedStatusUsed).to.equal(200);
+            });
+        });
+    });
 });

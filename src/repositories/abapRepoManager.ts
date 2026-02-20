@@ -1,7 +1,7 @@
 import { IConfiguration, IMetadata } from "../model/types.js";
 
 import AbapProvider from "./abapProvider.js";
-import IAppVariantIdHierarchyItem from "../model/appVariantIdHierarchyItem.js";
+import { IAppVariantIdHierarchyItem } from "../model/appVariantIdHierarchyItem.js";
 import { getLogger } from "@ui5/logger";
 import { unzipZipEntries } from "../util/zipUtil.js";
 

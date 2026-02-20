@@ -1,19 +1,9 @@
-export interface Adapter {
-    adapt(files: ReadonlyMap<string, string>, appVariantFiles: ReadonlyMap<string, string>): Promise<ReadonlyMap<string, string>>;
-}
+import AppVariant from "../appVariantManager.js";
+import BaseApp from "../baseAppManager.js";
+import { AdaptCommandChain, MergeCommandChain, PostCommandChain } from "./commands/command.js";
 
-export interface Mutator {
-    mutate(files: Map<string, string>, appVariantFiles: ReadonlyMap<string, string>): Promise<void>;
-}
-
-export class BaseAdapter implements Adapter {
-    protected mutators: Mutator[] = [];
-
-    async adapt(files: ReadonlyMap<string, string>, appVariantFiles: ReadonlyMap<string, string>): Promise<ReadonlyMap<string, string>> {
-        const filesCopy = new Map(files);
-        for (const mutator of this.mutators) {
-            await mutator.mutate(filesCopy, appVariantFiles);
-        }
-        return filesCopy;
-    }
+export interface IAdapter {
+    createAdaptCommandChain(baseApp: BaseApp, appVariant: AppVariant): AdaptCommandChain;
+    createMergeCommandChain(baseApp: BaseApp, appVariant: AppVariant): MergeCommandChain;
+    createPostCommandChain(): PostCommandChain;
 }

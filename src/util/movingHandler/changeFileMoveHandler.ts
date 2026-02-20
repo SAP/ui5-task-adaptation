@@ -1,4 +1,3 @@
-import path from "path/posix";
 import { isManifestChange } from "../commonUtil.js";
 
 const EXT_DIR = "ext/";
@@ -70,9 +69,9 @@ export const moveFile = (filename: string, content: string, prefix: string, id: 
 
     if (shouldMove(filename, content)) {
         const [dir, ...rest] = filename.split("/");
-        newFilename = path.join(dir, prefix, rest.join("/"));
+        newFilename = [dir, prefix, ...rest].join("/");
         const restWOExtPath = getPathWithoutExtensions(filename);
-        renamingPath.set(restWOExtPath, path.join(prefix, restWOExtPath));
+        renamingPath.set(restWOExtPath, [prefix, restWOExtPath].join("/"));
     }
 
     if (shouldNamespaceRenamed(filename)) {

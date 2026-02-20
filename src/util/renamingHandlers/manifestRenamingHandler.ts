@@ -1,24 +1,9 @@
-import { IRenamingHandler } from "./renamingHandler.js";
+import JsonRenamingHandler from "./jsonRenamingHandler.js";
 
-export default class ManifestRenamingHandler implements IRenamingHandler {
-
-    private appVariantIdHierarchy: any[] = [];
-
-    before(files: ReadonlyMap<string, string>): void {
-        const manifest = files.get("manifest.json");
-        if (manifest) {
-            const manifestJson = JSON.parse(manifest);
-            this.appVariantIdHierarchy = manifestJson["sap.ui5"].appVariantIdHierarchy;
-        }
-    }
-
-    after(files: Map<string, string>): void {
-        const manifest = files.get("manifest.json");
-        if (manifest) {
-            const manifestJson = JSON.parse(manifest);
-            manifestJson["sap.ui5"].appVariantIdHierarchy = this.appVariantIdHierarchy;
-            files.set("manifest.json", JSON.stringify(manifestJson));
-        }
-    };
-
+export default class ManifestRenamingHandler extends JsonRenamingHandler {
+    protected readonly filePath = "manifest.json";
+    // path to the JSON properties, forward slash separated, e.g. "sap.ui5/appVariantIdHierarchy"
+    protected readonly jsonPathsToRestore = [
+        "sap.ui5/appVariantIdHierarchy"
+    ];
 }

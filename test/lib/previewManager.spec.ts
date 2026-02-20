@@ -4,6 +4,7 @@ import ResourceUtil from "../../src/util/resourceUtil.js";
 import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import { SinonSandbox } from "sinon";
+import FsUtil from "../../src/util/fsUtil.js";
 
 
 describe("PreviewManager download reuse libraries", () => {
@@ -29,7 +30,7 @@ describe("PreviewManager download reuse libraries", () => {
 
 	it("should read ui5AppInfo.js and find reuse libs to download", async () => {
 		const appInfo = JSON.stringify({
-		"reuse.lib1": 	{
+			"reuse.lib1": {
 				asyncHints: {
 					libs: [
 						{
@@ -60,7 +61,7 @@ describe("PreviewManager download reuse libraries", () => {
 			fetchReuseLib: async (_: string) => []
 		} as any;
 
-		sandbox.stub(ResourceUtil, "readInProject").returns(Promise.resolve(appInfo));
+		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfo));
 
 		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processorStub);
 		expect(previewManager["fetchLibsPromises"].size > 0).to.be.true;
@@ -71,7 +72,7 @@ describe("PreviewManager download reuse libraries", () => {
 		try {
 			sandbox.stub(ResourceUtil, "byGlobInProject").returns(Promise.resolve(files));
 
-		    await PreviewManager.createFromRoot("reuse.lib1", {} as any);
+			await PreviewManager.createFromRoot("reuse.lib1", {} as any);
 			assert.fail(true, false, "Exception not thrown");
 		} catch (error: any) {
 			expect(error.message).to.match(/ui5AppInfo\.json is missing in project root, cannot process preview resources: ENOENT: no such file or directory, open '.*ui5AppInfo\.json'/);
@@ -80,7 +81,7 @@ describe("PreviewManager download reuse libraries", () => {
 
 	it("should read ui5AppInfo.json and find no reuse libs to download", async () => {
 		const appInfoContent = JSON.stringify({
-			"reuse.lib1": 	{
+			"reuse.lib1": {
 				asyncHints: {
 					libs: []
 				},
@@ -90,7 +91,7 @@ describe("PreviewManager download reuse libraries", () => {
 		const processorStub = {
 			fetchReuseLib: async () => new Map<string, string>()
 		} as any;
-		sandbox.stub(ResourceUtil, "readInProject").returns(Promise.resolve(appInfoContent));
+		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
 
 		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processorStub);
 		expect(previewManager["fetchLibsPromises"].size > 0).to.be.false;
@@ -100,7 +101,7 @@ describe("PreviewManager download reuse libraries", () => {
 		const writeStub = sandbox.stub(ResourceUtil, "writeInProject");
 
 		const appInfoContent = JSON.stringify({
-			"reuse.lib1": 	{
+			"reuse.lib1": {
 				asyncHints: {
 					libs: [
 						{
@@ -136,7 +137,7 @@ describe("PreviewManager download reuse libraries", () => {
 			}
 		} as any;
 
-		sandbox.stub(ResourceUtil, "readInProject").returns(Promise.resolve(appInfoContent));
+		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
 
 		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processor);
 		await previewManager.processPreviewResources(new Map<string, string>([["xs-app.json", "{}"]]));
@@ -169,7 +170,7 @@ describe("PreviewManager download reuse libraries", () => {
 		) as any;
 
 		const appInfoContent = JSON.stringify({
-			"reuse.libEmpty": 	{
+			"reuse.libEmpty": {
 				asyncHints: {
 					libs: [
 						{
@@ -190,7 +191,7 @@ describe("PreviewManager download reuse libraries", () => {
 			fetchReuseLib: async () => new Map<string, string>()
 		} as any;
 
-		sandbox.stub(ResourceUtil, "readInProject").returns(Promise.resolve(appInfoContent));
+		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
 
 		const previewManager = await PreviewManagerMock.createFromRoot("reuse.libEmpty", processorStub);
 		await previewManager.processPreviewResources(new Map<string, string>([["xs-app.json", "{}"]]));
@@ -262,7 +263,7 @@ describe("PreviewManager adjust xs-app.json", () => {
 
 	it("should merge xs-app.json files", async () => {
 		const appInfoContent = JSON.stringify({
-			"reuse.lib1": 	{
+			"reuse.lib1": {
 				asyncHints: {
 					libs: [
 						{
@@ -316,14 +317,14 @@ describe("PreviewManager adjust xs-app.json", () => {
 			}
 		} as any;
 
-		const resourceWrite = sandbox.stub(ResourceUtil, "writeInProject");
-		sandbox.stub(ResourceUtil, "readInProject").returns(Promise.resolve(appInfoContent));
+		const ressourceWrite = sandbox.stub(ResourceUtil, "writeInProject");
+		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
 
 		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processor);
 		await previewManager.processPreviewResources(baseFiles);
 
-		expect(resourceWrite.called, "ResourceUtil.writeInProject should be called to write merged xs-app.json").to.be.true;
-		const mergedXsAppMap = resourceWrite.getCall(0).args[1];
+		expect(ressourceWrite.called, "ResourceUtil.writeInProject should be called to write merged xs-app.json").to.be.true;
+		const mergedXsAppMap = ressourceWrite.getCall(0).args[1];
 		const mergedXsAppJson = mergedXsAppMap.get("xs-app.json")!;
 		const mergedXsApp = JSON.parse(mergedXsAppJson);
 

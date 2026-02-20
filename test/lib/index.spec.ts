@@ -7,6 +7,7 @@ import { IProjectOptions } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
 import index from "../../src/index.js";
+import CFUtil from "../../src/util/cfUtil.js";
 
 const { byIsOmited } = TestUtil;
 
@@ -23,14 +24,19 @@ const OPTIONS: IProjectOptions = {
         sapCloudService: "sapCloudService",
         target: {
             url: "https://example.sap.com"
-        }
+        },
+        type: "cf",
+        serviceInstanceName: "serviceInstanceName"
     }
 };
 
 describe("Index", () => {
     let sandbox: SinonSandbox;
 
-    beforeEach(() => sandbox = sinon.createSandbox());
+    beforeEach(() => {
+        sandbox = sinon.createSandbox();
+        sandbox.stub(CFUtil, "getOrCreateServiceKeyWithEndpoints").resolves({ endpoints: {} });
+    });
     afterEach(() => {
         sandbox.restore();
         CacheHolder.clear();
@@ -66,7 +72,15 @@ describe("Index", () => {
             it(`should merge i18n files from base app and variant with given i18n manifest ${test.testName}`, async () => {
                 const baseAppFiles = new Map([
                     ["manifest.json", TestUtil.getResource("manifest.json")],
-                    ["i18n/i18n.properties", TestUtil.getResource("i18n.properties")]
+                    ["i18n/i18n.properties", TestUtil.getResource("i18n.properties")],
+                    ["xs-app.json", JSON.stringify({
+                        routes: [{
+                            source: "^/sap/opu/odata/sap/ZTEST_SRV/",
+                            target: "/sap/opu/odata/sap/ZTEST_SRV/",
+                            authenticationType: "none",
+                            destination: "ZTEST_DEST"
+                        }]
+                    })]
                 ]);
                 test.manifestModification(baseAppFiles);
                 sandbox.stub(HTML5RepoManager, "getMetadata").resolves({ changedOn: "2100.01.01" });
@@ -89,12 +103,14 @@ describe("Index", () => {
                     "/resources/ns/changes/id_1707749484507_210_setTitle.ctrl_variant_change",
                     "/resources/ns/changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
                     "/resources/ns/changes/id_1753705046493_197_codeExt.change",
-                    "/resources/ns/changes/notsupported.testfile"
+                    "/resources/ns/changes/notsupported.testfile",
+                    "/resources/ns/xs-app.json"
                 ];
                 const tempResources = await CacheHolder.read("repoName1", "2100.01.01");
                 const tempResourcesMembers = [
                     "i18n/i18n.properties",
-                    "manifest.json"
+                    "manifest.json",
+                    "xs-app.json"
                 ];
                 checkResourcePathsAndTempResources(resourcePaths, resourcePathMembers, tempResources!, tempResourcesMembers);
                 const i18nResources = resources.filter(resources => resources.getPath().includes("i18n"));
@@ -106,12 +122,27 @@ describe("Index", () => {
                 ]);
 
                 expect(html5RepoManagerStub.getCalls().length).to.equal(1);
+
+                const xsAppJson = resources.filter(resources => resources.getPath().includes("xs-app.json"));
+                const xsAppJsonContent = JSON.parse(await xsAppJson[0].getString());
+                expect(xsAppJsonContent.routes).to.deep.equal([{
+                    source: "^/sap/opu/odata/sap/ZTEST_SRV/",
+                    target: "/sap/opu/odata/sap/ZTEST_SRV/",
+                    authenticationType: "basic",
+                    destination: "OVERRIDE"
+                }, {
+                    source: "^/sap/opu/odata/sap/ZTEST_SRV/",
+                    target: "/sap/opu/odata/sap/ZTEST_SRV/",
+                    authenticationType: "none",
+                    destination: "ZTEST_DEST"
+                }]);
             });
         });
 });
 
-const getWorkspace = async (options: IProjectOptions) => {
-    const { workspace, taskUtil } = await TestUtil.getWorkspace("appVariant1", options.projectNamespace);
+
+const getWorkspace = async (options: IProjectOptions, appVariant: string = "appVariant1") => {
+    const { workspace, taskUtil } = await TestUtil.getWorkspace(appVariant, options.projectNamespace);
     return { workspace, taskUtil }
 }
 
@@ -146,7 +177,8 @@ const runUi5TaskAdaptation = async (options: IProjectOptions, hasEnhanceWithForI
         "/resources/ns/changes/id_1707749484507_210_setTitle.ctrl_variant_change",
         "/resources/ns/changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
         "/resources/ns/changes/id_1753705046493_197_codeExt.change",
-        "/resources/ns/changes/notsupported.testfile"
+        "/resources/ns/changes/notsupported.testfile",
+        "/resources/ns/xs-app.json"
     ];
     const tempResources = await CacheHolder.read("repoName1", "010101");
     checkResourcePathsAndTempResources(resourcePaths, resourcePathsMembers, tempResources!, ["manifest.json"]);

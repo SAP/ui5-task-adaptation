@@ -1,12 +1,11 @@
 import AbapRepoManager from "../repositories/abapRepoManager.js";
 import AnnotationManager from "../annotationManager.js";
-import IAppVariantIdHierarchyItem from "../model/appVariantIdHierarchyItem.js";
+import { IAppVariantIdHierarchyItem } from "../model/appVariantIdHierarchyItem.js";
 import { IConfiguration } from "../model/types.js";
 import IProcessor from "./processor.js";
-import Language from "../model/language.js";
 import { cached } from "../cache/cacheHolder.js";
 import { validateObject } from "../util/commonUtil.js";
-import { Adapter } from "../adapters/adapter.js";
+import { IAdapter } from "../adapters/adapter.js";
 import AbapAdapter from "../adapters/abapAdapter.js";
 
 export default class AbapProcessor implements IProcessor {
@@ -28,8 +27,8 @@ export default class AbapProcessor implements IProcessor {
         return this.abapRepoManager.getAppVariantIdHierarchy(appId);
     }
 
-    getAdapter(): Adapter {
-        return new AbapAdapter();
+    getAdapter(): IAdapter {
+        return new AbapAdapter(this.configuration, this.annotationManager);
     }
 
 
@@ -50,25 +49,7 @@ export default class AbapProcessor implements IProcessor {
     }
 
 
-    async updateLandscapeSpecificContent(baseAppManifest: any, baseAppFiles: Map<string, string>, appVariantId: string, prefix: string): Promise<void> {
-        const languages = Language.create(this.configuration.languages)
-        const files = await this.annotationManager.process(baseAppManifest, languages, appVariantId, prefix);
-        if (baseAppFiles) {
-            files.forEach((value, key) => baseAppFiles.set(key, value));
-        }
-    }
-
-
     getConfigurationType(): string {
         return "abap";
-    }
-
-
-    createAppVariantHierarchyItem(appVariantId: string, version: string) {
-        return {
-            appVariantId,
-            version,
-            layer: "VENDOR"
-        }
     }
 }

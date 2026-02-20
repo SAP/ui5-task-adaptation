@@ -82,12 +82,16 @@ export function cached() {
     return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
         const originalValue = descriptor.value
         descriptor.value = async function (...args: any[]) {
-            let files = await CacheHolder.read(args[0], args[1]);
-            CacheHolder.clearOutdatedExcept(args[0]);
+            const repoName = args[0];
+            const cachebusterToken = args[1];
+            let files = await CacheHolder.read(repoName, cachebusterToken);
+            CacheHolder.clearOutdatedExcept(repoName);
             if (files.size === 0) {
-                log.verbose(`Cache repo '${args[0]}' with token '${args[1]}' does not contain files. Fetching...`);
+                log.verbose(`No cache for repo '${repoName}' with token '${cachebusterToken}'. Fetching from HTML5 Repository.`);
                 files = await originalValue.apply(this, args);
-                await CacheHolder.write(args[0], args[1], files);
+                await CacheHolder.write(repoName, cachebusterToken, files!);
+            } else {
+                log.verbose(`Using cached files for repo '${repoName}' with token '${cachebusterToken}'.`);
             }
             return files;
         };

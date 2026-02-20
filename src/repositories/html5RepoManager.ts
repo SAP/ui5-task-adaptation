@@ -47,6 +47,11 @@ export default class HTML5RepoManager {
         const spaceGuid = await CFUtil.getSpaceGuid(configuration?.space);
         const credentials = await this.getHTML5Credentials(spaceGuid);
         const token = await this.getToken(credentials);
+        if (!token || token.length === 0) {
+            throw new Error("Failed to obtain HTML5 Repo token");
+        } else {
+            log.verbose("Obtained HTML5 Repo token");
+        }
         return {
             token,
             baseUri: credentials.uri
@@ -75,7 +80,7 @@ export default class HTML5RepoManager {
     }
 
 
-    private static async getToken({ uaa }: ICredentials) {
+    private static async getToken({ uaa }: ICredentials): Promise<string> {
         log.verbose("Getting HTML5 Repo token");
         const auth = Buffer.from(uaa.clientid + ":" + uaa.clientsecret);
         const options = {

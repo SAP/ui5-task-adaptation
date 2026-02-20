@@ -3,7 +3,8 @@ import IProcessor from "./processors/processor.js";
 import { IReuseLibInfo } from "./model/types.js";
 import ResourceUtil from "./util/resourceUtil.js";
 import path from "path";
-import { merge, Route, XsApp } from "./util/cf/xsAppJsonUtil.js";
+import { merge } from "./util/cf/xsAppJsonUtil.js";
+import FsUtil from "./util/fsUtil.js";
 
 type AppInfoMessage = {
 	message: string;
@@ -20,6 +21,20 @@ type AppInfo = {
 	messages: AppInfoMessage[];
 };
 
+type route = {
+	source: string;
+	target: string;
+	service?: string;
+	destination?: string;
+	authenticationType?: string;
+	localDir?: string;
+}
+
+type XsApp = {
+	welcomeFile?: string;
+	authenticationMethod: "none" | "route";
+	routes: route[];
+}
 
 const log = getLogger("@ui5/task-adaptation::PreviewManager");
 const REUSE_DIR = ".adp/reuse";
@@ -35,11 +50,12 @@ export default class PreviewManager {
 
 		if (PreviewManager.isPreviewRequested()) {
 			try {
-				ui5AppInfo = await ResourceUtil.readInProject(APP_INFO_FILE);
-			} catch (_err) {
-				log.verbose("Preview mode not requested (env variable ADP_BUILDER_MODE=preview is not set), skipping preview resources processing.");
-				throw new Error(`ui5AppInfo.json is missing in project root, cannot process preview resources: ${_err instanceof Error ? _err.message : String(_err)}`);
+				ui5AppInfo = await FsUtil.readInProject(APP_INFO_FILE);
+			} catch (error) {
+				throw new Error(`ui5AppInfo.json is missing in project root, cannot process preview resources: ${error instanceof Error ? error.message : String(error)}`);
 			}
+		} else {
+			log.verbose("Preview mode not requested (env variable ADP_BUILDER_MODE=preview is not set), skipping preview resources processing.");
 		}
 
 		return new PreviewManager(appId, ui5AppInfo, processor);
@@ -52,6 +68,7 @@ export default class PreviewManager {
 	private constructor(appId: string, ui5AppInfo: string, processor: IProcessor) {
 		// If no ui5AppInfo is provided, no preview processing is needed
 		if (!ui5AppInfo) {
+			log.verbose("No ui5AppInfo provided, skipping preview resources processing.");
 			return;
 		}
 
@@ -80,7 +97,7 @@ export default class PreviewManager {
 
 	async processPreviewResources(baseAppFiles: ReadonlyMap<string, string>): Promise<void> {
 		log.verbose(`Downloading reuse libraries to reuse folder`);
-		const xsAppFiles: Map<string, string> = new Map();
+		const xsAppFiles = new Array<string>();
 		if (this.fetchLibsPromises.size === 0) {
 			log.verbose("No reuse libraries defined in ui5AppInfo.json for preview");
 			return;
@@ -96,7 +113,7 @@ export default class PreviewManager {
 			for (const [filename, content] of libFiles) {
 				mergedFiles.set(filename, content);
 				if (filename.includes(XS_APP_JSON_FILE)) {
-					xsAppFiles.set(filename, content);
+					xsAppFiles.push(content);
 				}
 			}
 		}
@@ -118,17 +135,17 @@ export default class PreviewManager {
 		return promises;
 	}
 
-	private searchBaseAppXsAppJsonFile(xsAppFiles: Map<string, string>, baseAppFiles: ReadonlyMap<string, string>): void {
+	private searchBaseAppXsAppJsonFile(xsAppFiles: string[], baseAppFiles: ReadonlyMap<string, string>): void {
 		const xsAppJsonContent = baseAppFiles.get(XS_APP_JSON_FILE);
 		if (xsAppJsonContent) {
-			xsAppFiles.set(XS_APP_JSON_FILE, xsAppJsonContent);
+			xsAppFiles.push(xsAppJsonContent);
 		} else {
 			log.warn("xs-app.json is missing in the downloaded base app files for preview");
 		}
 	}
 
-	private mergeXsAppJsonFiles(xsAppFiles: Map<string, string>, files: Map<string, string>): void {
-		const mergedXsAppJson = merge([...xsAppFiles.values()]);
+	private mergeXsAppJsonFiles(xsAppFiles: string[], files: Map<string, string>): void {
+		const mergedXsAppJson = merge(xsAppFiles);
 		if (mergedXsAppJson) {
 			files.set(XS_APP_JSON_FILE, mergedXsAppJson);
 		}
@@ -151,7 +168,7 @@ export default class PreviewManager {
 
 	private static modifyRoutes(xsAppJson: string, libName: string, libId: string): string {
 		const xsApp: XsApp = JSON.parse(xsAppJson);
-		xsApp.routes = xsApp.routes.map((route: Route) => {
+		xsApp.routes = xsApp.routes.map((route: route) => {
 			route.source = route.source.replace(new RegExp("^\\^\\/?(resources/)?"), `^/resources/${libId.replaceAll(".", "/")}/`);
 			if (route.service === "html5-apps-repo-rt") {
 				route = {

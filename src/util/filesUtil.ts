@@ -7,7 +7,7 @@ export default class FilesUtil {
     static filter(files: ReadonlyMap<string, string>): ReadonlyMap<string, string> {
         const shouldIgnore = (filename: string, content: string): boolean => {
             const IGNORE_FILES = ["manifest.appdescr_variant"];
-            if( filename.endsWith(".change") ) {
+            if (filename.endsWith(".change")) {
                 return JSON.parse(content).changeType?.startsWith("appdescr_"); // validate JSON
             }
             return IGNORE_FILES.includes(filename);
@@ -28,10 +28,13 @@ export default class FilesUtil {
      * @param references - Reference maps of the app variant
      * @returns A map of renamed files
      */
-    @restoreThatShouldntBeRenamed()
+    @restoreWhatShouldntBeRenamed()
     static rename(files: ReadonlyMap<string, string>, references: Map<string, string>): ReadonlyMap<string, string> {
         const IGNORE_EXTENSIONS = [".properties"];
-        const ignoreInString = this.getI18nPropertyKeys(files);
+        const ignoreInString = [
+            ...this.getI18nPropertyKeys(files),
+            ...this.getManifestSAPUI5DependencyIds(files)
+        ];
         return new Map(Array.from(files, ([filename, content]) => {
             if (!IGNORE_EXTENSIONS.some(ext => filename.endsWith(ext))) {
                 // 5p. We pass replacements as ignores since we don't want to
@@ -43,6 +46,20 @@ export default class FilesUtil {
             }
             return [filename, content];
         }));
+    }
+
+    private static getManifestSAPUI5DependencyIds(files: ReadonlyMap<string, string>) {
+        const manifestFile = files.get("manifest.json");
+        if (manifestFile) {
+            const manifest = JSON.parse(manifestFile);
+            const dependencies = manifest["sap.ui5"]?.dependencies;
+            if (dependencies) {
+                const libs = dependencies.libs ? Object.keys(dependencies.libs) : [];
+                const components = dependencies.components ? Object.keys(dependencies.components) : [];
+                return [...libs, ...components];
+            }
+        }
+        return [];
     }
 
     private static getI18nPropertyKeys(files: ReadonlyMap<string, string>) {
@@ -63,9 +80,9 @@ export default class FilesUtil {
 }
 
 /** 
- * We might rename appVariantIdHierarchy, so we restore it after the renaming.
+ * We might rename appVariantIdHierarchy and dependencies, so we restore them after the renaming.
  */
-export function restoreThatShouldntBeRenamed() {
+export function restoreWhatShouldntBeRenamed() {
     return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
         const handlers = [new ManifestRenamingHandler()] as Array<IRenamingHandler>;
         const originalValue = descriptor.value;
