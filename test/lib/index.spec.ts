@@ -35,7 +35,14 @@ describe("Index", () => {
 
     beforeEach(() => {
         sandbox = sinon.createSandbox();
-        sandbox.stub(CFUtil, "getOrCreateServiceKeyWithEndpoints").resolves({ endpoints: {} });
+        sandbox.stub(CFUtil, "getOrCreateServiceKeyWithEndpoints").resolves({
+            endpoints: {
+                "api-endpoint": { destination: "ZTEST_DEST" },
+                "view-endpoint": { destination: "" },
+                "ui-endpoint": "ui-dest"
+            },
+            "sap.cloud.service": "test-service"
+        });
     });
     afterEach(() => {
         sandbox.restore();
@@ -134,7 +141,8 @@ describe("Index", () => {
                     source: "^/sap/opu/odata/sap/ZTEST_SRV/",
                     target: "/sap/opu/odata/sap/ZTEST_SRV/",
                     authenticationType: "none",
-                    destination: "ZTEST_DEST"
+                    endpoint: "api-endpoint",
+                    service: "test-service"
                 }]);
             });
         });
