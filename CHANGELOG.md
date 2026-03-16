@@ -4,6 +4,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0...HEAD).
 
+<a name="v1.6.2"></a>
+## [v1.6.2] - 2026-03-16
+### Added
+- CF: Enhance xs-app.json with endpoints from service instance
+
 <a name="v1.6.0"></a>
 ## [v1.6.0] - 2026-02-20
 ### Added
@@ -134,6 +139,7 @@ A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task
 <a name="v1.0.0"></a>
 ## v1.0.0 - 2020-12-09
 
+[v1.6.2]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0...v1.6.2
 [v1.6.0]: https://github.com/SAP/ui5-task-adaptation/compare/v1.5.4...v1.6.0
 [v1.5.4]: https://github.com/SAP/ui5-task-adaptation/compare/v1.4.3...v1.5.4
 [v1.4.3]: https://github.com/SAP/ui5-task-adaptation/compare/v1.4.2...v1.4.3
