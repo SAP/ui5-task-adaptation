@@ -1,9 +1,9 @@
 import { getLogger } from "@ui5/logger";
 import IProcessor from "./processors/processor.js";
-import { IReuseLibInfo } from "./model/types.js";
+import { IConfiguration, IReuseLibInfo } from "./model/types.js";
 import ResourceUtil from "./util/resourceUtil.js";
 import path from "path";
-import { merge } from "./util/cf/xsAppJsonUtil.js";
+import { fetchCredentialsAndEnhanceRoutes, merge } from "./util/cf/xsAppJsonUtil.js";
 import FsUtil from "./util/fsUtil.js";
 
 type AppInfoMessage = {
@@ -44,8 +44,9 @@ const XS_APP_JSON_FILE = "xs-app.json";
 export default class PreviewManager {
 
 	private readonly fetchLibsPromises: Map<string, Promise<ReadonlyMap<string, string>>> = new Map();
+	private readonly configuration: IConfiguration;
 
-	static async createFromRoot(appId: string, processor: IProcessor): Promise<PreviewManager> {
+	static async createFromRoot(appId: string, processor: IProcessor, configuration: IConfiguration): Promise<PreviewManager> {
 		let ui5AppInfo: string = "";
 
 		if (PreviewManager.isPreviewRequested()) {
@@ -58,14 +59,15 @@ export default class PreviewManager {
 			log.verbose("Preview mode not requested (env variable ADP_BUILDER_MODE=preview is not set), skipping preview resources processing.");
 		}
 
-		return new PreviewManager(appId, ui5AppInfo, processor);
+		return new PreviewManager(appId, ui5AppInfo, processor, configuration);
 	}
 
 	static isPreviewRequested(): boolean {
 		return process.env.ADP_BUILDER_MODE === "preview";
 	}
 
-	private constructor(appId: string, ui5AppInfo: string, processor: IProcessor) {
+	private constructor(appId: string, ui5AppInfo: string, processor: IProcessor, configuration: IConfiguration) {
+		this.configuration = configuration;
 		// If no ui5AppInfo is provided, no preview processing is needed
 		if (!ui5AppInfo) {
 			log.verbose("No ui5AppInfo provided, skipping preview resources processing.");
@@ -119,7 +121,11 @@ export default class PreviewManager {
 		}
 
 		this.searchBaseAppXsAppJsonFile(xsAppFiles, baseAppFiles);
-		this.mergeXsAppJsonFiles(xsAppFiles, mergedFiles);
+		let xsAppJson = merge(xsAppFiles);
+		if (xsAppJson) {
+			xsAppJson = await fetchCredentialsAndEnhanceRoutes(xsAppJson, this.configuration);
+			mergedFiles.set(XS_APP_JSON_FILE, xsAppJson);
+		}
 		await ResourceUtil.writeInProject(REUSE_DIR, mergedFiles);
 	}
 
@@ -141,13 +147,6 @@ export default class PreviewManager {
 			xsAppFiles.push(xsAppJsonContent);
 		} else {
 			log.warn("xs-app.json is missing in the downloaded base app files for preview");
-		}
-	}
-
-	private mergeXsAppJsonFiles(xsAppFiles: string[], files: Map<string, string>): void {
-		const mergedXsAppJson = merge(xsAppFiles);
-		if (mergedXsAppJson) {
-			files.set(XS_APP_JSON_FILE, mergedXsAppJson);
 		}
 	}
 

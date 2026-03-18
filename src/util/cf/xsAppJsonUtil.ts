@@ -1,5 +1,6 @@
 import { getLogger } from "@ui5/logger";
-import { ServiceCredentials } from "../../model/types.js";
+import { IConfiguration, ServiceCredentials } from "../../model/types.js";
+import CFUtil from "../cfUtil.js";
 const log = getLogger("@ui5/task-adaptation::XSAppJsonUtil");
 
 type XsApp = {
@@ -103,4 +104,22 @@ export function enhanceRoutes(serviceCredentials: ServiceCredentials, baseRoutes
             return route;
         }
     });
+}
+
+export async function fetchCredentialsAndEnhanceRoutes(xsAppJson: string, { serviceInstanceName, space, appName }: IConfiguration): Promise<string> {
+    if (!serviceInstanceName) {
+        throw new Error(`Service instance name must be specified in ui5.yaml configuration for app '${appName}'`);
+    }
+    let serviceCredentials: ServiceCredentials | undefined;
+    try {
+        // Get valid service keys with proper endpoints structure
+        serviceCredentials = await CFUtil.getOrCreateServiceKeyWithEndpoints(serviceInstanceName, space);
+    } catch (error: any) {
+        throw new Error(`Failed to get valid service keys for app '${appName}': ${error.message}`);
+    }
+    if (serviceCredentials) {
+        return enhanceRoutesWithEndpointAndService(xsAppJson, serviceCredentials);
+    }
+    log.info(`No endpoints found for app '${appName}'. xs-app.json will not be updated.`);
+    return xsAppJson;
 }

@@ -24,7 +24,7 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
         const adapter = processor.getAdapter();
 
         const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
-        const previewManagerPromise = PreviewManager.createFromRoot(adaptationProject.reference, processor);
+        const previewManagerPromise = PreviewManager.createFromRoot(adaptationProject.reference, processor, options.configuration);
 
         const appVariantIdHierarchy = await processor.getAppVariantIdHierarchy(adaptationProject.reference);
         if (appVariantIdHierarchy.length === 0) {

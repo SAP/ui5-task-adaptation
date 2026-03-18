@@ -5,6 +5,15 @@ import { assert, expect } from "chai";
 import * as sinon from "sinon";
 import { SinonSandbox } from "sinon";
 import FsUtil from "../../src/util/fsUtil.js";
+import { IConfiguration } from "../../src/model/types.js";
+import CFUtil from "../../src/util/cfUtil.js";
+
+
+const configuration = {
+	appName: "testApp",
+	serviceInstanceName: "testService",
+	space: "testSpace"
+} as IConfiguration;
 
 
 describe("PreviewManager download reuse libraries", () => {
@@ -13,6 +22,14 @@ describe("PreviewManager download reuse libraries", () => {
 	beforeEach(() => {
 		sandbox = sinon.createSandbox();
 		process.env.ADP_BUILDER_MODE = "preview";
+		sandbox.stub(CFUtil, "getOrCreateServiceKeyWithEndpoints").resolves({
+			endpoints: {
+				"api-endpoint": {
+					destination: "ZTEST_DEST"
+				}
+			},
+			"sap.cloud.service": "test-service"
+		});
 	});
 
 	afterEach(() => sandbox.restore());
@@ -63,7 +80,7 @@ describe("PreviewManager download reuse libraries", () => {
 
 		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfo));
 
-		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processorStub);
+		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processorStub, configuration);
 		expect(previewManager["fetchLibsPromises"].size > 0).to.be.true;
 	});
 
@@ -72,7 +89,7 @@ describe("PreviewManager download reuse libraries", () => {
 		try {
 			sandbox.stub(ResourceUtil, "byGlobInProject").returns(Promise.resolve(files));
 
-			await PreviewManager.createFromRoot("reuse.lib1", {} as any);
+			await PreviewManager.createFromRoot("reuse.lib1", {} as any, configuration);
 			assert.fail(true, false, "Exception not thrown");
 		} catch (error: any) {
 			expect(error.message).to.match(/ui5AppInfo\.json is missing in project root, cannot process preview resources: ENOENT: no such file or directory, open '.*ui5AppInfo\.json'/);
@@ -93,7 +110,7 @@ describe("PreviewManager download reuse libraries", () => {
 		} as any;
 		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
 
-		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processorStub);
+		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processorStub, configuration);
 		expect(previewManager["fetchLibsPromises"].size > 0).to.be.false;
 	});
 
@@ -139,7 +156,7 @@ describe("PreviewManager download reuse libraries", () => {
 
 		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
 
-		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processor);
+		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processor, configuration);
 		await previewManager.processPreviewResources(new Map<string, string>([["xs-app.json", "{}"]]));
 
 		const allFiles = writeStub.getCall(0).args[1] as ReadonlyMap<string, string>;
@@ -193,7 +210,7 @@ describe("PreviewManager download reuse libraries", () => {
 
 		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
 
-		const previewManager = await PreviewManagerMock.createFromRoot("reuse.libEmpty", processorStub);
+		const previewManager = await PreviewManagerMock.createFromRoot("reuse.libEmpty", processorStub, configuration);
 		await previewManager.processPreviewResources(new Map<string, string>([["xs-app.json", "{}"]]));
 
 		expect(warnSpy.called).to.be.true;
@@ -208,6 +225,14 @@ describe("PreviewManager adjust xs-app.json", () => {
 	beforeEach(() => {
 		sandbox = sinon.createSandbox();
 		process.env.ADP_BUILDER_MODE = "preview";
+		sandbox.stub(CFUtil, "getOrCreateServiceKeyWithEndpoints").resolves({
+			endpoints: {
+				"api-endpoint": {
+					destination: "ZTEST_DEST"
+				}
+			},
+			"sap.cloud.service": "test-service"
+		});
 	});
 
 	afterEach(() => sandbox.restore());
@@ -303,7 +328,8 @@ describe("PreviewManager adjust xs-app.json", () => {
 						{
 							"source": "^/test/(.*)$",
 							"target": "/test/$1",
-							"authenticationType": "xsuaa"
+							"authenticationType": "xsuaa",
+							"destination": "ZTEST_DEST"
 						},
 						{
 							"source": "^(.*)$",
@@ -320,7 +346,7 @@ describe("PreviewManager adjust xs-app.json", () => {
 		const ressourceWrite = sandbox.stub(ResourceUtil, "writeInProject");
 		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
 
-		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processor);
+		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processor, configuration);
 		await previewManager.processPreviewResources(baseFiles);
 
 		expect(ressourceWrite.called, "ResourceUtil.writeInProject should be called to write merged xs-app.json").to.be.true;
@@ -328,11 +354,22 @@ describe("PreviewManager adjust xs-app.json", () => {
 		const mergedXsAppJson = mergedXsAppMap.get("xs-app.json")!;
 		const mergedXsApp = JSON.parse(mergedXsAppJson);
 
-		expect(mergedXsApp.routes.length).to.equal(3);
-		expect(mergedXsApp.routes[0].source).to.equal("^/resources/com/example/lib1/test/(.*)$");
-		expect(mergedXsApp.routes[1].source).to.equal("^/resources/com/example/lib1/(.*)$");
-		expect(mergedXsApp.routes[1].localDir).to.equal(".adp/reuse/lib1");
-		expect(mergedXsApp.routes[2].source).to.equal("^/resources/(.*)$");
-		expect(mergedXsApp.authenticationMethod).to.equal("route");
+		expect(mergedXsApp.routes).to.deep.equal([{
+			source: "^/resources/com/example/lib1/test/(.*)$",
+			target: "/test/$1",
+			authenticationType: "xsuaa",
+			endpoint: "api-endpoint",
+			service: "test-service",
+		},
+		{
+			source: "^/resources/com/example/lib1/(.*)$",
+			target: "$1",
+			localDir: ".adp/reuse/lib1", // update localDir for html5-apps-repo-rt service
+		},
+		{
+			source: "^/resources/(.*)$",
+			target: "/resources/$1",
+			authenticationType: "none",
+		}]);
 	});
 });
