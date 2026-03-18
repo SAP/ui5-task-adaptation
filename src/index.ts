@@ -51,7 +51,7 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
             const adaptCommandChain = adapter.createAdaptCommandChain(baseApp, appVariant);
             const mergeCommandChain = adapter.createMergeCommandChain(baseApp, appVariant);
             const adaptedFiles = await adaptCommandChain.execute();
-            const mergedFiles = await mergeCommandChain.execute(adaptedFiles, appVariant.getProcessedFiles());
+            const mergedFiles = await mergeCommandChain.execute(adaptedFiles);
             return mergedFiles;
         }
 

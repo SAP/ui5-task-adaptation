@@ -65,10 +65,10 @@ describe("I18nPropertiesMergeCommand", () => {
 
             const baseApp = await BaseApp.fromFiles(baseAppFiles);
             const appVariant = await AppVariant.fromFiles(appVariantFiles);
-            const mergeCommandChain = new MergeCommandChain([
+            const mergeCommandChain = new MergeCommandChain(appVariant.getProcessedFiles(), [
                 new I18nPropertiesMergeCommand(baseApp.i18nPath, appVariant.prefix, appVariant.getProcessedManifestChanges())
             ]);
-            const files = await mergeCommandChain.execute(baseApp.files, appVariant.getProcessedFiles());
+            const files = await mergeCommandChain.execute(baseApp.files);
 
             const expectedResources = [
                 "manifest.json",
