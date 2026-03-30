@@ -17,30 +17,33 @@ export default class I18nPropertiesMergeCommand extends MergeCommand {
 
     accept = (filename: string) => filename.endsWith(".properties");
 
-    
+
     private analyzeAppVariantManifestChanges(manifestChanges: ReadonlyArray<IChange>) {
         // check which files need to be copied and which files need to be merged and copied
         // this is necessary because lrep does not support multiple enhanceWith with multiple locations
         const TRANSLATION_REGEX_PATTERN = "((_[a-z]{2,3})?(_[a-zA-Z]{2,3}(_[a-zA-Z]{2,20})?)?)\.properties$";
-        const mergePaths = new Set<RegExp>();
-        const copyPaths = new Set<RegExp>();
+        const mergePaths = new Set<string>();
+        const copyPaths = new Set<string>();
         manifestChanges.forEach((change) => {
             const i18nPathWithExtension = change.content?.bundleUrl || change.texts?.i18n;
             if (i18nPathWithExtension) {
                 // build regex to match specific + language related files
                 const i18nPath = trimExtension(i18nPathWithExtension);
-                const regex = new RegExp("^" + escapeRegex(i18nPath) + TRANSLATION_REGEX_PATTERN);
+                const regexSource = "^" + escapeRegex(i18nPath) + TRANSLATION_REGEX_PATTERN;
                 if (change.changeType.includes("addNewModelEnhanceWith")) {
-                    copyPaths.add(regex);
+                    copyPaths.add(regexSource);
                 } else {
-                    mergePaths.add(regex);
+                    mergePaths.add(regexSource);
                 }
             }
         });
-        return { mergePaths: Array.from(mergePaths), copyPaths: Array.from(copyPaths) };
+        return {
+            mergePaths: Array.from(mergePaths, source => new RegExp(source)),
+            copyPaths: Array.from(copyPaths, source => new RegExp(source))
+        };
     }
-    
-    
+
+
     async execute(files: Map<string, string>, filename: string, appVariantContent: string): Promise<void> {
         // merge/copy logic
         // check if file matches with regex in merge/copy
