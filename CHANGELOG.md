@@ -2,7 +2,35 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task-adaptation/compare/v1.5.1...HEAD).
+A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0...HEAD).
+
+<a name="v1.6.4"></a>
+## [v1.6.4] - 2026-04-06
+### Added
+- Local repository for building adaptation project from local base app files
+
+<a name="v1.6.3"></a>
+## [v1.6.3] - 2026-03-18
+### Added
+- CF: Enhance xs-app.json with endpoints also for reuse libraries for the preview
+
+<a name="v1.6.2"></a>
+## [v1.6.2] - 2026-03-16
+### Added
+- CF: Enhance xs-app.json with endpoints from service instance
+
+<a name="v1.6.0"></a>
+## [v1.6.0] - 2026-02-20
+### Added
+- CF: Reuse library content is downloaded for the Adaptation Visual Editor preview.
+- CF: Merging xs-app.json files of the base application with xs-app.json of the Adaptation Project.
+### Fixed
+- Enhanced log coverage.
+
+<a name="v1.5.4"></a>
+## [v1.5.4] - 2026-02-16
+### Fixed
+- Should not rename sap.ui5/dependencies/libs and sap.ui5/dependencies/components ids if they contain base application id
 
 <a name="v1.5.4"></a>
 ## [v1.5.4] - 2026-02-16
@@ -126,6 +154,9 @@ A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task
 <a name="v1.0.0"></a>
 ## v1.0.0 - 2020-12-09
 
+[v1.6.3]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.2...v1.6.3
+[v1.6.2]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0...v1.6.2
+[v1.6.0]: https://github.com/SAP/ui5-task-adaptation/compare/v1.5.4...v1.6.0
 [v1.5.4]: https://github.com/SAP/ui5-task-adaptation/compare/v1.4.3...v1.5.4
 [v1.4.3]: https://github.com/SAP/ui5-task-adaptation/compare/v1.4.2...v1.4.3
 [v1.4.2]: https://github.com/SAP/ui5-task-adaptation/compare/v1.4.0...v1.4.2
