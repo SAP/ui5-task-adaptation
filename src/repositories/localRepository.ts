@@ -27,28 +27,32 @@ export default class LocalRepository implements IRepository {
     }
 
 
-    fetch(appId: string, _cachebusterToken: string): Promise<Map<string, string>> {
-        return this.readFilesInBaseAppDir(appId);
+    fetch(appId: string, cachebusterToken: string): Promise<Map<string, string>> {
+        return this.readFilesInBaseAppDir(appId, cachebusterToken);
     }
 
 
-    fetchReuseLib(libName: string, _cachebusterToken: string, _lib: IReuseLibInfo): Promise<Map<string, string>> {
-        return this.readFilesInBaseAppDir(libName);
+    fetchReuseLib(libName: string, cachebusterToken: string, _lib: IReuseLibInfo): Promise<Map<string, string>> {
+        return this.readFilesInBaseAppDir(libName, cachebusterToken);
     }
 
 
     private async collectAppVariantIdHierarchyItems(appId: string, items: IAppVariantIdHierarchyItem[]): Promise<void> {
+        const appDir = this.getLocalFilesDirectory(appId);
+        const filenames = [
+            ["manifest.json"],
+            ["manifest.appdescr_variant"],
+            ["webapp", "manifest.json"],
+            ["webapp", "manifest.appdescr_variant"],
+        ];
+        const filepaths = filenames.map((filename) => path.join(appDir, ...filename));
+
+        const existingManifestPath = await this.getExistingManifestPath(filepaths);
         items.push({
             appVariantId: appId,
             repoName: appId,
-            cachebusterToken: "local"
+            cachebusterToken: path.dirname(existingManifestPath)
         });
-
-        const appDir = this.getLocalFilesDirectory(appId);
-        const filenames = ["manifest.json", "manifest.appdescr_variant"];
-        const filepaths = filenames.map((filename) => path.join(appDir, filename));
-
-        const existingManifestPath = await this.getExistingManifestPath(filepaths);
         if (existingManifestPath.endsWith("manifest.appdescr_variant")) {
             const manifestContent = await fs.readFile(existingManifestPath, "utf-8");
             const manifest = JSON.parse(manifestContent);
@@ -67,10 +71,9 @@ export default class LocalRepository implements IRepository {
     }
 
 
-    private readFilesInBaseAppDir(appId: string): Promise<Map<string, string>> {
-        const appDir = this.getLocalFilesDirectory(appId);
-        log.verbose(`Fetching base app files from local directory: ${appDir}`);
-        return FsUtil.readFilesRecursively(appDir);
+    private readFilesInBaseAppDir(_appId: string, cachebusterToken: string): Promise<Map<string, string>> {
+        log.verbose(`Fetching base app files from local directory: ${cachebusterToken}`);
+        return FsUtil.readFilesRecursively(cachebusterToken);
     }
 
 

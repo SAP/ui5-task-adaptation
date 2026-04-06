@@ -49,9 +49,9 @@ describe("LocalRepository", () => {
             const localRepository = await setup();
             const hierarchy = await localRepository.getAppVariantIdHierarchy("appId1");
             expect(hierarchy).to.deep.equal([
-                { repoName: "appId1", appVariantId: "appId1", cachebusterToken: "local" },
-                { repoName: "appId2", appVariantId: "appId2", cachebusterToken: "local" },
-                { repoName: "appId3", appVariantId: "appId3", cachebusterToken: "local" }
+                { repoName: "appId1", appVariantId: "appId1", cachebusterToken: path.join(adpDir, "appId1") },
+                { repoName: "appId2", appVariantId: "appId2", cachebusterToken: path.join(adpDir, "appId2") },
+                { repoName: "appId3", appVariantId: "appId3", cachebusterToken: path.join(adpDir, "appId3") }
             ]);
         });
 
