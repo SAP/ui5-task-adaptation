@@ -1,11 +1,13 @@
-import { IConfiguration, IMetadata } from "../model/types.js";
+import { IConfiguration, IMetadata, IReuseLibInfo } from "../model/types.js";
 
 import AbapProvider from "./abapProvider.js";
 import { IAppVariantIdHierarchyItem } from "../model/appVariantIdHierarchyItem.js";
 import { getLogger } from "@ui5/logger";
 import { unzipZipEntries } from "../util/zipUtil.js";
+import IRepository from "./repository.js";
+import { cached } from "../cache/cacheHolder.js";
 
-const log = getLogger("@ui5/task-adaptation::AbapRepoManager");
+const log = getLogger("@ui5/task-adaptation::AbapRepository");
 
 const REQUEST_OPTIONS_XML = {
     responseType: "text",
@@ -20,7 +22,7 @@ const REQUEST_OPTIONS_JSON = {
     }
 };
 
-export default class AbapRepoManager {
+export default class AbapRepository implements IRepository {
 
     private configuration: IConfiguration;
     private abapProvider: AbapProvider;
@@ -29,6 +31,10 @@ export default class AbapRepoManager {
     constructor(configuration: IConfiguration, abapProvider?: AbapProvider) {
         this.configuration = configuration;
         this.abapProvider = abapProvider ? abapProvider : new AbapProvider();
+    }
+
+    fetchReuseLib(_libName: string, _cachebusterToken: string, _lib: IReuseLibInfo): Promise<Map<string, string>> {
+        throw new Error("Preview is not available on SAP S/4HANA On-Premise or Cloud Systems. Please create a ticket on CA-UI5-FL-ADP-BAS component.");
     }
 
 
@@ -87,7 +93,8 @@ export default class AbapRepoManager {
     }
 
 
-    async fetch(repoName: string): Promise<Map<string, string>> {
+    @cached()
+    async fetch(repoName: string, _cachebusterToken: string): Promise<Map<string, string>> {
         const encodedRepoName = encodeURIComponent(repoName);
         const provider = await this.abapProvider.get(this.configuration);
         const ui5Repo = provider.getUi5AbapRepository();

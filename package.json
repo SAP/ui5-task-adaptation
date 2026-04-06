@@ -1,6 +1,6 @@
 {
     "name": "@ui5/task-adaptation",
-    "version": "1.6.0-rc.4",
+    "version": "1.6.4-rc.0",
     "description": "Custom task for ui5-builder which allows building UI5 Flexibility Adaptation Projects for SAP BTP, Cloud Foundry environment",
     "main": "index.js",
     "scripts": {
@@ -115,7 +115,11 @@
             "src/annotations/transformers/transformer.ts",
             "src/model/configuration.ts",
             "src/model/appVariantIdHierarchyItem.ts",
-            "src/adapters/adapter.ts"
+            "src/adapters/adapter.ts",
+            "src/adapters/previewAdapter.ts",
+            "src/repositories/repository.ts",
+            "src/annotations/annotationManager.ts",
+            "src/processors/processor.ts"
         ],
         "check-coverage": true,
         "statements": 85,

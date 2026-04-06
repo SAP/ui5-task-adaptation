@@ -1,13 +1,15 @@
 import * as sinon from "sinon";
 
-import AbapRepoManager from "../../../src/repositories/abapRepoManager.js";
+import AbapRepository from "../../../src/repositories/abapRepository.js";
 import { IProjectOptions } from "../../../src/model/types.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "../testUtilities/testUtil.js";
 import esmock from "esmock";
 import { expect } from "chai";
+import CacheHolder from "../../../src/cache/cacheHolder.js";
+import AbapProvider from "../../../src/repositories/abapProvider.js";
 
-describe("AbapRepoManager", () => {
+describe("AbapRepository", () => {
     let sandbox: SinonSandbox;
     const options: IProjectOptions = {
         projectNamespace: "ns",
@@ -18,15 +20,19 @@ describe("AbapRepoManager", () => {
     };
 
     let RESPONSE_DATA = { data: TestUtil.getResource("abap-response-archive.json") };
+    const abapProvider = new AbapProvider();
 
     before(() => process.env.H2O_URL = "test");
     after(() => delete process.env.H2O_URL);
-    beforeEach(async () => sandbox = sinon.createSandbox());
+    beforeEach(async () => {
+        sandbox = sinon.createSandbox();
+        CacheHolder.clear();
+    });
     afterEach(() => sandbox.restore());
 
     it("should return map of files from archive", async () => {
-        const { abapRepoManager, calls } = await prepareServiceStubs(RESPONSE_DATA);
-        const baseAppFiles = await abapRepoManager.fetch("app/Name");
+        const { abapRepository, calls } = await prepareServiceStubs(RESPONSE_DATA);
+        const baseAppFiles = await abapRepository.fetch("app/Name", "token123");
         expect([...baseAppFiles.keys()]).to.have.members(["i18n.properties", "manifest.json"]);
         expect(calls.ui5AbapRepositoryProps).to.eql("/Repositories('app%2FName')");
     });
@@ -34,18 +40,37 @@ describe("AbapRepoManager", () => {
     it("should throw exception when archive is empty", async () => {
         const responseClone = JSON.parse(RESPONSE_DATA.data);
         responseClone.d.ZipArchive = "";
-        const { abapRepoManager } = await prepareServiceStubs({ data: JSON.stringify(responseClone) });
-        await expect(abapRepoManager.fetch("app/Name"))
+        const { abapRepository } = await prepareServiceStubs({ data: JSON.stringify(responseClone) });
+        await expect(abapRepository.fetch("app/Name", "token123"))
             .to.be.rejectedWith("App 'app/Name' doesn't contain files");
+    });
+
+    it("should raise an error when downloading reuse libs in preview mode", async () => {
+        const options: IProjectOptions = {
+            projectNamespace: "ns",
+            configuration: {
+                destination: "system",
+                appName: "appName",
+                target: {
+                    url: "https://example.sap.com"
+                }
+            }
+        };
+        const repository = new AbapRepository(options.configuration, abapProvider);
+        try {
+            await repository.fetchReuseLib("", "", { html5AppHostId: "hostId", html5AppName: "appName", html5AppVersion: "1.0.0", name: "libName", lazy: false, url: { uri: "https://example.sap.com", final: true }, html5CacheBusterToken: "token" });
+        } catch (error) {
+            expect((error as Error).message).to.eql("Preview is not available on SAP S/4HANA On-Premise or Cloud Systems. Please create a ticket on CA-UI5-FL-ADP-BAS component.");
+        }
     });
 
     async function prepareServiceStubs(abapRepositoryResponse: any) {
         const calls = {
             ui5AbapRepositoryProps: ""
         };
-        const AbapRepoManager = await mockAbapRepoManager({ abapRepositoryResponse, calls });
-        const abapRepoManager = new AbapRepoManager(options.configuration);
-        return { abapRepoManager, calls };
+        const AbapRepository = await mockAbapRepository({ abapRepositoryResponse, calls });
+        const abapRepository = new AbapRepository(options.configuration);
+        return { abapRepository, calls };
     }
 
     describe("getAppVariantIdHierarchy", () => {
@@ -57,18 +82,18 @@ describe("AbapRepoManager", () => {
             }]
         };
         it("should return api result", async () => {
-            const AbapRepoManager = await mockAbapRepoManager({
+            const AbapRepository = await mockAbapRepository({
                 lrepResponse: {
                     status: 200,
                     data: JSON.stringify(appVariantIdHierarchyJson)
                 }
             });
-            const abapRepoManager = new AbapRepoManager(options.configuration);
-            const appVariantIdHierarchy = await abapRepoManager.getAppVariantIdHierarchy("baseApp1");
+            const abapRepository = new AbapRepository(options.configuration);
+            const appVariantIdHierarchy = await abapRepository.getAppVariantIdHierarchy("baseApp1");
             expect(appVariantIdHierarchy).eql(appVariantIdHierarchyJson.appVariantIdHierarchy);
         });
         it("should fallback to metadata and configuration (has appName)", async () => {
-            const AbapRepoManager = await mockAbapRepoManager({
+            const AbapRepository = await mockAbapRepository({
                 lrepResponse: {
                     status: 404,
                     data: JSON.stringify(appVariantIdHierarchyJson)
@@ -81,8 +106,8 @@ describe("AbapRepoManager", () => {
                     })
                 }
             });
-            const abapRepoManager = new AbapRepoManager(options.configuration);
-            const appVariantIdHierarchy = await abapRepoManager.getAppVariantIdHierarchy("appVar1");
+            const abapRepository = new AbapRepository(options.configuration);
+            const appVariantIdHierarchy = await abapRepository.getAppVariantIdHierarchy("appVar1");
             expect(appVariantIdHierarchy).eql([{
                 repoName: "app/Name",
                 appVariantId: "appVar1",
@@ -92,8 +117,8 @@ describe("AbapRepoManager", () => {
     });
 });
 
-async function mockAbapRepoManager({ abapRepositoryResponse, lrepResponse, appIndexResponse, calls }: any): Promise<typeof AbapRepoManager> {
-    return esmock("../../../src/repositories/abapRepoManager.js", {}, {
+async function mockAbapRepository({ abapRepositoryResponse, lrepResponse, appIndexResponse, calls }: any): Promise<typeof AbapRepository> {
+    return esmock("../../../src/repositories/abapRepository.js", {}, {
         "@sap-ux/system-access": {
             createAbapServiceProvider: () => ({
                 getUi5AbapRepository: () => {

@@ -9,7 +9,7 @@ import esmock from "esmock";
 
 const { assert, expect } = chai;
 
-describe("Html5RepoManager", () => {
+describe("Html5Repository", () => {
     let sandbox: SinonSandbox;
     const options: IProjectOptions = {
         projectNamespace: "ns",
@@ -30,7 +30,7 @@ describe("Html5RepoManager", () => {
     it("should download archive from htlm5 repo", async () => {
         let requestUtilGetCall = 0;
         const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
-        const Html5RepoManager = await esmock("../../../src/repositories/html5RepoManager.js", {}, {
+        const HTML5Repository = await esmock("../../../src/repositories/html5Repository.js", {}, {
             "@sap/cf-tools/out/src/cli.js": {
                 Cli: {
                     execute: () => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json"))
@@ -47,14 +47,15 @@ describe("Html5RepoManager", () => {
                 }
             }
         });
-        const baseAppFiles = await Html5RepoManager.getBaseAppFiles(options.configuration);
+        const html5Repository = new HTML5Repository(options.configuration);
+        const baseAppFiles = await html5Repository.fetch("appName1", "token123");
         expect([...baseAppFiles.keys()]).to.have.members(["i18n.properties", "manifest.json"]);
     });
 
     it("should throw an exception because of corrupt archive", async () => {
         let requestUtilGetCall = 0;
         const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
-        const Html5RepoManager = await esmock("../../../src/repositories/html5RepoManager.js", {}, {
+        const Html5Repository = await esmock("../../../src/repositories/html5Repository.js", {}, {
             "@sap/cf-tools/out/src/cli.js": {
                 Cli: {
                     execute: () => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json"))
@@ -72,7 +73,8 @@ describe("Html5RepoManager", () => {
             }
         });
         try {
-            await Html5RepoManager.getBaseAppFiles(options.configuration)
+            const html5Repository = new Html5Repository(options.configuration);
+            await html5Repository.fetch("1", "2");
             assert.fail(true, false, "Exception not thrown");
         } catch (error: any) {
             expect(error.message).to.equal("Failed to parse zip content from HTML5 Repository: ADM-ZIP: Number of disk entries is too large");
@@ -87,7 +89,7 @@ describe("Html5RepoManager", () => {
             changedOn: "2100.01.01"
         };
         const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
-        const Html5RepoManager = await esmock("../../../src/repositories/html5RepoManager.js", {}, {
+        const Html5Repository = await esmock("../../../src/repositories/html5Repository.js", {}, {
             "@sap/cf-tools/out/src/cli.js": {
                 Cli: {
                     execute: () => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json"))
@@ -108,14 +110,15 @@ describe("Html5RepoManager", () => {
                 }
             }
         });
-        const metadata = await Html5RepoManager.getMetadata(options.configuration);
+        const html5Repository = new Html5Repository(options.configuration);
+        const metadata = await html5Repository.getMetadata();
         expect(metadata).to.eql(METADATA);
     });
 
     it("should download reuse lib from htlm5 repo", async () => {
         let requestUtilGetCall = 0;
         const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
-        const Html5RepoManager = await esmock("../../../src/repositories/html5RepoManager.js", {}, {
+        const HTML5Repository = await esmock("../../../src/repositories/html5Repository.js", {}, {
             "@sap/cf-tools/out/src/cli.js": {
                 Cli: {
                     execute: () => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json"))
@@ -132,7 +135,19 @@ describe("Html5RepoManager", () => {
                 }
             }
         });
-        const reuseLibFiles = await Html5RepoManager.getReuseLibFiles(options.configuration, { name: "lib1" });
+        const html5Repository = new HTML5Repository(options.configuration);
+        const reuseLibFiles = await html5Repository.fetchReuseLib("lib1", "token123", {
+            name: "lib1",
+            lazy: false,
+            html5AppHostId: "appHostId",
+            html5AppName: "appName",
+            html5AppVersion: "appVersion",
+            html5CacheBusterToken: "token123",
+            url: {
+                uri: "",
+                final: false
+            }
+        });
         expect([...reuseLibFiles.keys()]).to.have.members(["i18n.properties", "manifest.json"]);
     });
 
@@ -152,9 +167,8 @@ describe("Html5RepoManager", () => {
 
         statusCases.forEach(({ status, message, shouldError }) => {
             it(`should handle HTTP ${status}`, async () => {
-                let expectedStatusUsed: number | undefined;
                 const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
-                const Html5RepoManager = await esmock("../../../src/repositories/html5RepoManager.js", {}, {
+                const HTML5Repository = await esmock("../../../src/repositories/html5Repository.js", {}, {
                     "@sap/cf-tools/out/src/cli.js": {
                         Cli: {
                             execute: () => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json"))
@@ -165,13 +179,12 @@ describe("Html5RepoManager", () => {
                     },
                     "../../../src/util/requestUtil.js": {
                         default: {
-                            get: (url: string, _requestOptions: any, expectedStatus: number = 200) => {
+                            get: (url: string) => {
                                 if (url === tokenUrl) {
                                     return Promise.resolve({ "access_token": "accessToken1" });
                                 }
                                 if (url === downloadUrl) {
-                                    expectedStatusUsed = expectedStatus;
-                                    if (status === expectedStatus) {
+                                    if (status === 200) {
                                         return Promise.resolve(TestUtil.getResourceBuffer("baseapp.zip"));
                                     }
                                     if (status >= 500) {
@@ -184,10 +197,11 @@ describe("Html5RepoManager", () => {
                         }
                     }
                 });
+                const html5Repository = new HTML5Repository(options.configuration);
 
                 if (shouldError) {
                     try {
-                        await Html5RepoManager.getBaseAppFiles(options.configuration);
+                        await html5Repository.fetch("appName1", `token-${status}`);
                         assert.fail(true, false, "Exception not thrown");
                     } catch (error: any) {
                         if (status >= 500) {
@@ -197,10 +211,9 @@ describe("Html5RepoManager", () => {
                         }
                     }
                 } else {
-                    const baseAppFiles = await Html5RepoManager.getBaseAppFiles(options.configuration);
+                    const baseAppFiles = await html5Repository.fetch("appName1", `token-${status}`);
                     expect([...baseAppFiles.keys()]).to.have.members(["i18n.properties", "manifest.json"]);
                 }
-                expect(expectedStatusUsed).to.equal(200);
             });
         });
     });

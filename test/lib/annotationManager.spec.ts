@@ -3,10 +3,9 @@ import * as sinon from "sinon";
 
 import { expect } from "chai";
 
-import AbapRepoManager from "../../src/repositories/abapRepoManager.js";
-import AnnotationManager from "../../src/annotationManager.js";
+import AbapRepository from "../../src/repositories/abapRepository.js";
+import AbapAnnotationManager from "../../src/annotations/abapAnnotationManager.js";
 import { IProjectOptions } from "../../src/model/types.js";
-import Language from "../../src/model/language.js";
 import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
@@ -18,7 +17,8 @@ const options: IProjectOptions = {
     configuration: {
         destination: "system",
         appName: "appName",
-        enableBetaFeatures: true
+        enableBetaFeatures: true,
+        languages: ["EN", "DE", "FR"]
     }
 };
 const manifestString = TestUtil.getResource("manifest.json");
@@ -34,17 +34,17 @@ describe("AnnotationManager", () => {
     const expectedManifestForOneLanguage = TestUtil.getResource("manifest-expected-annotations-one-langauge.json");
 
     it("should process annotations", async () => {
-        const abapRepoManager = new AbapRepoManager(options.configuration);
-        stubAnnotations(abapRepoManager);
-        const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
+        const abapRepository = new AbapRepository(options.configuration);
+        stubAnnotations(abapRepository);
+        const annotationManager = new AbapAnnotationManager(options.configuration, abapRepository);
         const MANIFEST_FILENAME = "manifest.json";
         const baseAppFiles = new Map<string, string>([[MANIFEST_FILENAME, manifestString]]);
         const renamedFiles = renameResources(baseAppFiles, ["com.sap.base.app.id"], "customer.com.sap.application.variant.id");
         const manifest = JSON.parse(renamedFiles.get(MANIFEST_FILENAME)!);
-        const result = await annotationManager.process(manifest, Language.create(["EN", "DE", "FR"]), "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
-        expect(result.get("annotations/annotation_annotationName1.xml")).to.be.eql(expectedAnnotationName1);
+        const annotationFiles = await annotationManager.process(manifest, "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
+        expect(annotationFiles.get("annotations/annotation_annotationName1.xml")).to.be.eql(expectedAnnotationName1);
         expect(manifest).to.be.eql(JSON.parse(expectedManifest));
-        expect([...result.keys()]).to.have.members([
+        expect([...annotationFiles.keys()]).to.have.members([
             "annotations/annotation_annotationName1.xml",
             "annotations/annotation_annotationName2.xml",
             "customer_com_sap_application_variant_id/i18n/annotations/i18n.properties",
@@ -52,7 +52,7 @@ describe("AnnotationManager", () => {
             "customer_com_sap_application_variant_id/i18n/annotations/i18n_de.properties",
             "customer_com_sap_application_variant_id/i18n/annotations/i18n_fr.properties"
         ]);
-        expect(getI18ns(result, "i18n_en")).to.have.members([
+        expect(getI18ns(annotationFiles, "i18n_en")).to.have.members([
             "customer.com.sap.application.variant.id_AIRLINE=Airline",
             "customer.com.sap.application.variant.id_AIRLINE0=Airline",
             "customer.com.sap.application.variant.id_CUSTOMER=Customer",
@@ -63,7 +63,7 @@ describe("AnnotationManager", () => {
             "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_travel_mduu",
             "customer.com.sap.application.variant.id_CURRENCY0=currency"
         ]);
-        expect(getI18ns(result, "i18n_de")).to.have.members([
+        expect(getI18ns(annotationFiles, "i18n_de")).to.have.members([
             "customer.com.sap.application.variant.id_AIRLINE=Fluglinie",
             "customer.com.sap.application.variant.id_AIRLINE0=Fluglinie",
             "customer.com.sap.application.variant.id_CUSTOMER=Kunde",
@@ -74,7 +74,7 @@ describe("AnnotationManager", () => {
             "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_reise_mduu",
             "customer.com.sap.application.variant.id_CURRENCY0=währung"
         ]);
-        expect(getI18ns(result, "i18n_fr")).to.have.members([
+        expect(getI18ns(annotationFiles, "i18n_fr")).to.have.members([
             "customer.com.sap.application.variant.id_AIRLINE=Compagnie aérienne",
             "customer.com.sap.application.variant.id_AIRLINE0=Compagnie aérienne",
             "customer.com.sap.application.variant.id_CUSTOMER=Client",
@@ -87,15 +87,15 @@ describe("AnnotationManager", () => {
         ]);
 
         it("should process annotations without enhancing @i18n model if only one language is active", async () => {
-            const abapRepoManager = new AbapRepoManager(options.configuration);
-            stubAnnotations(abapRepoManager);
-            const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
+            const abapRepository = new AbapRepository(options.configuration);
+            stubAnnotations(abapRepository);
+            const annotationManager = new AbapAnnotationManager(options.configuration, abapRepository);
             const getAnnotationI18nsSpy = sandbox.spy(annotationManager, "getAdaptedAnnotation" as any);
             const MANIFEST_FILENAME = "manifest.json";
             const baseAppFiles = new Map<string, string>([[MANIFEST_FILENAME, manifestString]]);
             const renamedFiles = renameResources(baseAppFiles, ["com.sap.base.app.id"], "customer.com.sap.application.variant.id");
             const manifest = JSON.parse(renamedFiles.get(MANIFEST_FILENAME)!);
-            const result = await annotationManager.process(manifest, Language.create(["EN"]), "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
+            const result = await annotationManager.process(manifest, "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
             expect(getAnnotationI18nsSpy.getCalls().length).to.eql(0);
             expect(result.get("annotations/annotation_annotationName1.xml")).to.be.eql(expectedAnnotationName1WithoutI18NModel);
             expect(manifest).to.be.eql(JSON.parse(expectedManifestForOneLanguage));
@@ -107,8 +107,8 @@ describe("AnnotationManager", () => {
     });
 
     describe("when updating @i18n model", () => {
-        const abapRepoManager = new AbapRepoManager(options.configuration);
-        stubAnnotations(abapRepoManager);
+        const abapRepository = new AbapRepository(options.configuration);
+        stubAnnotations(abapRepository);
 
         it("should create sap.ui5 and new model", async () => await processManifest({
             // sap.ui5 doesn't exist
@@ -205,8 +205,8 @@ describe("AnnotationManager", () => {
                 }
             };
             const actual = { ...sapAppActual, ...sapUi5 };
-            const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
-            await annotationManager.process(actual, Language.create(["EN", "DE", "FR"]), "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
+            const annotationManager = new AbapAnnotationManager(options.configuration, abapRepository);
+            await annotationManager.process(actual, "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
             expect(actual).to.be.eql({ ...sapAppExpected, ...expectedSapUi5 });
         }
     });
@@ -237,10 +237,12 @@ async function processAnnotations(folder: string, languages = ["EN", "DE"], expe
     if (!fs.existsSync(TestUtil.getResourcePath(folder))) {
         return;
     }
-    const abapRepoManager = new AbapRepoManager(options.configuration);
+    const configCopy = structuredClone(options.configuration);
+    configCopy.languages = languages;
+    const abapRepository = new AbapRepository(configCopy);
     const ODATA_URI = "/sap/opu/odata4/m2_sd_travel_mduu/";
-    const stub = MockServer.stubAnnotations(sandbox, abapRepoManager, [{ folder, url: ODATA_URI + "$metadata" }], numberOfFailedRequests);
-    const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
+    const stub = MockServer.stubAnnotations(sandbox, abapRepository, [{ folder, url: ODATA_URI + "$metadata" }], numberOfFailedRequests);
+    const annotationManager = new AbapAnnotationManager(configCopy, abapRepository);
     const MANIFEST_FILENAME = "manifest.json";
     const baseAppFiles = new Map<string, string>([[MANIFEST_FILENAME, JSON.stringify({
         "sap.app": {
@@ -259,7 +261,7 @@ async function processAnnotations(folder: string, languages = ["EN", "DE"], expe
     })]]);
     const renamedFiles = renameResources(baseAppFiles, ["com.sap.base.app.id"], "customer.com.sap.application.variant.id");
     const manifest = JSON.parse(renamedFiles.get(MANIFEST_FILENAME)!);
-    const result = await annotationManager.process(manifest, Language.create(languages), "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
+    const result = await annotationManager.process(manifest, "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
     const expectedFolder = `${folder}-expected/metadata.xml`;
     if (fs.existsSync(TestUtil.getResourcePath(expectedFolder))) {
         const expected = TestUtil.getResourceXml(expectedFolder);
@@ -280,8 +282,8 @@ function getI18ns(files: Map<string, string>, fileName: string) {
     return files.get(`customer_com_sap_application_variant_id/i18n/annotations/${fileName}.properties`)!.split("\n");
 }
 
-function stubAnnotations(abapRepoManager: AbapRepoManager) {
-    MockServer.stubAnnotations(sandbox, abapRepoManager, [
+function stubAnnotations(abapRepository: AbapRepository) {
+    MockServer.stubAnnotations(sandbox, abapRepository, [
         {
             folder: "annotations/v2/annotation-1-v2",
             url: "/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/"

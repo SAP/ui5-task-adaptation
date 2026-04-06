@@ -1,17 +1,13 @@
 import * as sinon from "sinon";
 
-import AbapProcessor from "../../../src/processors/abapProcessor.js";
-import AbapProvider from "../../../src/repositories/abapProvider.js";
-import AbapRepoManager from "../../../src/repositories/abapRepoManager.js";
-import AnnotationManager from "../../../src/annotationManager.js";
-import CFProcessor from "../../../src/processors/cfProcessor.js";
 import CacheHolder from "../../../src/cache/cacheHolder.js";
-import HTML5RepoManager from "../../../src/repositories/html5RepoManager.js";
+import HTML5Repository from "../../../src/repositories/html5Repository.js";
 import { IProjectOptions } from "../../../src/model/types.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "../testUtilities/testUtil.js";
 import esmock from "esmock";
 import { expect } from "chai";
+import IRepository from "../../../src/repositories/repository.js";
 
 describe("CacheHolder", () => {
     const options: IProjectOptions = {
@@ -19,6 +15,8 @@ describe("CacheHolder", () => {
         configuration: {
             destination: "system",
             appName: "appName",
+            appHostId: "appHostId",
+            appVersion: "1.0.0",
             target: {
                 url: "https://example.sap.com"
             }
@@ -27,14 +25,7 @@ describe("CacheHolder", () => {
 
     let sandbox: SinonSandbox;
     let fetchStub: sinon.SinonStub;
-    let getBaseAppFilesStub: sinon.SinonStub;
-    let getReuseLibFilesStub: sinon.SinonStub;
-    const abapProvider = new AbapProvider();
-    const abapRepoManager = new AbapRepoManager(options.configuration, abapProvider);
-    const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
-    const abapProcessor = new AbapProcessor(options.configuration, abapRepoManager, annotationManager);
-
-    const cfProcessor = new CFProcessor(options.configuration);
+    let repository: IRepository;
 
     beforeEach(async () => {
         const newManifest =
@@ -56,9 +47,17 @@ describe("CacheHolder", () => {
                 }
             })]]);
         sandbox = sinon.createSandbox();
-        fetchStub = sandbox.stub(abapRepoManager, "fetch").resolves(newManifest);
-        getBaseAppFilesStub = sandbox.stub(HTML5RepoManager, "getBaseAppFiles").resolves(newManifest);
-        getReuseLibFilesStub = sandbox.stub(HTML5RepoManager, "getReuseLibFiles").resolves(newReuseLibManifest);
+
+        repository = new HTML5Repository(options.configuration);
+        sandbox.stub(repository, "getHtml5RepoInfo" as any).resolves({});
+        fetchStub = sandbox.stub(repository, "getAppZipEntries" as any).callsFake(
+            async (...args: unknown[]) => {
+                const appInfo = args[0] as { appName?: string } | undefined;
+                return appInfo?.appName === "libName1"
+                    ? newReuseLibManifest
+                    : newManifest;
+            }
+        );
         await CacheHolder.write("repoName1", "010101",
             new Map([["manifest.json", JSON.stringify({
                 "sap.app": {
@@ -67,8 +66,7 @@ describe("CacheHolder", () => {
                         "version": "1.0.0"
                     }
                 }
-            })]])
-        );
+            })]]));
         await CacheHolder.write("libName1", "010103",
             new Map([["manifest.json", JSON.stringify({
                 "sap.app": {
@@ -101,14 +99,14 @@ describe("CacheHolder", () => {
     };
 
     describe("Abap Processor", () => {
-        it("should get files from cache with same chacheBusterToken", async () => {
-            assertManifest(await abapProcessor.fetch("repoName1", "010101"), "1.0.0");
+        it("should get files from cache with same cacheBusterToken", async () => {
+            assertManifest(await repository.fetch("repoName1", "010101"), "1.0.0");
             assertManifest((await CacheHolder.read("repoName1", "010101"))!, "1.0.0");
             expect(fetchStub.getCalls().length).to.equal(0);
         });
 
-        it("should download files with different chacheBusterToken", async () => {
-            assertManifest(await abapProcessor.fetch("repoName1", "010102"), "1.0.1");
+        it("should download files with different cacheBusterToken", async () => {
+            assertManifest(await repository.fetch("repoName1", "010102"), "1.0.1");
             assertManifest((await CacheHolder.read("repoName1", "010102"))!, "1.0.1");
             expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // old cache should be deleted
             expect(fetchStub.getCalls().length).to.equal(1);
@@ -116,34 +114,40 @@ describe("CacheHolder", () => {
     });
 
     describe("CF Processor", () => {
-        it("should get files from cache with same chacheBusterToken", async () => {
-            sandbox.stub(HTML5RepoManager, "getMetadata").resolves({ applicationName: "repoName1", changedOn: "010101" });
-            assertManifest(await cfProcessor.fetch("repoName1", "010101"), "1.0.0");
+        it("should get files from cache with same cacheBusterToken", async () => {
+            assertManifest(await repository.fetch("repoName1", "010101"), "1.0.0");
             assertManifest((await CacheHolder.read("repoName1", "010101"))!, "1.0.0");
             expect(fetchStub.getCalls().length).to.equal(0);
         });
 
-        it("should download files with different chacheBusterToken", async () => {
-            sandbox.stub(HTML5RepoManager, "getMetadata").resolves({ applicationName: "repoName1", changedOn: "010102" });
-            assertManifest(await cfProcessor.fetch("repoName1", "010102"), "1.0.1");
+        it("should download files with different cacheBusterToken", async () => {
+            assertManifest(await repository.fetch("repoName1", "010102"), "1.0.1");
             assertManifest((await CacheHolder.read("repoName1", "010102"))!, "1.0.1");
             expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // old cache should be deleted
-            expect(getBaseAppFilesStub.getCalls().length).to.equal(1);
+            expect(fetchStub.getCalls().length).to.equal(1);
         });
 
-        it("should get reuse lib files from cache with same chacheBusterToken", async () => {
-            sandbox.stub(HTML5RepoManager, "getMetadata").resolves({ applicationName: "libName1", changedOn: "010103" });
-            assertReuseLibManifest(await cfProcessor.fetchReuseLib("libName1", "010103", {} as any), "1.0.2");
+        it("should get reuse lib files from cache with same cacheBusterToken", async () => {
+            sandbox.stub(repository as HTML5Repository, "getMetadata").resolves({ applicationName: "libName1", changedOn: "010103" });
+            assertReuseLibManifest(await repository.fetchReuseLib("libName1", "010103", {
+                html5AppName: "libName1",
+                html5AppVersion: "1.0.2",
+                html5AppHostId: "libHostId"
+            } as any), "1.0.2");
             assertReuseLibManifest(await CacheHolder.read("libName1", "010103"), "1.0.2");
             expect(fetchStub.getCalls().length).to.equal(0);
         });
 
-        it("should download files with different chacheBusterToken", async () => {
-            sandbox.stub(HTML5RepoManager, "getMetadata").resolves({ applicationName: "libName1", changedOn: "010104" });
-            assertReuseLibManifest(await cfProcessor.fetchReuseLib("libName1", "010104", {} as any), "1.0.2");
+        it("should download files with different cacheBusterToken", async () => {
+            sandbox.stub(repository as HTML5Repository, "getMetadata").resolves({ applicationName: "libName1", changedOn: "010104" });
+            assertReuseLibManifest(await repository.fetchReuseLib("libName1", "010104", {
+                html5AppName: "libName1",
+                html5AppVersion: "1.0.2",
+                html5AppHostId: "libHostId"
+            } as any), "1.0.2");
             assertReuseLibManifest(await CacheHolder.read("libName1", "010104"), "1.0.2");
             expect((await CacheHolder.read("libName1", "010103")).size).to.equal(0); // old cache should be deleted
-            expect(getReuseLibFilesStub.getCalls().length).to.equal(1);
+            expect(fetchStub.getCalls().length).to.equal(1);
         });
     });
 

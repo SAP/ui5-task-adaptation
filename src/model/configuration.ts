@@ -10,12 +10,14 @@ export interface IConfiguration {
     sapCloudService?: string;
     destination?: string;
     type?: "cf" | "abap";
+    mode?: "preview" | "local" | "default";
     languages?: any[] | undefined;
     enableAnnotationCache?: boolean;
     enableBetaFeatures?: boolean;
     writeTempFiles?: any;
     target?: AbapTarget & IAbapTargetMeta;
     serviceInstanceName?: string;
+    adpDir?: string;
 }
 
 export interface IAbapTargetMeta {

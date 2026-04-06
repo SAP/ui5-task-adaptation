@@ -1,44 +1,44 @@
-import AbapProcessor from "../../../src/processors/abapProcessor.js"
-import CFProcessor from "../../../src/processors/cfProcessor.js";
-import { determineProcessor } from "../../../src/processors/processor.js"
+import { initialize } from "../../src/landscapeConfiguration.js";
 import { expect } from "chai";
+import AbapAdapter from "../../src/adapters/abapAdapter.js";
+import CFAdapter from "../../src/adapters/cfAdapter.js";
 
 describe("Processor", () => {
 
     after(() => delete process.env.H2O_URL);
 
     it("should determine ABAP config by type", () => {
-        const processor = determineProcessor({
+        const { adapter } = initialize({
             type: "abap",
             appName: "appName",
             target: {
                 url: "abc"
             }
         });
-        expect(processor instanceof AbapProcessor);
+        expect(adapter instanceof AbapAdapter).to.be.true;
     });
 
-    it("should determine ABAP config by properties", () => {
-        const processor = determineProcessor({
+    it("should throw validation exception - no type found", () => {
+        expect(() => initialize({
             appName: "appName",
             target: {
                 url: "abc"
             }
-        });
-        expect(processor instanceof AbapProcessor);
+        })).to.throw("should be specified in ui5.yaml configuration: 'cf' or 'abap'");
     });
 
     it("should determine CF config", () => {
-        const processor = determineProcessor({
+        const { adapter } = initialize({
             appHostId: "appHostId",
             appId: "appId",
             appName: "appName",
             appVersion: "appVersion",
             space: "spaceGuid",
             org: "orgGuid",
-            sapCloudService: "sapCloudService"
+            sapCloudService: "sapCloudService",
+            type: "cf"
         });
-        expect(processor instanceof CFProcessor)
+        expect(adapter instanceof CFAdapter).to.be.true;
     });
 
 });

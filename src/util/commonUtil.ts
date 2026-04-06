@@ -17,6 +17,11 @@ export function dotToUnderscore(value: string) {
 }
 
 
+export function validateConfiguration<T extends object>(options: T, properties: Array<keyof T>) {
+    validateObject(options, properties, "should be specified in ui5.yaml configuration");
+}
+
+
 export function validateObject<T extends object>(options: T, properties: Array<keyof T>, message: string) {
     for (const property of properties) {
         if (!options[property]) {

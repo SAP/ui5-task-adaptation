@@ -1,6 +1,6 @@
 import * as chai from "chai";
 
-import { merge } from "../../../../src/util/cf/xsAppJsonUtil.js";
+import { enhanceRoutesWithEndpointAndService, merge } from "../../../../src/util/cf/xsAppJsonUtil.js";
 
 const { expect } = chai;
 
@@ -63,5 +63,20 @@ describe("xsAppJsonUtil.merge", () => {
             }]
         };
         expect(merged).to.deep.equal(expected);
+    });
+
+    it("should skip xs-app.json update if there are no routes", async () => {
+        const result = enhanceRoutesWithEndpointAndService("{}", {} as any);
+        expect(result).to.eql("{}");
+    });
+
+    it("should skip xs-app.json update if there are no routes with destination", async () => {
+        const routes = [
+            { source: "/foo", authenticationType: "none" },
+            { source: "/bar", authenticationType: "none" }
+        ];
+        const routesString = JSON.stringify({ routes })
+        const result = enhanceRoutesWithEndpointAndService(routesString, {} as any);
+        expect(result).to.eql(routesString);
     });
 });

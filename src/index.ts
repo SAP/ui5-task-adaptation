@@ -6,9 +6,9 @@ import AppVariant from "./appVariantManager.js";
 import BaseApp from "./baseAppManager.js";
 import { ITaskParameters } from "./model/types.js";
 import ResourceUtil from "./util/resourceUtil.js";
-import { determineProcessor } from "./processors/processor.js";
 import FilesUtil from "./util/filesUtil.js";
 import PreviewManager from "./previewManager.js";
+import { initialize } from "./landscapeConfiguration.js";
 
 /**
  * Creates an appVariant bundle from the provided resources.
@@ -20,13 +20,12 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
     async function process(workspace: IWorkspace, taskUtil: any) {
         logBuilderVersion();
 
-        const processor = determineProcessor(options.configuration);
-        const adapter = processor.getAdapter();
+        const { repository, adapter } = initialize(options.configuration);
 
         const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
-        const previewManagerPromise = PreviewManager.createFromRoot(adaptationProject.reference, processor);
+        const previewManagerPromise = PreviewManager.createFromRoot(adaptationProject.reference, repository, options.configuration);
 
-        const appVariantIdHierarchy = await processor.getAppVariantIdHierarchy(adaptationProject.reference);
+        const appVariantIdHierarchy = await repository.getAppVariantIdHierarchy(adaptationProject.reference);
         if (appVariantIdHierarchy.length === 0) {
             throw new Error(`No app variant found for reference ${adaptationProject.reference}`);
         }
@@ -35,7 +34,7 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
         // latest app variant on top. We reverse the list to process original
         // application first and then app variants in chronological order.
         const reversedHierarchy = appVariantIdHierarchy.toReversed();
-        const fetchFilesPromises: Promise<ReadonlyMap<string, string>>[] = reversedHierarchy.map(({ repoName, cachebusterToken }) => processor.fetch(repoName, cachebusterToken));
+        const fetchFilesPromises: Promise<ReadonlyMap<string, string>>[] = reversedHierarchy.map(({ repoName, cachebusterToken }) => repository.fetch(repoName, cachebusterToken));
         fetchFilesPromises.push(Promise.resolve(adaptationProject.files));
         const appVariants = new Array<AppVariant>();
 
@@ -51,7 +50,7 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
             const adaptCommandChain = adapter.createAdaptCommandChain(baseApp, appVariant);
             const mergeCommandChain = adapter.createMergeCommandChain(baseApp, appVariant);
             const adaptedFiles = await adaptCommandChain.execute();
-            const mergedFiles = await mergeCommandChain.execute(adaptedFiles, appVariant.getProcessedFiles());
+            const mergedFiles = await mergeCommandChain.execute(adaptedFiles);
             return mergedFiles;
         }
 

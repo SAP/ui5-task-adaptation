@@ -57,14 +57,15 @@ describe("CFAdapter", () => {
             const appVariantStub = {
                 id: "base.app.variant",
                 prefix: "customer.base.app.variant",
-                getProcessedManifestChanges: sandbox.stub().returns([])
+                getProcessedManifestChanges: sandbox.stub().returns([]),
+                getProcessedFiles: sandbox.stub().returns(appVariantFiles)
             } as unknown as AppVariant;
             const postCommandChain = adapter.createPostCommandChain();
             const mergeCommandChain = adapter.createMergeCommandChain(
                 baseAppStub,
                 appVariantStub
             );
-            const mergedMap = await mergeCommandChain.execute(files, appVariantFiles);
+            const mergedMap = await mergeCommandChain.execute(files);
             mergedXsAppJson = JSON.parse(mergedMap.get(XSAPP_JSON_FILENAME)!);
             const enhancedMap = await postCommandChain.execute(mergedMap);
             enhancedXsAppJson = JSON.parse(enhancedMap.get(XSAPP_JSON_FILENAME)!);

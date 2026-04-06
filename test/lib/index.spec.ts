@@ -2,12 +2,15 @@ import * as chai from "chai";
 import * as sinon from "sinon";
 
 import CacheHolder from "../../src/cache/cacheHolder.js";
-import HTML5RepoManager from "../../src/repositories/html5RepoManager.js";
+import HTML5Repository from "../../src/repositories/html5Repository.js";
 import { IProjectOptions } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
-import index from "../../src/index.js";
 import CFUtil from "../../src/util/cfUtil.js";
+import esmock from "esmock";
+import LocalAnnotationManager from "../../src/annotations/localAnnotationManager.js";
+import IRepository from "../../src/repositories/repository.js";
+import CFAdapter from "../../src/adapters/cfAdapter.js";
 
 const { byIsOmited } = TestUtil;
 
@@ -35,7 +38,14 @@ describe("Index", () => {
 
     beforeEach(() => {
         sandbox = sinon.createSandbox();
-        sandbox.stub(CFUtil, "getOrCreateServiceKeyWithEndpoints").resolves({ endpoints: {} });
+        sandbox.stub(CFUtil, "getOrCreateServiceKeyWithEndpoints").resolves({
+            endpoints: {
+                "api-endpoint": { destination: "ZTEST_DEST" },
+                "view-endpoint": { destination: "" },
+                "ui-endpoint": "ui-dest"
+            },
+            "sap.cloud.service": "test-service"
+        });
     });
     afterEach(() => {
         sandbox.restore();
@@ -43,12 +53,14 @@ describe("Index", () => {
     });
 
     it("should add enhanceWith to i18n model in manifest.json", async () => {
-        sandbox.stub(HTML5RepoManager, "getMetadata").resolves({ changedOn: "010101" });
-        const html5RepoManagerStub = sandbox.stub(HTML5RepoManager, "getBaseAppFiles")
+        const html5Repository = new HTML5Repository(OPTIONS.configuration);
+        sandbox.stub(html5Repository, "getMetadata").resolves({ changedOn: "010101" });
+        sandbox.stub(html5Repository, "getHtml5RepoInfo" as any).resolves({});
+        const html5RepositoryStub = sandbox.stub(html5Repository, "getAppZipEntries" as any)
             .resolves(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
         OPTIONS.configuration.languages = ["EN", "DE"];
-        await runUi5TaskAdaptation(OPTIONS, true);
-        expect(html5RepoManagerStub.getCalls().length).to.equal(1);
+        await runUi5TaskAdaptation(OPTIONS, true, html5Repository);
+        expect(html5RepositoryStub.getCalls().length).to.equal(1);
         delete OPTIONS.configuration.languages;
     });
 
@@ -83,12 +95,22 @@ describe("Index", () => {
                     })]
                 ]);
                 test.manifestModification(baseAppFiles);
-                sandbox.stub(HTML5RepoManager, "getMetadata").resolves({ changedOn: "2100.01.01" });
-                const html5RepoManagerStub = sandbox.stub(HTML5RepoManager, "getBaseAppFiles");
-                html5RepoManagerStub.resolves(baseAppFiles);
+                const repository = new HTML5Repository(OPTIONS.configuration);
+                const getMetadataStub = sandbox.stub(repository, "getMetadata").resolves({ changedOn: "2100.01.01" });
+                const getHtml5RepoInfoStub = sandbox.stub(repository, "getHtml5RepoInfo" as any).resolves({});
+                const getAppZipEntriesStub = sandbox.stub(repository, "getAppZipEntries" as any).resolves(baseAppFiles);
                 const { workspace, taskUtil } = await getWorkspace(OPTIONS);
 
-                await index({ workspace, options: OPTIONS, taskUtil });
+                const indexStub = await esmock("../../src/index.js", {
+                    "../../src/landscapeConfiguration.js": {
+                        initialize: () => ({
+                            repository,
+                            adapter: new CFAdapter(OPTIONS.configuration),
+                            annotationManager: new LocalAnnotationManager(OPTIONS.configuration, repository)
+                        })
+                    }
+                });
+                await indexStub({ workspace, options: OPTIONS, taskUtil });
 
                 const resources: any[] = (await workspace.byGlob("/**/*")).filter(byIsOmited(taskUtil));
                 const resourcePaths = resources.map(r => r.getPath());
@@ -121,8 +143,6 @@ describe("Index", () => {
                     ["/resources/ns/i18n/i18n.properties", TestUtil.getResource("i18n-expected.properties")]
                 ]);
 
-                expect(html5RepoManagerStub.getCalls().length).to.equal(1);
-
                 const xsAppJson = resources.filter(resources => resources.getPath().includes("xs-app.json"));
                 const xsAppJsonContent = JSON.parse(await xsAppJson[0].getString());
                 expect(xsAppJsonContent.routes).to.deep.equal([{
@@ -134,8 +154,12 @@ describe("Index", () => {
                     source: "^/sap/opu/odata/sap/ZTEST_SRV/",
                     target: "/sap/opu/odata/sap/ZTEST_SRV/",
                     authenticationType: "none",
-                    destination: "ZTEST_DEST"
+                    endpoint: "api-endpoint",
+                    service: "test-service"
                 }]);
+                expect(getMetadataStub.getCalls().length).to.equal(1);
+                expect(getHtml5RepoInfoStub.getCalls().length).to.equal(1);
+                expect(getAppZipEntriesStub.getCalls().length).to.equal(1);
             });
         });
 });
@@ -153,9 +177,17 @@ const checkResourcePathsAndTempResources = (resourcePaths: any[], resourcePathsM
     expect([...tempResources.keys()]).to.have.members(tempResourcesMembers);
 }
 
-const runUi5TaskAdaptation = async (options: IProjectOptions, hasEnhanceWithForI18NModel: boolean) => {
+const runUi5TaskAdaptation = async (options: IProjectOptions, hasEnhanceWithForI18NModel: boolean, repository: IRepository) => {
     const { workspace, taskUtil } = await getWorkspace(options);
-    await index({ workspace, options, taskUtil });
+    const indexStub = await esmock("../../src/index.js", {
+        "../../src/landscapeConfiguration.js": {
+            initialize: () => ({
+                repository,
+                adapter: new CFAdapter(OPTIONS.configuration)
+            })
+        }
+    });
+    await indexStub({ workspace, options, taskUtil });
     const resources: any[] = (await workspace.byGlob("/**/*")).filter(byIsOmited(taskUtil));
     const resourcePaths = resources.map(r => r.getPath());
 

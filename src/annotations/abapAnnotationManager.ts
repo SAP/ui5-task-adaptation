@@ -1,10 +1,11 @@
-import AbapRepoManager from "./repositories/abapRepoManager.js";
-import DataSourceManager from "./annotations/dataSource/dataSourceManager.js";
-import I18nManager from "./i18nManager.js";
-import { IConfiguration } from "./model/types.js";
-import Language from "./model/language.js";
-import ServiceRequestor from "./annotations/serviceRequestor.js";
+import DataSourceManager from "./dataSource/dataSourceManager.js";
+import I18nManager from "../i18nManager.js";
+import { IConfiguration } from "../model/types.js";
+import Language from "../model/language.js";
+import ServiceRequestor from "./serviceRequestor.js";
 import { posix as path } from "path";
+import IAnnotationManager from "./annotationManager.js";
+import IRepository from "../repositories/repository.js";
 
 const I18N_DEFAULT_PATH = "i18n/annotations";
 const I18N_DEFAULT_MODEL_NAME = "@i18n";
@@ -16,26 +17,25 @@ export interface IAnnotationFiles {
     annotationFileName: string;
 }
 
-export default class AnnotationManager {
+export default class AbapAnnotationManager implements IAnnotationManager {
 
-    private abapRepoManager: AbapRepoManager;
+    private repository: IRepository;
     private configuration: IConfiguration;
 
-    constructor(configuration: IConfiguration, abapRepoManager: AbapRepoManager) {
+    constructor(configuration: IConfiguration, repository: IRepository) {
         this.configuration = configuration;
-        this.abapRepoManager = abapRepoManager;
+        this.repository = repository;
     }
 
     public ANNOTATIONS_FOLDER = "annotations";
 
-
-    async process(baseAppManifest: any, languages: Language[], appVariantId: string, prefix: string) {
-
+    async process(baseAppManifest: any, appVariantId: string, prefix: string): Promise<Map<string, string>> {
+        const languages = Language.create(this.configuration.languages);
         //TODO: switch to this after resolving @i18n custom model
         const modelName = I18N_DEFAULT_MODEL_NAME;//`i18n_a9n_${normalisedId}`;
         const i18nPathName = path.join(prefix, I18N_DEFAULT_PATH);
         const i18nManager = new I18nManager(modelName, appVariantId, languages);
-        const serviceRequestor = new ServiceRequestor(this.configuration, this.abapRepoManager);
+        const serviceRequestor = new ServiceRequestor(this.configuration, this.repository);
 
         const dataSourceManager = new DataSourceManager();
         dataSourceManager.addDataSources(baseAppManifest["sap.app"]?.dataSources);

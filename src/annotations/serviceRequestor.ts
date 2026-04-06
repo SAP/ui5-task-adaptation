@@ -1,9 +1,9 @@
-import AbapRepoManager from "../repositories/abapRepoManager.js";
 import { IConfiguration } from "../model/types.js";
 import Language from "../model/language.js";
 import ServerError from "../model/serverError.js";
 import { getLogger } from "@ui5/logger";
 import { writeTempAnnotations } from "../util/commonUtil.js";
+import IRepository from "../repositories/repository.js";
 
 const log = getLogger("@ui5/task-adaptation::ServiceRequestor");
 
@@ -34,11 +34,11 @@ function retryOnError(maxRetries: number): MethodDecorator {
 }
 
 export default class ServiceRequestor {
-    private abapRepoManager: AbapRepoManager;
+    private repository: IRepository;
     private configuration: IConfiguration;
 
-    constructor(configuration: IConfiguration, abapRepoManager: AbapRepoManager) {
-        this.abapRepoManager = abapRepoManager;
+    constructor(configuration: IConfiguration, repository: IRepository) {
+        this.repository = repository;
         this.configuration = configuration;
     }
 
@@ -49,7 +49,7 @@ export default class ServiceRequestor {
     async downloadAnnotation(uri: string, name: string, language: Language): Promise<string> {
         uri += `?sap-language=${language.sap}`;
         log.verbose(`Getting annotation '${name}' ${language} by '${uri}'`);
-        let files = await this.abapRepoManager.downloadAnnotationFile(uri);
+        let files = await this.repository.downloadAnnotationFile(uri);
         if (!files || files.size === 0) {
             throw new Error(`No files were fetched for '${name}' by '${uri}'`);
         }
