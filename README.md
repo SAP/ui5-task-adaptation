@@ -27,6 +27,10 @@ For more information, see [Create an Adaptation Project](https://help.sap.com/do
 > [!NOTE]  
 > For SAP S/4HANA (on-premise) systems, a different builder is used.
 
+## Branch Structure
+* `main` (npm `latest`) — The stable version, ready for production use.
+* `rc` (npm `rc`) — Active development. The code here may be unstable and features are subject to change. Use at your own risk.
+
 
 ## How to obtain support
 In case you need any support, please create a [GitHub issue](https://github.com/SAP/ui5-task-adaptation/issues).
