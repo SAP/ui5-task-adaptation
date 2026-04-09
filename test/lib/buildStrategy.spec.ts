@@ -1,7 +1,6 @@
 import * as chai from "chai";
 
 import BuildStrategy from "../../src/buildStrategy.js";
-import { RegistrationBuild } from "../../dist/bundle.js";
 
 const { expect } = chai;
 
@@ -20,13 +19,13 @@ describe("BuildStrategy", () => {
     };
 
     it("should create enhanceWith", () => {
-        const strategy = new BuildStrategy(RegistrationBuild);
+        const strategy = new BuildStrategy();
         strategy.processTexts(BASE_APP);
         expect(BASE_APP["sap.app"].i18n).to.eql(EXPECTED_I18N);
     });
 
     it("should not add double", () => {
-        const strategy = new BuildStrategy(RegistrationBuild);
+        const strategy = new BuildStrategy();
         const baseAppManifest = { ...BASE_APP, i18n: EXPECTED_I18N };
         strategy.processTexts(baseAppManifest);
         expect(baseAppManifest["sap.app"].i18n).to.eql(EXPECTED_I18N);
