@@ -78,8 +78,9 @@ export default class AppVariant {
 
 
     getProcessedManifestChanges() {
-        // Order: manifest changes first, then *.change files
+        // Order: manifest changes first, then *.change files sorted by creation ASC
         const manifestChanges: Array<IChange> = structuredClone(this.content) ?? [];
+        const changeFileChanges: Array<IChange> = [];
 
         this.files.forEach((content, filename) => {
             if (filename.endsWith(CHANGES_EXT)) {
@@ -87,10 +88,12 @@ export default class AppVariant {
                 if (isManifestChange(filename, content)) {
                     const { newFilename } = moveFile(filename, content, this.prefix, this.id);
                     this.updateRelativePaths(change, newFilename);
-                    manifestChanges.push(change);
+                    changeFileChanges.push(change);
                 }
             }
         });
+        changeFileChanges.sort(FilesUtil.sortByTimeStamp);
+        manifestChanges.push(...changeFileChanges);
         if (this.layer) {
             manifestChanges.forEach(change => change.layer = this.layer ?? change.layer);
         }

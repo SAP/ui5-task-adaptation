@@ -72,6 +72,7 @@ export interface IChange {
     layer?: string;
     content?: IChangeContent;
     filename: string;
+    creation: string;
 }
 
 export interface IChangeText {

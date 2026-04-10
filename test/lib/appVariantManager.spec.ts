@@ -185,6 +185,81 @@ describe("AppVariantManager", () => {
         });
     });
 
+    describe("when sorting change files by creation", () => {
+        const manifest = {
+            "reference": "base.app.id",
+            "id": "customer.base.app.id.variant1"
+        };
+        const createSimpleChange = (creation: string) => JSON.stringify({
+            "changeType": "appdescr_change",
+            "creation": creation
+        });
+
+        it("should sort *.change files by creation ASC", () => {
+            const appVariant = AppVariant.fromFiles(new Map([
+                ["manifest.appdescr_variant", JSON.stringify(manifest)],
+                ["changes/id_3.change", createSimpleChange("2026-01-03T14:14:01.000Z")],
+                ["changes/id_1.change", createSimpleChange("2026-01-01T14:14:02.000Z")],
+                ["changes/id_2.change", createSimpleChange("2026-01-02T14:14:03.000Z")]
+            ]));
+            const manifestChanges = appVariant.getProcessedManifestChanges();
+            expect(manifestChanges.map((c: any) => c.creation)).to.eql([
+                "2026-01-01T14:14:02.000Z",
+                "2026-01-02T14:14:03.000Z",
+                "2026-01-03T14:14:01.000Z"
+            ]);
+        });
+
+        it("should not sort appvariantinline changes from manifest content", () => {
+            const manifestWithContent = {
+                ...manifest,
+                "content": [
+                    { "changeType": "appdescr_inline_1", "creation": "2026-01-03T14:14:01.000Z" },
+                    { "changeType": "appdescr_inline_2", "creation": "2026-01-01T14:14:02.000Z" }
+                ]
+            };
+            const appVariant = AppVariant.fromFiles(new Map([
+                ["manifest.appdescr_variant", JSON.stringify(manifestWithContent)]
+            ]));
+            const manifestChanges = appVariant.getProcessedManifestChanges();
+            expect(manifestChanges.map((c: any) => c.changeType)).to.eql([
+                "appdescr_inline_1",
+                "appdescr_inline_2"
+            ]);
+        });
+
+        it("should keep appvariantinline changes first and append *.change files sorted by creation ASC", () => {
+            const manifestWithContent = {
+                ...manifest,
+                "content": [
+                    { "changeType": "appdescr_inline_1", "creation": "2026-01-03T14:14:01.000Z" },
+                    { "changeType": "appdescr_inline_2", "creation": "2026-01-01T14:14:02.000Z" }
+                ]
+            };
+            const appVariant = AppVariant.fromFiles(new Map([
+                ["manifest.appdescr_variant", JSON.stringify(manifestWithContent)],
+                ["changes/id_3.change", createSimpleChange("2026-01-03T14:14:01.000Z")],
+                ["changes/id_1.change", createSimpleChange("2026-01-01T14:14:02.000Z")],
+                ["changes/id_2.change", createSimpleChange("2026-01-02T14:14:03.000Z")]
+            ]));
+            const manifestChanges = appVariant.getProcessedManifestChanges();
+            expect(manifestChanges.map((c: any) => c.changeType)).to.eql([
+                "appdescr_inline_1",
+                "appdescr_inline_2",
+                "appdescr_change",
+                "appdescr_change",
+                "appdescr_change"
+            ]);
+            expect(manifestChanges.map((c: any) => c.creation)).to.eql([
+                "2026-01-03T14:14:01.000Z",
+                "2026-01-01T14:14:02.000Z",
+                "2026-01-01T14:14:02.000Z",
+                "2026-01-02T14:14:03.000Z",
+                "2026-01-03T14:14:01.000Z"
+            ]);
+        });
+    });
+
     describe("when processing moved files", () => {
         let appVariant: AppVariant;
         before(async () => {
