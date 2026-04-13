@@ -16,6 +16,8 @@ describe("LocalRepository", () => {
         await fs.rm(tmpRoot, { recursive: true, force: true });
     });
 
+    afterEach(() => delete process.env.ADP_BUILDER_DIR);
+
     async function generateAdpStructure(nodes: AppChainNode[]): Promise<void> {
         for (const node of nodes) {
             const appDir = path.join(adpDir, node.id);
@@ -45,6 +47,22 @@ describe("LocalRepository", () => {
     }
 
     describe("getAppVariantIdHierarchy", () => {
+        it("uses ADP_BUILDER_DIR env variable over configuration.adpDir", async () => {
+            const envAdpDir = path.join(tmpRoot, "env", ".adp");
+            await fs.mkdir(path.join(envAdpDir, "appId1"), { recursive: true });
+            await fs.writeFile(path.join(envAdpDir, "appId1", "manifest.json"), JSON.stringify({ "sap.app": { id: "envApp" } }));
+
+            process.env.ADP_BUILDER_DIR = path.relative(process.cwd(), envAdpDir);
+            const localRepository = new LocalRepository({
+                appName: "testApp",
+                adpDir: "test/tmp/target/.adp" // configured adpDir should be ignored in favor of env variable above
+            });
+            const hierarchy = await localRepository.getAppVariantIdHierarchy("appId1");
+            expect(hierarchy).to.deep.equal([
+                { repoName: "appId1", appVariantId: "appId1", cachebusterToken: path.join(envAdpDir, "appId1") }
+            ]);
+        });
+
         it("returns the complete hierarchy from dynamically generated files", async () => {
             const localRepository = await setup();
             const hierarchy = await localRepository.getAppVariantIdHierarchy("appId1");

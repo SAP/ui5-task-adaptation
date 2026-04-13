@@ -3,7 +3,7 @@ import { expect } from "chai";
 import AbapAdapter from "../../src/adapters/abapAdapter.js";
 import CFAdapter from "../../src/adapters/cfAdapter.js";
 
-describe("Processor", () => {
+describe("LandscapeConfiguration", () => {
 
     after(() => delete process.env.H2O_URL);
 

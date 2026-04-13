@@ -1,5 +1,6 @@
 import * as sinon from "sinon";
 
+import AdmZip from "adm-zip";
 import CacheHolder from "../../../src/cache/cacheHolder.js";
 import HTML5Repository from "../../../src/repositories/html5Repository.js";
 import { IProjectOptions } from "../../../src/model/types.js";
@@ -7,7 +8,9 @@ import { SinonSandbox } from "sinon";
 import TestUtil from "../testUtilities/testUtil.js";
 import esmock from "esmock";
 import { expect } from "chai";
-import IRepository from "../../../src/repositories/repository.js";
+import AbapRepository from "../../../src/repositories/abapRepository.js";
+import AbapProvider from "../../../src/repositories/abapProvider.js";
+import { Ui5AbapRepositoryService } from "@sap-ux/axios-extension";
 
 describe("CacheHolder", () => {
     const options: IProjectOptions = {
@@ -25,39 +28,29 @@ describe("CacheHolder", () => {
 
     let sandbox: SinonSandbox;
     let fetchStub: sinon.SinonStub;
-    let repository: IRepository;
+
+    const newManifest =
+        new Map([["manifest.json", JSON.stringify({
+            "sap.app": {
+                "id": "com.sap.base.app.id",
+                "applicationVersion": {
+                    "version": "1.0.1"
+                }
+            }
+        })]]);
+    const newReuseLibManifest =
+        new Map([["manifest.json", JSON.stringify({
+            "sap.app": {
+                "id": "com.sap.reuse.lib.id",
+                "applicationVersion": {
+                    "version": "1.0.2"
+                }
+            }
+        })]]);
 
     beforeEach(async () => {
-        const newManifest =
-            new Map([["manifest.json", JSON.stringify({
-                "sap.app": {
-                    "id": "com.sap.base.app.id",
-                    "applicationVersion": {
-                        "version": "1.0.1"
-                    }
-                }
-            })]]);
-        const newReuseLibManifest =
-            new Map([["manifest.json", JSON.stringify({
-                "sap.app": {
-                    "id": "com.sap.reuse.lib.id",
-                    "applicationVersion": {
-                        "version": "1.0.2"
-                    }
-                }
-            })]]);
         sandbox = sinon.createSandbox();
 
-        repository = new HTML5Repository(options.configuration);
-        sandbox.stub(repository, "getHtml5RepoInfo" as any).resolves({});
-        fetchStub = sandbox.stub(repository, "getAppZipEntries" as any).callsFake(
-            async (...args: unknown[]) => {
-                const appInfo = args[0] as { appName?: string } | undefined;
-                return appInfo?.appName === "libName1"
-                    ? newReuseLibManifest
-                    : newManifest;
-            }
-        );
         await CacheHolder.write("repoName1", "010101",
             new Map([["manifest.json", JSON.stringify({
                 "sap.app": {
@@ -98,22 +91,51 @@ describe("CacheHolder", () => {
         expect(manifest["sap.app"].applicationVersion.version).to.eql(expectedVersion);
     };
 
-    describe("Abap Processor", () => {
+    describe("Abap Repository", () => {
+        let repository: AbapRepository;
+        let fetchCalls = 0;
+        beforeEach(() => {
+            fetchCalls = 0;
+            const ui5Repo = {
+                get: () => {
+                    fetchCalls++;
+                    return Promise.resolve({
+                        data: JSON.stringify({ d: { ZipArchive: mapToBase64Zip(newManifest) } })
+                    });
+                }
+            } as unknown as Ui5AbapRepositoryService;
+            const provider = { getUi5AbapRepository: () => ui5Repo } as unknown as AbapProvider;
+            const abapProvider = { get: () => provider };
+            repository = new AbapRepository(options.configuration, abapProvider as unknown as AbapProvider);
+        });
         it("should get files from cache with same cacheBusterToken", async () => {
             assertManifest(await repository.fetch("repoName1", "010101"), "1.0.0");
             assertManifest((await CacheHolder.read("repoName1", "010101"))!, "1.0.0");
-            expect(fetchStub.getCalls().length).to.equal(0);
+            expect(fetchCalls).to.equal(0);
         });
 
         it("should download files with different cacheBusterToken", async () => {
             assertManifest(await repository.fetch("repoName1", "010102"), "1.0.1");
             assertManifest((await CacheHolder.read("repoName1", "010102"))!, "1.0.1");
             expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // old cache should be deleted
-            expect(fetchStub.getCalls().length).to.equal(1);
+            expect(fetchCalls).to.equal(1);
         });
     });
 
-    describe("CF Processor", () => {
+    describe("HTML5 Repository", () => {
+        let repository: HTML5Repository;
+        beforeEach(() => {
+            repository = new HTML5Repository(options.configuration);
+            sandbox.stub(repository, "getHtml5RepoInfo" as any).resolves({});
+            fetchStub = sandbox.stub(repository, "getAppZipEntries" as any).callsFake(
+                async (...args: unknown[]) => {
+                    const appInfo = args[0] as { appName?: string } | undefined;
+                    return appInfo?.appName === "libName1"
+                        ? newReuseLibManifest
+                        : newManifest;
+                }
+            );
+        });
         it("should get files from cache with same cacheBusterToken", async () => {
             assertManifest(await repository.fetch("repoName1", "010101"), "1.0.0");
             assertManifest((await CacheHolder.read("repoName1", "010101"))!, "1.0.0");
@@ -198,6 +220,14 @@ describe("CacheHolder", () => {
 
 });
 
+
+function mapToBase64Zip(files: Map<string, string>): string {
+    const zip = new AdmZip();
+    for (const [name, content] of files) {
+        zip.addFile(name, Buffer.from(content, "utf8"));
+    }
+    return zip.toBuffer().toString("base64");
+}
 
 function getCacheHolderMock(log: any) {
     return esmock("../../../src/cache/cacheHolder.js", {}, {

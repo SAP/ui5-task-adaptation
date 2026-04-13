@@ -8,9 +8,9 @@ import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
 import CFUtil from "../../src/util/cfUtil.js";
 import esmock from "esmock";
-import LocalAnnotationManager from "../../src/annotations/localAnnotationManager.js";
 import IRepository from "../../src/repositories/repository.js";
 import CFAdapter from "../../src/adapters/cfAdapter.js";
+import CFAnnotationManager from "../../src/annotations/cfAnnotationManager.js";
 
 const { byIsOmited } = TestUtil;
 
@@ -106,7 +106,7 @@ describe("Index", () => {
                         initialize: () => ({
                             repository,
                             adapter: new CFAdapter(OPTIONS.configuration),
-                            annotationManager: new LocalAnnotationManager(OPTIONS.configuration, repository)
+                            annotationManager: new CFAnnotationManager()
                         })
                     }
                 });

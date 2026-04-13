@@ -84,8 +84,8 @@
         "sinon": "^18.0.1",
         "source-map-support": "^0.5.19",
         "tsx": "^4.21.0",
-        "typescript": "^5.9.3",
-        "typescript-eslint": "^8.48.1",
+        "typescript": "^6.0.2",
+        "typescript-eslint": "^8.58.0",
         "yargs": "^17.7.2"
     },
     "c8": {
@@ -97,18 +97,13 @@
             "text-summary"
         ],
         "exclude": [
-            ".eslintrc.js",
-            "docs/**",
-            "jsdocs/**",
             "coverage/**",
             "test/**",
-            "lib/processors/jsdoc/lib/**",
             "dist/**",
             "src/model/types.ts",
             "src/util/requestUtil.ts",
             "src/util/renamingHandlers/renamingHandler.ts",
             "scripts/**/*.js",
-            "scripts/git/octokitUtil.ts",
             "*/**/*.d.ts",
             "src/annotations/comparator/diffCase.ts",
             "src/annotations/transformers/transformer.ts",
@@ -117,8 +112,7 @@
             "src/adapters/adapter.ts",
             "src/adapters/previewAdapter.ts",
             "src/repositories/repository.ts",
-            "src/annotations/annotationManager.ts",
-            "src/processors/processor.ts"
+            "src/annotations/annotationManager.ts"
         ],
         "check-coverage": true,
         "statements": 85,

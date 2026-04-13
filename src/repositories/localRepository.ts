@@ -78,9 +78,10 @@ export default class LocalRepository implements IRepository {
 
 
     private getLocalFilesDirectory(appId: string): string {
-        const baseDir = this.configuration.adpDir
-            ? path.normalize(this.configuration.adpDir).replace(/\\/g, "/").replace(/\/+$/, "").split("/")
+        const adpDirConfigured = process.env.ADP_BUILDER_DIR || this.configuration.adpDir;
+        const adpDir = adpDirConfigured
+            ? path.normalize(adpDirConfigured).replace(/\\/g, "/").replace(/\/+$/, "").split("/")
             : [".."];
-        return path.join(process.cwd(), ...baseDir, appId);
+        return path.join(process.cwd(), ...adpDir, appId);
     }
 }

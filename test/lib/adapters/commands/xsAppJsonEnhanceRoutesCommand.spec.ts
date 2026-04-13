@@ -17,7 +17,7 @@ describe("updateXsAppJson", () => {
     });
 
     it("should throw error when serviceInstanceName is not provided", async () => {
-        const processor = new XsAppJsonEnhanceRoutesCommand({
+        const command = new XsAppJsonEnhanceRoutesCommand({
             appName: "test-app"
             // serviceInstanceName is missing
         });
@@ -27,14 +27,14 @@ describe("updateXsAppJson", () => {
             routes: [{ source: "/api", destination: "api-dest" }]
         }));
 
-        await expect(processor.execute(baseAppFiles))
+        await expect(command.execute(baseAppFiles))
             .to.be.rejectedWith("Service instance name must be specified in ui5.yaml configuration for app 'test-app'");
     });
 
     it("should throw error when CFUtil.getOrCreateServiceKeyWithEndpoints fails", async () => {
         cfUtilStub.rejects(new Error("Service not found"));
 
-        const processor = new XsAppJsonEnhanceRoutesCommand({
+        const command = new XsAppJsonEnhanceRoutesCommand({
             appName: "test-app",
             serviceInstanceName: "test-service-instance"
         });
@@ -44,7 +44,7 @@ describe("updateXsAppJson", () => {
             routes: [{ source: "/api", destination: "api-dest" }]
         }));
 
-        await expect(processor.execute(baseAppFiles))
+        await expect(command.execute(baseAppFiles))
             .to.be.rejectedWith("Failed to get valid service keys for app 'test-app': Service not found");
     });
 
@@ -107,13 +107,13 @@ describe("updateXsAppJson", () => {
             ]
         };
 
-        const processor = new XsAppJsonEnhanceRoutesCommand({
+        const command = new XsAppJsonEnhanceRoutesCommand({
             appName: "test-app",
             serviceInstanceName: "test-service-instance"
         });
         const baseAppFiles = new Map<string, string>();
         baseAppFiles.set("xs-app.json", JSON.stringify(originalXsAppJson));
-        await processor.execute(baseAppFiles);
+        await command.execute(baseAppFiles);
         const updatedXsAppJson = JSON.parse(baseAppFiles.get("xs-app.json")!);
         expect(updatedXsAppJson.routes).to.deep.equal(expectedXsAppJson.routes);
     });
@@ -136,7 +136,7 @@ describe("updateXsAppJson", () => {
             .stub(CFUtil, "generateUniqueServiceKeyName")
             .resolves("test-service-instance-key-5");
 
-        const processor = new XsAppJsonEnhanceRoutesCommand({
+        const command = new XsAppJsonEnhanceRoutesCommand({
             appName: "test-app",
             serviceInstanceName: "test-service-instance"
         });
@@ -146,7 +146,7 @@ describe("updateXsAppJson", () => {
             routes: [{ source: "/api", destination: "api-dest" }]
         }));
 
-        await processor.execute(baseAppFiles);
+        await command.execute(baseAppFiles);
 
         // Verify that getOrCreateServiceKeyWithEndpoints was called with the service instance name and space
         expect(cfUtilStub.calledWith("test-service-instance", undefined)).to.be.true;
@@ -159,7 +159,7 @@ describe("updateXsAppJson", () => {
         // Simulate CFUtil.getOrCreateServiceKeyWithEndpoints returning undefined or empty endpoints
         cfUtilStub.resolves({ endpoints: {} });
 
-        const processor = new XsAppJsonEnhanceRoutesCommand({
+        const command = new XsAppJsonEnhanceRoutesCommand({
             appName: "test-app",
             serviceInstanceName: "test-service-instance"
         });
@@ -172,7 +172,7 @@ describe("updateXsAppJson", () => {
         baseAppFiles.set("xs-app.json", JSON.stringify({ routes }));
         baseAppFiles.set("manifest.json", "{}");
 
-        await processor.execute(baseAppFiles);
+        await command.execute(baseAppFiles);
         // xs-app.json should remain unchanged
         const updated = JSON.parse(baseAppFiles.get("xs-app.json")!);
         expect(updated.routes).to.deep.equal(routes);

@@ -1,4 +1,5 @@
 {
+    "$schema": "https://json.schemastore.org/tsconfig",
     "compileOnSave": true,
     "compilerOptions": {
         "target": "ES2023",
@@ -16,7 +17,6 @@
         "noImplicitAny": true,
         "noImplicitReturns": false,
         "noImplicitThis": true,
-        "downlevelIteration": true,
         "strict": true,
         "strictBindCallApply": true,
         "strictNullChecks": true,
@@ -28,6 +28,10 @@
             "./types",
             "./node_modules/@types",
             "./dist/bundle.d.ts"
+        ],
+        "types": [
+            "node",
+            "mocha"
         ],
         "skipLibCheck": true
     },

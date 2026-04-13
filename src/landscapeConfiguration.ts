@@ -11,6 +11,7 @@ import IAnnotationManager from "./annotations/annotationManager.js";
 import AbapAnnotationManager from "./annotations/abapAnnotationManager.js";
 import LocalAnnotationManager from "./annotations/localAnnotationManager.js";
 import { validateObject } from "./util/commonUtil.js";
+import CFAnnotationManager from "./annotations/cfAnnotationManager.js";
 
 
 export function initialize(configuration: IConfiguration): {
@@ -67,7 +68,7 @@ function getAnnotationManager(configuration: IConfiguration, repository: IReposi
         case "abap":
             return new AbapAnnotationManager(configuration, repository);
         case "cf":
-            return new LocalAnnotationManager();
+            return new CFAnnotationManager();
         default:
             throw new Error(`No annotation manager found for the given configuration type '${configuration.type}'`);
     }

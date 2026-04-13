@@ -3,13 +3,13 @@ import { AdaptCommandChain, ManifestUpdateCommandChain, MergeCommandChain, PostC
 import { IAppVariantIdHierarchyManifestItem } from "../model/appVariantIdHierarchyItem.js";
 import BaseApp from "../baseAppManager.js";
 import AppVariant from "../appVariantManager.js";
-import AnnotationManager from "../annotations/annotationManager.js";
+import IAnnotationManager from "../annotations/annotationManager.js";
 import DownloadAnnotationsCommand from "./commands/downloadAnnotationsCommand.js";
 import I18nPropertiesMergeCommand from "./commands/i18nPropertiesMergeCommand.js";
 
 
 export default class AbapAdapter implements IAdapter {
-    constructor(private annotationManager: AnnotationManager) { }
+    constructor(private annotationManager: IAnnotationManager) { }
 
     createAdaptCommandChain(baseApp: BaseApp, appVariant: AppVariant): AdaptCommandChain {
         const appVariantIdHierarchyItem = {

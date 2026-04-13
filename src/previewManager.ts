@@ -98,11 +98,14 @@ export default class PreviewManager {
 	}
 
 	async processPreviewResources(baseAppFiles: ReadonlyMap<string, string>): Promise<void> {
+		if (!PreviewManager.isPreviewRequested()) {
+			log.verbose("Preview mode not requested, skipping downloading reuse libraries and xs-app.json processing.");
+			return;
+		}
 		log.verbose(`Downloading reuse libraries to reuse folder`);
 		const xsAppFiles = new Array<string>();
 		if (this.fetchLibsPromises.size === 0) {
 			log.verbose("No reuse libraries defined in ui5AppInfo.json for preview");
-			return;
 		}
 
 		const mergedFiles = new Map<string, string>();
@@ -125,6 +128,9 @@ export default class PreviewManager {
 		if (xsAppJson) {
 			xsAppJson = await fetchCredentialsAndEnhanceRoutes(xsAppJson, this.configuration);
 			mergedFiles.set(XS_APP_JSON_FILE, xsAppJson);
+		}
+		if (mergedFiles.size === 0) {
+			return;
 		}
 		await ResourceUtil.writeInProject(REUSE_DIR, mergedFiles);
 	}
