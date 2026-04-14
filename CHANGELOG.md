@@ -2,79 +2,42 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task-adaptation/compare/v1.6.5-rc.2...HEAD).
+A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0...HEAD).
 
-<a name="v1.6.5-rc.2"></a>
-## [v1.6.5-rc.2] - 2026-04-14
-
-<a name="v1.6.5-rc.1"></a>
-## [v1.6.5-rc.1] - 2026-04-13
-
-<a name="v1.6.4-rc.3"></a>
-## [v1.6.4-rc.3] - 2026-04-07
-
-<a name="v1.6.4-rc.2"></a>
-## [v1.6.4-rc.2] - 2026-04-06
-
-<a name="v1.6.4-rc.1"></a>
-## [v1.6.4-rc.1] - 2026-04-06
+<a name="v1.6.4"></a>
+## [v1.6.4] - 2026-04-10
+### Fixed
+- CF: merged xs-app.json is written to .adp/reuse even if no reuse libraries specified for the app
+- Change files are ascending sorted by `creation` timestamp before applying to manifest.json
+- Rollup override for the `appdescr_app_addNewDataSource` descriptor change merger, adding comprehensive validation logic when adding new data sources to the `sap.app.dataSources` section of a manifest
 
 <a name="v1.6.3"></a>
 ## [v1.6.3] - 2026-03-18
+### Added
+- CF: Enhance xs-app.json with endpoints also for reuse libraries for the preview
 
 <a name="v1.6.2"></a>
 ## [v1.6.2] - 2026-03-16
-
-<a name="v1.6.1"></a>
-## [v1.6.1] - 2026-02-26
+### Added
+- CF: Enhance xs-app.json with endpoints from service instance
 
 <a name="v1.6.0"></a>
-## [v1.6.0] - 2026-02-26
-
-<a name="v0.2.0"></a>
-## [v0.2.0] - 2026-02-20
-
-<a name="v0.1.0"></a>
-## [v0.1.0] - 2026-02-20
+## [v1.6.0] - 2026-02-20
+### Added
+- CF: Reuse library content is downloaded for the Adaptation Visual Editor preview.
+- CF: Merging xs-app.json files of the base application with xs-app.json of the Adaptation Project.
+### Fixed
+- Enhanced log coverage.
 
 <a name="v1.5.4"></a>
 ## [v1.5.4] - 2026-02-16
-### Bug Fixes
-- Removed moved changes [`babdc1b`](https://github.com/SAP/ui5-task-adaptation/commit/babdc1bce8e407b2638e014cfaa4e6547bba10ac)
-
-
-<a name="v1.6.0-rc.4"></a>
-## [v1.6.0-rc.4] - 2026-02-12
-
-<a name="v1.6.0-rc.3"></a>
-## [v1.6.0-rc.3] - 2026-02-05
-
-<a name="v1.6.0-rc.2"></a>
-## [v1.6.0-rc.2] - 2026-02-05
-
-<a name="v1.6.0-rc.1"></a>
-## [v1.6.0-rc.1] - 2026-02-05
-
-<a name="v1.6.0-rc.0"></a>
-## [v1.6.0-rc.0] - 2026-02-02
-
-<a name="v1.5.3"></a>
-## [v1.5.3] - 2025-09-29
-
-<a name="v1.5.2"></a>
-## [v1.5.2] - 2025-08-25
-### Bug Fixes
-- Removed moved changes [`babdc1b`](https://github.com/SAP/ui5-task-adaptation/commit/babdc1bce8e407b2638e014cfaa4e6547bba10ac)
-
-
-<a name="v1.5.2-rc.1"></a>
-## [v1.5.2-rc.1] - 2025-08-22
-
-<a name="v1.5.2-rc.0"></a>
-## [v1.5.2-rc.0] - 2025-08-19
+### Fixed
+- Should not rename sap.ui5/dependencies/libs and sap.ui5/dependencies/components ids if they contain base application id
 
 <a name="v1.5.1"></a>
 ## [v1.5.1] - 2025-08-06
+### Bug Fixes
+- Correct handling of manifest changes
 
 <a name="v1.4.3"></a>
 ## [v1.4.3] - 2025-04-17
@@ -188,28 +151,11 @@ A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task
 <a name="v1.0.0"></a>
 ## v1.0.0 - 2020-12-09
 
-[v1.6.5-rc.2]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.5-rc.1...v1.6.5-rc.2
-[v1.6.5-rc.1]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.4-rc.3...v1.6.5-rc.1
-[v1.6.4-rc.3]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.4-rc.2...v1.6.4-rc.3
-[v1.6.4-rc.2]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.4-rc.1...v1.6.4-rc.2
-[v1.6.4-rc.1]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.3...v1.6.4-rc.1
+[v1.6.4]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.3...v1.6.4
 [v1.6.3]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.2...v1.6.3
-[v1.6.2]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.1...v1.6.2
-[v1.6.1]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0...v1.6.1
-[v1.6.0]: https://github.com/SAP/ui5-task-adaptation/compare/v0.2.0...v1.6.0
-[v0.2.0]: https://github.com/SAP/ui5-task-adaptation/compare/v0.1.0...v0.2.0
-[v0.1.0]: https://github.com/SAP/ui5-task-adaptation/compare/v1.5.4...v0.1.0
-[v1.5.4]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0-rc.4...v1.5.4
-[v1.6.0-rc.4]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0-rc.3...v1.6.0-rc.4
-[v1.6.0-rc.3]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0-rc.2...v1.6.0-rc.3
-[v1.6.0-rc.2]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0-rc.1...v1.6.0-rc.2
-[v1.6.0-rc.1]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0-rc.0...v1.6.0-rc.1
-[v1.6.0-rc.0]: https://github.com/SAP/ui5-task-adaptation/compare/v1.5.3...v1.6.0-rc.0
-[v1.5.3]: https://github.com/SAP/ui5-task-adaptation/compare/v1.5.2...v1.5.3
-[v1.5.2]: https://github.com/SAP/ui5-task-adaptation/compare/v1.5.2-rc.1...v1.5.2
-[v1.5.2-rc.1]: https://github.com/SAP/ui5-task-adaptation/compare/v1.5.2-rc.0...v1.5.2-rc.1
-[v1.5.2-rc.0]: https://github.com/SAP/ui5-task-adaptation/compare/v1.5.1...v1.5.2-rc.0
-[v1.5.1]: https://github.com/SAP/ui5-task-adaptation/compare/v1.4.3...v1.5.1
+[v1.6.2]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0...v1.6.2
+[v1.6.0]: https://github.com/SAP/ui5-task-adaptation/compare/v1.5.4...v1.6.0
+[v1.5.4]: https://github.com/SAP/ui5-task-adaptation/compare/v1.4.3...v1.5.4
 [v1.4.3]: https://github.com/SAP/ui5-task-adaptation/compare/v1.4.2...v1.4.3
 [v1.4.2]: https://github.com/SAP/ui5-task-adaptation/compare/v1.4.0...v1.4.2
 [v1.4.0]: https://github.com/SAP/ui5-task-adaptation/compare/v1.3.3...v1.4.0
