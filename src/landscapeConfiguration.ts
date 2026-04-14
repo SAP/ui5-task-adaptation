@@ -9,9 +9,15 @@ import HTML5Repository from "./repositories/html5Repository.js";
 import LocalRepository from "./repositories/localRepository.js";
 import IAnnotationManager from "./annotations/annotationManager.js";
 import AbapAnnotationManager from "./annotations/abapAnnotationManager.js";
-import LocalAnnotationManager from "./annotations/localAnnotationManager.js";
-import { validateObject } from "./util/commonUtil.js";
 import CFAnnotationManager from "./annotations/cfAnnotationManager.js";
+import CFValidator from "./util/validator/cfValidator.js";
+import AbapValidator from "./util/validator/abapValidator.js";
+import IValidator, { isOneOf } from "./util/validator/validator.js";
+import { LANDSCAPE_TYPES, LandscapeType } from "./model/configuration.js";
+import { getLogger } from "@ui5/logger";
+import LocalAnnotationManager from "./annotations/localAnnotationManager.js";
+
+const log = getLogger("@ui5/task-adaptation::LandscapeConfiguration");
 
 
 export function initialize(configuration: IConfiguration): {
@@ -19,14 +25,38 @@ export function initialize(configuration: IConfiguration): {
     repository: IRepository,
     annotationManager: IAnnotationManager
 } {
-    validateObject(configuration, ["type"], "should be specified in ui5.yaml configuration: 'cf' or 'abap'");
-    const repository = getRepository(configuration);
-    const annotationManager = getAnnotationManager(configuration, repository);
+    const type = getTypeByConfiguration(configuration);
+    const enhancedConfig = { ...configuration, type };
+    const repository = getRepository(enhancedConfig);
+    const annotationManager = getAnnotationManager(enhancedConfig, repository);
     return {
-        adapter: getAdapter(configuration, annotationManager),
+        adapter: getAdapter(enhancedConfig, annotationManager),
         repository,
         annotationManager
     };
+}
+
+
+function getTypeByConfiguration(configuration: IConfiguration): LandscapeType {
+    const validators = [
+        new CFValidator(),
+        new AbapValidator(),
+    ] as IValidator[];
+
+    if (isOneOf(LANDSCAPE_TYPES, configuration.type)) {
+        return configuration.type;
+    } else {
+        log.warn("Deprecated behavior: type is not specified or invalid. Should be either 'cf' or 'abap'. Trying to detect the type based on provided configuration");
+        for (const validator of validators) {
+            try {
+                validator.validateConfiguration(configuration);
+                return validator.type;
+            } catch (_error) {
+                // Continue to the next validator if validation fails
+            }
+        }
+        throw new Error("'type' should be specified in ui5.yaml configuration: 'cf' or 'abap'");
+    }
 }
 
 

@@ -1,6 +1,7 @@
 import { renameMap } from "./renamingUtil.js";
 import ManifestRenamingHandler from "./renamingHandlers/manifestRenamingHandler.js";
 import { IRenamingHandler } from "./renamingHandlers/renamingHandler.js";
+import { IChange } from "../model/types.js";
 
 export default class FilesUtil {
 
@@ -19,6 +20,12 @@ export default class FilesUtil {
             }
         });
         return result;
+    }
+
+    static sortByTimeStamp(a: IChange, b: IChange): number {
+        if (a.creation < b.creation) return -1;
+        if (a.creation > b.creation) return 1;
+        return 0;
     }
 
     /**

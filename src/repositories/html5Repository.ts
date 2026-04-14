@@ -9,7 +9,7 @@ import { unzipZipEntries } from "../util/zipUtil.js";
 import IRepository from "./repository.js";
 import { IAppVariantIdHierarchyItem } from "../model/appVariantIdHierarchyItem.js";
 import { cached } from "../cache/cacheHolder.js";
-import { validateConfiguration } from "../util/commonUtil.js";
+import CFValidator from "../util/validator/cfValidator.js";
 
 interface appData {
     appName: string,
@@ -21,8 +21,10 @@ const log = getLogger("@ui5/task-adaptation::HTML5Repository");
 
 export default class HTML5Repository implements IRepository {
 
+    private validator = new CFValidator();
+
     constructor(private configuration: IConfiguration) {
-        validateConfiguration(configuration, ["appHostId", "appName", "appVersion"]);
+        this.validator.validateConfiguration(configuration);
     }
 
 
