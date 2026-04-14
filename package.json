@@ -97,25 +97,22 @@
             "text-summary"
         ],
         "exclude": [
-            ".eslintrc.js",
-            "docs/**",
-            "jsdocs/**",
             "coverage/**",
             "test/**",
-            "lib/processors/jsdoc/lib/**",
             "dist/**",
             "src/model/types.ts",
             "src/util/requestUtil.ts",
             "src/util/renamingHandlers/renamingHandler.ts",
             "scripts/**/*.js",
-            "scripts/git/octokitUtil.ts",
             "*/**/*.d.ts",
             "src/annotations/comparator/diffCase.ts",
             "src/annotations/transformers/transformer.ts",
             "src/model/configuration.ts",
             "src/model/appVariantIdHierarchyItem.ts",
             "src/adapters/adapter.ts",
-            "src/adapters/previewAdapter.ts"
+            "src/adapters/previewAdapter.ts",
+            "src/repositories/repository.ts",
+            "src/annotations/annotationManager.ts"
         ],
         "check-coverage": true,
         "statements": 85,

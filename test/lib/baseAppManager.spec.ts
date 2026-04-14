@@ -3,8 +3,8 @@ import * as sinon from "sinon";
 import { RawApplier, AppDescriptorChange } from "../../dist/bundle.js";
 import { assert, expect } from "chai";
 
-import AbapRepoManager from "../../src/repositories/abapRepoManager.js";
-import AnnotationManager from "../../src/annotationManager.js";
+import AbapRepository from "../../src/repositories/abapRepository.js";
+import AbapAnnotationManager from "../../src/annotations/abapAnnotationManager.js";
 import AppVariant from "../../src/appVariantManager.js";
 import BaseApp, { preProcessFiles } from "../../src/baseAppManager.js";
 import { IProjectOptions } from "../../src/model/types.js";
@@ -292,9 +292,9 @@ describe("BaseAppManager Abap", () => {
             enableBetaFeatures: true
         }
     };
-    const abapRepoManager = new AbapRepoManager(options.configuration);
-    const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
-    const adapter = new AbapAdapter(options.configuration, annotationManager);
+    const abapRepository = new AbapRepository(options.configuration);
+    const annotationManager = new AbapAnnotationManager(options.configuration, abapRepository);
+    const adapter = new AbapAdapter(annotationManager);
 
     beforeEach(async () => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
@@ -302,7 +302,7 @@ describe("BaseAppManager Abap", () => {
     before(async () => {
         appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
         sandbox = sinon.createSandbox();
-        MockServer.stubAnnotations(sandbox, abapRepoManager, [
+        MockServer.stubAnnotations(sandbox, abapRepository, [
             {
                 folder: "annotations/v2/annotation-1-v2",
                 url: "/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/"
@@ -409,11 +409,11 @@ describe("BaseAppManager Abap", () => {
     it("should throw an error because of one-segment id", async () => {
         const manifest = JSON.stringify({
             "sap.app": {
-                "id": "segment"
+                "id": "appId"
             }
         });
         expect(() => BaseApp.fromFiles(new Map([["manifest.json", manifest]]))).to.throw(
-            "The original application id 'segment' should consist of multiple segments split by dot, e.g.: original.id");
+            "The original application id 'appId' should consist of multiple segments split by dot, e.g.: original.id");
     });
 
     const assertValidation = async (appVariant: AppVariant, expectedError: string, manifest: any) => {

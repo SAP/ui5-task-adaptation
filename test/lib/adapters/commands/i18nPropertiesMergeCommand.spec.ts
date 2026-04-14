@@ -2,10 +2,12 @@ import esmock from "esmock";
 import sinon, { SinonSandbox } from "sinon";
 import { MergeCommandChain } from "../../../../src/adapters/commands/command.js";
 import I18nPropertiesMergeCommand from "../../../../src/adapters/commands/i18nPropertiesMergeCommand.js";
+import CFAdapter from "../../../../src/adapters/cfAdapter.js";
 import AppVariant from "../../../../src/appVariantManager.js";
 import BaseApp from "../../../../src/baseAppManager.js";
 import CacheHolder from "../../../../src/cache/cacheHolder.js";
 import { IProjectOptions } from "../../../../src/model/types.js";
+import CFUtil from "../../../../src/util/cfUtil.js";
 import TestUtil from "../../testUtilities/testUtil.js";
 import { expect } from "chai";
 
@@ -125,7 +127,10 @@ describe("I18nPropertiesMergeCommand", () => {
         let sandbox: SinonSandbox;
 
         before(() => CacheHolder.clear());
-        beforeEach(() => sandbox = sinon.createSandbox());
+        beforeEach(() => {
+            sandbox = sinon.createSandbox();
+            sandbox.stub(CFUtil, "getOrCreateServiceKeyWithEndpoints").resolves({ endpoints: {} });
+        });
         afterEach(() => sandbox.restore());
 
         it("should copy in target manifest/i18n with same path if not exist", async () => {
@@ -481,24 +486,24 @@ describe("I18nPropertiesMergeCommand", () => {
         });
 
         async function test({ baseAppFiles, appVariantFolder, expectLength, expectIncluded, expectExcluded }: ITestParams) {
-            const cfUtilMock = {
-                getOrCreateServiceKeyWithEndpoints: () => Promise.resolve({})
-            };
-
-            const CFProcessor = await esmock("../../../../src/processors/cfProcessor.js", {}, {
-                "../../../../src/repositories/html5RepoManager.ts": {
-                    getBaseAppFiles: () => Promise.resolve(baseAppFiles),
-                    getMetadata: () => Promise.resolve({ changedOn: "123" })
-                },
-                "../../../../src/cache/cacheHolder": {
-                    cached: () => { }
-                },
-                "../../../../src/util/cfUtil.ts": cfUtilMock
-            });
-            const processor = new CFProcessor(OPTIONS.configuration);
             const index = await esmock("../../../../src/index.js", {}, {
-                "../../../../src/processors/processor.js": {
-                    determineProcessor: () => processor
+                "../../../../src/landscapeConfiguration.js": {
+                    initialize: () => ({
+                        adapter: new CFAdapter(OPTIONS.configuration),
+                        repository: {
+                            getAppVariantIdHierarchy: async (appId: string) => [{
+                                repoName: OPTIONS.configuration.appName,
+                                appVariantId: appId,
+                                cachebusterToken: "123"
+                            }],
+                            fetch: async () => baseAppFiles,
+                            fetchReuseLib: async () => new Map<string, string>(),
+                            downloadAnnotationFile: async () => new Map<string, string>()
+                        },
+                        annotationManager: {
+                            process: async () => new Map<string, string>()
+                        }
+                    })
                 }
             });
             const { workspace, taskUtil } = await TestUtil.getWorkspace(appVariantFolder, OPTIONS.projectNamespace);

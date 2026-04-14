@@ -1,6 +1,4 @@
-import AbapProcessor from "../../src/processors/abapProcessor.js";
-import AbapRepoManager from "../../src/repositories/abapRepoManager.js";
-import AnnotationManager from "../../src/annotationManager.js";
+import AbapRepository from "../../src/repositories/abapRepository.js";
 import CacheHolder from "../../src/cache/cacheHolder.js";
 import { IProjectOptions } from "../../src/model/types.js";
 import ResourceUtil from "../../src/util/resourceUtil.js";
@@ -9,6 +7,8 @@ import XmlUtil from "../../src/util/xmlUtil.js";
 import esmock from "esmock";
 import { expect } from "chai";
 import sinon from "sinon";
+import AbapAnnotationManager from "../../src/annotations/abapAnnotationManager.js";
+import AbapAdapter from "../../src/adapters/abapAdapter.js";
 
 describe("App Variant Hierarchy", () => {
     let sandbox: sinon.SinonSandbox;
@@ -27,8 +27,8 @@ describe("App Variant Hierarchy", () => {
     let files = new Map<string, string>();
     beforeEach(async () => {
         sandbox = sinon.createSandbox();
-        sandbox.stub(AnnotationManager.prototype, "process").resolves(new Map<string, string>());
-        sandbox.stub(AbapRepoManager.prototype, "getAppVariantIdHierarchy").resolves([
+        sandbox.stub(AbapAnnotationManager.prototype, "process").resolves(new Map<string, string>());
+        sandbox.stub(AbapRepository.prototype, "getAppVariantIdHierarchy").resolves([
             {
                 appVariantId: "customer.com.sap.application.variant.id",
                 repoName: "REPO_NAME_1",
@@ -41,18 +41,21 @@ describe("App Variant Hierarchy", () => {
             }
         ]);
         const appVariant1Path = TestUtil.getResourcePath("appVariant1", "webapp");
-        sandbox.stub(AbapRepoManager.prototype, "fetch")
+        sandbox.stub(AbapRepository.prototype, "fetch")
             .withArgs("REPO_NAME_0").resolves(new Map([
                 ["manifest.json", TestUtil.getResource("manifest.json")],
                 ["i18n/i18n.properties", "base=a"],
                 ["i18n/i18n_de.properties", "base=a_de"],
             ]))
             .withArgs("REPO_NAME_1").resolves(await ResourceUtil.byGlob(appVariant1Path, "**/*"));
-        const abapRepoManager = new AbapRepoManager(options.configuration);
-        const annotationManager = new AnnotationManager(options.configuration, abapRepoManager);
+        const repository = new AbapRepository(options.configuration);
+        const annotationManager = new AbapAnnotationManager(options.configuration, repository);
         const index = await esmock("../../src/index.js", {}, {
-            "../../src/processors/processor.js": {
-                determineProcessor: () => new AbapProcessor(options.configuration, abapRepoManager, annotationManager)
+            "../../src/landscapeConfiguration.js": {
+                initialize: () => ({
+                    repository,
+                    adapter: new AbapAdapter(annotationManager)
+                })
             }
         });
 

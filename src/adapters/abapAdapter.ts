@@ -1,16 +1,15 @@
-import { IConfiguration } from "../model/configuration.js";
 import { getCommonManifestUpdateCommands, IAdapter } from "./adapter.js";
 import { AdaptCommandChain, ManifestUpdateCommandChain, MergeCommandChain, PostCommandChain } from "./commands/command.js";
 import { IAppVariantIdHierarchyManifestItem } from "../model/appVariantIdHierarchyItem.js";
 import BaseApp from "../baseAppManager.js";
 import AppVariant from "../appVariantManager.js";
-import AnnotationManager from "../annotationManager.js";
+import IAnnotationManager from "../annotations/annotationManager.js";
 import DownloadAnnotationsCommand from "./commands/downloadAnnotationsCommand.js";
 import I18nPropertiesMergeCommand from "./commands/i18nPropertiesMergeCommand.js";
 
 
 export default class AbapAdapter implements IAdapter {
-    constructor(private configuration: IConfiguration, private annotationManager: AnnotationManager) { }
+    constructor(private annotationManager: IAnnotationManager) { }
 
     createAdaptCommandChain(baseApp: BaseApp, appVariant: AppVariant): AdaptCommandChain {
         const appVariantIdHierarchyItem = {
@@ -22,7 +21,7 @@ export default class AbapAdapter implements IAdapter {
             new ManifestUpdateCommandChain([
                 ...getCommonManifestUpdateCommands(baseApp, appVariant, appVariantIdHierarchyItem),
             ]),
-            new DownloadAnnotationsCommand(appVariant.id, appVariant.prefix, this.annotationManager, this.configuration),
+            new DownloadAnnotationsCommand(appVariant.id, appVariant.prefix, this.annotationManager),
         ]);
     }
 

@@ -7,6 +7,7 @@ import { SinonSandbox, SinonStub } from "sinon";
 import FsUtil from "../../src/util/fsUtil.js";
 import { IConfiguration, IReuseLibInfo } from "../../src/model/types.js";
 import CFUtil from "../../src/util/cfUtil.js";
+import IRepository from "../../src/repositories/repository.js";
 
 
 const configuration = {
@@ -74,13 +75,13 @@ describe("PreviewManager download reuse libraries", () => {
 			}
 		});
 
-		const processorStub = {
+		const repositoryStub = {
 			fetchReuseLib: async (_: string) => []
 		} as any;
 
 		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfo));
 
-		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processorStub, configuration);
+		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", repositoryStub, configuration);
 		expect(previewManager["fetchLibsPromises"].size > 0).to.be.true;
 	});
 
@@ -105,12 +106,12 @@ describe("PreviewManager download reuse libraries", () => {
 				messages: []
 			}
 		});
-		const processorStub = {
+		const repositoryStub = {
 			fetchReuseLib: async () => new Map<string, string>()
 		} as any;
 		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
 
-		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processorStub, configuration);
+		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", repositoryStub, configuration);
 		expect(previewManager["fetchLibsPromises"].size > 0).to.be.false;
 	});
 
@@ -145,7 +146,7 @@ describe("PreviewManager download reuse libraries", () => {
 			}
 		});
 
-		const processor = {
+		const repositoryStub = {
 			fetchReuseLib: async () => {
 				const libFiles = new Map<string, string>();
 				libFiles.set("file1.js", "console.log('file1');");
@@ -156,7 +157,7 @@ describe("PreviewManager download reuse libraries", () => {
 
 		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
 
-		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", processor, configuration);
+		const previewManager = await PreviewManager.createFromRoot("reuse.lib1", repositoryStub, configuration);
 		await previewManager.processPreviewResources(new Map<string, string>([["xs-app.json", "{}"]]));
 
 		const allFiles = writeStub.getCall(0).args[1] as ReadonlyMap<string, string>;
@@ -204,13 +205,13 @@ describe("PreviewManager download reuse libraries", () => {
 			}
 		});
 
-		const processorStub = {
+		const repositoryStub = {
 			fetchReuseLib: async () => new Map<string, string>()
 		} as any;
 
 		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
 
-		const previewManager = await PreviewManagerMock.createFromRoot("reuse.libEmpty", processorStub, configuration);
+		const previewManager = await PreviewManagerMock.createFromRoot("reuse.libEmpty", repositoryStub, configuration);
 		await previewManager.processPreviewResources(new Map<string, string>([["xs-app.json", "{}"]]));
 
 		expect(warnSpy.called).to.be.true;
@@ -275,13 +276,13 @@ describe("PreviewManager adjust xs-app.json", () => {
 		return baseFiles;
 	};
 
-	const createProcessor = (libFiles: ReadonlyMap<string, string>) => ({
+	const createRepository = (libFiles: ReadonlyMap<string, string>) => ({
 		fetchReuseLib: async () => libFiles
 	}) as any;
 
-	const createPreviewManager = async (appInfoContent: string, processor: any) => {
+	const createPreviewManager = async (appInfoContent: string, repositoryStub: IRepository) => {
 		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
-		return PreviewManager.createFromRoot("reuse.lib1", processor, configuration);
+		return PreviewManager.createFromRoot("reuse.lib1", repositoryStub, configuration);
 	};
 
 	beforeEach(() => {
@@ -459,10 +460,10 @@ describe("PreviewManager adjust xs-app.json", () => {
 			defaultReuseLibFiles.set("Component.js", "sap.ui.define([], function() {});");
 			reuseLibFiles?.forEach((value, key) => defaultReuseLibFiles.set(key, value));
 		}
-		const processor = createProcessor(defaultReuseLibFiles);
+		const repositoryStub = createRepository(defaultReuseLibFiles);
 
 		const resourceWrite = sandbox.stub(ResourceUtil, "writeInProject");
-		const previewManager = await createPreviewManager(appInfoContent, processor);
+		const previewManager = await createPreviewManager(appInfoContent, repositoryStub);
 		await previewManager.processPreviewResources(baseFiles);
 		return resourceWrite;
 	}

@@ -1,10 +1,10 @@
 import { getLogger } from "@ui5/logger";
-import IProcessor from "./processors/processor.js";
 import { IConfiguration, IReuseLibInfo } from "./model/types.js";
 import ResourceUtil from "./util/resourceUtil.js";
 import path from "path";
 import { fetchCredentialsAndEnhanceRoutes, merge } from "./util/cf/xsAppJsonUtil.js";
 import FsUtil from "./util/fsUtil.js";
+import IRepository from "./repositories/repository.js";
 
 type AppInfoMessage = {
 	message: string;
@@ -46,7 +46,7 @@ export default class PreviewManager {
 	private readonly fetchLibsPromises: Map<string, Promise<ReadonlyMap<string, string>>> = new Map();
 	private readonly configuration: IConfiguration;
 
-	static async createFromRoot(appId: string, processor: IProcessor, configuration: IConfiguration): Promise<PreviewManager> {
+	static async createFromRoot(appId: string, repository: IRepository, configuration: IConfiguration): Promise<PreviewManager> {
 		let ui5AppInfo: string = "";
 
 		if (PreviewManager.isPreviewRequested()) {
@@ -59,14 +59,14 @@ export default class PreviewManager {
 			log.verbose("Preview mode not requested (env variable ADP_BUILDER_MODE=preview is not set), skipping preview resources processing.");
 		}
 
-		return new PreviewManager(appId, ui5AppInfo, processor, configuration);
+		return new PreviewManager(appId, ui5AppInfo, repository, configuration);
 	}
 
 	static isPreviewRequested(): boolean {
 		return process.env.ADP_BUILDER_MODE === "preview";
 	}
 
-	private constructor(appId: string, ui5AppInfo: string, processor: IProcessor, configuration: IConfiguration) {
+	private constructor(appId: string, ui5AppInfo: string, repository: IRepository, configuration: IConfiguration) {
 		this.configuration = configuration;
 		// If no ui5AppInfo is provided, no preview processing is needed
 		if (!ui5AppInfo) {
@@ -81,7 +81,7 @@ export default class PreviewManager {
 
 		const reuseLibs = appInfo.asyncHints.libs.filter(lib => lib.html5AppHostId && lib.html5AppName && lib.html5AppVersion);
 		if (reuseLibs.length > 0) {
-			this.fetchLibsPromises = this.preReadLibs(reuseLibs, processor);
+			this.fetchLibsPromises = this.preReadLibs(reuseLibs, repository);
 		}
 
 		const logMap: { [key: string]: any } = {
@@ -135,13 +135,13 @@ export default class PreviewManager {
 		await ResourceUtil.writeInProject(REUSE_DIR, mergedFiles);
 	}
 
-	private preReadLibs(reuseLibs: IReuseLibInfo[], processor: IProcessor): Map<string, Promise<ReadonlyMap<string, string>>> {
+	private preReadLibs(reuseLibs: IReuseLibInfo[], repository: IRepository): Map<string, Promise<ReadonlyMap<string, string>>> {
 		const promises = new Map<string, Promise<ReadonlyMap<string, string>>>();
 		reuseLibs.forEach(lib => {
 			log.info(`Downloading reuse library '${lib.html5AppName}' version '${lib.html5AppVersion}'`);
-			const promise = processor
+			const promise = repository
 				.fetchReuseLib(lib.html5AppName, lib.html5CacheBusterToken, lib)
-				.then(libFiles => PreviewManager.moveLibraryFiles(libFiles, lib.html5AppName, lib.name));
+				.then((libFiles: ReadonlyMap<string, string>) => PreviewManager.moveLibraryFiles(libFiles, lib.html5AppName, lib.name));
 			promises.set(lib.html5AppName, promise);
 		});
 		return promises;
