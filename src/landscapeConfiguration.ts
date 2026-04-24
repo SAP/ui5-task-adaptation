@@ -61,7 +61,7 @@ function getTypeByConfiguration(configuration: IConfiguration): LandscapeType {
 
 
 function getAdapter(configuration: IConfiguration, annotationManager: IAnnotationManager): IAdapter {
-    if (isPreview(configuration)) {
+    if (isPreview()) {
         return new PreviewAdapter(configuration);
     }
     switch (configuration.type) {
@@ -76,8 +76,8 @@ function getAdapter(configuration: IConfiguration, annotationManager: IAnnotatio
 
 
 function getRepository(configuration: IConfiguration): IRepository {
-    if (isLocal(configuration)) {
-        return new LocalRepository(configuration);
+    if (isLocal()) {
+        return new LocalRepository();
     }
     switch (configuration.type) {
         case "abap":
@@ -91,7 +91,7 @@ function getRepository(configuration: IConfiguration): IRepository {
 
 
 function getAnnotationManager(configuration: IConfiguration, repository: IRepository): IAnnotationManager {
-    if (isLocal(configuration)) {
+    if (isLocal()) {
         return new LocalAnnotationManager();
     }
     switch (configuration.type) {
@@ -105,10 +105,11 @@ function getAnnotationManager(configuration: IConfiguration, repository: IReposi
 }
 
 
-function isLocal(configuration: IConfiguration) {
-    return process.env.ADP_BUILDER_MODE === "local" || configuration.mode === "local";
+function isLocal() {
+    return process.env.ADP_BUILDER_MODE === "local";
 }
 
-function isPreview(configuration: IConfiguration) {
-    return process.env.ADP_BUILDER_MODE === "preview" || configuration.mode === "preview";
+
+function isPreview() {
+    return process.env.ADP_BUILDER_MODE === "preview";
 }

@@ -40,36 +40,19 @@ describe("LocalRepository", () => {
             { id: "appId2", reference: "appId3" },
             { id: "appId3" }
         ]);
-        return new LocalRepository({
-            appName: "testApp",
-            adpDir: "test/tmp/target/.adp"
-        });
+        process.env.ADP_BUILDER_DIR = "test/tmp/target/.adp";
+        return new LocalRepository();
     }
 
     describe("getAppVariantIdHierarchy", () => {
-        it("uses ADP_BUILDER_DIR env variable over configuration.adpDir", async () => {
-            const envAdpDir = path.join(tmpRoot, "env", ".adp");
-            await fs.mkdir(path.join(envAdpDir, "appId1"), { recursive: true });
-            await fs.writeFile(path.join(envAdpDir, "appId1", "manifest.json"), JSON.stringify({ "sap.app": { id: "envApp" } }));
-
-            process.env.ADP_BUILDER_DIR = path.relative(process.cwd(), envAdpDir);
-            const localRepository = new LocalRepository({
-                appName: "testApp",
-                adpDir: "test/tmp/target/.adp" // configured adpDir should be ignored in favor of env variable above
-            });
-            const hierarchy = await localRepository.getAppVariantIdHierarchy("appId1");
-            expect(hierarchy).to.deep.equal([
-                { repoName: "appId1", appVariantId: "appId1", cachebusterToken: path.join(envAdpDir, "appId1") }
-            ]);
-        });
-
         it("returns the complete hierarchy from dynamically generated files", async () => {
             const localRepository = await setup();
             const hierarchy = await localRepository.getAppVariantIdHierarchy("appId1");
-            expect(hierarchy).to.deep.equal([
-                { repoName: "appId1", appVariantId: "appId1", cachebusterToken: path.join(adpDir, "appId1") },
-                { repoName: "appId2", appVariantId: "appId2", cachebusterToken: path.join(adpDir, "appId2") },
-                { repoName: "appId3", appVariantId: "appId3", cachebusterToken: path.join(adpDir, "appId3") }
+            const actual = await Promise.all(hierarchy.map(async (item) => ({ ...item, cacheBusterToken: await item.cacheBusterToken })));
+            expect(actual).to.deep.equal([
+                { appName: "appId1", absolutePath: path.join(adpDir, "appId1"), cacheBusterToken: "local" },
+                { appName: "appId2", absolutePath: path.join(adpDir, "appId2"), cacheBusterToken: "local" },
+                { appName: "appId3", absolutePath: path.join(adpDir, "appId3"), cacheBusterToken: "local" }
             ]);
         });
 
@@ -77,12 +60,8 @@ describe("LocalRepository", () => {
             await generateAdpStructure([
                 { id: "appId1", reference: "missingApp" }
             ]);
-            const localRepository = new LocalRepository({
-                appName: "testApp",
-                adpDir: "test/tmp/target/.adp"
-            });
-
-            await expect(localRepository.getAppVariantIdHierarchy("appId1"))
+            process.env.ADP_BUILDER_DIR = "test/tmp/target/.adp";
+            await expect(new LocalRepository().getAppVariantIdHierarchy("appId1"))
                 .to.be.rejectedWith(Error, "None of the paths exist");
         });
     });
@@ -94,7 +73,7 @@ describe("LocalRepository", () => {
             await fs.writeFile(path.join(adpDir, "appId3", "i18n", "i18n.properties"), "hello=world\n");
 
             const hierarchy = await localRepository.getAppVariantIdHierarchy("appId1");
-            const files = await Promise.all(hierarchy.map((item) => localRepository.fetch(item.appVariantId, item.cachebusterToken)));
+            const files = await Promise.all(hierarchy.map((item) => localRepository.fetch(item)));
             expect(JSON.parse(files[0].get("manifest.appdescr_variant")!)).to.deep.equal({ id: "appId1", reference: "appId2" });
             expect(JSON.parse(files[1].get("manifest.appdescr_variant")!)).to.deep.equal({ id: "appId2", reference: "appId3" });
             expect(JSON.parse(files[2].get("manifest.json")!)).to.deep.equal({ "sap.app": { id: "appId3" } });
@@ -104,10 +83,7 @@ describe("LocalRepository", () => {
 
     describe("downloadAnnotationFile", () => {
         it("returns an empty map", async () => {
-            const localRepository = new LocalRepository({
-                appName: "testApp",
-                adpDir: "test/tmp/target/.adp"
-            });
+            const localRepository = new LocalRepository();
             const annotationFiles = await localRepository.downloadAnnotationFile("test/uri");
             expect(annotationFiles.size).to.equal(0);
         });

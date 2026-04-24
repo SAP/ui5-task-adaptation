@@ -7,7 +7,6 @@ import TestUtil from "../testUtilities/testUtil.js";
 import esmock from "esmock";
 import { expect } from "chai";
 import CacheHolder from "../../../src/cache/cacheHolder.js";
-import AbapProvider from "../../../src/repositories/abapProvider.js";
 
 describe("AbapRepository", () => {
     let sandbox: SinonSandbox;
@@ -20,7 +19,6 @@ describe("AbapRepository", () => {
     };
 
     let RESPONSE_DATA = { data: TestUtil.getResource("abap-response-archive.json") };
-    const abapProvider = new AbapProvider();
 
     before(() => process.env.H2O_URL = "test");
     after(() => delete process.env.H2O_URL);
@@ -32,7 +30,7 @@ describe("AbapRepository", () => {
 
     it("should return map of files from archive", async () => {
         const { abapRepository, calls } = await prepareServiceStubs(RESPONSE_DATA);
-        const baseAppFiles = await abapRepository.fetch("app/Name", "token123");
+        const baseAppFiles = await abapRepository.fetch({ appName: "app/Name", cacheBusterToken: Promise.resolve("token123") });
         expect([...baseAppFiles.keys()]).to.have.members(["i18n.properties", "manifest.json"]);
         expect(calls.ui5AbapRepositoryProps).to.eql("/Repositories('app%2FName')");
     });
@@ -41,27 +39,8 @@ describe("AbapRepository", () => {
         const responseClone = JSON.parse(RESPONSE_DATA.data);
         responseClone.d.ZipArchive = "";
         const { abapRepository } = await prepareServiceStubs({ data: JSON.stringify(responseClone) });
-        await expect(abapRepository.fetch("app/Name", "token123"))
+        await expect(abapRepository.fetch({ appName: "app/Name", cacheBusterToken: Promise.resolve("token123") }))
             .to.be.rejectedWith("App 'app/Name' doesn't contain files");
-    });
-
-    it("should raise an error when downloading reuse libs in preview mode", async () => {
-        const options: IProjectOptions = {
-            projectNamespace: "ns",
-            configuration: {
-                destination: "system",
-                appName: "appName",
-                target: {
-                    url: "https://example.sap.com"
-                }
-            }
-        };
-        const repository = new AbapRepository(options.configuration, abapProvider);
-        try {
-            await repository.fetchReuseLib("", "", { html5AppHostId: "hostId", html5AppName: "appName", html5AppVersion: "1.0.0", name: "libName", lazy: false, url: { uri: "https://example.sap.com", final: true }, html5CacheBusterToken: "token" });
-        } catch (error) {
-            expect((error as Error).message).to.eql("Preview is not available on SAP S/4HANA On-Premise or Cloud Systems. Please create a ticket on CA-UI5-FL-ADP-BAS component.");
-        }
     });
 
     async function prepareServiceStubs(abapRepositoryResponse: any) {
@@ -90,7 +69,11 @@ describe("AbapRepository", () => {
             });
             const abapRepository = new AbapRepository(options.configuration);
             const appVariantIdHierarchy = await abapRepository.getAppVariantIdHierarchy("baseApp1");
-            expect(appVariantIdHierarchy).eql(appVariantIdHierarchyJson.appVariantIdHierarchy);
+            const actual = await Promise.all(appVariantIdHierarchy.map(async (item) => ({ ...item, cacheBusterToken: await item.cacheBusterToken })));
+            expect(actual).eql([{
+                appName: "APP_VAR_1",
+                cacheBusterToken: "~3B9623C59A5D02FAC13300DA1D98A0CD~5",
+            }]);
         });
         it("should fallback to metadata and configuration (has appName)", async () => {
             const AbapRepository = await mockAbapRepository({
@@ -107,11 +90,11 @@ describe("AbapRepository", () => {
                 }
             });
             const abapRepository = new AbapRepository(options.configuration);
-            const appVariantIdHierarchy = await abapRepository.getAppVariantIdHierarchy("appVar1");
-            expect(appVariantIdHierarchy).eql([{
-                repoName: "app/Name",
-                appVariantId: "appVar1",
-                cachebusterToken: "010101",
+            let appVariantIdHierarchy = await abapRepository.getAppVariantIdHierarchy("appVar1");
+            const actual = await Promise.all(appVariantIdHierarchy.map(async (item) => ({ ...item, cacheBusterToken: await item.cacheBusterToken })));
+            expect(actual).eql([{
+                appName: "app/Name",
+                cacheBusterToken: "010101",
             }]);
         });
     });

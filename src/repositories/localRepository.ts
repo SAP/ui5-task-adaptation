@@ -1,18 +1,19 @@
-import { IAppVariantIdHierarchyItem } from "../model/appVariantIdHierarchyItem.js";
-import { IConfiguration } from "../model/configuration.js";
-import { IReuseLibInfo } from "../model/types.js";
 import IRepository from "./repository.js";
 import { getLogger } from "@ui5/logger";
 import path from "node:path";
 import fs from "node:fs/promises";
 import FsUtil from "../util/fsUtil.js";
+import ICachedResource from "../cache/cachedResource.js";
 
 const log = getLogger("@ui5/task-adaptation::LocalRepository");
 
+
+export interface ILocalResource extends ICachedResource {
+    absolutePath: string;
+}
+
+
 export default class LocalRepository implements IRepository {
-
-    constructor(private configuration: IConfiguration) { }
-
 
     async downloadAnnotationFile(_uri: string): Promise<Map<string, string>> {
         log.verbose("Downloading annotation files is not supported in LocalRepository.");
@@ -20,24 +21,20 @@ export default class LocalRepository implements IRepository {
     }
 
 
-    async getAppVariantIdHierarchy(appId: string): Promise<IAppVariantIdHierarchyItem[]> {
-        const items: IAppVariantIdHierarchyItem[] = [];
+    async getAppVariantIdHierarchy(appId: string): Promise<ILocalResource[]> {
+        const items: ILocalResource[] = [];
         await this.collectAppVariantIdHierarchyItems(appId, items);
         return items;
     }
 
 
-    fetch(appId: string, cachebusterToken: string): Promise<Map<string, string>> {
-        return this.readFilesInBaseAppDir(appId, cachebusterToken);
+    fetch(resource: ILocalResource): Promise<Map<string, string>> {
+        log.verbose(`Fetching base app files from local directory: ${resource.absolutePath}`);
+        return FsUtil.readFilesRecursively(resource.absolutePath);
     }
 
 
-    fetchReuseLib(libName: string, cachebusterToken: string, _lib: IReuseLibInfo): Promise<Map<string, string>> {
-        return this.readFilesInBaseAppDir(libName, cachebusterToken);
-    }
-
-
-    private async collectAppVariantIdHierarchyItems(appId: string, items: IAppVariantIdHierarchyItem[]): Promise<void> {
+    private async collectAppVariantIdHierarchyItems(appId: string, items: ILocalResource[]): Promise<void> {
         const appDir = this.getLocalFilesDirectory(appId);
         const filenames = [
             ["manifest.json"],
@@ -49,9 +46,9 @@ export default class LocalRepository implements IRepository {
 
         const existingManifestPath = await this.getExistingManifestPath(filepaths);
         items.push({
-            appVariantId: appId,
-            repoName: appId,
-            cachebusterToken: path.dirname(existingManifestPath)
+            appName: appId,
+            cacheBusterToken: Promise.resolve("local"),
+            absolutePath: path.dirname(existingManifestPath),
         });
         if (existingManifestPath.endsWith("manifest.appdescr_variant")) {
             const manifestContent = await fs.readFile(existingManifestPath, "utf-8");
@@ -71,14 +68,8 @@ export default class LocalRepository implements IRepository {
     }
 
 
-    private readFilesInBaseAppDir(_appId: string, cachebusterToken: string): Promise<Map<string, string>> {
-        log.verbose(`Fetching base app files from local directory: ${cachebusterToken}`);
-        return FsUtil.readFilesRecursively(cachebusterToken);
-    }
-
-
     private getLocalFilesDirectory(appId: string): string {
-        const adpDirConfigured = process.env.ADP_BUILDER_DIR || this.configuration.adpDir;
+        const adpDirConfigured = process.env.ADP_BUILDER_DIR
         const adpDir = adpDirConfigured
             ? path.normalize(adpDirConfigured).replace(/\\/g, "/").replace(/\/+$/, "").split("/")
             : [".."];

@@ -5,6 +5,7 @@ import path from "path";
 import { fetchCredentialsAndEnhanceRoutes, merge } from "./util/cf/xsAppJsonUtil.js";
 import FsUtil from "./util/fsUtil.js";
 import IRepository from "./repositories/repository.js";
+import { IHtml5Resource } from "./repositories/html5Repository.js";
 
 type AppInfoMessage = {
 	message: string;
@@ -139,8 +140,14 @@ export default class PreviewManager {
 		const promises = new Map<string, Promise<ReadonlyMap<string, string>>>();
 		reuseLibs.forEach(lib => {
 			log.info(`Downloading reuse library '${lib.html5AppName}' version '${lib.html5AppVersion}'`);
+			const resource: IHtml5Resource = {
+				appName: lib.html5AppName,
+				appVersion: lib.html5AppVersion,
+				appHostId: lib.html5AppHostId,
+				cacheBusterToken: Promise.resolve(lib.html5CacheBusterToken)
+			}
 			const promise = repository
-				.fetchReuseLib(lib.html5AppName, lib.html5CacheBusterToken, lib)
+				.fetch(resource)
 				.then((libFiles: ReadonlyMap<string, string>) => PreviewManager.moveLibraryFiles(libFiles, lib.html5AppName, lib.name));
 			promises.set(lib.html5AppName, promise);
 		});

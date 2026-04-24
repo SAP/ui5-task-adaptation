@@ -112,7 +112,8 @@
             "src/adapters/adapter.ts",
             "src/adapters/previewAdapter.ts",
             "src/repositories/repository.ts",
-            "src/annotations/annotationManager.ts"
+            "src/annotations/annotationManager.ts",
+            "src/cache/cachedResource.ts"
         ],
         "check-coverage": true,
         "statements": 85,

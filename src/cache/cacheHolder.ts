@@ -6,6 +6,7 @@ import * as os from "node:os";
 import ResourceUtil from "../util/resourceUtil.js";
 import encodeFilename from "filenamify";
 import { getLogger } from "@ui5/logger";
+import ICachedResource from "./cachedResource.js";
 
 const log = getLogger("@ui5/task-adaptation::CacheHolder");
 
@@ -82,16 +83,17 @@ export function cached() {
     return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
         const originalValue = descriptor.value
         descriptor.value = async function (...args: any[]) {
-            const repoName = args[0];
-            const cachebusterToken = args[1];
-            let files = await CacheHolder.read(repoName, cachebusterToken);
-            CacheHolder.clearOutdatedExcept(repoName);
+            const cachedResource = args[0] as ICachedResource;
+            const { appName, cacheBusterToken: cachebusterToken } = cachedResource;
+            const token = await cachebusterToken;
+            let files = await CacheHolder.read(appName, token);
+            CacheHolder.clearOutdatedExcept(appName);
             if (files.size === 0) {
-                log.verbose(`No cache for repo '${repoName}' with token '${cachebusterToken}'. Fetching from HTML5 Repository.`);
+                log.verbose(`No cache for repo '${appName}' with token '${token}'. Fetching from HTML5 Repository.`);
                 files = await originalValue.apply(this, args);
-                await CacheHolder.write(repoName, cachebusterToken, files!);
+                await CacheHolder.write(appName, token, files!);
             } else {
-                log.verbose(`Using cached files for repo '${repoName}' with token '${cachebusterToken}'.`);
+                log.verbose(`Using cached files for repo '${appName}' with token '${token}'.`);
             }
             return files;
         };

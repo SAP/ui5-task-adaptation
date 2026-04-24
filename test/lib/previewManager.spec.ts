@@ -76,7 +76,7 @@ describe("PreviewManager download reuse libraries", () => {
 		});
 
 		const repositoryStub = {
-			fetchReuseLib: async (_: string) => []
+			fetch: async (_: string) => []
 		} as any;
 
 		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfo));
@@ -147,7 +147,7 @@ describe("PreviewManager download reuse libraries", () => {
 		});
 
 		const repositoryStub = {
-			fetchReuseLib: async () => {
+			fetch: async () => {
 				const libFiles = new Map<string, string>();
 				libFiles.set("file1.js", "console.log('file1');");
 				libFiles.set("file2.js", "console.log('file2');");
@@ -206,7 +206,7 @@ describe("PreviewManager download reuse libraries", () => {
 		});
 
 		const repositoryStub = {
-			fetchReuseLib: async () => new Map<string, string>()
+			fetch: async () => new Map<string, string>()
 		} as any;
 
 		sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
@@ -277,7 +277,7 @@ describe("PreviewManager adjust xs-app.json", () => {
 	};
 
 	const createRepository = (libFiles: ReadonlyMap<string, string>) => ({
-		fetchReuseLib: async () => libFiles
+		fetch: async () => libFiles
 	}) as any;
 
 	const createPreviewManager = async (appInfoContent: string, repositoryStub: IRepository) => {

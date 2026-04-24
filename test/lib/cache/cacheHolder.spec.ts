@@ -109,13 +109,13 @@ describe("CacheHolder", () => {
             repository = new AbapRepository(options.configuration, abapProvider as unknown as AbapProvider);
         });
         it("should get files from cache with same cacheBusterToken", async () => {
-            assertManifest(await repository.fetch("repoName1", "010101"), "1.0.0");
+            assertManifest(await repository.fetch({ appName: "repoName1", cacheBusterToken: Promise.resolve("010101") }), "1.0.0");
             assertManifest((await CacheHolder.read("repoName1", "010101"))!, "1.0.0");
             expect(fetchCalls).to.equal(0);
         });
 
         it("should download files with different cacheBusterToken", async () => {
-            assertManifest(await repository.fetch("repoName1", "010102"), "1.0.1");
+            assertManifest(await repository.fetch({ appName: "repoName1", cacheBusterToken: Promise.resolve("010102") }), "1.0.1");
             assertManifest((await CacheHolder.read("repoName1", "010102"))!, "1.0.1");
             expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // old cache should be deleted
             expect(fetchCalls).to.equal(1);
@@ -137,13 +137,22 @@ describe("CacheHolder", () => {
             );
         });
         it("should get files from cache with same cacheBusterToken", async () => {
-            assertManifest(await repository.fetch("repoName1", "010101"), "1.0.0");
+            assertManifest(await repository.fetch({
+                appName: "repoName1",
+                cacheBusterToken: Promise.resolve("010101"),
+                appVersion: "1.0.0", appHostId: "libHostId",
+            }), "1.0.0");
             assertManifest((await CacheHolder.read("repoName1", "010101"))!, "1.0.0");
             expect(fetchStub.getCalls().length).to.equal(0);
         });
 
         it("should download files with different cacheBusterToken", async () => {
-            assertManifest(await repository.fetch("repoName1", "010102"), "1.0.1");
+            assertManifest(await repository.fetch({
+                appName: "repoName1",
+                cacheBusterToken: Promise.resolve("010102"),
+                appVersion: "1.0.1",
+                appHostId: "libHostId",
+            }), "1.0.1");
             assertManifest((await CacheHolder.read("repoName1", "010102"))!, "1.0.1");
             expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // old cache should be deleted
             expect(fetchStub.getCalls().length).to.equal(1);
@@ -151,22 +160,24 @@ describe("CacheHolder", () => {
 
         it("should get reuse lib files from cache with same cacheBusterToken", async () => {
             sandbox.stub(repository as HTML5Repository, "getMetadata").resolves({ applicationName: "libName1", changedOn: "010103" });
-            assertReuseLibManifest(await repository.fetchReuseLib("libName1", "010103", {
-                html5AppName: "libName1",
-                html5AppVersion: "1.0.2",
-                html5AppHostId: "libHostId"
-            } as any), "1.0.2");
+            assertReuseLibManifest(await repository.fetch({
+                appName: "libName1",
+                appVersion: "1.0.2",
+                appHostId: "libHostId",
+                cacheBusterToken: Promise.resolve("010103"),
+            }), "1.0.2");
             assertReuseLibManifest(await CacheHolder.read("libName1", "010103"), "1.0.2");
             expect(fetchStub.getCalls().length).to.equal(0);
         });
 
         it("should download files with different cacheBusterToken", async () => {
             sandbox.stub(repository as HTML5Repository, "getMetadata").resolves({ applicationName: "libName1", changedOn: "010104" });
-            assertReuseLibManifest(await repository.fetchReuseLib("libName1", "010104", {
-                html5AppName: "libName1",
-                html5AppVersion: "1.0.2",
-                html5AppHostId: "libHostId"
-            } as any), "1.0.2");
+            assertReuseLibManifest(await repository.fetch({
+                appName: "libName1",
+                appVersion: "1.0.2",
+                appHostId: "libHostId",
+                cacheBusterToken: Promise.resolve("010104"),
+            }), "1.0.2");
             assertReuseLibManifest(await CacheHolder.read("libName1", "010104"), "1.0.2");
             expect((await CacheHolder.read("libName1", "010103")).size).to.equal(0); // old cache should be deleted
             expect(fetchStub.getCalls().length).to.equal(1);

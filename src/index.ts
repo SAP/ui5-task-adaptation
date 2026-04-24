@@ -34,7 +34,7 @@ export default ({ workspace, options, taskUtil }: ITaskParameters) => {
         // latest app variant on top. We reverse the list to process original
         // application first and then app variants in chronological order.
         const reversedHierarchy = appVariantIdHierarchy.toReversed();
-        const fetchFilesPromises: Promise<ReadonlyMap<string, string>>[] = reversedHierarchy.map(({ repoName, cachebusterToken }) => repository.fetch(repoName, cachebusterToken));
+        const fetchFilesPromises: Promise<ReadonlyMap<string, string>>[] = reversedHierarchy.map(variant => repository.fetch(variant));
         fetchFilesPromises.push(Promise.resolve(adaptationProject.files));
         const appVariants = new Array<AppVariant>();
 
