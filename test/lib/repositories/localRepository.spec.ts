@@ -18,28 +18,27 @@ describe("LocalRepository", () => {
 
     afterEach(() => delete process.env.ADP_BUILDER_DIR);
 
-    async function generateAdpStructure(nodes: AppChainNode[]): Promise<void> {
+    async function generateAdpStructure(nodes: AppChainNode[], isArtefact = false): Promise<void> {
         for (const node of nodes) {
-            const appDir = path.join(adpDir, node.id);
-            await fs.mkdir(appDir, { recursive: true });
+            const appBaseId = node.id + (isArtefact ? "-opt-static-abap" : "");
+            const appDir = path.join(adpDir, appBaseId);
+            const fileDir = isArtefact ? appDir : path.join(appDir, "webapp");
+            await fs.mkdir(fileDir, { recursive: true });
             if (node.reference) {
-                const descriptor = {
-                    id: node.id,
-                    reference: node.reference
-                };
-                await fs.writeFile(path.join(appDir, "manifest.appdescr_variant"), JSON.stringify(descriptor));
+                const descriptor = { id: node.id, reference: node.reference };
+                await fs.writeFile(path.join(fileDir, "manifest.appdescr_variant"), JSON.stringify(descriptor));
             } else {
-                await fs.writeFile(path.join(appDir, "manifest.json"), JSON.stringify({ "sap.app": { id: node.id } }));
+                await fs.writeFile(path.join(fileDir, "manifest.json"), JSON.stringify({ "sap.app": { id: node.id } }));
             }
         }
     }
 
-    async function setup() {
+    async function setup(isArtefact = false) {
         await generateAdpStructure([
             { id: "appId1", reference: "appId2" },
             { id: "appId2", reference: "appId3" },
             { id: "appId3" }
-        ]);
+        ], isArtefact);
         process.env.ADP_BUILDER_DIR = "test/tmp/target/.adp";
         return new LocalRepository();
     }
@@ -50,9 +49,20 @@ describe("LocalRepository", () => {
             const hierarchy = await localRepository.getAppVariantIdHierarchy("appId1");
             const actual = await Promise.all(hierarchy.map(async (item) => ({ ...item, cacheBusterToken: await item.cacheBusterToken })));
             expect(actual).to.deep.equal([
-                { appName: "appId1", absolutePath: path.join(adpDir, "appId1"), cacheBusterToken: "local" },
-                { appName: "appId2", absolutePath: path.join(adpDir, "appId2"), cacheBusterToken: "local" },
-                { appName: "appId3", absolutePath: path.join(adpDir, "appId3"), cacheBusterToken: "local" }
+                { appName: "appId1", absolutePath: path.join(adpDir, "appId1", "webapp"), cacheBusterToken: "local" },
+                { appName: "appId2", absolutePath: path.join(adpDir, "appId2", "webapp"), cacheBusterToken: "local" },
+                { appName: "appId3", absolutePath: path.join(adpDir, "appId3", "webapp"), cacheBusterToken: "local" }
+            ]);
+        });
+
+        it("returns the complete hierarchy from dynamically generated files with classifier", async () => {
+            const localRepository = await setup(true);
+            const hierarchy = await localRepository.getAppVariantIdHierarchy("appId1");
+            const actual = await Promise.all(hierarchy.map(async (item) => ({ ...item, cacheBusterToken: await item.cacheBusterToken })));
+            expect(actual).to.deep.equal([
+                { appName: "appId1", absolutePath: path.join(adpDir, "appId1-opt-static-abap"), cacheBusterToken: "local" },
+                { appName: "appId2", absolutePath: path.join(adpDir, "appId2-opt-static-abap"), cacheBusterToken: "local" },
+                { appName: "appId3", absolutePath: path.join(adpDir, "appId3-opt-static-abap"), cacheBusterToken: "local" }
             ]);
         });
 
@@ -69,8 +79,8 @@ describe("LocalRepository", () => {
     describe("fetch", () => {
         it("returns files for hierarchy app ids", async () => {
             const localRepository = await setup();
-            await fs.mkdir(path.join(adpDir, "appId3", "i18n"), { recursive: true });
-            await fs.writeFile(path.join(adpDir, "appId3", "i18n", "i18n.properties"), "hello=world\n");
+            await fs.mkdir(path.join(adpDir, "appId3", "webapp", "i18n"), { recursive: true });
+            await fs.writeFile(path.join(adpDir, "appId3", "webapp", "i18n", "i18n.properties"), "hello=world\n");
 
             const hierarchy = await localRepository.getAppVariantIdHierarchy("appId1");
             const files = await Promise.all(hierarchy.map((item) => localRepository.fetch(item)));

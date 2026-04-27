@@ -37,12 +37,12 @@ export default class LocalRepository implements IRepository {
     private async collectAppVariantIdHierarchyItems(appId: string, items: ILocalResource[]): Promise<void> {
         const appDir = this.getLocalFilesDirectory(appId);
         const filenames = [
-            ["manifest.json"],
-            ["manifest.appdescr_variant"],
-            ["webapp", "manifest.json"],
-            ["webapp", "manifest.appdescr_variant"],
+            { path: ["webapp", "manifest.json"], suffix: "" },
+            { path: ["webapp", "manifest.appdescr_variant"], suffix: "" },
+            { path: ["manifest.json"], suffix: "-opt-static-abap" },
+            { path: ["manifest.appdescr_variant"], suffix: "-opt-static-abap" },
         ];
-        const filepaths = filenames.map((filename) => path.join(appDir, ...filename));
+        const filepaths = filenames.map((filename) => path.join(appDir + filename.suffix, ...filename.path));
 
         const existingManifestPath = await this.getExistingManifestPath(filepaths);
         items.push({
