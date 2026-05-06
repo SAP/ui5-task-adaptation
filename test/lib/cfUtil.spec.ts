@@ -697,7 +697,6 @@ describe("CFUtil", () => {
             expect(() => CFUtil.processCfErrors(json.errors)).to.throw("Failed sending request to Cloud Foundry: [{\"title\":\"CF-Other\",\"code\":99999,\"detail\":\"Other issue\"}]");
         });
     });
-
 });
 
 const spyCFToolsCliCliExecute = async (sandbox: SinonSandbox, params: IGetServiceInstanceParams, expected: string) => {

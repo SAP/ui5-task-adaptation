@@ -1,3 +1,4 @@
+import TaskUtil from "@ui5/project/build/helpers/TaskUtil";
 import { IConfiguration } from "./configuration.js";
 import Language from "./language.js";
 
@@ -88,9 +89,15 @@ export interface IChangeContent {
 }
 
 export interface ITaskParameters {
-    workspace: any;
+    workspace: IWorkspace;
     options: IProjectOptions;
-    taskUtil: any;
+    taskUtil: TaskUtil;
+}
+
+export interface UI5BuilderTools {
+    workspace: IWorkspace;
+    projectNamespace: string;
+    taskUtil: TaskUtil;
 }
 
 export interface IBaseAppInfo {
@@ -104,16 +111,16 @@ export interface IHTML5RepoInfo {
 }
 
 export interface IReuseLibInfo {
-	name: string;
-	lazy: boolean;
-	html5AppHostId: string;
-	html5AppName: string;
-	html5AppVersion: string;
-	html5CacheBusterToken: string;
-	url: {
-		uri: string;
-		final: boolean;
-	}
+    name: string;
+    lazy: boolean;
+    html5AppHostId: string;
+    html5AppName: string;
+    html5AppVersion: string;
+    html5CacheBusterToken: string;
+    url: {
+        uri: string;
+        final: boolean;
+    }
 }
 
 export interface IAuth {
@@ -142,5 +149,7 @@ export type ServiceCredentials = {
     endpoints: Record<string, { destination: string } | string>;
     "sap.cloud.service"?: string;
 }
+
+export type FetchFilesPromise = Map<string, Promise<ReadonlyMap<string, string>>>;
 
 export { IConfiguration };

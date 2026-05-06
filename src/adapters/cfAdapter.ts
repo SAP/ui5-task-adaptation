@@ -1,6 +1,6 @@
 import { IConfiguration } from "../model/configuration.js";
-import { getCommonManifestUpdateCommands, IAdapter } from "./adapter.js";
-import { AdaptCommandChain, ManifestUpdateCommandChain, MergeCommandChain, PostCommandChain } from "./commands/command.js";
+import { dependsOn, getCommonManifestUpdateCommands, getCommonPostCommands, IAdapter } from "./adapter.js";
+import { AdaptCommandChain, ManifestUpdateCommandChain, MergeCommandChain, PostCommandChain, SetupCommandChain } from "./commands/command.js";
 import { IAppVariantIdHierarchyManifestItem } from "../model/appVariantIdHierarchyItem.js";
 import XsAppJsonEnhanceRoutesCommand from "./commands/xsAppJsonEnhanceRoutesCommand.js";
 import BaseApp from "../baseAppManager.js";
@@ -8,10 +8,22 @@ import AppVariant from "../appVariantManager.js";
 import UpdateCloudPlatformCommand from "./commands/updateCloudPlatformCommand.js";
 import I18nPropertiesMergeCommand from "./commands/i18nPropertiesMergeCommand.js";
 import XsAppJsonMergeCommand from "./commands/xsAppJsonMergeCommand.js";
+import { UI5BuilderTools } from "../model/types.js";
+import FetchEndpointsCommand from "./commands/fetchEndpointsCommand.js";
+import IRepository from "../repositories/repository.js";
 
 
 export default class CFAdapter implements IAdapter {
+    private fetchEndpointsCommand: FetchEndpointsCommand | null = null;
+
     constructor(private configuration: IConfiguration) { }
+
+    createSetupCommandChain(_appId: string, _repository: IRepository): SetupCommandChain {
+        this.fetchEndpointsCommand = new FetchEndpointsCommand(this.configuration);
+        return new SetupCommandChain([
+            this.fetchEndpointsCommand
+        ]);
+    }
 
     createAdaptCommandChain(baseApp: BaseApp, appVariant: AppVariant): AdaptCommandChain {
         const appVariantIdHierarchyItem = {
@@ -34,9 +46,19 @@ export default class CFAdapter implements IAdapter {
         ]);
     }
 
-    createPostCommandChain(): PostCommandChain {
+    createPostCommandChain(
+        references: Map<string, string>,
+        adaptationProject: AppVariant,
+        ui5BuilderTools: UI5BuilderTools,
+    ): PostCommandChain {
+        const serviceCredentialsPromise = dependsOn(this.fetchEndpointsCommand);
         return new PostCommandChain([
-            new XsAppJsonEnhanceRoutesCommand(this.configuration),
+            new XsAppJsonEnhanceRoutesCommand(serviceCredentialsPromise),
+            ...getCommonPostCommands(
+                references,
+                adaptationProject,
+                ui5BuilderTools,
+            )
         ]);
     }
 }

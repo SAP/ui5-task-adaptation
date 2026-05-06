@@ -11,10 +11,10 @@ import { IProjectOptions } from "../../src/model/types.js";
 import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
-import FilesUtil from "../../src/util/filesUtil.js";
 import CFAdapter from "../../src/adapters/cfAdapter.js";
 import AbapAdapter from "../../src/adapters/abapAdapter.js";
 import UpdateCloudDevAdaptationCommand from "../../src/adapters/commands/updateCloudDevAdaptationCommand.js";
+import RenameFilesCommand from "../../src/adapters/commands/renameFilesCommand.js";
 
 describe("BaseAppManager getManifestInfo", () => {
 
@@ -168,12 +168,16 @@ describe("BaseAppManager CF", () => {
         ]));
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
         let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
-        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
-        const actualManifest = JSON.parse(files.get("manifest.json")!);
-        const actualCPreload = files.get("component-preload.js");
+        const renamedFiles = new Map(files);
+        const references = new Map([[baseApp.id, appVariant.id]]);
+        const command = new RenameFilesCommand(references);
+        await command.execute(renamedFiles);
+
+        const actualManifest = JSON.parse(renamedFiles.get("manifest.json")!);
+        const actualCPreload = renamedFiles.get("component-preload.js");
         expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected-cf.json")));
         expect(actualCPreload).to.eql(TestUtil.getResource("component-preload-expected.js"));
-        assertManifestInfo(files);
+        assertManifestInfo(renamedFiles);
     });
 
     it("should skip base app files", async () => {
@@ -188,9 +192,12 @@ describe("BaseAppManager CF", () => {
         ]));
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
         let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
-        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
-        expect(Array.from(files.keys())).to.have.members(["manifest.json", "Component.js", "Controller-dbg.js"]);
-        assertManifestInfo(files);
+        const renamedFiles = new Map(files);
+        const references = new Map([[baseApp.id, appVariant.id]]);
+        const command = new RenameFilesCommand(references);
+        await command.execute(renamedFiles);
+        expect(Array.from(renamedFiles.keys())).to.have.members(["manifest.json", "Component.js", "Controller-dbg.js"]);
+        assertManifestInfo(renamedFiles);
     });
 
     it("should validate sap.app/id", async () => {
@@ -212,10 +219,13 @@ describe("BaseAppManager CF", () => {
         delete optionsClone.configuration["sapCloudService"];
         const adapter = new CFAdapter(optionsClone.configuration);
         let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
-        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
-        const manifest = JSON.parse(files.get("manifest.json")!);
+        const renamedFiles = new Map(files);
+        const references = new Map([[baseApp.id, appVariant.id]]);
+        const command = new RenameFilesCommand(references);
+        await command.execute(renamedFiles);
+        const manifest = JSON.parse(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.be.undefined;
-        assertManifestInfo(files);
+        assertManifestInfo(renamedFiles);
     });
 
     it("should create default 'sap.cloud'", async () => {
@@ -224,10 +234,13 @@ describe("BaseAppManager CF", () => {
         delete baseAppManifest["sap.cloud"];
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(baseAppManifest)]]));
         let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
-        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
-        const manifest = JSON.parse(files.get("manifest.json")!);
+        const renamedFiles = new Map(files);
+        const references = new Map([[baseApp.id, appVariant.id]]);
+        const command = new RenameFilesCommand(references);
+        await command.execute(renamedFiles);
+        const manifest = JSON.parse(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.eql({ service: "sapCloudService" });
-        assertManifestInfo(files);
+        assertManifestInfo(renamedFiles);
     });
 
     it("should fill change layer", async () => {
@@ -328,9 +341,12 @@ describe("BaseAppManager Abap", () => {
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
         ]));
         let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
-        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
-        const actualManifest = JSON.parse(files.get("manifest.json")!);
-        const actualCPreload = files.get("component-preload.js");
+        const renamedFiles = new Map(files);
+        const references = new Map([[baseApp.id, appVariant.id]]);
+        const command = new RenameFilesCommand(references);
+        await command.execute(renamedFiles);
+        const actualManifest = JSON.parse(renamedFiles.get("manifest.json")!);
+        const actualCPreload = renamedFiles.get("component-preload.js");
         expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected-abap.json")));
         expect(actualCPreload).to.eql(TestUtil.getResource("component-preload-expected.js"));
         assertAnnotations(files, 8);
@@ -348,9 +364,12 @@ describe("BaseAppManager Abap", () => {
             ["Controller-dbg.js", "debug only content"]
         ]));
         let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
-        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
-        assertAnnotations(files, 9);
-        expect(Array.from(files.keys())).to.have.members([
+        const renamedFiles = new Map(files);
+        const references = new Map([[baseApp.id, appVariant.id]]);
+        const command = new RenameFilesCommand(references);
+        await command.execute(renamedFiles);
+        assertAnnotations(renamedFiles, 9);
+        expect(Array.from(renamedFiles.keys())).to.have.members([
             "manifest.json",
             "Component.js",
             "Controller-dbg.js",
@@ -361,7 +380,7 @@ describe("BaseAppManager Abap", () => {
             "customer_com_sap_application_variant_id/i18n/annotations/i18n_fr.properties",
             "annotations/annotation_annotationName2.xml"
         ]);
-        assertManifestInfo(files);
+        assertManifestInfo(renamedFiles);
     });
 
     it("should validate sap.app/id", async () => {
@@ -379,11 +398,14 @@ describe("BaseAppManager Abap", () => {
         const optionsClone = { ...options, configuration: { ...options.configuration } };
         delete optionsClone.configuration["sapCloudService"];
         let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
-        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
-        const manifest = JSON.parse(files.get("manifest.json")!);
+        const renamedFiles = new Map(files);
+        const references = new Map([[baseApp.id, appVariant.id]]);
+        const command = new RenameFilesCommand(references);
+        await command.execute(renamedFiles);
+        const manifest = JSON.parse(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.eql({ service: "com.sap.manifest.default.service", public: true });
-        assertAnnotations(files, 7);
-        assertManifestInfo(files);
+        assertAnnotations(renamedFiles, 7);
+        assertManifestInfo(renamedFiles);
     });
 
     it("should create default 'sap.cloud'", async () => {
@@ -391,11 +413,14 @@ describe("BaseAppManager Abap", () => {
         delete baseAppManifest["sap.cloud"];
         const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(baseAppManifest)]]));
         let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
-        files = FilesUtil.rename(files, new Map([[baseApp.id, appVariant.id]]));
-        const manifest = JSON.parse(files.get("manifest.json")!);
+        const renamedFiles = new Map(files);
+        const references = new Map([[baseApp.id, appVariant.id]]);
+        const command = new RenameFilesCommand(references);
+        await command.execute(renamedFiles);
+        const manifest = JSON.parse(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.be.undefined;
-        assertAnnotations(files, 7);
-        assertManifestInfo(files);
+        assertAnnotations(renamedFiles, 7);
+        assertManifestInfo(renamedFiles);
     });
 
     it("should fill change layer", async () => {
@@ -413,7 +438,7 @@ describe("BaseAppManager Abap", () => {
             }
         });
         expect(() => BaseApp.fromFiles(new Map([["manifest.json", manifest]]))).to.throw(
-            "The original application id 'appId' should consist of multiple segments split by dot, e.g.: original.id");
+            "The application id 'appId' must have at least two parts, separated by a period.");
     });
 
     const assertValidation = async (appVariant: AppVariant, expectedError: string, manifest: any) => {

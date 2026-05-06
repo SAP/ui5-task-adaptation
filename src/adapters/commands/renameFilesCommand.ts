@@ -1,61 +1,50 @@
-import { renameMap } from "./renamingUtil.js";
-import ManifestRenamingHandler from "./renamingHandlers/manifestRenamingHandler.js";
-import { IRenamingHandler } from "./renamingHandlers/renamingHandler.js";
-import { IChange } from "../model/types.js";
+import ManifestRenamingHandler from "../../util/renamingHandlers/manifestRenamingHandler.js";
+import { IRenamingHandler } from "../../util/renamingHandlers/renamingHandler.js";
+import { renameMap } from "../../util/renamingUtil.js";
+import { PostCommand } from "./command.js";
 
-export default class FilesUtil {
 
-    static filter(files: ReadonlyMap<string, string>): ReadonlyMap<string, string> {
-        const shouldIgnore = (filename: string, content: string): boolean => {
-            const IGNORE_FILES = ["manifest.appdescr_variant"];
-            if (filename.endsWith(".change")) {
-                return JSON.parse(content).changeType?.startsWith("appdescr_"); // validate JSON
-            }
-            return IGNORE_FILES.includes(filename);
-        }
-        const result = new Map<string, string>();
-        files.forEach((content, filename) => {
-            if (!shouldIgnore(filename, content)) {
-                result.set(filename, content);
-            }
-        });
-        return result;
+export default class RenameFilesCommand extends PostCommand {
+    constructor(private references: Map<string, string>) {
+        super();
     }
 
-    static sortByTimeStamp(a: IChange, b: IChange): number {
-        if (a.creation < b.creation) return -1;
-        if (a.creation > b.creation) return 1;
-        return 0;
+    async execute(files: Map<string, string>): Promise<void> {
+        this.rename(files, this.references);
     }
+
 
     /**
-     * 1p. i18n.properties are not renamed and property keys are ignored during
-     * the renaming across the files.
-     * @param files - all files both base and appVariants
-     * @param references - Reference maps of the app variant
-     * @returns A map of renamed files
-     */
+         * 1p. i18n.properties are not renamed and property keys are ignored during
+         * the renaming across the files.
+         * @param files - all files both base and appVariants
+         * @param references - Reference maps of the app variant
+         * @returns A map of renamed files
+         */
     @restoreWhatShouldntBeRenamed()
-    static rename(files: ReadonlyMap<string, string>, references: Map<string, string>): ReadonlyMap<string, string> {
+    rename(files: Map<string, string>, references: Map<string, string>): void {
         const IGNORE_EXTENSIONS = [".properties"];
         const ignoreInString = [
             ...this.getI18nPropertyKeys(files),
             ...this.getManifestSAPUI5DependencyIds(files)
         ];
-        return new Map(Array.from(files, ([filename, content]) => {
+        const updates = new Map<string, string>();
+        for (const [filename, content] of files) {
             if (!IGNORE_EXTENSIONS.some(ext => filename.endsWith(ext))) {
                 // 5p. We pass replacements as ignores since we don't want to
                 // rename them again. E.g. we replace app.id with
                 // customer.app.id, but if we found customer.app.id somewhere,
                 // because we applied changes or something, we don't want to
                 // rename it again to customer.customer.app.id.
-                content = renameMap(content, references, [...references.values(), ...ignoreInString]);
+                updates.set(filename, renameMap(content, references, [...references.values(), ...ignoreInString]));
             }
-            return [filename, content];
-        }));
+        }
+        for (const [filename, content] of updates) {
+            files.set(filename, content);
+        }
     }
 
-    private static getManifestSAPUI5DependencyIds(files: ReadonlyMap<string, string>) {
+    private getManifestSAPUI5DependencyIds(files: ReadonlyMap<string, string>) {
         const manifestFile = files.get("manifest.json");
         if (manifestFile) {
             const manifest = JSON.parse(manifestFile);
@@ -69,7 +58,7 @@ export default class FilesUtil {
         return [];
     }
 
-    private static getI18nPropertyKeys(files: ReadonlyMap<string, string>) {
+    private getI18nPropertyKeys(files: ReadonlyMap<string, string>) {
         const keys = new Set<string>();
         files.forEach((content, filename) => {
             if (filename.endsWith(".properties")) {
@@ -94,10 +83,12 @@ export function restoreWhatShouldntBeRenamed() {
         const handlers = [new ManifestRenamingHandler()] as Array<IRenamingHandler>;
         const originalValue = descriptor.value;
         descriptor.value = function (...args: any[]) {
-            handlers.forEach(handler => handler.before(args[0]));
-            const renamedFiles = originalValue.apply(this, args);
-            handlers.forEach(handler => handler.after(renamedFiles));
-            return renamedFiles;
+            const files = args[0] as Map<string, string>;
+            const references = args[1] as Map<string, string>;
+            handlers.forEach(handler => handler.before(files));
+            originalValue.apply(this, [files, references]);
+            handlers.forEach(handler => handler.after(files));
+            return files;
         };
     };
 };
