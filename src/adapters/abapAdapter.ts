@@ -1,8 +1,8 @@
 import { getCommonManifestUpdateCommands, getCommonPostCommands, IAdapter } from "./adapter.js";
 import { AdaptCommandChain, ManifestUpdateCommandChain, MergeCommandChain, PostCommandChain, SetupCommandChain } from "./commands/command.js";
 import { IAppVariantIdHierarchyManifestItem } from "../model/appVariantIdHierarchyItem.js";
-import BaseApp from "../baseAppManager.js";
-import AppVariant from "../appVariantManager.js";
+import BaseApp from "../baseApp.js";
+import AppVariant from "../appVariant.js";
 import IAnnotationManager from "../annotations/annotationManager.js";
 import DownloadAnnotationsCommand from "./commands/downloadAnnotationsCommand.js";
 import I18nPropertiesMergeCommand from "./commands/i18nPropertiesMergeCommand.js";

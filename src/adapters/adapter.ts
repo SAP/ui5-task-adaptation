@@ -1,5 +1,5 @@
-import AppVariant from "../appVariantManager.js";
-import BaseApp from "../baseAppManager.js";
+import AppVariant from "../appVariant.js";
+import BaseApp from "../baseApp.js";
 import { IAppVariantIdHierarchyManifestItem } from "../model/appVariantIdHierarchyItem.js";
 import { UI5BuilderTools } from "../model/types.js";
 import IRepository from "../repositories/repository.js";

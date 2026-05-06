@@ -2,7 +2,7 @@ import * as convert from "xml-js";
 import * as fs from "fs";
 import * as util from "util";
 
-import AppVariant from "../../../src/appVariantManager.js";
+import AppVariant from "../../../src/appVariant.js";
 import Language from "../../../src/model/language.js";
 import ResourceUtil from "../../../src/util/resourceUtil.js";
 import { glob } from "glob";

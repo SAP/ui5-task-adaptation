@@ -3,8 +3,8 @@ import * as sinon from "sinon";
 import CFAdapter from "../../../src/adapters/cfAdapter.js";
 import { XSAPP_JSON_FILENAME } from "../../../src/util/cf/xsAppJsonUtil.js";
 import CFUtil from "../../../src/util/cfUtil.js";
-import BaseApp from "../../../src/baseAppManager.js";
-import AppVariant from "../../../src/appVariantManager.js";
+import BaseApp from "../../../src/baseApp.js";
+import AppVariant from "../../../src/appVariant.js";
 import { UI5BuilderTools } from "../../../src/model/types.js";
 import TaskUtil from "@ui5/project/build/helpers/TaskUtil";
 

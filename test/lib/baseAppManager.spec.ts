@@ -5,8 +5,8 @@ import { assert, expect } from "chai";
 
 import AbapRepository from "../../src/repositories/abapRepository.js";
 import AbapAnnotationManager from "../../src/annotations/abapAnnotationManager.js";
-import AppVariant from "../../src/appVariantManager.js";
-import BaseApp, { preProcessFiles } from "../../src/baseAppManager.js";
+import AppVariant from "../../src/appVariant.js";
+import BaseApp, { preProcessFiles } from "../../src/baseApp.js";
 import { IProjectOptions } from "../../src/model/types.js";
 import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";

@@ -3,8 +3,8 @@ import { dependsOn, getCommonManifestUpdateCommands, getCommonPostCommands, IAda
 import { AdaptCommandChain, ManifestUpdateCommandChain, MergeCommandChain, PostCommandChain, SetupCommandChain } from "./commands/command.js";
 import { IAppVariantIdHierarchyManifestItem } from "../model/appVariantIdHierarchyItem.js";
 import XsAppJsonEnhanceRoutesCommand from "./commands/xsAppJsonEnhanceRoutesCommand.js";
-import BaseApp from "../baseAppManager.js";
-import AppVariant from "../appVariantManager.js";
+import BaseApp from "../baseApp.js";
+import AppVariant from "../appVariant.js";
 import UpdateCloudPlatformCommand from "./commands/updateCloudPlatformCommand.js";
 import I18nPropertiesMergeCommand from "./commands/i18nPropertiesMergeCommand.js";
 import XsAppJsonMergeCommand from "./commands/xsAppJsonMergeCommand.js";

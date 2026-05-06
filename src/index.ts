@@ -2,8 +2,8 @@ import * as dotenv from "dotenv";
 
 import { getReferences, logBuilderVersion } from "./util/commonUtil.js";
 
-import AppVariant from "./appVariantManager.js";
-import BaseApp from "./baseAppManager.js";
+import AppVariant from "./appVariant.js";
+import BaseApp from "./baseApp.js";
 import { ITaskParameters, UI5BuilderTools } from "./model/types.js";
 import { initialize } from "./landscapeConfiguration.js";
 
