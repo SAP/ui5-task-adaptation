@@ -1,15 +1,14 @@
 import { getLogger } from "@ui5/logger";
-import { IConfiguration, ServiceCredentials } from "../../model/types.js";
-import CFUtil from "../cfUtil.js";
+import { ServiceCredentials } from "../../model/types.js";
 const log = getLogger("@ui5/task-adaptation::XSAppJsonUtil");
 
-type XsApp = {
+export type XsApp = {
     welcomeFile?: string;
     authenticationMethod: "none" | "route";
     routes: Route[];
 }
 
-type Route = {
+export type Route = {
     source: string;
     target: string;
     service?: string;
@@ -79,7 +78,7 @@ export function enhanceRoutesWithEndpointAndService(xsAppJsonContent: string, se
 }
 
 
-export function enhanceRoutes(serviceCredentials: ServiceCredentials, baseRoutes: any) {
+export function enhanceRoutes(serviceCredentials: ServiceCredentials, baseRoutes: Route[]): Route[] {
     const endpoints = serviceCredentials.endpoints;
     // Map destinations to endpoint names
     const destinationToEndpoint = Object.entries(endpoints).reduce((acc: Record<string, string>, [endpointName, obj]) => {
@@ -89,8 +88,8 @@ export function enhanceRoutes(serviceCredentials: ServiceCredentials, baseRoutes
         return acc;
     }, {} as Record<string, string>);
 
-    return baseRoutes.map((route: any) => {
-        const endpointName = destinationToEndpoint[route.destination];
+    return baseRoutes.map((route: Route) => {
+        const endpointName = route.destination && destinationToEndpoint[route.destination];
         if (endpointName) {
             // There is a matching endpoint: remove destination and add endpoint/service
             const { destination: _destination, ...rest } = route;
@@ -106,20 +105,11 @@ export function enhanceRoutes(serviceCredentials: ServiceCredentials, baseRoutes
     });
 }
 
-export async function fetchCredentialsAndEnhanceRoutes(xsAppJson: string, { serviceInstanceName, space, appName }: IConfiguration): Promise<string> {
-    if (!serviceInstanceName) {
-        throw new Error(`Service instance name must be specified in ui5.yaml configuration for app '${appName}'`);
+export async function fetchCredentialsAndEnhanceRoutes(xsAppJson: string, serviceCredentialsPromise: Promise<ServiceCredentials | undefined>): Promise<string> {
+    const serviceCredentials = await serviceCredentialsPromise;
+    if (!serviceCredentials) {
+        log.verbose(`No service credentials available. Skipping xs-app.json update.`);
+        return xsAppJson;
     }
-    let serviceCredentials: ServiceCredentials | undefined;
-    try {
-        // Get valid service keys with proper endpoints structure
-        serviceCredentials = await CFUtil.getOrCreateServiceKeyWithEndpoints(serviceInstanceName, space);
-    } catch (error: any) {
-        throw new Error(`Failed to get valid service keys for app '${appName}': ${error.message}`);
-    }
-    if (serviceCredentials) {
-        return enhanceRoutesWithEndpointAndService(xsAppJson, serviceCredentials);
-    }
-    log.info(`No endpoints found for app '${appName}'. xs-app.json will not be updated.`);
-    return xsAppJson;
+    return enhanceRoutesWithEndpointAndService(xsAppJson, serviceCredentials);
 }

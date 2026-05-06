@@ -30,24 +30,22 @@ describe("App Variant Hierarchy", () => {
         sandbox.stub(AbapAnnotationManager.prototype, "process").resolves(new Map<string, string>());
         sandbox.stub(AbapRepository.prototype, "getAppVariantIdHierarchy").resolves([
             {
-                appVariantId: "customer.com.sap.application.variant.id",
-                repoName: "REPO_NAME_1",
-                cachebusterToken: "cachebusterToken1"
+                appName: "REPO_NAME_1",
+                cacheBusterToken: Promise.resolve("cachebusterToken1")
             },
             {
-                appVariantId: "com.sap.base.app.id",
-                repoName: "REPO_NAME_0",
-                cachebusterToken: "cachebusterToken0"
+                appName: "REPO_NAME_0",
+                cacheBusterToken: Promise.resolve("cachebusterToken0")
             }
         ]);
         const appVariant1Path = TestUtil.getResourcePath("appVariant1", "webapp");
         sandbox.stub(AbapRepository.prototype, "fetch")
-            .withArgs("REPO_NAME_0").resolves(new Map([
+            .withArgs(sinon.match({ appName: "REPO_NAME_0" })).resolves(new Map([
                 ["manifest.json", TestUtil.getResource("manifest.json")],
                 ["i18n/i18n.properties", "base=a"],
                 ["i18n/i18n_de.properties", "base=a_de"],
             ]))
-            .withArgs("REPO_NAME_1").resolves(await ResourceUtil.byGlob(appVariant1Path, "**/*"));
+            .withArgs(sinon.match({ appName: "REPO_NAME_1" })).resolves(await ResourceUtil.byGlob(appVariant1Path, "**/*"));
         const repository = new AbapRepository(options.configuration);
         const annotationManager = new AbapAnnotationManager(options.configuration, repository);
         const index = await esmock("../../src/index.js", {}, {

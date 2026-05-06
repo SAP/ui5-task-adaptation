@@ -1,15 +1,21 @@
-import { getCommonManifestUpdateCommands, IAdapter } from "./adapter.js";
-import { AdaptCommandChain, ManifestUpdateCommandChain, MergeCommandChain, PostCommandChain } from "./commands/command.js";
+import { getCommonManifestUpdateCommands, getCommonPostCommands, IAdapter } from "./adapter.js";
+import { AdaptCommandChain, ManifestUpdateCommandChain, MergeCommandChain, PostCommandChain, SetupCommandChain } from "./commands/command.js";
 import { IAppVariantIdHierarchyManifestItem } from "../model/appVariantIdHierarchyItem.js";
 import BaseApp from "../baseAppManager.js";
 import AppVariant from "../appVariantManager.js";
 import IAnnotationManager from "../annotations/annotationManager.js";
 import DownloadAnnotationsCommand from "./commands/downloadAnnotationsCommand.js";
 import I18nPropertiesMergeCommand from "./commands/i18nPropertiesMergeCommand.js";
+import { UI5BuilderTools } from "../model/types.js";
+import IRepository from "../repositories/repository.js";
 
 
 export default class AbapAdapter implements IAdapter {
     constructor(private annotationManager: IAnnotationManager) { }
+
+    createSetupCommandChain(_appId: string, _repository: IRepository): SetupCommandChain {
+        return new SetupCommandChain([]);
+    }
 
     createAdaptCommandChain(baseApp: BaseApp, appVariant: AppVariant): AdaptCommandChain {
         const appVariantIdHierarchyItem = {
@@ -32,8 +38,17 @@ export default class AbapAdapter implements IAdapter {
         ]);
     }
 
-    createPostCommandChain(): PostCommandChain {
-        // No post commands needed for ABAP, return an empty chain
-        return new PostCommandChain([]);
+    createPostCommandChain(
+        references: Map<string, string>,
+        adaptationProject: AppVariant,
+        ui5BuilderTools: UI5BuilderTools,
+    ): PostCommandChain {
+        return new PostCommandChain(
+            getCommonPostCommands(
+                references,
+                adaptationProject,
+                ui5BuilderTools,
+            )
+        );
     }
 }

@@ -5,6 +5,7 @@ import { IConfiguration } from "../model/types.js";
 import Language from "../model/language.js";
 import { fileURLToPath } from "url";
 import { posix as path } from "path";
+import AppVariant from "../appVariantManager.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const log = Log.getLogger("rollup-plugin-ui5-resolve-task-adaptation");
@@ -112,4 +113,22 @@ export function isManifestChange(filename: string, content: string): boolean {
         return change.changeType?.startsWith(MANIFEST_CHANGE);
     }
     return false;
+}
+
+/**
+ * 4p. Reference map contains searchTerm as key and replacement as value. Base
+ * id and app variant ids are renamed to adaptation project id.
+ */
+export function getReferences(appVariants: AppVariant[], adaptationProjectId: string): Map<string, string> {
+    const references = new Map<string, string>();
+    appVariants.forEach((variant, i) => {
+        if (i === 0) {
+            references.set(variant.reference, adaptationProjectId);
+        }
+        if (variant.id !== adaptationProjectId) {
+            references.set(variant.id, adaptationProjectId);
+        }
+        variant.getRenamingForMovedFiles().forEach((value, key) => references.set(key, value));
+    });
+    return references;
 }

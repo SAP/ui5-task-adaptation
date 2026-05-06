@@ -6,6 +6,7 @@ import ServerError from "../../../src/model/serverError.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "../testUtilities/testUtil.js";
 import esmock from "esmock";
+import HTML5Repository from "../../../src/repositories/html5Repository.js";
 
 const { assert, expect } = chai;
 
@@ -47,8 +48,13 @@ describe("Html5Repository", () => {
                 }
             }
         });
-        const html5Repository = new HTML5Repository(options.configuration);
-        const baseAppFiles = await html5Repository.fetch("appName1", "token123");
+        const html5Repository = new HTML5Repository(options.configuration) as HTML5Repository;
+        const baseAppFiles = await html5Repository.fetch({
+            appName: "appName1",
+            cacheBusterToken: Promise.resolve("token123"),
+            appHostId: "appHostId",
+            appVersion: "appVersion",
+        });
         expect([...baseAppFiles.keys()]).to.have.members(["i18n.properties", "manifest.json"]);
     });
 
@@ -73,8 +79,13 @@ describe("Html5Repository", () => {
             }
         });
         try {
-            const html5Repository = new Html5Repository(options.configuration);
-            await html5Repository.fetch("1", "2");
+            const html5Repository = new Html5Repository(options.configuration) as HTML5Repository;
+            await html5Repository.fetch({
+                appName: "1",
+                cacheBusterToken: Promise.resolve("2"),
+                appHostId: "3",
+                appVersion: "4"
+            });
             assert.fail(true, false, "Exception not thrown");
         } catch (error: any) {
             expect(error.message).to.equal("Failed to parse zip content from HTML5 Repository: ADM-ZIP: Number of disk entries is too large");
@@ -135,24 +146,18 @@ describe("Html5Repository", () => {
                 }
             }
         });
-        const html5Repository = new HTML5Repository(options.configuration);
-        const reuseLibFiles = await html5Repository.fetchReuseLib("lib1", "token123", {
-            name: "lib1",
-            lazy: false,
-            html5AppHostId: "appHostId",
-            html5AppName: "appName",
-            html5AppVersion: "appVersion",
-            html5CacheBusterToken: "token123",
-            url: {
-                uri: "",
-                final: false
-            }
+        const html5Repository = new HTML5Repository(options.configuration) as HTML5Repository;
+        const reuseLibFiles = await html5Repository.fetch({
+            appHostId: "appHostId",
+            appName: "appName",
+            appVersion: "appVersion",
+            cacheBusterToken: Promise.resolve("token123"),
         });
         expect([...reuseLibFiles.keys()]).to.have.members(["i18n.properties", "manifest.json"]);
     });
 
     describe("when downloading archive with various status codes", () => {
-        const downloadUrl = "html5Uri/applications/content/appName-appVersion/";
+        const downloadUrl = "html5Uri/applications/content/appName1-appVersion/";
         const tokenUrl = "html5UaaUrl/oauth/token?grant_type=client_credentials";
 
         const statusCases = [
@@ -197,11 +202,16 @@ describe("Html5Repository", () => {
                         }
                     }
                 });
-                const html5Repository = new HTML5Repository(options.configuration);
+                const html5Repository = new HTML5Repository(options.configuration) as HTML5Repository;
 
                 if (shouldError) {
                     try {
-                        await html5Repository.fetch("appName1", `token-${status}`);
+                        await html5Repository.fetch({
+                            appName: "appName1",
+                            cacheBusterToken: Promise.resolve(`token-${status}`),
+                            appHostId: "appHostId",
+                            appVersion: "appVersion"
+                        });
                         assert.fail(true, false, "Exception not thrown");
                     } catch (error: any) {
                         if (status >= 500) {
@@ -211,7 +221,12 @@ describe("Html5Repository", () => {
                         }
                     }
                 } else {
-                    const baseAppFiles = await html5Repository.fetch("appName1", `token-${status}`);
+                    const baseAppFiles = await html5Repository.fetch({
+                        appName: "appName1",
+                        cacheBusterToken: Promise.resolve(`token-${status}`),
+                        appHostId: "appHostId",
+                        appVersion: "appVersion"
+                    });
                     expect([...baseAppFiles.keys()]).to.have.members(["i18n.properties", "manifest.json"]);
                 }
             });

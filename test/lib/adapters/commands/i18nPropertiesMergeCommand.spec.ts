@@ -497,7 +497,6 @@ describe("I18nPropertiesMergeCommand", () => {
                                 cachebusterToken: "123"
                             }],
                             fetch: async () => baseAppFiles,
-                            fetchReuseLib: async () => new Map<string, string>(),
                             downloadAnnotationFile: async () => new Map<string, string>()
                         },
                         annotationManager: {

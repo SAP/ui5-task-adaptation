@@ -1,4 +1,4 @@
-import { IConfiguration, IMetadata, IReuseLibInfo } from "../model/types.js";
+import { IConfiguration, IMetadata } from "../model/types.js";
 
 import AbapProvider from "./abapProvider.js";
 import { IAppVariantIdHierarchyItem } from "../model/appVariantIdHierarchyItem.js";
@@ -6,6 +6,7 @@ import { getLogger } from "@ui5/logger";
 import { unzipZipEntries } from "../util/zipUtil.js";
 import IRepository from "./repository.js";
 import { cached } from "../cache/cacheHolder.js";
+import ICachedResource from "../cache/cachedResource.js";
 
 const log = getLogger("@ui5/task-adaptation::AbapRepository");
 
@@ -22,6 +23,9 @@ const REQUEST_OPTIONS_JSON = {
     }
 };
 
+
+type IAbapResource = ICachedResource
+
 export default class AbapRepository implements IRepository {
 
     private configuration: IConfiguration;
@@ -33,26 +37,24 @@ export default class AbapRepository implements IRepository {
         this.abapProvider = abapProvider ? abapProvider : new AbapProvider();
     }
 
-    fetchReuseLib(_libName: string, _cachebusterToken: string, _lib: IReuseLibInfo): Promise<Map<string, string>> {
-        throw new Error("Preview is not available on SAP S/4HANA On-Premise or Cloud Systems. Please create a ticket on CA-UI5-FL-ADP-BAS component.");
-    }
 
-
-    async getAppVariantIdHierarchy(id: string): Promise<IAppVariantIdHierarchyItem[]> {
+    async getAppVariantIdHierarchy(id: string): Promise<IAbapResource[]> {
         const provider = await this.abapProvider.get(this.configuration);
         const lrep = provider.getLayeredRepository();
         const response = await lrep.get("/dta_folder/app_info", {
             params: { id }
         });
         if (response.status === 200) {
-            return JSON.parse(response.data)?.appVariantIdHierarchy;
+            const hierarchy = JSON.parse(response.data)?.appVariantIdHierarchy as IAppVariantIdHierarchyItem[];
+            return hierarchy.map(item => ({
+                appName: item.repoName,
+                cacheBusterToken: Promise.resolve(item.cachebusterToken)
+            }));
         } else if (this.configuration.appName) {
             // Fallback to old API on old ABAP backend or CF for backward compatibility
-            const metadataResponse = await this.getMetadata(id);
             return [{
-                repoName: this.configuration.appName,
-                appVariantId: id,
-                cachebusterToken: metadataResponse.changedOn
+                appName: this.configuration.appName,
+                cacheBusterToken: this.getMetadata(id).then(metadata => metadata.changedOn),
             }];
         }
         throw new Error(`App variant id hierarchy for app id '${id}' is not provided`);
@@ -94,8 +96,8 @@ export default class AbapRepository implements IRepository {
 
 
     @cached()
-    async fetch(repoName: string, _cachebusterToken: string): Promise<Map<string, string>> {
-        const encodedRepoName = encodeURIComponent(repoName);
+    async fetch(resource: IAbapResource): Promise<Map<string, string>> {
+        const encodedRepoName = encodeURIComponent(resource.appName);
         const provider = await this.abapProvider.get(this.configuration);
         const ui5Repo = provider.getUi5AbapRepository();
         const response = await ui5Repo.get(`/Repositories('${encodedRepoName}')`, {
@@ -110,6 +112,6 @@ export default class AbapRepository implements IRepository {
             const buffer = Buffer.from(data.d.ZipArchive, "base64");
             return unzipZipEntries(buffer);
         }
-        throw new Error(`App '${repoName}' doesn't contain files`);
+        throw new Error(`App '${resource.appName}' doesn't contain files`);
     }
 }

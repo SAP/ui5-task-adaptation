@@ -28,3 +28,5 @@ export interface IAbapTargetMeta {
     name?: string;
     ignoreCertErrors?: boolean;
 }
+
+export const REUSE_DIR = ".adp/reuse";

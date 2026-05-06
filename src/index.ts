@@ -1,97 +1,67 @@
 import * as dotenv from "dotenv";
 
-import { logBuilderVersion } from "./util/commonUtil.js";
+import { getReferences, logBuilderVersion } from "./util/commonUtil.js";
 
 import AppVariant from "./appVariantManager.js";
 import BaseApp from "./baseAppManager.js";
-import { ITaskParameters } from "./model/types.js";
-import ResourceUtil from "./util/resourceUtil.js";
-import FilesUtil from "./util/filesUtil.js";
-import PreviewManager from "./previewManager.js";
+import { ITaskParameters, UI5BuilderTools } from "./model/types.js";
 import { initialize } from "./landscapeConfiguration.js";
 
 /**
  * Creates an appVariant bundle from the provided resources.
  */
-export default ({ workspace, options, taskUtil }: ITaskParameters) => {
+export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
 
     dotenv.config();
+    logBuilderVersion();
 
-    async function process(workspace: IWorkspace, taskUtil: any) {
-        logBuilderVersion();
+    const { repository, adapter } = initialize(options.configuration);
+    const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
+    const setupCommandChain = adapter.createSetupCommandChain(adaptationProject.reference, repository);
+    await setupCommandChain.execute();
 
-        const { repository, adapter } = initialize(options.configuration);
-
-        const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
-        const previewManagerPromise = PreviewManager.createFromRoot(adaptationProject.reference, repository, options.configuration);
-
-        const appVariantIdHierarchy = await repository.getAppVariantIdHierarchy(adaptationProject.reference);
-        if (appVariantIdHierarchy.length === 0) {
-            throw new Error(`No app variant found for reference ${adaptationProject.reference}`);
-        }
-
-        // appVariantIdHierarchy contains original application on bottom and the
-        // latest app variant on top. We reverse the list to process original
-        // application first and then app variants in chronological order.
-        const reversedHierarchy = appVariantIdHierarchy.toReversed();
-        const fetchFilesPromises: Promise<ReadonlyMap<string, string>>[] = reversedHierarchy.map(({ repoName, cachebusterToken }) => repository.fetch(repoName, cachebusterToken));
-        fetchFilesPromises.push(Promise.resolve(adaptationProject.files));
-        const appVariants = new Array<AppVariant>();
-
-        const adapt = async (baseAppFiles: ReadonlyMap<string, string>, appVariantFiles: ReadonlyMap<string, string>): Promise<ReadonlyMap<string, string>> => {
-            let baseApp = BaseApp.fromFiles(baseAppFiles);
-            let appVariant = AppVariant.fromFiles(appVariantFiles);
-            // If the app variant is the same as the adaptation project, we use the
-            // adaptation project because it contains resources that should be updated.
-            if (appVariant.id === adaptationProject.id) {
-                appVariant = adaptationProject;
-            }
-            appVariants.push(appVariant);
-            const adaptCommandChain = adapter.createAdaptCommandChain(baseApp, appVariant);
-            const mergeCommandChain = adapter.createMergeCommandChain(baseApp, appVariant);
-            const adaptedFiles = await adaptCommandChain.execute();
-            const mergedFiles = await mergeCommandChain.execute(adaptedFiles);
-            return mergedFiles;
-        }
-
-        let files = await fetchFilesPromises.reduce(async (previousFiles, currentFiles) =>
-            adapt(await previousFiles, await currentFiles), fetchFilesPromises.shift()!);
-
-        files = await adapter.createPostCommandChain().execute(files);
-
-        const references = getReferences(appVariants, adaptationProject.id);
-        files = FilesUtil.filter(files);
-        files = FilesUtil.rename(files, references);
-
-        adaptationProject.omitDeletedResources(files, options.projectNamespace, taskUtil);
-
-        // Read libs for preview
-        const previewManager = await previewManagerPromise;
-        const writePromises = new Array<Promise<void>>(previewManager.processPreviewResources(files));
-        files.forEach((content, filename) => {
-            const resource = ResourceUtil.createResource(filename, options.projectNamespace, content);
-            writePromises.push(workspace.write(resource));
-        });
-        await Promise.all(writePromises);
+    const appVariantIdHierarchy = await repository.getAppVariantIdHierarchy(adaptationProject.reference);
+    if (appVariantIdHierarchy.length === 0) {
+        throw new Error(`No app variant found for reference ${adaptationProject.reference}`);
     }
 
-    return process(workspace, taskUtil);
+    // appVariantIdHierarchy contains original application on bottom and the
+    // latest app variant on top. We reverse the list to process original
+    // application first and then app variants in chronological order.
+    const reversedHierarchy = appVariantIdHierarchy.toReversed();
+    const fetchFilesPromises: Promise<ReadonlyMap<string, string>>[] = reversedHierarchy.map(variant => repository.fetch(variant));
+    fetchFilesPromises.push(Promise.resolve(adaptationProject.files));
+    const appVariants = new Array<AppVariant>();
 
-    /**
-     * 4p. Reference map contains searchTerm as key and replacement as value. Base
-     * id and app variant ids are renamed to adaptation project id.
-     */
-    function getReferences(appVariants: AppVariant[], adaptationProjectId: string): Map<string, string> {
-        const references = new Map<string, string>();
-        appVariants.forEach((variant, i) => {
-            if (i === 0) {
-                references.set(variant.reference, adaptationProjectId);
-            }
-            if (variant.id !== adaptationProjectId) {
-                references.set(variant.id, adaptationProjectId);
-            }
-            variant.getRenamingForMovedFiles().forEach((value, key) => references.set(key, value));
-        });
-        return references;
+    const adapt = async (baseAppFiles: ReadonlyMap<string, string>, appVariantFiles: ReadonlyMap<string, string>): Promise<ReadonlyMap<string, string>> => {
+        let baseApp = BaseApp.fromFiles(baseAppFiles);
+        let appVariant = AppVariant.fromFiles(appVariantFiles);
+        // If the app variant is the same as the adaptation project, we use the
+        // adaptation project because it contains resources that should be updated.
+        if (appVariant.id === adaptationProject.id) {
+            appVariant = adaptationProject;
+        }
+        appVariants.push(appVariant);
+        const adaptCommandChain = adapter.createAdaptCommandChain(baseApp, appVariant);
+        const mergeCommandChain = adapter.createMergeCommandChain(baseApp, appVariant);
+        const adaptedFiles = await adaptCommandChain.execute();
+        const mergedFiles = await mergeCommandChain.execute(adaptedFiles);
+        return mergedFiles;
     }
+
+    let files = await fetchFilesPromises.reduce(async (previousFiles, currentFiles) =>
+        adapt(await previousFiles, await currentFiles), fetchFilesPromises.shift()!);
+
+    const references = getReferences(appVariants, adaptationProject.id);
+    const ui5BuilderTools = {
+        workspace,
+        taskUtil,
+        projectNamespace: options.projectNamespace
+    } as UI5BuilderTools;
+    return adapter.createPostCommandChain(
+        references,
+        adaptationProject,
+        ui5BuilderTools,
+    ).execute(files);
+
 }

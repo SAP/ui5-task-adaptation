@@ -1,20 +1,19 @@
 import * as AdmZip from "adm-zip";
 
-import { IConfiguration, ICreateServiceInstanceParams, ICredentials, IGetServiceInstanceParams, IHTML5RepoInfo, IReuseLibInfo } from "./../model/types.js";
+import { IConfiguration, ICreateServiceInstanceParams, ICredentials, IGetServiceInstanceParams, IHTML5RepoInfo } from "./../model/types.js";
 
 import CFUtil from "../util/cfUtil.js";
 import RequestUtil from "../util/requestUtil.js";
 import { getLogger } from "@ui5/logger";
 import { unzipZipEntries } from "../util/zipUtil.js";
 import IRepository from "./repository.js";
-import { IAppVariantIdHierarchyItem } from "../model/appVariantIdHierarchyItem.js";
 import { cached } from "../cache/cacheHolder.js";
 import CFValidator from "../util/validator/cfValidator.js";
+import ICachedResource from "../cache/cachedResource.js";
 
-interface appData {
-    appName: string,
-    appVersion: string,
-    appHostId: string,
+export interface IHtml5Resource extends ICachedResource {
+    appVersion: string;
+    appHostId: string;
 }
 
 const log = getLogger("@ui5/task-adaptation::HTML5Repository");
@@ -28,37 +27,24 @@ export default class HTML5Repository implements IRepository {
     }
 
 
-    async getAppVariantIdHierarchy(appId: string): Promise<IAppVariantIdHierarchyItem[]> {
-        const metadata = await this.getMetadata();
+    async getAppVariantIdHierarchy(_appId: string): Promise<IHtml5Resource[]> {
+        const { appName, appVersion, appHostId } = this.configuration;
+        if (!appName || !appVersion || !appHostId) {
+            throw new Error("Missing required configuration properties appName, appVersion or appHostId");
+        }
         return [{
-            repoName: this.configuration.appName!,
-            appVariantId: appId,
-            cachebusterToken: metadata.changedOn
+            appName,
+            cacheBusterToken: this.getMetadata().then(metadata => metadata.changedOn),
+            appVersion,
+            appHostId,
         }];
     }
 
 
     @cached()
-    async fetch(_repoName: string, _cachebusterToken: string): Promise<Map<string, string>> {
+    async fetch(resource: IHtml5Resource): Promise<Map<string, string>> {
         const { token, baseUri } = await this.getHtml5RepoInfo();
-        const appData: appData = {
-            appName: this.configuration.appName!,
-            appVersion: this.configuration.appVersion!,
-            appHostId: this.configuration.appHostId!
-        };
-        return this.getAppZipEntries(appData, baseUri, token);
-    }
-
-
-    @cached()
-    async fetchReuseLib(_libName: string, _cachebusterToken: string, lib: IReuseLibInfo): Promise<Map<string, string>> {
-        const { token, baseUri } = await this.getHtml5RepoInfo();
-        const libAppData: appData = {
-            appName: lib.html5AppName,
-            appVersion: lib.html5AppVersion,
-            appHostId: lib.html5AppHostId
-        };
-        return this.getAppZipEntries(libAppData, baseUri, token);
+        return this.getAppZipEntries(resource, baseUri, token);
     }
 
 
@@ -87,17 +73,17 @@ export default class HTML5Repository implements IRepository {
     private async getHTML5Credentials(spaceGuid: string): Promise<ICredentials> {
         log.verbose("Getting HTML5 Repo Runtime credentials from space " + spaceGuid);
         const PLAN_NAME = "app-runtime";
-        const SERVIСE_INSTANCE_NAME = "html5-apps-repo-runtime";
+        const SERVICE_INSTANCE_NAME = "html5-apps-repo-runtime";
         const getParams: IGetServiceInstanceParams = {
             spaceGuids: [spaceGuid],
             planNames: [PLAN_NAME],
-            names: [SERVIСE_INSTANCE_NAME]
+            names: [SERVICE_INSTANCE_NAME]
         };
         const createParams: ICreateServiceInstanceParams = {
             spaceGuid,
             planName: PLAN_NAME,
             serviceName: "html5-apps-repo",
-            serviceInstanceName: SERVIСE_INSTANCE_NAME,
+            serviceInstanceName: SERVICE_INSTANCE_NAME,
             tags: ["html5-apps-repo-rt"]
         };
         const serviceKeys = await CFUtil.getServiceInstanceKeys(getParams, createParams);
@@ -134,9 +120,10 @@ export default class HTML5Repository implements IRepository {
     }
 
 
-    private async getAppZipEntries(app: appData, html5RepoBaseUri: string, token: string): Promise<Map<string, string>> {
-        const uri = `${html5RepoBaseUri}/applications/content/${app.appName}-${app.appVersion}/`;
-        const zip = await this.download(token, app.appHostId!, uri);
+    private async getAppZipEntries(resource: IHtml5Resource, html5RepoBaseUri: string, token: string): Promise<Map<string, string>> {
+        const { appName, appVersion, appHostId } = resource;
+        const uri = `${html5RepoBaseUri}/applications/content/${appName}-${appVersion}/`;
+        const zip = await this.download(token, appHostId, uri);
         return unzipZipEntries(zip);
     }
 

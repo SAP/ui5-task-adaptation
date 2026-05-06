@@ -5,6 +5,8 @@ import { XSAPP_JSON_FILENAME } from "../../../src/util/cf/xsAppJsonUtil.js";
 import CFUtil from "../../../src/util/cfUtil.js";
 import BaseApp from "../../../src/baseAppManager.js";
 import AppVariant from "../../../src/appVariantManager.js";
+import { UI5BuilderTools } from "../../../src/model/types.js";
+import TaskUtil from "@ui5/project/build/helpers/TaskUtil";
 
 const { expect } = chai;
 
@@ -60,11 +62,21 @@ describe("CFAdapter", () => {
                 getProcessedManifestChanges: sandbox.stub().returns([]),
                 getProcessedFiles: sandbox.stub().returns(appVariantFiles)
             } as unknown as AppVariant;
-            const postCommandChain = adapter.createPostCommandChain();
+            const references = new Map<string, string>([["base.app.variant", "customer.base.app.variant"]]);
             const mergeCommandChain = adapter.createMergeCommandChain(
                 baseAppStub,
                 appVariantStub
             );
+            const ui5BuilderTools = {
+                workspace: {
+                    write: sinon.stub().resolves()
+                } as unknown as IWorkspace,
+                taskUtil: {} as TaskUtil,
+                projectNamespace: "projectNamespace"
+            } as UI5BuilderTools;
+            const setupCommandChain = adapter.createSetupCommandChain("my-app-id", {} as any);
+            await setupCommandChain.execute();
+            const postCommandChain = adapter.createPostCommandChain(references, appVariantStub, ui5BuilderTools);
             const mergedMap = await mergeCommandChain.execute(files);
             mergedXsAppJson = JSON.parse(mergedMap.get(XSAPP_JSON_FILENAME)!);
             const enhancedMap = await postCommandChain.execute(mergedMap);

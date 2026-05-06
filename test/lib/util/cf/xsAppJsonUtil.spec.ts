@@ -1,6 +1,7 @@
 import * as chai from "chai";
 
 import { enhanceRoutesWithEndpointAndService, merge } from "../../../../src/util/cf/xsAppJsonUtil.js";
+import XsAppJsonEnhanceRoutesCommand from "../../../../src/adapters/commands/xsAppJsonEnhanceRoutesCommand.js";
 
 const { expect } = chai;
 
@@ -78,5 +79,87 @@ describe("xsAppJsonUtil.merge", () => {
         const routesString = JSON.stringify({ routes })
         const result = enhanceRoutesWithEndpointAndService(routesString, {} as any);
         expect(result).to.eql(routesString);
+    });
+});
+
+describe("xsAppJsonUtil.enhanceRoutesWithEndpointAndService", () => {
+    it("should skip xs-app.json update if there are no routes", async () => {
+        expect(enhanceRoutesWithEndpointAndService("{}", {} as any)).to.eql("{}");
+    });
+
+    it("should skip xs-app.json update if there are no routes with destination", async () => {
+        const routes = [
+            { source: "/foo", authenticationType: "none" },
+            { source: "/bar", authenticationType: "none" }
+        ];
+        const routesString = JSON.stringify({ routes })
+        expect(enhanceRoutesWithEndpointAndService(routesString, {} as any)).to.eql(routesString);
+    });
+
+    it("should enhance routes with endpoint and service information", async () => {
+        const mockServiceCredentials = {
+            endpoints: {
+                "api-endpoint": {
+                    destination: "test-destination",
+                    url: "https://api.example.com"
+                },
+                "ui-endpoint": {
+                    destination: "ui-destination",
+                    url: "https://ui.example.com"
+                }
+            },
+            "sap.cloud.service": "test-cloud-service"
+        };
+
+        const originalXsAppJson = {
+            routes: [
+                {
+                    source: "/api/(.*)",
+                    destination: "test-destination",
+                    authenticationType: "xsuaa"
+                },
+                {
+                    source: "/ui/(.*)",
+                    destination: "ui-destination",
+                    authenticationType: "none"
+                },
+                {
+                    source: "/other/(.*)",
+                    destination: "other-destination",
+                    authenticationType: "none"
+                }
+            ]
+        };
+
+        const expectedXsAppJson = {
+            routes: [
+                {
+                    source: "/api/(.*)",
+                    endpoint: "api-endpoint",
+                    service: "test-cloud-service",
+                    authenticationType: "xsuaa"
+                },
+                {
+                    source: "/ui/(.*)",
+                    endpoint: "ui-endpoint",
+                    service: "test-cloud-service",
+                    authenticationType: "none"
+                },
+                {
+                    source: "/other/(.*)",
+                    destination: "other-destination",
+                    authenticationType: "none"
+                }
+            ]
+        };
+
+        const command = new XsAppJsonEnhanceRoutesCommand(
+            Promise.resolve(mockServiceCredentials)
+        );
+        const baseAppFiles = new Map<string, string>();
+        baseAppFiles.set("xs-app.json", JSON.stringify(originalXsAppJson));
+        await command.execute(baseAppFiles);
+        const updatedXsAppJson = JSON.parse(baseAppFiles.get("xs-app.json")!);
+        expect(updatedXsAppJson.routes).to.deep.equal(expectedXsAppJson.routes);
     });
 });

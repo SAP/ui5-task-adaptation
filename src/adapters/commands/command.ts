@@ -1,3 +1,26 @@
+export abstract class SetupCommand {
+    readonly commandType = "setup";
+    /**
+     * Executes the command
+     */
+    abstract execute(): Promise<void>;
+}
+
+
+export class SetupCommandChain {
+    constructor(private commands: SetupCommand[]) { }
+
+    /**
+     * Executes all commands in the chain
+     */
+    async execute(): Promise<void> {
+        for (const command of this.commands) {
+            await command.execute();
+        }
+    }
+}
+
+
 export abstract class AdaptCommand {
     readonly commandType = "adapt";
     abstract accept(filename: string): boolean;
@@ -134,4 +157,8 @@ export class PostCommandChain {
         }
         return filesCopy;
     }
+}
+
+export interface IPromiseCommand<T> {
+    result: Promise<T>;
 }

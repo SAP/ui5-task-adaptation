@@ -6,7 +6,9 @@ import AppVariant from "../../src/appVariantManager.js";
 import { IAppVariantManifest } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
-import FilesUtil from "../../src/util/filesUtil.js";
+import FilterFilesCommand from "../../src/adapters/commands/filterFilesCommand.js";
+import { PostCommandChain } from "../../src/adapters/commands/command.js";
+import RenameFilesCommand from "../../src/adapters/commands/renameFilesCommand.js";
 
 chai.use(chaiAsPromised);
 const { expect } = chai;
@@ -31,11 +33,12 @@ describe("AppVariantManager", () => {
     describe("when process appvariant resources", () => {
 
         const changes = TestUtil.getResourceJson("appVariant1-renamed/webapp/changes/id_1696839317668_changeInbound.change");
-        let files: ReadonlyMap<string, string>;
+        let files: Map<string, string>;
 
         before(async () => {
             appVariant = await AppVariant.fromWorkspace(workspace, NAMESPACE);
-            files = FilesUtil.filter(appVariant.files);
+            files = new Map<string, string>(appVariant.files);
+            await new FilterFilesCommand().execute(files);
         });
 
         it("should get appVariant info and adjsted manifest", () => {
@@ -84,8 +87,12 @@ describe("AppVariantManager", () => {
         let processedFiles: ReadonlyMap<string, string>
         before(async () => {
             appVariant = await AppVariant.fromWorkspace(workspace, NAMESPACE);
-            processedFiles = FilesUtil.rename(appVariant.files, new Map([["com.sap.base.app.id", appVariant.id]]));
-            processedFiles = FilesUtil.filter(processedFiles);
+            const references = new Map([["com.sap.base.app.id", appVariant.id]]);
+            const commandChain = new PostCommandChain([
+                new FilterFilesCommand(),
+                new RenameFilesCommand(references),
+            ]);
+            processedFiles = await commandChain.execute(appVariant.files);
         });
 
         it("should adjust .properties path", async () => {
@@ -142,8 +149,10 @@ describe("AppVariantManager", () => {
             }]
         } as any;
         const appVariant = (manifest: any) => AppVariant.fromFiles(new Map([["manifest.appdescr_variant", JSON.stringify(manifest)]]));
-        it("shouldn't contain processed files", () => {
-            expect(FilesUtil.filter(appVariant(manifest).files).size).eq(0);
+        it("shouldn't contain processed files", async () => {
+            const files = new Map<string, string>(appVariant(manifest).files);
+            await new FilterFilesCommand().execute(files);
+            expect(files.size).eq(0);
         });
         it("shouldn't fill change layer if layer is undefined", () => {
             expect(appVariant(manifest).getProcessedManifestChanges()[0].layer).to.be.undefined
@@ -222,12 +231,13 @@ describe("AppVariantManager", () => {
             "reference": "base.app.id",
             "id": "customer.base.app.id.variant1"
         };
-        it("should contain manifest change with correct path", () => {
+        it("should contain manifest change with correct path", async () => {
             const appVariant = AppVariant.fromFiles(new Map([
                 ["manifest.appdescr_variant", JSON.stringify(manifest)],
                 ["changes/id.change", `{ "changeType": "appdescr_change", "reference": "base.app.id" }`]
             ]));
-            const files = FilesUtil.filter(appVariant.files);
+            const files = new Map<string, string>(appVariant.files);
+            await new FilterFilesCommand().execute(files);
             expect(files.size).eq(0);
             const manifestChanges = appVariant.getProcessedManifestChanges();
             expect(manifestChanges.length).eq(1);
@@ -236,13 +246,17 @@ describe("AppVariantManager", () => {
                 "reference": "base.app.id"
             });
         });
-        it("shouldn't contain manifest changes with confusing path", () => {
+        it("shouldn't contain manifest changes with confusing path", async () => {
             const appVariant = AppVariant.fromFiles(new Map([
                 ["manifest.appdescr_variant", JSON.stringify(manifest)],
                 ["changes/manifestid.change", `{ "reference": "base.app.id" }`]
             ]));
-            let files = FilesUtil.filter(appVariant.files);
-            files = FilesUtil.rename(files, new Map([["base.app.id", appVariant.id]]));
+            const references = new Map([["base.app.id", appVariant.id]]);
+            const commandChain = new PostCommandChain([
+                new FilterFilesCommand(),
+                new RenameFilesCommand(references),
+            ]);
+            const files = await commandChain.execute(appVariant.files);
             expect(files.size).eq(1);
             expect(files.get("changes/manifestid.change")).eql(`{ "reference": "customer.base.app.id.variant1" }`);
             expect(appVariant.getProcessedManifestChanges().length).eq(0);
@@ -377,7 +391,8 @@ async function assertChangeUrl(testUrl: string, expectedUrl: string) {
         ["changes/id_1707246076536_addAnnotationsToOData.change", changeResource],
         ["manifest.appdescr_variant", manifestResource]]);
     const appVariant = await AppVariant.fromFiles(resources);
-    const files = FilesUtil.filter(appVariant.files);
+    const files = new Map<string, string>(appVariant.files);
+    await new FilterFilesCommand().execute(files);
     expect(files.has("manifest.appdescr_variant")).to.be.false;
     const change = appVariant.getProcessedManifestChanges().find(change => change.changeType === "appdescr_app_addAnnotationsToOData") as any;
     expect(change.content.dataSource["customer.annotation.annotation_1707246076536"].uri)
