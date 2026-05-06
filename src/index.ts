@@ -11,7 +11,13 @@ import { initialize } from "./landscapeConfiguration.js";
  * Creates an appVariant bundle from the provided resources.
  */
 export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
-
+    
+    const ui5BuilderTools = {
+        workspace,
+        projectNamespace: options.projectNamespace,
+        taskUtil,
+    } as UI5BuilderTools;
+    
     dotenv.config();
     logBuilderVersion();
 
@@ -29,35 +35,23 @@ export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
     // latest app variant on top. We reverse the list to process original
     // application first and then app variants in chronological order.
     const reversedHierarchy = appVariantIdHierarchy.toReversed();
-    const fetchFilesPromises: Promise<ReadonlyMap<string, string>>[] = reversedHierarchy.map(variant => repository.fetch(variant));
-    fetchFilesPromises.push(Promise.resolve(adaptationProject.files));
+    const fetchFilesPromises = reversedHierarchy.map(variant => repository.fetch(variant)) as Promise<ReadonlyMap<string, string>>[];
     const appVariants = new Array<AppVariant>();
 
-    const adapt = async (baseAppFiles: ReadonlyMap<string, string>, appVariantFiles: ReadonlyMap<string, string>): Promise<ReadonlyMap<string, string>> => {
-        let baseApp = BaseApp.fromFiles(baseAppFiles);
-        let appVariant = AppVariant.fromFiles(appVariantFiles);
-        // If the app variant is the same as the adaptation project, we use the
-        // adaptation project because it contains resources that should be updated.
-        if (appVariant.id === adaptationProject.id) {
-            appVariant = adaptationProject;
-        }
+    const adapt = async (baseFiles: ReadonlyMap<string, string>, appVariant: AppVariant) => {
         appVariants.push(appVariant);
-        const adaptCommandChain = adapter.createAdaptCommandChain(baseApp, appVariant);
-        const mergeCommandChain = adapter.createMergeCommandChain(baseApp, appVariant);
-        const adaptedFiles = await adaptCommandChain.execute();
-        const mergedFiles = await mergeCommandChain.execute(adaptedFiles);
-        return mergedFiles;
-    }
+        const baseApp = BaseApp.fromFiles(baseFiles);
+        const adapted = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        return adapter.createMergeCommandChain(baseApp, appVariant).execute(adapted);
+    };
 
-    let files = await fetchFilesPromises.reduce(async (previousFiles, currentFiles) =>
-        adapt(await previousFiles, await currentFiles), fetchFilesPromises.shift()!);
+    let files = await fetchFilesPromises.shift()!; // original app files
+    for (const appVariantFiles of fetchFilesPromises) {
+        files = await adapt(files, AppVariant.fromFiles(await appVariantFiles));
+    }
+    files = await adapt(files, adaptationProject);
 
     const references = getReferences(appVariants, adaptationProject.id);
-    const ui5BuilderTools = {
-        workspace,
-        taskUtil,
-        projectNamespace: options.projectNamespace
-    } as UI5BuilderTools;
     return adapter.createPostCommandChain(
         references,
         adaptationProject,
