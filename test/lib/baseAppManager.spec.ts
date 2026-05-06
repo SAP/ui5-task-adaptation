@@ -413,7 +413,7 @@ describe("BaseAppManager Abap", () => {
             }
         });
         expect(() => BaseApp.fromFiles(new Map([["manifest.json", manifest]]))).to.throw(
-            "The original application id 'appId' should consist of multiple segments split by dot, e.g.: original.id");
+            "The application id 'appId' must have at least two parts, separated by a period.");
     });
 
     const assertValidation = async (appVariant: AppVariant, expectedError: string, manifest: any) => {

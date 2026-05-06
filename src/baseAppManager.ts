@@ -1,4 +1,5 @@
 import { trimExtension } from "./util/commonUtil.js";
+import { validateAppId } from "./util/validator/validator.js";
 
 export interface IBaseAppResources {
     resources: any[];
@@ -96,23 +97,16 @@ export default class BaseApp {
     }
 
 
-    private VALIDATION_RULES = new Map([["sap.app/id", (value: string) => {
-        if (!value.includes(".")) {
-            // https://help.sap.com/docs/bas/developing-sap-fiori-app-in-sap-business-application-studio/releasing-sap-fiori-application-to-be-extensible-in-adaptation-projects-on-sap-s-4hana-cloud
-            // In the manifest.json file, make sure that the attribute
-            // sap.app/id has at least 2 segments.
-            throw new Error(`The original application id '${value}' should consist of multiple segments split by dot, e.g.: original.id`);
-        }
-    }]]);
+    private VALIDATION_RULES = new Map([["sap.app/id", validateAppId]]);
 
 
     private validateProperty(value: string, property: string) {
         if (!value) {
             throw new Error(`Original application manifest should have ${property}`);
         }
-        let validatationRule = this.VALIDATION_RULES.get(property);
-        if (validatationRule) {
-            validatationRule(value);
+        let validationRule = this.VALIDATION_RULES.get(property);
+        if (validationRule) {
+            validationRule(value);
         }
     }
 

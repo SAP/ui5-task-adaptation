@@ -1,0 +1,9 @@
+{
+    "fileName": "manifest",
+    "layer": "CUSTOMER_BASE",
+    "fileType": "appdescr_variant",
+    "reference": "com.sap.base.app.id",
+    "id": "invalidSingleSegmentId",
+    "namespace": "apps/com.sap.base.app.id/appVariants/invalidSingleSegmentId/",
+    "content": []
+}

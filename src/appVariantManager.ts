@@ -5,6 +5,7 @@ import ResourceUtil from "./util/resourceUtil.js";
 import TaskUtil from "@ui5/project/build/helpers/TaskUtil";
 import { posix as path } from "path";
 import { moveFile, moveFiles } from "./util/movingHandler/changeFileMoveHandler.js";
+import { validateAppId } from "./util/validator/validator.js";
 
 const CHANGES_EXT = ".change";
 
@@ -25,7 +26,7 @@ export default class AppVariant {
         const EXTENSIONS_TO_PROCESS = "js,json,xml,html,properties,change,appdescr_variant,ctrl_variant,ctrl_variant_change,ctrl_variant_management_change,variant,fioriversion,codeChange,xmlViewChange,context";
         const resources = await workspace.byGlob(`/**/*.{${EXTENSIONS_TO_PROCESS}}`);
         const files = await ResourceUtil.toFileMap(resources, projectNamespace);
-        return new AppVariant(files, resources);
+return new AppVariant(files, resources);
     }
 
 
@@ -46,9 +47,9 @@ export default class AppVariant {
         const { reference, id, layer, content } = JSON.parse(manifestString!);
         this.reference = reference;
         this.id = id;
+        validateAppId(id);
         this.layer = layer;
         this.content = content;
-
         // Prefix is a subfolder for the app variant to store js, fragments,
         // annotations and i18n files. It can be anything, but for convenience
         // it is an app variant id.

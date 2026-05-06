@@ -1,5 +1,6 @@
 import * as chai from "chai";
 import * as sinon from "sinon";
+import chaiAsPromised from "chai-as-promised";
 
 import AppVariant from "../../src/appVariantManager.js";
 import { IAppVariantManifest } from "../../src/model/types.js";
@@ -7,6 +8,7 @@ import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
 import FilesUtil from "../../src/util/filesUtil.js";
 
+chai.use(chaiAsPromised);
 const { expect } = chai;
 
 describe("AppVariantManager", () => {
@@ -153,6 +155,68 @@ describe("AppVariantManager", () => {
         });
     });
 
+    describe("when creating new AppVariant fromFiles or Workspace, validating app variant id", () => {
+        const createManifest = (id: string) => JSON.stringify({
+            "reference": "base.app.id",
+            "id": id,
+            "content": []
+        });
+
+        it("should throw error when id is empty", () => {
+            expect(() => AppVariant.fromFiles(new Map([
+                ["manifest.appdescr_variant", createManifest("")]
+            ]))).to.throw("The application id must not be empty.");
+        });
+
+        it("should throw error when id has only one segment", () => {
+            expect(() => AppVariant.fromFiles(new Map([
+                ["manifest.appdescr_variant", createManifest("singleSegment")]
+            ]))).to.throw("The application id 'singleSegment' must have at least two parts, separated by a period.");
+        });
+
+        it("should throw error when id has dots but no real segments", () => {
+            expect(() => AppVariant.fromFiles(new Map([
+                ["manifest.appdescr_variant", createManifest(".")]
+            ]))).to.throw("must have at least two parts, separated by a period.");
+        });
+
+        it("should not throw error when id has two segments", () => {
+            expect(() => AppVariant.fromFiles(new Map([
+                ["manifest.appdescr_variant", createManifest("customer.app")]
+            ]))).to.not.throw();
+        });
+
+        it("should not throw error when id is valid", () => {
+            expect(() => AppVariant.fromFiles(new Map([
+                ["manifest.appdescr_variant", createManifest("customer.com.sap.application.variant.id")]
+            ]))).to.not.throw();
+        });
+
+        it("should throw error from fromWorkspace when id has only one segment", async () => {
+            const projectMeta = await TestUtil.getWorkspace("appVariantSingleSegement", NAMESPACE);
+            await expect(AppVariant.fromWorkspace(projectMeta.workspace, NAMESPACE))
+                .to.be.rejectedWith("The application id 'invalidSingleSegmentId' must have at least two parts, separated by a period.");
+        });
+
+        it("should throw error from fromWorkspace when id is empty", async () => {
+            const projectMeta = await TestUtil.getWorkspace("appVariantWithEmptyId", NAMESPACE);
+            await expect(AppVariant.fromWorkspace(projectMeta.workspace, NAMESPACE))
+                .to.be.rejectedWith("The application id must not be empty.");
+        });
+
+        it("should throw error from fromWorkspace when id has no segment", async () => {
+            const projectMeta = await TestUtil.getWorkspace("appVariantWithNoSegment", NAMESPACE);
+            await expect(AppVariant.fromWorkspace(projectMeta.workspace, NAMESPACE))
+                .to.be.rejectedWith("The application id '.' must have at least two parts, separated by a period.");
+        });
+
+        it("should not throw error from fromWorkspace when id is valid", async () => {
+            const projectMeta = await TestUtil.getWorkspace("appVariantPlain", NAMESPACE);
+            await expect(AppVariant.fromWorkspace(projectMeta.workspace, NAMESPACE))
+                .to.not.be.rejected;
+        });
+    });
+
     describe("when processing change files", () => {
         let manifest = {
             "reference": "base.app.id",
@@ -259,6 +323,7 @@ describe("AppVariantManager", () => {
             ]);
         });
     });
+
 
     describe("when processing moved files", () => {
         let appVariant: AppVariant;
