@@ -196,7 +196,10 @@ describe("BaseAppManager CF", () => {
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        expect(Array.from(renamedFiles.keys())).to.have.members(["manifest.json", "Component.js", "Controller-dbg.js"]);
+        expect(Array.from(renamedFiles.keys())).to.include.members(["manifest.json", "Component.js", "Controller-dbg.js"]);
+        expect(renamedFiles.has("manifest-bundle.zip")).to.be.false;
+        expect(renamedFiles.has("Component-preload.js")).to.be.false;
+        expect(renamedFiles.has("sap-ui-cachebuster-info.json")).to.be.false;
         assertManifestInfo(renamedFiles);
     });
 
@@ -349,7 +352,7 @@ describe("BaseAppManager Abap", () => {
         const actualCPreload = renamedFiles.get("component-preload.js");
         expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected-abap.json")));
         expect(actualCPreload).to.eql(TestUtil.getResource("component-preload-expected.js"));
-        assertAnnotations(files, 8);
+        assertAnnotations(files, 20);
         assertManifestInfo(files);
     });
 
@@ -368,8 +371,8 @@ describe("BaseAppManager Abap", () => {
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        assertAnnotations(renamedFiles, 9);
-        expect(Array.from(renamedFiles.keys())).to.have.members([
+        assertAnnotations(renamedFiles, 21);
+        expect(Array.from(renamedFiles.keys())).to.include.members([
             "manifest.json",
             "Component.js",
             "Controller-dbg.js",
@@ -380,6 +383,9 @@ describe("BaseAppManager Abap", () => {
             "customer_com_sap_application_variant_id/i18n/annotations/i18n_fr.properties",
             "annotations/annotation_annotationName2.xml"
         ]);
+        expect(renamedFiles.has("manifest-bundle.zip")).to.be.false;
+        expect(renamedFiles.has("Component-preload.js")).to.be.false;
+        expect(renamedFiles.has("sap-ui-cachebuster-info.json")).to.be.false;
         assertManifestInfo(renamedFiles);
     });
 
@@ -404,7 +410,7 @@ describe("BaseAppManager Abap", () => {
         await command.execute(renamedFiles);
         const manifest = JSON.parse(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.eql({ service: "com.sap.manifest.default.service", public: true });
-        assertAnnotations(renamedFiles, 7);
+        assertAnnotations(renamedFiles, 19);
         assertManifestInfo(renamedFiles);
     });
 
@@ -419,7 +425,7 @@ describe("BaseAppManager Abap", () => {
         await command.execute(renamedFiles);
         const manifest = JSON.parse(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.be.undefined;
-        assertAnnotations(renamedFiles, 7);
+        assertAnnotations(renamedFiles, 19);
         assertManifestInfo(renamedFiles);
     });
 

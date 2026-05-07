@@ -3,8 +3,9 @@ import * as sinon from "sinon";
 import CFAdapter from "../../../src/adapters/cfAdapter.js";
 import { XSAPP_JSON_FILENAME } from "../../../src/util/cf/xsAppJsonUtil.js";
 import CFUtil from "../../../src/util/cfUtil.js";
-import BaseApp from "../../../src/baseApp.js";
 import AppVariant from "../../../src/appVariant.js";
+import { AdaptCommandChain } from "../../../src/adapters/commands/command.js";
+import XsAppJsonMergeCommand from "../../../src/adapters/commands/xsAppJsonMergeCommand.js";
 import { UI5BuilderTools } from "../../../src/model/types.js";
 import TaskUtil from "@ui5/project/build/helpers/TaskUtil";
 
@@ -55,7 +56,6 @@ describe("CFAdapter", () => {
                 "sap.cloud.service": "my-service"
             });
 
-            const baseAppStub = sandbox.stub(BaseApp.prototype);
             const appVariantStub = {
                 id: "base.app.variant",
                 prefix: "customer.base.app.variant",
@@ -63,10 +63,9 @@ describe("CFAdapter", () => {
                 getProcessedFiles: sandbox.stub().returns(appVariantFiles)
             } as unknown as AppVariant;
             const references = new Map<string, string>([["base.app.variant", "customer.base.app.variant"]]);
-            const mergeCommandChain = adapter.createMergeCommandChain(
-                baseAppStub,
-                appVariantStub
-            );
+            const adaptCommandChain = new AdaptCommandChain(files, appVariantFiles, [
+                new XsAppJsonMergeCommand(),
+            ]);
             const ui5BuilderTools = {
                 workspace: {
                     write: sinon.stub().resolves()
@@ -77,7 +76,7 @@ describe("CFAdapter", () => {
             const setupCommandChain = adapter.createSetupCommandChain("my-app-id", {} as any);
             await setupCommandChain.execute();
             const postCommandChain = adapter.createPostCommandChain(references, appVariantStub, ui5BuilderTools);
-            const mergedMap = await mergeCommandChain.execute(files);
+            const mergedMap = await adaptCommandChain.execute();
             mergedXsAppJson = JSON.parse(mergedMap.get(XSAPP_JSON_FILENAME)!);
             const enhancedMap = await postCommandChain.execute(mergedMap);
             enhancedXsAppJson = JSON.parse(enhancedMap.get(XSAPP_JSON_FILENAME)!);

@@ -41,8 +41,7 @@ export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
     const adapt = async (baseFiles: ReadonlyMap<string, string>, appVariant: AppVariant) => {
         appVariants.push(appVariant);
         const baseApp = BaseApp.fromFiles(baseFiles);
-        const adapted = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
-        return adapter.createMergeCommandChain(baseApp, appVariant).execute(adapted);
+        return adapter.createAdaptCommandChain(baseApp, appVariant).execute();
     };
 
     let files = await fetchFilesPromises.shift()!; // original app files

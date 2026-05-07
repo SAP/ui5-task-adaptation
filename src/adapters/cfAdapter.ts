@@ -1,6 +1,6 @@
 import { IConfiguration } from "../model/configuration.js";
 import { dependsOn, getCommonManifestUpdateCommands, getCommonPostCommands, IAdapter } from "./adapter.js";
-import { AdaptCommandChain, ManifestUpdateCommandChain, MergeCommandChain, PostCommandChain, SetupCommandChain } from "./commands/command.js";
+import { AdaptCommandChain, ManifestUpdateCommandChain, PostCommandChain, SetupCommandChain } from "./commands/command.js";
 import { IAppVariantIdHierarchyManifestItem } from "../model/appVariantIdHierarchyItem.js";
 import XsAppJsonEnhanceRoutesCommand from "./commands/xsAppJsonEnhanceRoutesCommand.js";
 import BaseApp from "../baseApp.js";
@@ -30,17 +30,12 @@ export default class CFAdapter implements IAdapter {
             appVariantId: baseApp.id,
             version: baseApp.version
         } as IAppVariantIdHierarchyManifestItem;
-        return new AdaptCommandChain(baseApp.files, [
+        const manifestChanges = appVariant.getProcessedManifestChanges();
+        return new AdaptCommandChain(baseApp.files, appVariant.getProcessedFiles(), [
             new ManifestUpdateCommandChain([
                 ...getCommonManifestUpdateCommands(baseApp, appVariant, appVariantIdHierarchyItem),
                 new UpdateCloudPlatformCommand(this.configuration.sapCloudService),
             ]),
-        ]);
-    }
-
-    createMergeCommandChain(baseApp: BaseApp, appVariant: AppVariant): MergeCommandChain {
-        const manifestChanges = appVariant.getProcessedManifestChanges();
-        return new MergeCommandChain(appVariant.getProcessedFiles(), [
             new I18nPropertiesMergeCommand(baseApp.i18nPath, appVariant.prefix, manifestChanges),
             new XsAppJsonMergeCommand(),
         ]);

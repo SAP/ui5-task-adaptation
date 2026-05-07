@@ -33,25 +33,6 @@ export abstract class AdaptCommand {
 }
 
 
-export class AdaptCommandChain {
-    constructor(private files: ReadonlyMap<string, string>, private commands: AdaptCommand[]) { }
-
-    /**
-     * Executes all commands in the chain that accept the given filename
-     */
-    async execute(): Promise<ReadonlyMap<string, string>> {
-        const filesCopy = new Map(this.files);
-        for (const [filename] of filesCopy) {
-            for (const command of this.commands) {
-                if (command.accept(filename)) {
-                    await command.execute(filesCopy, filename);
-                }
-            }
-        }
-        return filesCopy;
-    }
-}
-
 
 export abstract class MergeCommand {
     readonly commandType = "merge";
@@ -66,32 +47,7 @@ export abstract class MergeCommand {
 }
 
 
-/**
- * CommandChain implements the Chain of Responsibility pattern
- * It manages a collection of commands and executes them in sequence
- */
-export class MergeCommandChain {
-    constructor(private appVariantFiles: ReadonlyMap<string, string>, private commands: MergeCommand[] = []) { }
 
-    /**
-     * Executes all commands in the chain that accept the given filename
-     * @param files - Map of all files being processed
-     */
-    async execute(files: ReadonlyMap<string, string>): Promise<ReadonlyMap<string, string>> {
-        const filesCopy = new Map(files);
-        for (const [filename, appVariantContent] of this.appVariantFiles) {
-            const acceptedCommands = this.commands.filter(command => command.accept(filename));
-            if (acceptedCommands.length > 0) {
-                for (const command of acceptedCommands) {
-                    await command.execute(filesCopy, filename, appVariantContent);
-                }
-            } else {
-                filesCopy.set(filename, appVariantContent);
-            }
-        }
-        return filesCopy;
-    }
-}
 
 
 export abstract class ManifestUpdateCommand {
@@ -154,6 +110,42 @@ export class PostCommandChain {
         const filesCopy = new Map(files);
         for (const command of this.commands) {
             await command.execute(filesCopy);
+        }
+        return filesCopy;
+    }
+}
+
+export class AdaptCommandChain {
+    private adaptCommands: AdaptCommand[];
+    private mergeCommands: MergeCommand[];
+
+    constructor(
+        private files: ReadonlyMap<string, string>, 
+        private appVariantFiles: ReadonlyMap<string, string>,
+        commands: (AdaptCommand | MergeCommand)[]
+    ) {
+        this.adaptCommands = commands.filter((c): c is AdaptCommand => c.commandType === "adapt");
+        this.mergeCommands = commands.filter((c): c is MergeCommand => c.commandType === "merge");
+    }
+
+    async execute(): Promise<ReadonlyMap<string, string>> {
+        const filesCopy = new Map(this.files);
+        for (const [filename] of filesCopy) {
+            for (const command of this.adaptCommands) {
+                if (command.accept(filename)) {
+                    await command.execute(filesCopy, filename);
+                }
+            }
+        }
+        for (const [filename, appVariantContent] of this.appVariantFiles) {
+            const acceptedCommands = this.mergeCommands.filter(command => command.accept(filename));
+            if (acceptedCommands.length > 0) {
+                for (const command of acceptedCommands) {
+                    await command.execute(filesCopy, filename, appVariantContent);
+                }
+            } else {
+                filesCopy.set(filename, appVariantContent);
+            }
         }
         return filesCopy;
     }

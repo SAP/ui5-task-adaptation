@@ -1,6 +1,6 @@
 import esmock from "esmock";
 import sinon, { SinonSandbox } from "sinon";
-import { MergeCommandChain } from "../../../../src/adapters/commands/command.js";
+import { AdaptCommandChain } from "../../../../src/adapters/commands/command.js";
 import I18nPropertiesMergeCommand from "../../../../src/adapters/commands/i18nPropertiesMergeCommand.js";
 import CFAdapter from "../../../../src/adapters/cfAdapter.js";
 import AppVariant from "../../../../src/appVariant.js";
@@ -67,10 +67,10 @@ describe("I18nPropertiesMergeCommand", () => {
 
             const baseApp = await BaseApp.fromFiles(baseAppFiles);
             const appVariant = await AppVariant.fromFiles(appVariantFiles);
-            const mergeCommandChain = new MergeCommandChain(appVariant.getProcessedFiles(), [
+            const adaptCommandChain = new AdaptCommandChain(baseApp.files, appVariant.getProcessedFiles(), [
                 new I18nPropertiesMergeCommand(baseApp.i18nPath, appVariant.prefix, appVariant.getProcessedManifestChanges())
             ]);
-            const files = await mergeCommandChain.execute(baseApp.files);
+            const files = await adaptCommandChain.execute();
 
             const expectedResources = [
                 "manifest.json",
