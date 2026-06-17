@@ -40,14 +40,14 @@ export default class FsUtil {
     }
 
 
-    static async readFilesRecursively(rootDirectory: string): Promise<Map<string, string>> {
+    static async readFilesRecursively(rootDirectory: string): Promise<Map<string, Buffer>> {
         const entries = await fs.readdir(rootDirectory, { withFileTypes: true, recursive: true });
         const fileReadTasks = entries
             .filter(entry => entry.isFile())
-            .map(async (entry): Promise<[string, string]> => {
+            .map(async (entry): Promise<[string, Buffer]> => {
                 const entryPath = path.join(entry.parentPath, entry.name);
                 const relativeFilePath = path.relative(rootDirectory, entryPath);
-                const content = await fs.readFile(entryPath, "utf-8");
+                const content = await fs.readFile(entryPath);
                 return [relativeFilePath, content];
             });
         return new Map(await Promise.all(fileReadTasks));

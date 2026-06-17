@@ -96,7 +96,7 @@ export default class AbapRepository implements IRepository {
 
 
     @cached()
-    async fetch(resource: IAbapResource): Promise<Map<string, string>> {
+    async fetch(resource: IAbapResource): Promise<Map<string, Buffer>> {
         const encodedRepoName = encodeURIComponent(resource.appName);
         const provider = await this.abapProvider.get(this.configuration);
         const ui5Repo = provider.getUi5AbapRepository();

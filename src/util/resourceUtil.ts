@@ -3,6 +3,31 @@ import { posix as path } from "path";
 
 const UTF8 = "utf8";
 
+/**
+ * Extensions of files whose contents are processed by the adaptation
+ * pipeline as text. Anything outside this whitelist is treated as binary
+ * (e.g. images, fonts) and is saved to the workspace verbatim by WorkspaceManager.
+ *
+ * Kept in sync with EXTENSIONS_TO_PROCESS in appVariant.ts.
+ */
+export const TEXT_EXTENSIONS: ReadonlySet<string> = new Set([
+    "js",
+    "json",
+    "xml",
+    "html",
+    "properties",
+    "change",
+    "appdescr_variant",
+    "ctrl_variant",
+    "ctrl_variant_change",
+    "ctrl_variant_management_change",
+    "variant",
+    "fioriversion",
+    "codeChange",
+    "xmlViewChange",
+    "context",
+]);
+
 export default class ResourceUtil {
 
     static getRootFolder(projectNamespace?: string) {
@@ -30,17 +55,17 @@ export default class ResourceUtil {
      * NOTE: to write in project folder (folder where 'webapp',
      * 'package.json', 'ui5.yaml' located), use writeInProject method.
      * @param dir The directory to write files to.
-     * @param files A Map of file paths and their contents.
+     * @param files A Map of file paths and their contents as Buffer.
      * @returns A promise that resolves when all files have been written.
      */
-    static write(dir: string, files: Map<string, string>) {
+    static write(dir: string, files: Map<string, Buffer>) {
         const fsTarget = resourceFactory.createAdapter({
             fsBasePath: dir,
             virBasePath: "/"
         });
         const promises: Promise<void>[] = [];
-        files.forEach((string, filename) => {
-            const resource = resourceFactory.createResource({ path: "/" + filename, string });
+        files.forEach((content, filename) => {
+            const resource = ResourceUtil.createResourceFromContent("/" + filename, content);
             promises.push(fsTarget.write(resource));
         });
         return Promise.all(promises);
@@ -51,24 +76,24 @@ export default class ResourceUtil {
      * Write files to the project folder (folder where 'webapp',
      * 'package.json', 'ui5.yaml' located), use writeInProject method.
      * @param dir The directory to write files to.
-     * @param files A Map of file paths and their contents.
+     * @param files A Map of file paths and their contents as Buffer.
      * @returns A promise that resolves when all files have been written.
      */
-    static writeInProject(dir: string, files: Map<string, string>) {
+    static writeInProject(dir: string, files: Map<string, Buffer>) {
         return ResourceUtil.write(path.join("./", dir), files);
     }
 
 
     /*
-     * Search files in the given folder, excluding specified glob patterns. 
+     * Search files in the given folder, excluding specified glob patterns.
      * NOTE: to search in project folder (folder where 'webapp',
      * 'package.json', 'ui5.yaml' located), use byGlobInProject method.
      * @param dir The directory to search in.
-     * @param pattern The glob pattern to match files, e.g., "/ui5AppInfo.json". 
-     * @param excludes An array of glob patterns to exclude from the search. 
-     * @returns A promise that resolves to a Map of file paths and their contents.
+     * @param pattern The glob pattern to match files, e.g., "/ui5AppInfo.json".
+     * @param excludes An array of glob patterns to exclude from the search.
+     * @returns A promise that resolves to a Map of file paths and their contents as Buffer.
      */
-    static byGlob(dir: string, pattern: string, excludes: string[] = []): Promise<Map<string, string>> {
+    static byGlob(dir: string, pattern: string, excludes: string[] = []): Promise<Map<string, Buffer>> {
         const adapter = resourceFactory.createAdapter({
             fsBasePath: dir,
             virBasePath: "/",
@@ -80,12 +105,12 @@ export default class ResourceUtil {
 
     /*
      * Search files in the adaptation project (folder where 'webapp',
-     * 'package.json', 'ui5.yaml' located), excluding specified glob patterns. 
-     * @param pattern The glob pattern to match files, e.g., "/ui5AppInfo.json". 
-     * @param excludes An array of glob patterns to exclude from the search. 
-     * @returns A promise that resolves to a Map of file paths and their contents.
+     * 'package.json', 'ui5.yaml' located), excluding specified glob patterns.
+     * @param pattern The glob pattern to match files, e.g., "/ui5AppInfo.json".
+     * @param excludes An array of glob patterns to exclude from the search.
+     * @returns A promise that resolves to a Map of file paths and their contents as Buffer.
      */
-    static byGlobInProject(pattern: string, excludes: string[] = []): Promise<Map<string, string>> {
+    static byGlobInProject(pattern: string, excludes: string[] = []): Promise<Map<string, Buffer>> {
         return ResourceUtil.byGlob("./", pattern, [
             "/node_modules",
             "/dist",
@@ -109,11 +134,20 @@ export default class ResourceUtil {
     }
 
 
-    static createResource(filename: string, projectNamespace: string, content: string) {
-        return resourceFactory.createResource({
-            path: this.getResourcePath(projectNamespace, filename),
-            string: content
-        });
+    static createResource(filename: string, projectNamespace: string, content: string | Buffer) {
+        return ResourceUtil.createResourceFromContent(
+            this.getResourcePath(projectNamespace, filename),
+            content
+        );
+    }
+
+
+    private static createResourceFromContent(resourcePath: string, content: string | Buffer) {
+        return resourceFactory.createResource(
+            Buffer.isBuffer(content)
+                ? { path: resourcePath, buffer: content }
+                : { path: resourcePath, string: content }
+        );
     }
 
 
@@ -125,4 +159,23 @@ export default class ResourceUtil {
         }
         return files;
     }
+
+
+    /**
+     * Decodes the text-extension files of a buffer map to UTF-8 strings.
+     * Binary files (e.g. images, fonts) are dropped — they are expected to
+     * have been written to the workspace separately and are not relevant
+     * to the in-memory text pipeline.
+     */
+    static toTextMap(buffers: ReadonlyMap<string, Buffer>): ReadonlyMap<string, string> {
+        const text = new Map<string, string>();
+        buffers.forEach((buffer, filename) => {
+            if (TEXT_EXTENSIONS.has(path.extname(filename).slice(1))) {
+                text.set(filename, buffer.toString(UTF8));
+            }
+        });
+        return text;
+    }
+
+
 }

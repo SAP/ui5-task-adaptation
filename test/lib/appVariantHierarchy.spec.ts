@@ -41,9 +41,9 @@ describe("App Variant Hierarchy", () => {
         const appVariant1Path = TestUtil.getResourcePath("appVariant1", "webapp");
         sandbox.stub(AbapRepository.prototype, "fetch")
             .withArgs(sinon.match({ appName: "REPO_NAME_0" })).resolves(new Map([
-                ["manifest.json", TestUtil.getResource("manifest.json")],
-                ["i18n/i18n.properties", "base=a"],
-                ["i18n/i18n_de.properties", "base=a_de"],
+                ["manifest.json", Buffer.from(TestUtil.getResource("manifest.json"))],
+                ["i18n/i18n.properties", Buffer.from("base=a")],
+                ["i18n/i18n_de.properties", Buffer.from("base=a_de")],
             ]))
             .withArgs(sinon.match({ appName: "REPO_NAME_1" })).resolves(await ResourceUtil.byGlob(appVariant1Path, "**/*"));
         const repository = new AbapRepository(options.configuration);
@@ -112,21 +112,21 @@ describe("App Variant Hierarchy", () => {
             "changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
             "changes/id_1707749484510_240_setDefault.ctrl_variant_management_change",
             "changes/id_1753705046493_197_codeExt.change",
-            "changes/customer_com_sap_application_variant_id/notsupported.testfile",
+            "changes/notsupported.testfile",
             "xs-app.json"
         ]);
         // It has replaced id_12345 of appVariant1 with the appVariant2
-        expect(files.get("changes/customer_com_sap_application_variant_id/coding/id_12345.js")).to.include("appVariant1");
-        expect(files.get("changes/customer_app_variant_2_id/coding/id_12345.js")).to.include("appVariant2");
+        expect(files.get("changes/customer_com_sap_application_variant_id/coding/id_12345.js")!.toString()).to.include("appVariant1");
+        expect(files.get("changes/customer_app_variant_2_id/coding/id_12345.js")!.toString()).to.include("appVariant2");
     });
 
     it("should merge i18n files of original app, appVariant1 and appVariant2", async () => {
-        expect(files.get("i18n/i18n.properties")!.split("\n")).to.include.members([
+        expect(files.get("i18n/i18n.properties")!.toString().split("\n")).to.include.members([
             "base=a", // was in original app
             "opensap.manage.products_sap.app.title=Manage Cargo", // merged from appVariant1
             "app.variant.2=a" // merged from appVariant2
         ]);
-        expect(files.get("i18n/i18n_de.properties")!.split("\n")).to.include.members([
+        expect(files.get("i18n/i18n_de.properties")!.toString().split("\n")).to.include.members([
             "base=a_de", // was in original app
             "customer.com.sap.application.variant.id.title=UI5 Task Adaptation DE", // merged from appVariant1
             "app.variant.2=a_de" // merged from appVariant2

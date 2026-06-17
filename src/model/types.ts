@@ -150,6 +150,6 @@ export type ServiceCredentials = {
     "sap.cloud.service"?: string;
 }
 
-export type FetchFilesPromise = Map<string, Promise<ReadonlyMap<string, string>>>;
+export type FetchFilesPromise = Map<string, Promise<ReadonlyMap<string, Buffer>>>;
 
 export { IConfiguration };

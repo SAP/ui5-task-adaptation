@@ -18,15 +18,15 @@ export default class CacheHolder {
         return path.join(os.tmpdir(), this.TEMP_TASK_DIR, ...paths.map(part => encodeFilename(part, { replacement: "_" })));
     }
 
-    static read(repoName: string, token: string): Promise<Map<string, string>> {
+    static read(repoName: string, token: string): Promise<Map<string, Buffer>> {
         const directory = this.getTempDir(repoName, token);
         if (this.isValid(repoName, "repoName") && this.isValid(token, "token") && fs.existsSync(directory)) {
             return ResourceUtil.byGlob(directory, "**/*");
         }
-        return Promise.resolve(new Map<string, string>());
+        return Promise.resolve(new Map<string, Buffer>());
     }
 
-    static async write(repoName: string, token: string, files: Map<string, string>): Promise<void> {
+    static async write(repoName: string, token: string, files: Map<string, Buffer>): Promise<void> {
         this.delete(repoName);
         if (this.isValid(repoName, "repoName") && this.isValid(token, "token")) {
             await ResourceUtil.write(this.getTempDir(repoName, token), files);

@@ -6,20 +6,28 @@ import AppVariant from "./appVariant.js";
 import BaseApp from "./baseApp.js";
 import { ITaskParameters, UI5BuilderTools } from "./model/types.js";
 import { initialize } from "./landscapeConfiguration.js";
+import WorkspaceManager from "./util/workspaceManager.js";
 
 /**
  * Creates an appVariant bundle from the provided resources.
  */
 export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
-    
+
     const ui5BuilderTools = {
         workspace,
         projectNamespace: options.projectNamespace,
         taskUtil,
     } as UI5BuilderTools;
-    
+
     dotenv.config();
     logBuilderVersion();
+
+    // We write original app files and appVariant files to workspace as they
+    // fetched, in this case these files will overwrite the adaptation project
+    // files, so we create a snapshot to later on overwrite the workspace files
+    // with adapatation project files again to make sure they are on top
+    const workspaceManager = new WorkspaceManager(workspace, options.projectNamespace);
+    await workspaceManager.createSnapshot();
 
     const { repository, adapter } = initialize(options.configuration);
     const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
@@ -35,19 +43,23 @@ export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
     // latest app variant on top. We reverse the list to process original
     // application first and then app variants in chronological order.
     const reversedHierarchy = appVariantIdHierarchy.toReversed();
-    const fetchFilesPromises = reversedHierarchy.map(variant => repository.fetch(variant)) as Promise<ReadonlyMap<string, string>>[];
-    const appVariants = new Array<AppVariant>();
+    const fetchFilesPromises = reversedHierarchy.map(variant => repository.fetch(variant)) as Promise<ReadonlyMap<string, Buffer>>[];
 
+    const appVariants = new Array<AppVariant>();
     const adapt = async (baseFiles: ReadonlyMap<string, string>, appVariant: AppVariant) => {
         appVariants.push(appVariant);
         const baseApp = BaseApp.fromFiles(baseFiles);
         return adapter.createAdaptCommandChain(baseApp, appVariant).execute();
     };
 
-    let files = await fetchFilesPromises.shift()!; // original app files
-    for (const appVariantFiles of fetchFilesPromises) {
-        files = await adapt(files, AppVariant.fromFiles(await appVariantFiles));
+    let files = await workspaceManager.saveAndConvert(fetchFilesPromises.shift()!); // original app files
+    for (const appVariantFilesPromise of fetchFilesPromises) {
+        const appVariantFiles = await workspaceManager.saveAndConvert(appVariantFilesPromise);
+        files = await adapt(files, AppVariant.fromFiles(appVariantFiles));
     }
+
+    // We need to overwrite base files with the adaptation project files
+    await workspaceManager.restoreSnapshot();
     files = await adapt(files, adaptationProject);
 
     const references = getReferences(appVariants, adaptationProject.id);

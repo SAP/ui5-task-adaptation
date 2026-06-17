@@ -79,8 +79,8 @@ export default class FetchPreviewResourcesCommand extends SetupCommand implement
         });
     }
 
-    private preReadLibs(reuseLibs: IReuseLibInfo[], repository: IRepository): Map<string, Promise<ReadonlyMap<string, string>>> {
-        const promises = new Map<string, Promise<ReadonlyMap<string, string>>>();
+    private preReadLibs(reuseLibs: IReuseLibInfo[], repository: IRepository): Map<string, Promise<ReadonlyMap<string, Buffer>>> {
+        const promises = new Map<string, Promise<ReadonlyMap<string, Buffer>>>();
         reuseLibs.forEach(lib => {
             log.info(`Downloading reuse library '${lib.html5AppName}' version '${lib.html5AppVersion}'`);
             const resource: IHtml5Resource = {
@@ -91,20 +91,21 @@ export default class FetchPreviewResourcesCommand extends SetupCommand implement
             }
             const promise = repository
                 .fetch(resource)
-                .then((libFiles: ReadonlyMap<string, string>) => this.moveLibraryFiles(libFiles, lib.html5AppName, lib.name));
+                .then((libFiles: ReadonlyMap<string, Buffer>) => this.moveLibraryFiles(libFiles, lib.html5AppName, lib.name));
             promises.set(lib.html5AppName, promise);
         });
         return promises;
     }
 
-    private moveLibraryFiles(inputFiles: ReadonlyMap<string, string>, libraryName: string, libId: string): ReadonlyMap<string, string> {
-        const files = new Map<string, string>();
-        inputFiles.forEach((content: string, filename: string) => {
+    private moveLibraryFiles(inputFiles: ReadonlyMap<string, Buffer>, libraryName: string, libId: string): ReadonlyMap<string, Buffer> {
+        const files = new Map<string, Buffer>();
+        inputFiles.forEach((content: Buffer, filename: string) => {
             const newFilename = path.join(libraryName, filename);
 
             // Source path in xs-app.json needs to be adjusted to new location
             if (filename.includes("xs-app.json")) {
-                content = this.modifyRoutes(content, libraryName, libId);
+                const modified = this.modifyRoutes(content.toString("utf8"), libraryName, libId);
+                content = Buffer.from(modified, "utf8");
             }
 
             files.set(newFilename, content);

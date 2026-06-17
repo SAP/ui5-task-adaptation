@@ -42,7 +42,7 @@ export default class HTML5Repository implements IRepository {
 
 
     @cached()
-    async fetch(resource: IHtml5Resource): Promise<Map<string, string>> {
+    async fetch(resource: IHtml5Resource): Promise<Map<string, Buffer>> {
         const { token, baseUri } = await this.getHtml5RepoInfo();
         return this.getAppZipEntries(resource, baseUri, token);
     }
@@ -120,7 +120,7 @@ export default class HTML5Repository implements IRepository {
     }
 
 
-    private async getAppZipEntries(resource: IHtml5Resource, html5RepoBaseUri: string, token: string): Promise<Map<string, string>> {
+    private async getAppZipEntries(resource: IHtml5Resource, html5RepoBaseUri: string, token: string): Promise<Map<string, Buffer>> {
         const { appName, appVersion, appHostId } = resource;
         const uri = `${html5RepoBaseUri}/applications/content/${appName}-${appVersion}/`;
         const zip = await this.download(token, appHostId, uri);

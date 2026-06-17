@@ -64,7 +64,7 @@ export default class LocalRepository implements IRepository {
     }
 
 
-    fetch(resource: ILocalResource): Promise<Map<string, string>> {
+    fetch(resource: ILocalResource): Promise<Map<string, Buffer>> {
         log.verbose(`Fetching base app files from local directory: ${resource.absolutePath}`);
         return FsUtil.readFilesRecursively(resource.absolutePath);
     }

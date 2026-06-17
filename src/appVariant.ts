@@ -1,6 +1,6 @@
 import { IChange } from "./model/types.js";
 import { dotToUnderscore, isManifestChange } from "./util/commonUtil.js";
-import ResourceUtil from "./util/resourceUtil.js";
+import ResourceUtil, { TEXT_EXTENSIONS } from "./util/resourceUtil.js";
 import { posix as path } from "path";
 import { moveFile, moveFiles } from "./util/movingHandler/changeFileMoveHandler.js";
 import RenameFilesCommand from "./adapters/commands/renameFilesCommand.js";
@@ -22,7 +22,7 @@ export default class AppVariant {
 
 
     static async fromWorkspace(workspace: IWorkspace, projectNamespace: string): Promise<AppVariant> {
-        const EXTENSIONS_TO_PROCESS = "js,json,xml,html,properties,change,appdescr_variant,ctrl_variant,ctrl_variant_change,ctrl_variant_management_change,variant,fioriversion,codeChange,xmlViewChange,context";
+        const EXTENSIONS_TO_PROCESS = Array.from(TEXT_EXTENSIONS).join(",");
         const resources = await workspace.byGlob(`/**/*.{${EXTENSIONS_TO_PROCESS}}`);
         const files = await ResourceUtil.toFileMap(resources, projectNamespace);
         return new AppVariant(files, resources);

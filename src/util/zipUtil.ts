@@ -1,6 +1,6 @@
 import AdmZip from "adm-zip";
 
-export async function unzipZipEntries(zip: Buffer): Promise<Map<string, string>> {
+export async function unzipZipEntries(zip: Buffer): Promise<Map<string, Buffer>> {
     let admZip;
     try {
         admZip = new AdmZip(zip);
@@ -12,6 +12,6 @@ export async function unzipZipEntries(zip: Buffer): Promise<Map<string, string>>
 }
 
 
-function mapEntries(entries: AdmZip.IZipEntry[]): Map<string, string> {
-    return new Map(entries.filter(entry => !entry.isDirectory).map(entry => [entry.entryName, entry.getData().toString("utf8")]));
+function mapEntries(entries: AdmZip.IZipEntry[]): Map<string, Buffer> {
+    return new Map(entries.filter(entry => !entry.isDirectory).map(entry => [entry.entryName, entry.getData()]));
 }
