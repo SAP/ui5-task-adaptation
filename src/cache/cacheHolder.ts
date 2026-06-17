@@ -14,7 +14,7 @@ export default class CacheHolder {
 
     private static TEMP_TASK_DIR = "ui5-task-adaptation";
 
-    private static getTempDir(...paths: string[]) {
+    static getTempDir(...paths: string[]) {
         return path.join(os.tmpdir(), this.TEMP_TASK_DIR, ...paths.map(part => encodeFilename(part, { replacement: "_" })));
     }
 
