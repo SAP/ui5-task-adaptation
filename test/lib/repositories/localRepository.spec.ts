@@ -1,7 +1,11 @@
+import * as chai from "chai";
 import * as fs from "node:fs/promises";
 import path from "node:path";
-import { expect } from "chai";
+import chaiAsPromised from "chai-as-promised";
 import LocalRepository from "../../../src/repositories/localRepository.js";
+
+chai.use(chaiAsPromised);
+const { expect } = chai;
 
 type AppChainNode = {
     id: string;
@@ -43,6 +47,19 @@ describe("LocalRepository", () => {
         return new LocalRepository();
     }
 
+    async function setupManualVariant(appId: string, descriptor: Record<string, unknown>): Promise<void> {
+        const appDir = path.join(adpDir, appId, "webapp");
+        await fs.mkdir(appDir, { recursive: true });
+        await fs.writeFile(path.join(appDir, "manifest.appdescr_variant"), JSON.stringify(descriptor));
+        process.env.ADP_BUILDER_DIR = "test/tmp/target/.adp";
+    }
+
+    async function expectInvalidReference(appId: string, descriptor: Record<string, unknown>): Promise<void> {
+        await setupManualVariant(appId, descriptor);
+        await expect(new LocalRepository().getAppVariantIdHierarchy(appId))
+            .to.be.rejectedWith(Error, "Invalid or missing 'reference'");
+    }
+
     describe("getAppVariantIdHierarchy", () => {
         it("returns the complete hierarchy from dynamically generated files", async () => {
             const localRepository = await setup();
@@ -72,7 +89,60 @@ describe("LocalRepository", () => {
             ]);
             process.env.ADP_BUILDER_DIR = "test/tmp/target/.adp";
             await expect(new LocalRepository().getAppVariantIdHierarchy("appId1"))
-                .to.be.rejectedWith(Error, "None of the paths exist");
+                .to.be.rejectedWith(Error, "App 'missingApp' not found");
+        });
+
+        it("throws when a self-referencing cycle is detected", async () => {
+            await generateAdpStructure([
+                { id: "appId1", reference: "appId1" }
+            ]);
+            process.env.ADP_BUILDER_DIR = "test/tmp/target/.adp";
+            await expect(new LocalRepository().getAppVariantIdHierarchy("appId1"))
+                .to.be.rejectedWith(Error, "Cycle detected in app variant hierarchy: 'appId1' was already visited");
+        });
+
+        it("throws when a multi-node cycle is detected", async () => {
+            await generateAdpStructure([
+                { id: "appId1", reference: "appId2" },
+                { id: "appId2", reference: "appId3" },
+                { id: "appId3", reference: "appId1" }
+            ]);
+            process.env.ADP_BUILDER_DIR = "test/tmp/target/.adp";
+            await expect(new LocalRepository().getAppVariantIdHierarchy("appId1"))
+                .to.be.rejectedWith(Error, "Cycle detected in app variant hierarchy: 'appId1' was already visited");
+        });
+
+        it("throws when manifest.appdescr_variant has no reference", async () => {
+            await expectInvalidReference("appId1", { id: "appId1" });
+        });
+
+        it("throws when manifest.appdescr_variant reference is not a string", async () => {
+            await expectInvalidReference("appId1", { id: "appId1", reference: 123 });
+        });
+
+        it("throws when manifest.appdescr_variant reference is an empty string", async () => {
+            await expectInvalidReference("appId1", { id: "appId1", reference: "" });
+        });
+
+        it("returns a single item for a base app without references", async () => {
+            await generateAdpStructure([
+                { id: "appId1" }
+            ]);
+            process.env.ADP_BUILDER_DIR = "test/tmp/target/.adp";
+            const hierarchy = await new LocalRepository().getAppVariantIdHierarchy("appId1");
+            expect(hierarchy).to.have.lengthOf(1);
+            expect(hierarchy[0].appName).to.equal("appId1");
+            expect(hierarchy[0].absolutePath).to.equal(path.join(adpDir, "appId1", "webapp"));
+        });
+
+        it("includes visited IDs in cycle error message", async () => {
+            await generateAdpStructure([
+                { id: "appId1", reference: "appId2" },
+                { id: "appId2", reference: "appId1" }
+            ]);
+            process.env.ADP_BUILDER_DIR = "test/tmp/target/.adp";
+            await expect(new LocalRepository().getAppVariantIdHierarchy("appId1"))
+                .to.be.rejectedWith(Error, "appId1 -> appId2 -> appId1");
         });
     });
 

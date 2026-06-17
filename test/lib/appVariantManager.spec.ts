@@ -2,7 +2,7 @@ import * as chai from "chai";
 import * as sinon from "sinon";
 import chaiAsPromised from "chai-as-promised";
 
-import AppVariant from "../../src/appVariantManager.js";
+import AppVariant from "../../src/appVariant.js";
 import { IAppVariantManifest } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";

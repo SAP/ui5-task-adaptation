@@ -40,7 +40,7 @@ export default class FetchPreviewResourcesCommand extends SetupCommand implement
     private async preparePreview(): Promise<FetchFilesPromise> {
         let ui5AppInfo: string = "";
         try {
-            ui5AppInfo = await FsUtil.readInProject("ui5AppInfo.json");
+            ui5AppInfo = await FsUtil.readInProject("ui5AppInfo.json", "utf-8") as string;
         } catch (error) {
             throw new Error(`ui5AppInfo.json is missing in project root, cannot process preview resources: ${error instanceof Error ? error.message : String(error)}`);
         }

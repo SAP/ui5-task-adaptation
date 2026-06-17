@@ -1,3 +1,7 @@
+import { getLogger } from "@ui5/logger";
+const log = getLogger("@ui5/task-adaptation::CommandChain");
+
+
 export abstract class SetupCommand {
     readonly commandType = "setup";
     /**
@@ -14,9 +18,13 @@ export class SetupCommandChain {
      * Executes all commands in the chain
      */
     async execute(): Promise<void> {
+        const timings: Timing[] = [];
         for (const command of this.commands) {
+            const start = performance.now();
             await command.execute();
+            pushTiming(command, timings, start);
         }
+        logTimings(this, timings);
     }
 }
 
@@ -33,26 +41,6 @@ export abstract class AdaptCommand {
 }
 
 
-export class AdaptCommandChain {
-    constructor(private files: ReadonlyMap<string, string>, private commands: AdaptCommand[]) { }
-
-    /**
-     * Executes all commands in the chain that accept the given filename
-     */
-    async execute(): Promise<ReadonlyMap<string, string>> {
-        const filesCopy = new Map(this.files);
-        for (const [filename] of filesCopy) {
-            for (const command of this.commands) {
-                if (command.accept(filename)) {
-                    await command.execute(filesCopy, filename);
-                }
-            }
-        }
-        return filesCopy;
-    }
-}
-
-
 export abstract class MergeCommand {
     readonly commandType = "merge";
     abstract accept(filename: string): boolean;
@@ -63,34 +51,6 @@ export abstract class MergeCommand {
      * @param appVariantContent - Content from the app variant
      */
     abstract execute(files: Map<string, string>, filename: string, appVariantContent: string): Promise<void>;
-}
-
-
-/**
- * CommandChain implements the Chain of Responsibility pattern
- * It manages a collection of commands and executes them in sequence
- */
-export class MergeCommandChain {
-    constructor(private appVariantFiles: ReadonlyMap<string, string>, private commands: MergeCommand[] = []) { }
-
-    /**
-     * Executes all commands in the chain that accept the given filename
-     * @param files - Map of all files being processed
-     */
-    async execute(files: ReadonlyMap<string, string>): Promise<ReadonlyMap<string, string>> {
-        const filesCopy = new Map(files);
-        for (const [filename, appVariantContent] of this.appVariantFiles) {
-            const acceptedCommands = this.commands.filter(command => command.accept(filename));
-            if (acceptedCommands.length > 0) {
-                for (const command of acceptedCommands) {
-                    await command.execute(filesCopy, filename, appVariantContent);
-                }
-            } else {
-                filesCopy.set(filename, appVariantContent);
-            }
-        }
-        return filesCopy;
-    }
 }
 
 
@@ -117,10 +77,14 @@ export class ManifestUpdateCommandChain extends AdaptCommand {
             throw new Error("Original application should have manifest.json in root folder");
         }
         const manifest = JSON.parse(manifestContent);
+        const timings: Timing[] = [];
         for (const command of this.commands) {
+            const start = performance.now();
             await command.execute(manifest);
+            pushTiming(command, timings, start);
         }
         files.set(filename, JSON.stringify(manifest));
+        logTimings(this, timings);
     }
 }
 
@@ -152,13 +116,75 @@ export class PostCommandChain {
      */
     async execute(files: ReadonlyMap<string, string>): Promise<ReadonlyMap<string, string>> {
         const filesCopy = new Map(files);
+        const timings: Timing[] = [];
         for (const command of this.commands) {
+            const start = performance.now();
             await command.execute(filesCopy);
+            pushTiming(command, timings, start);
         }
+        logTimings(this, timings);
         return filesCopy;
     }
 }
 
+
+export class AdaptCommandChain {
+    private adaptCommands: AdaptCommand[];
+    private mergeCommands: MergeCommand[];
+
+    constructor(
+        private files: ReadonlyMap<string, string>,
+        private appVariantFiles: ReadonlyMap<string, string>,
+        commands: (AdaptCommand | MergeCommand)[]
+    ) {
+        this.adaptCommands = commands.filter((c): c is AdaptCommand => c.commandType === "adapt");
+        this.mergeCommands = commands.filter((c): c is MergeCommand => c.commandType === "merge");
+    }
+
+    async execute(): Promise<ReadonlyMap<string, string>> {
+        const filesCopy = new Map(this.files);
+        const timings: Timing[] = [];
+        for (const command of this.adaptCommands) {
+            const start = performance.now();
+            for (const [filename] of filesCopy) {
+                if (command.accept(filename)) {
+                    await command.execute(filesCopy, filename);
+                }
+            }
+            pushTiming(command, timings, start);
+        }
+        for (const command of this.mergeCommands) {
+            const start = performance.now();
+            for (const [filename, appVariantContent] of this.appVariantFiles) {
+                if (command.accept(filename)) {
+                    await command.execute(filesCopy, filename, appVariantContent);
+                }
+            }
+            pushTiming(command, timings, start);
+        }
+        for (const [filename, appVariantContent] of this.appVariantFiles) {
+            const accepted = this.mergeCommands.some(command => command.accept(filename));
+            if (!accepted) {
+                filesCopy.set(filename, appVariantContent);
+            }
+        }
+        logTimings(this, timings);
+        return filesCopy;
+    }
+}
+
+
 export interface IPromiseCommand<T> {
     result: Promise<T>;
+}
+
+type Timing = { name: string; duration: number };
+
+function logTimings(chain: { constructor: { name: string } }, timings: Timing[]): void {
+    log.info(`${chain.constructor.name}:`);
+    timings.forEach(({ name, duration }) => log.info(`  ${name}: ${duration.toFixed(2)}ms`));
+}
+
+function pushTiming(command: { constructor: { name: string } }, timings: Timing[], start: number): void {
+    timings.push({ name: command.constructor.name, duration: performance.now() - start });
 }

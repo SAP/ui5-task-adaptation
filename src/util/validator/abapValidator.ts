@@ -1,7 +1,7 @@
 import { AbapTarget } from "@sap-ux/system-access";
 import { IAbapTargetMeta, IConfiguration, LandscapeType } from "../../model/configuration.js";
 import { validateObject } from "../commonUtil.js";
-import BtpUtils from "@sap-ux/btp-utils";
+import { isAppStudio } from "@sap-ux/btp-utils";
 import IValidator from "./validator.js";
 import { getLogger } from "@ui5/logger";
 
@@ -16,7 +16,7 @@ export default class AbapValidator implements IValidator {
             // if target configuration appears, we validate that it should be
             // either target/destination for BAS or target/url for IDE we're
             // trying to detect is it destination for BAS or url for IDE
-            const abapTargetProperties: Array<keyof AbapTarget> = BtpUtils.isAppStudio() ? ["destination"] : ["url"];
+            const abapTargetProperties: Array<keyof AbapTarget> = isAppStudio() ? ["destination"] : ["url"];
             validateObject(target, abapTargetProperties, "should be specified in ui5.yaml configuration/target");
             return target;
         } else if (destination) {

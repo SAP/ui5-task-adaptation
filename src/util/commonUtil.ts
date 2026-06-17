@@ -5,7 +5,7 @@ import { IConfiguration } from "../model/types.js";
 import Language from "../model/language.js";
 import { fileURLToPath } from "url";
 import { posix as path } from "path";
-import AppVariant from "../appVariantManager.js";
+import AppVariant from "../appVariant.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const log = Log.getLogger("rollup-plugin-ui5-resolve-task-adaptation");

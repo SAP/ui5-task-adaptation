@@ -1,11 +1,11 @@
-import AppVariant from "../appVariantManager.js";
-import BaseApp from "../baseAppManager.js";
+import AppVariant from "../appVariant.js";
+import BaseApp from "../baseApp.js";
 import { IAppVariantIdHierarchyManifestItem } from "../model/appVariantIdHierarchyItem.js";
 import { UI5BuilderTools } from "../model/types.js";
 import IRepository from "../repositories/repository.js";
 import AddAppVariantIdHierarchyCommand from "./commands/addAppVariantIdHierarchyCommand.js";
 import ApplyDescriptorChangesCommand from "./commands/applyDescriptorChangesCommand.js";
-import { AdaptCommandChain, IPromiseCommand, ManifestUpdateCommand, MergeCommandChain, PostCommand, PostCommandChain, SetupCommandChain } from "./commands/command.js";
+import { AdaptCommandChain, IPromiseCommand, ManifestUpdateCommand, PostCommand, PostCommandChain, SetupCommandChain } from "./commands/command.js";
 import FilterFilesCommand from "./commands/filterFilesCommand.js";
 import OmitDeletedResourcesCommand from "./commands/omitDeletedResourcesCommand.js";
 import RenameFilesCommand from "./commands/renameFilesCommand.js";
@@ -17,7 +17,6 @@ import WriteResourcesCommand from "./commands/writeResourcesCommand.js";
 export interface IAdapter {
     createSetupCommandChain(appId: string, repository: IRepository): SetupCommandChain;
     createAdaptCommandChain(baseApp: BaseApp, appVariant: AppVariant): AdaptCommandChain;
-    createMergeCommandChain(baseApp: BaseApp, appVariant: AppVariant): MergeCommandChain;
     createPostCommandChain(
         references: Map<string, string>,
         adaptationProject: AppVariant,

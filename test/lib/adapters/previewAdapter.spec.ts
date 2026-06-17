@@ -6,7 +6,7 @@ import ResourceUtil from "../../../src/util/resourceUtil.js";
 import { REUSE_DIR } from "../../../src/model/configuration.js";
 import { UI5BuilderTools } from "../../../src/model/types.js";
 import CFUtil from "../../../src/util/cfUtil.js";
-import AppVariant from "../../../src/appVariantManager.js";
+import AppVariant from "../../../src/appVariant.js";
 import TaskUtil from "@ui5/project/build/helpers/TaskUtil";
 
 

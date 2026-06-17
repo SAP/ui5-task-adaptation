@@ -9,9 +9,9 @@ export default class FsUtil {
      * @param filepath The relative file path from the project root (e.g. 'ui5AppInfo.json').
      * @returns A promise that resolves to the file content as a string.
      */
-    static async readInProject(filepath: string): Promise<string> {
+    static async readInProject(filepath: string, encoding?: BufferEncoding): Promise<Buffer | string> {
         try {
-            return await fs.readFile(path.join(process.cwd(), filepath), "utf-8");
+            return await fs.readFile(path.join(process.cwd(), filepath), encoding);
         } catch (error: any) {
             const isProjectRoot = await FsUtil.fileExists(path.join(process.cwd(), "ui5.yaml"));
             if (!isProjectRoot) {
@@ -39,42 +39,17 @@ export default class FsUtil {
         }
     }
 
-    
-    static async readFilesRecursively(rootDirectory: string): Promise<Map<string, string>> {	
-        const directoriesToScan: string[] = [rootDirectory];	
-        const fileReadTasks: Array<Promise<[string, string]>> = [];	
 
-        while (directoriesToScan.length > 0) {	
-            const currentDirectory = directoriesToScan.pop();	
-            if (!currentDirectory) {	
-                continue;	
-            }	
-
-            const entries = await fs.readdir(currentDirectory, { withFileTypes: true });	
-            for (const entry of entries) {	
-                const entryPath = path.join(currentDirectory, entry.name);	
-                if (entry.isDirectory()) {	
-                    directoriesToScan.push(entryPath);	
-                } else if (entry.isFile()) {	
-                    fileReadTasks.push((async () => {	
-                        const relativeFilePath = path.relative(rootDirectory, entryPath);	
-                        const content = await fs.readFile(entryPath, "utf-8");	
-                        return [relativeFilePath, content];	
-                    })());	
-                }	
-            }	
-        }	
-
-        return new Map(await Promise.all(fileReadTasks));	
-    }	
-
-
-    static async exists(filePath: string): Promise<boolean> {	
-        try {	
-            await fs.access(filePath);	
-            return true;	
-        } catch {	
-            return false;	
-        }	
+    static async readFilesRecursively(rootDirectory: string): Promise<Map<string, string>> {
+        const entries = await fs.readdir(rootDirectory, { withFileTypes: true, recursive: true });
+        const fileReadTasks = entries
+            .filter(entry => entry.isFile())
+            .map(async (entry): Promise<[string, string]> => {
+                const entryPath = path.join(entry.parentPath, entry.name);
+                const relativeFilePath = path.relative(rootDirectory, entryPath);
+                const content = await fs.readFile(entryPath, "utf-8");
+                return [relativeFilePath, content];
+            });
+        return new Map(await Promise.all(fileReadTasks));
     }
 }
