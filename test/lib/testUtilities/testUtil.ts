@@ -13,8 +13,10 @@ export default class TestUtil {
 
     static ENV = { env: { "CF_COLOR": "false" } };
 
+    private static cwd = process.cwd().replaceAll("\\", "/");
+
     static getResource(filename: string): string {
-        return fs.readFileSync(this.getResourcePath(filename), { encoding: "utf-8" });
+        return fs.readFileSync(this.getResourcePath(filename), { encoding: "utf-8" }).replaceAll("\r\n", "\n");
     }
 
     static getResourceXml(filename: string): string {
@@ -36,7 +38,7 @@ export default class TestUtil {
     }
 
     static getResourcePath(...filename: string[]): string {
-        return path.join(...[process.cwd(), "test", "resources", ...filename]);
+        return path.join(...[TestUtil.cwd, "test", "resources", ...filename]);
     }
 
     static async getWorkspace(projectName: string, namespace: string) {
@@ -57,7 +59,7 @@ export default class TestUtil {
         //     projectBuildContext: buildContext.createProjectContext({ project })
         // });
         // return { workspace, taskUtil };
-        const folder = path.join(process.cwd(), "test", "resources", projectName);
+        const folder = path.join(TestUtil.cwd, "test", "resources", projectName);
         return { workspace: new Workspace(folder, namespace), taskUtil: new TaskUtil() };
     }
 
@@ -176,9 +178,8 @@ class Workspace implements IWorkspace {
             const files = await glob(webappFolder + "/**/*.*");
             for (const file of files) {
                 const normalizedFile = file.replaceAll("\\", "/");
-                const normalizedWebappFolder = webappFolder.replaceAll("\\", "/");
                 if (fs.statSync(file).isFile()) {
-                    const relativePath = path.relative(normalizedWebappFolder, normalizedFile);
+                    const relativePath = path.relative(webappFolder, normalizedFile);
                     const content = fs.readFileSync(file, { encoding: "utf-8" });
                     const resource = ResourceUtil.createResource(relativePath, this.namespace, content);
                     this.resources.set(resource.getPath(), resource);
