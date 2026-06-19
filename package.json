@@ -6,8 +6,8 @@
     "scripts": {
         "test": "npm run lint && npm run build && npm run coverage",
         "lint": "eslint ./src ./test/lib",
-        "dev": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --import=tsx 'test/lib/**/*.spec.ts'",
-        "perf": "UI5_LOG_LVL=error mocha --no-timeouts --no-warnings --import=tsx 'test/lib/**/*.perf.ts'",
+        "dev": "node --env-file=.env.test ./node_modules/.bin/mocha --no-timeouts --no-warnings --import=tsx 'test/lib/**/*.spec.ts'",
+        "perf": "node --env-file=.env.test ./node_modules/.bin/mocha --no-timeouts --no-warnings --import=tsx 'test/lib/**/*.perf.ts'",
         "coverage": "c8 npm run dev",
         "preversion": "npm test",
         "version": "git-chglog --next-tag v$npm_package_version -o CHANGELOG.md && git add CHANGELOG.md",
