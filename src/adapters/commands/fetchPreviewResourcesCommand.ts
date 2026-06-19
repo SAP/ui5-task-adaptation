@@ -1,5 +1,5 @@
 import FsUtil from "../../util/fsUtil.js";
-import path from "path";
+import { posix as path } from "path";
 import { IPromiseCommand, SetupCommand } from "./command.js";
 import { FetchFilesPromise, IReuseLibInfo } from "../../model/types.js";
 import { Route, XsApp } from "../../util/cf/xsAppJsonUtil.js";
