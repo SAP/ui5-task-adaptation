@@ -95,7 +95,7 @@ export default class ResourceUtil {
 
 
     static getString(resource: any): Promise<string> {
-        return resource.getBuffer().then((buffer: Buffer) => buffer.toString(UTF8));
+        return resource.getBuffer().then((buffer: Buffer) => buffer.toString(UTF8).replaceAll("\r\n", "\n"));
     }
 
 

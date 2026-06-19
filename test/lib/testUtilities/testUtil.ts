@@ -180,7 +180,7 @@ class Workspace implements IWorkspace {
                 const normalizedFile = file.replaceAll("\\", "/");
                 if (fs.statSync(file).isFile()) {
                     const relativePath = path.relative(webappFolder, normalizedFile);
-                    const content = fs.readFileSync(file, { encoding: "utf-8" });
+                    const content = fs.readFileSync(file, { encoding: "utf-8" }).replaceAll("\r\n", "\n");
                     const resource = ResourceUtil.createResource(relativePath, this.namespace, content);
                     this.resources.set(resource.getPath(), resource);
                 }
