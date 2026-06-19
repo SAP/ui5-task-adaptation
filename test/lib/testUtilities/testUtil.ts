@@ -175,8 +175,10 @@ class Workspace implements IWorkspace {
             const webappFolder = path.join(this.folder, "webapp");
             const files = await glob(webappFolder + "/**/*.*");
             for (const file of files) {
+                const normalizedFile = file.replaceAll("\\", "/");
+                const normalizedWebappFolder = webappFolder.replaceAll("\\", "/");
                 if (fs.statSync(file).isFile()) {
-                    const relativePath = path.relative(webappFolder, file);
+                    const relativePath = path.relative(normalizedWebappFolder, normalizedFile);
                     const content = fs.readFileSync(file, { encoding: "utf-8" });
                     const resource = ResourceUtil.createResource(relativePath, this.namespace, content);
                     this.resources.set(resource.getPath(), resource);
