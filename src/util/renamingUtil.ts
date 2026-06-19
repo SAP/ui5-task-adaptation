@@ -19,7 +19,7 @@ export function renameMap(content: string, references: Map<string, string>, igno
         log.info(`Ignored renaming: ${ignoredReferenceKeys.join(", ")}`);
     }
 
-    const searchTerms = [...references.keys()];
+    const searchTerms = [...references.keys()].filter(key => key.length > 0);
     if (!content || !searchTerms || searchTerms.length === 0) {
         return content;
     }
