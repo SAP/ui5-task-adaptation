@@ -46,7 +46,7 @@ export default class FsUtil {
             .filter(entry => entry.isFile())
             .map(async (entry): Promise<[string, Buffer]> => {
                 const entryPath = path.join(entry.parentPath, entry.name);
-                const relativeFilePath = path.relative(rootDirectory, entryPath);
+                const relativeFilePath = path.relative(rootDirectory, entryPath).replaceAll("\\", "/");
                 const content = await fs.readFile(entryPath);
                 return [relativeFilePath, content];
             });
