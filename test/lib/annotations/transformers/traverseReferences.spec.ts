@@ -53,7 +53,7 @@ describe("TraverseReferences", () => {
             `<Annotations Target="SAP__core.SameTarget">
                 <Annotation Term="SAP__core.ShouldBeMerged" />
             </Annotations>`);
-        const { files } = createAnnotationFiles(sandbox, dataSources, [
+        const { files } = await createAnnotationFiles(sandbox, dataSources, [
             { xml: child, uri: "/odata/v2/reference/to/child1", name: "CHILD_NAMESPACE" },
             { xml: parent, uri: "/odata/v2/ManifestConfigurationService/$metadata", name: "mainService" }
         ]);
@@ -88,7 +88,7 @@ describe("TraverseReferences", () => {
                 <Annotation Term="SAP__core.SameTerm" Qualifier="ShouldNotOverwrite" />
                 <Annotation Term="SAP__core.ShouldBeMerged" />
             </Annotations>`);
-        const { files } = createAnnotationFiles(sandbox, dataSources, [
+        const { files } = await createAnnotationFiles(sandbox, dataSources, [
             { xml: child, uri: "/odata/v2/reference/to/child1", name: "CHILD_NAMESPACE" },
             { xml: parent, uri: "/odata/v2/ManifestConfigurationService/$metadata", name: "mainService" }
         ]);
@@ -122,7 +122,7 @@ describe("TraverseReferences", () => {
             `<Annotations Target="SAP__core.ShouldBeMerged">
                 <Annotation Term="SAP__core.Currency" />
             </Annotations>`);
-        const { files } = createAnnotationFiles(sandbox, dataSources, [
+        const { files } = await createAnnotationFiles(sandbox, dataSources, [
             { xml: child, uri: "/odata/v2/reference/to/child1", name: "CHILD_NAMESPACE" },
             { xml: odata, uri: "/odata/v2/ManifestConfigurationService/$metadata", name: "mainService" }
         ]);
@@ -162,7 +162,7 @@ describe("TraverseReferences", () => {
         const CHILD2_FOLDER = "annotations/v4/metadata-2-child2-v4/";
 
         const dataSourceManager = new DataSourceManager();
-        dataSourceManager.addDataSources({
+        await dataSourceManager.addDataSources({
             [PARENT_NAME]: {
                 "uri": PARENT_URL,
                 "type": isOData ? "OData" : "ODataAnnotation"
@@ -202,9 +202,9 @@ describe("TraverseReferences", () => {
         }
     }
 
-    function createAnnotationFiles(sandbox: SinonSandbox, dataSources: any, annotations: IChild[]): IUnderTestResult {
+    async function createAnnotationFiles(sandbox: SinonSandbox, dataSources: any, annotations: IChild[]): Promise<IUnderTestResult> {
         const dataSourceManager = new DataSourceManager();
-        dataSourceManager.addDataSources(dataSources);
+        await dataSourceManager.addDataSources(dataSources);
         const languages = [new Language("EN", "en", true)];
         const i18nManager = new I18nManager("model1", "appVariantId1", languages);
         const serviceRequestor = new ServiceRequestor({}, repository);
@@ -235,7 +235,7 @@ describe("TraverseReferences", () => {
             "uri": "/odata/v2/annotationName1",
             "type": "ODataAnnotation",
         }
-        const { stub, files } = createAnnotationFiles(sandbox, dataSourcesClone, [
+        const { stub, files } = await createAnnotationFiles(sandbox, dataSourcesClone, [
             { xml: odataAnnotation, uri: "/odata/v2/annotationName1", name: "annotatioName1" },
             { xml: odata, uri: "/odata/v2/ManifestConfigurationService/$metadata", name: "mainService" }
         ]);

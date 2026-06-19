@@ -29,7 +29,7 @@ export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
     const workspaceManager = new WorkspaceManager(workspace, options.projectNamespace);
     await workspaceManager.createSnapshot();
 
-    const { repository, adapter } = initialize(options.configuration);
+    const { repository, adapter } = await initialize(options.configuration);
     const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
     const setupCommandChain = adapter.createSetupCommandChain(adaptationProject.reference, repository);
     await setupCommandChain.execute();

@@ -23,13 +23,13 @@ describe("LandscapeConfiguration", () => {
 
     describe("type is specified explicitly", () => {
 
-        it("should return CF adapter when type is 'cf'", () => {
-            const { adapter } = initialize({ ...CF_CONFIG, type: "cf" });
+        it("should return CF adapter when type is 'cf'", async () => {
+            const { adapter } = await initialize({ ...CF_CONFIG, type: "cf" });
             expect(adapter).to.be.instanceOf(CFAdapter);
         });
 
-        it("should return ABAP adapter when type is 'abap'", () => {
-            const { adapter } = initialize({ ...ABAP_CONFIG, type: "abap" });
+        it("should return ABAP adapter when type is 'abap'", async () => {
+            const { adapter } = await initialize({ ...ABAP_CONFIG, type: "abap" });
             expect(adapter).to.be.instanceOf(AbapAdapter);
         });
 
@@ -37,33 +37,33 @@ describe("LandscapeConfiguration", () => {
 
     describe("type is not specified — auto-detection", () => {
 
-        it("should detect CF type", () => {
-            const { adapter } = initialize({ ...CF_CONFIG });
+        it("should detect CF type", async () => {
+            const { adapter } = await initialize({ ...CF_CONFIG });
             expect(adapter).to.be.instanceOf(CFAdapter);
         });
 
-        it("should detect ABAP type", () => {
-            const { adapter } = initialize({ ...ABAP_CONFIG });
+        it("should detect ABAP type", async () => {
+            const { adapter } = await initialize({ ...ABAP_CONFIG });
             expect(adapter).to.be.instanceOf(AbapAdapter);
         });
 
-        it("should throw when no validator matches", () => {
-            expect(() => initialize({ appName: "appName" }))
-                .to.throw("'type' should be specified in ui5.yaml configuration: 'cf' or 'abap'");
+        it("should throw when no validator matches", async () => {
+            await expect(initialize({ appName: "appName" }))
+                .to.be.rejectedWith("'type' should be specified in ui5.yaml configuration: 'cf' or 'abap'");
         });
 
     });
 
     describe("type is invalid — fallback to auto-detection", () => {
 
-        it("should detect CF type when type is invalid", () => {
-            const { adapter } = initialize({ ...CF_CONFIG, type: "unknown" as any });
+        it("should detect CF type when type is invalid", async () => {
+            const { adapter } = await initialize({ ...CF_CONFIG, type: "unknown" as any });
             expect(adapter).to.be.instanceOf(CFAdapter);
         });
 
-        it("should throw when type is invalid and no validator matches", () => {
-            expect(() => initialize({ appName: "appName", type: "unknown" as any }))
-                .to.throw("'type' should be specified in ui5.yaml configuration: 'cf' or 'abap'");
+        it("should throw when type is invalid and no validator matches", async () => {
+            await expect(initialize({ appName: "appName", type: "unknown" as any }))
+                .to.be.rejectedWith("'type' should be specified in ui5.yaml configuration: 'cf' or 'abap'");
         });
 
     });

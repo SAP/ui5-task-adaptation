@@ -38,7 +38,7 @@ export default class AbapAnnotationManager implements IAnnotationManager {
         const serviceRequestor = new ServiceRequestor(this.configuration, this.repository);
 
         const dataSourceManager = new DataSourceManager();
-        dataSourceManager.addDataSources(baseAppManifest["sap.app"]?.dataSources);
+        await dataSourceManager.addDataSources(baseAppManifest["sap.app"]?.dataSources);
         const annotationFiles = await dataSourceManager.createAnnotationFiles(languages, i18nManager, serviceRequestor);
         const i18nFiles = i18nManager.createFiles(i18nPathName);
 
