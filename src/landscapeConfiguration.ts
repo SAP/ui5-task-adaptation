@@ -72,6 +72,10 @@ async function getAdapter(configuration: IConfiguration, annotationManager: IAnn
 
 
 async function getRepository(configuration: IConfiguration): Promise<IRepository> {
+    if (isLocal()) {
+        const { default: LocalRepository } = await import("./repositories/localRepository.js");
+        return new LocalRepository();
+    }
     switch (configuration.type) {
         case "abap": {
             const { default: AbapRepository } = await import("./repositories/abapRepository.js");
