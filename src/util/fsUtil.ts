@@ -9,9 +9,9 @@ export default class FsUtil {
      * @param filepath The relative file path from the project root (e.g. 'ui5AppInfo.json').
      * @returns A promise that resolves to the file content as a string.
      */
-    static async readInProject(filepath: string): Promise<string> {
+    static async readInProject(filepath: string, encoding?: BufferEncoding): Promise<Buffer | string> {
         try {
-            return await fs.readFile(path.join(process.cwd(), filepath), "utf-8");
+            return await fs.readFile(path.join(process.cwd(), filepath), encoding);
         } catch (error: any) {
             const isProjectRoot = await FsUtil.fileExists(path.join(process.cwd(), "ui5.yaml"));
             if (!isProjectRoot) {
@@ -37,5 +37,20 @@ export default class FsUtil {
             }
             throw e;
         }
+    }
+
+
+    static async readFilesRecursively(rootDirectory: string): Promise<Map<string, string>> {
+        const entries = await fs.readdir(rootDirectory, { withFileTypes: true, recursive: true });
+        const fileReadTasks = entries
+            .filter(entry => entry.isFile())
+            .map(async (entry): Promise<[string, string]> => {
+                const parentPath = entry.parentPath ?? entry.path; // node v20.11.0 fallback
+                const entryPath = path.join(parentPath, entry.name);
+                const relativeFilePath = path.relative(rootDirectory, entryPath).replaceAll("\\", "/");
+                const content = await fs.readFile(entryPath, "utf-8");
+                return [relativeFilePath, content];
+            });
+        return new Map(await Promise.all(fileReadTasks));
     }
 }

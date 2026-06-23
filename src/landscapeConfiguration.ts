@@ -6,6 +6,7 @@ import PreviewAdapter from "./adapters/previewAdapter.js";
 import IRepository from "./repositories/repository.js";
 import AbapRepository from "./repositories/abapRepository.js";
 import HTML5Repository from "./repositories/html5Repository.js";
+import LocalRepository from "./repositories/localRepository.js";
 import IAnnotationManager from "./annotations/annotationManager.js";
 import AbapAnnotationManager from "./annotations/abapAnnotationManager.js";
 import CFAnnotationManager from "./annotations/cfAnnotationManager.js";
@@ -14,6 +15,7 @@ import AbapValidator from "./util/validator/abapValidator.js";
 import IValidator, { isOneOf } from "./util/validator/validator.js";
 import { LANDSCAPE_TYPES, LandscapeType } from "./model/configuration.js";
 import { getLogger } from "@ui5/logger";
+import LocalAnnotationManager from "./annotations/localAnnotationManager.js";
 
 const log = getLogger("@ui5/task-adaptation::LandscapeConfiguration");
 
@@ -59,7 +61,7 @@ function getTypeByConfiguration(configuration: IConfiguration): LandscapeType {
 
 
 function getAdapter(configuration: IConfiguration, annotationManager: IAnnotationManager): IAdapter {
-    if (isPreview(configuration)) {
+    if (isPreview()) {
         return new PreviewAdapter(configuration);
     }
     switch (configuration.type) {
@@ -74,6 +76,9 @@ function getAdapter(configuration: IConfiguration, annotationManager: IAnnotatio
 
 
 function getRepository(configuration: IConfiguration): IRepository {
+    if (isLocal()) {
+        return new LocalRepository();
+    }
     switch (configuration.type) {
         case "abap":
             return new AbapRepository(configuration);
@@ -86,6 +91,9 @@ function getRepository(configuration: IConfiguration): IRepository {
 
 
 function getAnnotationManager(configuration: IConfiguration, repository: IRepository): IAnnotationManager {
+    if (isLocal()) {
+        return new LocalAnnotationManager();
+    }
     switch (configuration.type) {
         case "abap":
             return new AbapAnnotationManager(configuration, repository);
@@ -97,6 +105,11 @@ function getAnnotationManager(configuration: IConfiguration, repository: IReposi
 }
 
 
-function isPreview(configuration: IConfiguration) {
-    return process.env.ADP_BUILDER_MODE === "preview" || configuration.mode === "preview";
+function isLocal() {
+    return process.env.ADP_BUILDER_MODE === "local";
+}
+
+
+function isPreview() {
+    return process.env.ADP_BUILDER_MODE === "preview";
 }
