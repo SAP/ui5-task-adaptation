@@ -1,8 +1,13 @@
 import { initialize } from "../../src/landscapeConfiguration.js";
-import { expect } from "chai";
+import * as chai from "chai";
+import chaiAsPromised from "chai-as-promised";
 import AbapAdapter from "../../src/adapters/abapAdapter.js";
 import CFAdapter from "../../src/adapters/cfAdapter.js";
+import LocalRepository from "../../src/repositories/localRepository.js";
 import { IConfiguration } from "../../src/model/configuration.js";
+
+chai.use(chaiAsPromised);
+const { expect } = chai;
 
 describe("LandscapeConfiguration", () => {
 
@@ -64,6 +69,18 @@ describe("LandscapeConfiguration", () => {
         it("should throw when type is invalid and no validator matches", async () => {
             await expect(initialize({ appName: "appName", type: "unknown" as any }))
                 .to.be.rejectedWith("'type' should be specified in ui5.yaml configuration: 'cf' or 'abap'");
+        });
+
+    });
+
+    describe("local mode (ADP_BUILDER_MODE=local)", () => {
+
+        afterEach(() => delete process.env.ADP_BUILDER_MODE);
+
+        it("should return LocalRepository regardless of configuration type", async () => {
+            process.env.ADP_BUILDER_MODE = "local";
+            const { repository } = await initialize({ ...CF_CONFIG, type: "cf" });
+            expect(repository).to.be.instanceOf(LocalRepository);
         });
 
     });

@@ -168,4 +168,47 @@ describe("LocalRepository", () => {
             expect(annotationFiles.size).to.equal(0);
         });
     });
+
+    describe("getLocalFilesDir", () => {
+        it("throws when ADP_BUILDER_DIR is not set", async () => {
+            await expect(new LocalRepository().getAppVariantIdHierarchy("any"))
+                .to.be.rejectedWith("Environment variable 'ADP_BUILDER_DIR' is not set");
+        });
+
+        it("accepts Linux absolute path", async () => {
+            const absDir = path.resolve("test/tmp/target/.adp");
+            process.env.ADP_BUILDER_DIR = absDir;
+            await generateAdpStructure([{ id: "appId1" }]);
+            const hierarchy = await new LocalRepository().getAppVariantIdHierarchy("appId1");
+            expect(hierarchy[0].absolutePath).to.equal(path.join(absDir, "appId1", "webapp"));
+        });
+
+        it("resolves relative path against cwd", async () => {
+            process.env.ADP_BUILDER_DIR = "test/tmp/target/.adp";
+            await generateAdpStructure([{ id: "appId1" }]);
+            const hierarchy = await new LocalRepository().getAppVariantIdHierarchy("appId1");
+            expect(hierarchy[0].absolutePath).to.equal(path.join(process.cwd(), "test/tmp/target/.adp", "appId1", "webapp"));
+        });
+
+        it("strips trailing slash from relative path", async () => {
+            process.env.ADP_BUILDER_DIR = "test/tmp/target/.adp/";
+            await generateAdpStructure([{ id: "appId1" }]);
+            const hierarchy = await new LocalRepository().getAppVariantIdHierarchy("appId1");
+            expect(hierarchy[0].absolutePath).to.equal(path.join(process.cwd(), "test/tmp/target/.adp", "appId1", "webapp"));
+        });
+
+        it("handles backslash-separated relative path (Windows-style)", async () => {
+            process.env.ADP_BUILDER_DIR = "test\\tmp\\target\\.adp";
+            await generateAdpStructure([{ id: "appId1" }]);
+            const hierarchy = await new LocalRepository().getAppVariantIdHierarchy("appId1");
+            expect(hierarchy[0].absolutePath).to.equal(path.join(process.cwd(), "test/tmp/target/.adp", "appId1", "webapp"));
+        });
+
+        it("handles backslash-separated relative path with trailing backslash", async () => {
+            process.env.ADP_BUILDER_DIR = "test\\tmp\\target\\.adp\\";
+            await generateAdpStructure([{ id: "appId1" }]);
+            const hierarchy = await new LocalRepository().getAppVariantIdHierarchy("appId1");
+            expect(hierarchy[0].absolutePath).to.equal(path.join(process.cwd(), "test/tmp/target/.adp", "appId1", "webapp"));
+        });
+    });
 });

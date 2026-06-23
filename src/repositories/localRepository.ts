@@ -93,13 +93,14 @@ export default class LocalRepository implements IRepository {
 
 
     private getLocalFilesDir(): string {
-        const adpDirConfigured = process.env.ADP_BUILDER_DIR
-        if (adpDirConfigured && path.isAbsolute(adpDirConfigured)) {
-            return path.normalize(adpDirConfigured);
+        const adpDirConfigured = process.env.ADP_BUILDER_DIR;
+        if (adpDirConfigured) {
+            const unix = adpDirConfigured.replace(/\\/g, "/").replace(/\/+$/, "");
+            if (/^[A-Za-z]:/.test(adpDirConfigured) || path.isAbsolute(unix)) {
+                return unix;
+            }
+            return path.join(process.cwd(), unix);
         }
-        const adpDir = adpDirConfigured
-            ? path.normalize(adpDirConfigured).replace(/\\/g, "/").replace(/\/+$/, "").split("/")
-            : [".."];
-        return path.join(process.cwd(), ...adpDir);
+        throw new Error("Environment variable 'ADP_BUILDER_DIR' is not set. Please set it to the directory containing the local app files.");
     }
 }
