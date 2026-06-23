@@ -45,7 +45,8 @@ export default class FsUtil {
         const fileReadTasks = entries
             .filter(entry => entry.isFile())
             .map(async (entry): Promise<[string, Buffer]> => {
-                const entryPath = path.join(entry.parentPath, entry.name);
+                const parentPath = entry.parentPath ?? entry.path;
+                const entryPath = path.join(parentPath, entry.name);
                 const relativeFilePath = path.relative(rootDirectory, entryPath).replaceAll("\\", "/");
                 const content = await fs.readFile(entryPath);
                 return [relativeFilePath, content];
