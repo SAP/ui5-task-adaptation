@@ -4,6 +4,11 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0...HEAD).
 
+<a name="v1.6.5"></a>
+## [v1.6.5] - 2026-06-24
+### Added
+- Use environemnt variables `ADP_BUILDER_MODE=local` and `ADP_BUILDER_DIR=<path-to-base-app-files>` to build the Adaptation Project from local base app files offline - without accessing the remote repositories.
+
 <a name="v1.6.4"></a>
 ## [v1.6.4] - 2026-04-10
 ### Fixed

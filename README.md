@@ -23,6 +23,10 @@ target:
   destination: abc
 ```
 
+### Local/Offline Build
+Specify environment variables `ADP_BUILDER_MODE=local` and `ADP_BUILDER_DIR=<path-to-base-app-files>` to build the Adaptation Project from local base app files offline - without accessing the remote repositories.
+
+### More
 For more information, see [Create an Adaptation Project](https://help.sap.com/docs/bas/developing-sap-fiori-app-in-sap-business-application-studio/create-project) (on SAP S/4HANA Cloud) or [Create an Adaptation Project](https://help.sap.com/docs/bas/developing-sap-fiori-app-in-sap-business-application-studio/create-adaptation-project-c7b455d488bc4229af7efe0311546752) (on SAP BTP, Cloud Foundry environment).
 > [!NOTE]  
 > For SAP S/4HANA (on-premise) systems, a different builder is used.
