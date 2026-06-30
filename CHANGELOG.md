@@ -4,6 +4,16 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 
 A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0...HEAD).
 
+<a name="v1.6.6"></a>
+## [v1.6.6] - 2026-06-30
+### Fixed
+- CF: await `XsAppJsonEnhanceRoutesCommand` in `ProcessPreviewResourcesCommand` so the reuse-library `xs-app.json` is written with `endpoint`/`service` rewritten from `destination` (previously the enhance ran fire-and-forget and could race against `ResourceUtil.writeInProject`)
+
+<a name="v1.6.5"></a>
+## [v1.6.5] - 2026-06-24
+### Added
+- Use environemnt variables `ADP_BUILDER_MODE=local` and `ADP_BUILDER_DIR=<path-to-base-app-files>` to build the Adaptation Project from local base app files offline - without accessing the remote repositories.
+
 <a name="v1.6.4"></a>
 ## [v1.6.4] - 2026-04-10
 ### Fixed
@@ -151,6 +161,8 @@ A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task
 <a name="v1.0.0"></a>
 ## v1.0.0 - 2020-12-09
 
+[v1.6.6]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.5...v1.6.6
+[v1.6.5]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.4...v1.6.5
 [v1.6.4]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.3...v1.6.4
 [v1.6.3]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.2...v1.6.3
 [v1.6.2]: https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0...v1.6.2
