@@ -20,7 +20,7 @@ export default class ProcessPreviewResourcesCommand extends PostCommand {
         log.verbose(`Downloading reuse libraries to reuse folder`);
         const baseAppXsAppJson = files.get(XSAPP_JSON_FILENAME);
         const mergedFiles = await this.collectReuseLibFiles(await this.previewPromise, baseAppXsAppJson);
-        new XsAppJsonEnhanceRoutesCommand(this.serviceCredentialsPromise).execute(mergedFiles);
+        await new XsAppJsonEnhanceRoutesCommand(this.serviceCredentialsPromise).execute(mergedFiles);
         if (mergedFiles.size === 0) {
             return;
         }

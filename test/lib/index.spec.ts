@@ -162,6 +162,87 @@ describe("Index", () => {
                 expect(getAppZipEntriesStub.getCalls().length).to.equal(1);
             });
         });
+
+    it("XsAppJsonEnhanceRoutesCommand: should rewrite destination->endpoint/service for matching routes and leave unmatched routes intact", async () => {
+        const baseAppFiles = new Map([
+            ["manifest.json", TestUtil.getResource("manifest.json")],
+            ["i18n/i18n.properties", TestUtil.getResource("i18n.properties")],
+            ["xs-app.json", JSON.stringify({
+                authenticationMethod: "route",
+                routes: [
+                    {
+                        source: "^/sap/opu/odata/sap/ZTEST_SRV/",
+                        target: "/sap/opu/odata/sap/ZTEST_SRV/",
+                        authenticationType: "none",
+                        destination: "ZTEST_DEST"
+                    },
+                    {
+                        source: "^/unmatched/(.*)$",
+                        target: "/unmatched/$1",
+                        authenticationType: "none",
+                        destination: "NOT_IN_ENDPOINTS"
+                    },
+                    {
+                        source: "^/no-destination/(.*)$",
+                        target: "/no-destination/$1",
+                        authenticationType: "none"
+                    }
+                ]
+            })]
+        ]);
+        const repository = new HTML5Repository(OPTIONS.configuration);
+        sandbox.stub(repository, "getMetadata").resolves({ changedOn: "2200.01.01" });
+        sandbox.stub(repository, "getHtml5RepoInfo" as any).resolves({});
+        sandbox.stub(repository, "getAppZipEntries" as any).resolves(baseAppFiles);
+        const { workspace, taskUtil } = await getWorkspace(OPTIONS);
+
+        const indexStub = await esmock("../../src/index.js", {
+            "../../src/landscapeConfiguration.js": {
+                initialize: () => ({
+                    repository,
+                    adapter: new CFAdapter(OPTIONS.configuration),
+                    annotationManager: new CFAnnotationManager()
+                })
+            }
+        });
+        await indexStub({ workspace, options: OPTIONS, taskUtil });
+
+        const resources: any[] = (await workspace.byGlob("/**/*")).filter(byIsOmited(taskUtil));
+        const xsAppJsonResource = resources.find(r => r.getPath().includes("xs-app.json"));
+        const xsAppJson = JSON.parse(await xsAppJsonResource.getString());
+
+        // Order: appVariant1 xs-app.json routes come first (merged by XsAppJsonMergeCommand),
+        // then base app routes. XsAppJsonEnhanceRoutesCommand rewrites:
+        //   - route with destination matching an endpoint -> destination dropped, endpoint+service added
+        //   - route with destination NOT matching any endpoint -> kept untouched
+        //   - route without destination -> kept untouched
+        expect(xsAppJson.routes).to.deep.equal([
+            {
+                source: "^/sap/opu/odata/sap/ZTEST_SRV/",
+                target: "/sap/opu/odata/sap/ZTEST_SRV/",
+                authenticationType: "basic",
+                destination: "OVERRIDE"
+            },
+            {
+                source: "^/sap/opu/odata/sap/ZTEST_SRV/",
+                target: "/sap/opu/odata/sap/ZTEST_SRV/",
+                authenticationType: "none",
+                endpoint: "api-endpoint",
+                service: "test-service"
+            },
+            {
+                source: "^/unmatched/(.*)$",
+                target: "/unmatched/$1",
+                authenticationType: "none",
+                destination: "NOT_IN_ENDPOINTS"
+            },
+            {
+                source: "^/no-destination/(.*)$",
+                target: "/no-destination/$1",
+                authenticationType: "none"
+            }
+        ]);
+    });
 });
 
 

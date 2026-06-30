@@ -486,6 +486,52 @@ describe("adjust xs-app.json", () => {
         expect(resourceWrite.calledOnce, "ResourceUtil.writeInProject should not be called with no files").to.be.false;
     });
 
+    it("should await XsAppJsonEnhanceRoutesCommand before writing xs-app.json to project (regression: fire-and-forget)", async () => {
+        // Regression: if processPreviewResourcesCommand.ts forgets to await
+        // XsAppJsonEnhanceRoutesCommand, ResourceUtil.writeInProject is called
+        // BEFORE the routes get rewritten with endpoint/service. A reference-based
+        // assertion misses it because the Map gets mutated after the fact, so we
+        // snapshot the xs-app.json content at the moment of writeInProject.
+        const libFiles = new Map<string, string>([["xs-app.json", JSON.stringify({
+            authenticationMethod: "route",
+            routes: [{
+                source: "^/test/(.*)$",
+                target: "/test/$1",
+                authenticationType: "xsuaa",
+                destination: "ZTEST_DEST"
+            }]
+        })]]);
+        const defaultReuseLibFiles = new Map<string, string>([
+            ["Component.js", "sap.ui.define([], function() {});"],
+            ...libFiles
+        ]);
+        const repository = createRepository(defaultReuseLibFiles);
+        let xsAppJsonAtWriteTime: string | undefined;
+        sandbox.stub(ResourceUtil, "writeInProject").callsFake(async (_dir: string, files: Map<string, string>) => {
+            // snapshot content in the very moment writeInProject is invoked
+            xsAppJsonAtWriteTime = files.get("xs-app.json");
+            return [];
+        });
+        sandbox.stub(FsUtil, "readInProject").resolves(createAppInfoContent([createReuseLibInfo()]));
+        // Delay service credentials so fire-and-forget enhance cannot win the race
+        const slowCredentials = new Promise<ServiceCredentials>(resolve => {
+            setTimeout(() => resolve(credentials), 50);
+        });
+        const fetchCommand = new FetchPreviewResourcesCommand("reuse.lib1", repository);
+        await fetchCommand.execute();
+        const processCommand = new ProcessPreviewResourcesCommand(slowCredentials, fetchCommand.result);
+        await processCommand.execute(createBaseFiles(createBaseXsAppJson()));
+
+        expect(xsAppJsonAtWriteTime, "writeInProject was not called").to.not.be.undefined;
+        const written = JSON.parse(xsAppJsonAtWriteTime!);
+        const enhancedRoute = written.routes.find((r: any) => r.source === "^/resources/com/example/lib1/test/(.*)$");
+        expect(enhancedRoute, "route with matching destination should be enhanced").to.deep.include({
+            endpoint: "api-endpoint",
+            service: "test-service"
+        });
+        expect(enhancedRoute).to.not.have.property("destination");
+    });
+
     async function prepareFiles(ui5AppInfoJson: IReuseLibInfo[], reuseLibFiles?: Map<string, string>, xsAppJson?: string): Promise<SinonStub<[dir: string, files: Map<string, string>], Promise<void[]>>> {
         const appInfoContent = createAppInfoContent(ui5AppInfoJson);
         // input for preview process: contain baseApp and appVar merged files
