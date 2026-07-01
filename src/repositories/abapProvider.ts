@@ -2,7 +2,7 @@ import { createAbapServiceProvider } from "@sap-ux/system-access";
 import type { AbapServiceProvider } from "@sap-ux/axios-extension";
 import { IConfiguration } from "../model/types.js";
 import { getLogger } from "@ui5/logger";
-import AbapValidator from "../util/validator/abapValidator.js";
+import AbapConnectionValidator from "../util/validator/abapConnectionValidator.js";
 
 const log = getLogger("@ui5/task-adaptation::AbapProvider");
 log.debug = (message: string) => log.verbose(message);
@@ -10,7 +10,7 @@ log.debug = (message: string) => log.verbose(message);
 export default class AbapProvider {
 
     private provider: AbapServiceProvider | null = null;
-    private abapValidator = new AbapValidator();
+    private abapValidator = new AbapConnectionValidator();
 
     async get({ target, destination }: IConfiguration): Promise<AbapServiceProvider> {
         if (!this.provider) {

@@ -1,5 +1,4 @@
 import DataSource from "./dataSource.js";
-import DataSourceOData from "./dataSourceOData.js";
 import DataSourceODataAnnotation from "./dataSourceODataAnnotation.js";
 import I18nManager from "../../i18nManager.js";
 import Language from "../../model/language.js";
@@ -10,19 +9,22 @@ export default class DataSourceManager {
 
     private dataSources = new Array<DataSource>();
 
-
     /**
      * Parses dataSources from manifest.json.
      * @param dataSourcesJson manifest.json/sap.app/dataSources node
      */
-    addDataSources(dataSourcesJson: any): void {
+    async addDataSources(dataSourcesJson: any): Promise<void> {
         if (!dataSourcesJson) {
             return;
         }
         const odataAnnotationMap = new Map<string, string>();
+        const dataSourceODataEntries = Object.entries<any>(dataSourcesJson).filter(
+            ([, dataSource]) => dataSource.uri?.startsWith("/") && dataSource.type === "OData"
+        );
         // Loop over OData first to collect linked annotation names
-        for (const [name, dataSource] of Object.entries<any>(dataSourcesJson)) {
-            if (dataSource.uri?.startsWith("/") && dataSource.type === "OData") {
+        if (dataSourceODataEntries.length > 0) {
+            const { default: DataSourceOData } = await import("./dataSourceOData.js");
+            for (const [name, dataSource] of dataSourceODataEntries) {
                 const uri = path.normalize(dataSource.uri + "/$metadata");
                 const odata = new DataSourceOData(name, uri, dataSource);
                 odata.getAnnotations().forEach(annotation => odataAnnotationMap.set(annotation, uri))

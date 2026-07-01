@@ -1,52 +1,43 @@
 import { IConfiguration } from "./model/types.js";
 import { IAdapter } from "./adapters/adapter.js";
-import AbapAdapter from "./adapters/abapAdapter.js";
-import CFAdapter from "./adapters/cfAdapter.js";
-import PreviewAdapter from "./adapters/previewAdapter.js";
 import IRepository from "./repositories/repository.js";
-import AbapRepository from "./repositories/abapRepository.js";
-import HTML5Repository from "./repositories/html5Repository.js";
-import LocalRepository from "./repositories/localRepository.js";
 import IAnnotationManager from "./annotations/annotationManager.js";
-import AbapAnnotationManager from "./annotations/abapAnnotationManager.js";
-import CFAnnotationManager from "./annotations/cfAnnotationManager.js";
 import CFValidator from "./util/validator/cfValidator.js";
-import AbapValidator from "./util/validator/abapValidator.js";
 import IValidator, { isOneOf } from "./util/validator/validator.js";
 import { LANDSCAPE_TYPES, LandscapeType } from "./model/configuration.js";
 import { getLogger } from "@ui5/logger";
+import AbapValidator from "./util/validator/abapValidator.js";
 import LocalAnnotationManager from "./annotations/localAnnotationManager.js";
 
 const log = getLogger("@ui5/task-adaptation::LandscapeConfiguration");
 
 
-export function initialize(configuration: IConfiguration): {
+export async function initialize(configuration: IConfiguration): Promise<{
     adapter: IAdapter,
     repository: IRepository,
     annotationManager: IAnnotationManager
-} {
-    const type = getTypeByConfiguration(configuration);
+}> {
+    const type = await getTypeByConfiguration(configuration);
     const enhancedConfig = { ...configuration, type };
-    const repository = getRepository(enhancedConfig);
-    const annotationManager = getAnnotationManager(enhancedConfig, repository);
+    const repository = await getRepository(enhancedConfig);
+    const annotationManager = await getAnnotationManager(enhancedConfig, repository);
     return {
-        adapter: getAdapter(enhancedConfig, annotationManager),
+        adapter: await getAdapter(enhancedConfig, annotationManager),
         repository,
         annotationManager
     };
 }
 
 
-function getTypeByConfiguration(configuration: IConfiguration): LandscapeType {
-    const validators = [
-        new CFValidator(),
-        new AbapValidator(),
-    ] as IValidator[];
-
+async function getTypeByConfiguration(configuration: IConfiguration): Promise<LandscapeType> {
     if (isOneOf(LANDSCAPE_TYPES, configuration.type)) {
         return configuration.type;
     } else {
         log.warn("Deprecated behavior: type is not specified or invalid. Should be either 'cf' or 'abap'. Trying to detect the type based on provided configuration");
+        const validators = [
+            new CFValidator(),
+            new AbapValidator(),
+        ] as IValidator[];
         for (const validator of validators) {
             try {
                 validator.validateConfiguration(configuration);
@@ -60,45 +51,59 @@ function getTypeByConfiguration(configuration: IConfiguration): LandscapeType {
 }
 
 
-function getAdapter(configuration: IConfiguration, annotationManager: IAnnotationManager): IAdapter {
+async function getAdapter(configuration: IConfiguration, annotationManager: IAnnotationManager): Promise<IAdapter> {
     if (isPreview()) {
+        const { default: PreviewAdapter } = await import("./adapters/previewAdapter.js");
         return new PreviewAdapter(configuration);
     }
     switch (configuration.type) {
-        case "abap":
+        case "abap": {
+            const { default: AbapAdapter } = await import("./adapters/abapAdapter.js");
             return new AbapAdapter(annotationManager);
-        case "cf":
+        }
+        case "cf": {
+            const { default: CFAdapter } = await import("./adapters/cfAdapter.js");
             return new CFAdapter(configuration);
+        }
         default:
             throw new Error(`No adapter found for the given configuration type '${configuration.type}'`);
     }
 }
 
 
-function getRepository(configuration: IConfiguration): IRepository {
+async function getRepository(configuration: IConfiguration): Promise<IRepository> {
     if (isLocal()) {
+        const { default: LocalRepository } = await import("./repositories/localRepository.js");
         return new LocalRepository();
     }
     switch (configuration.type) {
-        case "abap":
+        case "abap": {
+            const { default: AbapRepository } = await import("./repositories/abapRepository.js");
             return new AbapRepository(configuration);
-        case "cf":
+        }
+        case "cf": {
+            const { default: HTML5Repository } = await import("./repositories/html5Repository.js");
             return new HTML5Repository(configuration);
+        }
         default:
             throw new Error(`No repository found for the given configuration type '${configuration.type}'`);
     }
 }
 
 
-function getAnnotationManager(configuration: IConfiguration, repository: IRepository): IAnnotationManager {
+async function getAnnotationManager(configuration: IConfiguration, repository: IRepository): Promise<IAnnotationManager> {
     if (isLocal()) {
         return new LocalAnnotationManager();
     }
     switch (configuration.type) {
-        case "abap":
+        case "abap": {
+            const { default: AbapAnnotationManager } = await import("./annotations/abapAnnotationManager.js");
             return new AbapAnnotationManager(configuration, repository);
-        case "cf":
+        }
+        case "cf": {
+            const { default: CFAnnotationManager } = await import("./annotations/cfAnnotationManager.js");
             return new CFAnnotationManager();
+        }
         default:
             throw new Error(`No annotation manager found for the given configuration type '${configuration.type}'`);
     }
