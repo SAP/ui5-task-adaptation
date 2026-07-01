@@ -11,6 +11,7 @@ export function renameMap(content: string, references: Map<string, string>, igno
     const ignoredReferenceKeys: string[] = [];
     for (const [key, value] of references) {
         if (value.includes(".") !== key.includes(".")) {
+            log.info(`Ignoring renaming of "${key}" → "${value}" because the dot count does not match.`);
             ignoredReferenceKeys.push(key);
             references.delete(key);
         }
@@ -34,11 +35,11 @@ export function renameMap(content: string, references: Map<string, string>, igno
         if (!term) {
             continue;
         }
-        const repl = references.get(term)!;
-        replacementMap.set(term, repl);
+        const replacement = references.get(term)!;
+        replacementMap.set(term, replacement);
         const slashTerm = dotToSlash(term);
         if (slashTerm !== term) {
-            replacementMap.set(slashTerm, dotToSlash(repl));
+            replacementMap.set(slashTerm, dotToSlash(replacement));
         }
     }
 
@@ -69,15 +70,18 @@ export function renameMap(content: string, references: Map<string, string>, igno
     // Single-pass: find all matches, skip ignored ones, batch-replace the rest
     const parts: string[] = [];
     let lastEnd = 0;
-    let m;
-    while ((m = regex.exec(content)) !== null) {
-        const matched = m[0];
-        if (ignoreSet.has(matched)) continue;
+    let match;
+    while ((match = regex.exec(content)) !== null) {
+        const matched = match[0];
+        if (ignoreSet.has(matched)) {
+            // ignore takes priority over replacement
+            continue;
+        }
         const replacement = replacementMap.get(matched);
         if (replacement !== undefined) {
-            parts.push(content.substring(lastEnd, m.index));
+            parts.push(content.substring(lastEnd, match.index));
             parts.push(replacement);
-            lastEnd = m.index + matched.length;
+            lastEnd = match.index + matched.length;
         }
     }
     parts.push(content.substring(lastEnd));
