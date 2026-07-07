@@ -204,7 +204,7 @@ describe("TraverseReferences", () => {
 
     async function createAnnotationFiles(sandbox: SinonSandbox, dataSources: any, annotations: IChild[]): Promise<IUnderTestResult> {
         const dataSourceManager = new DataSourceManager();
-        await dataSourceManager.addDataSources(dataSources);
+        await dataSourceManager.addDataSources(structuredClone(dataSources));
         const languages = [new Language("EN", "en", true)];
         const i18nManager = new I18nManager("model1", "appVariantId1", languages);
         const serviceRequestor = new ServiceRequestor({}, repository);

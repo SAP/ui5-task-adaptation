@@ -133,3 +133,153 @@ describe("App Variant Hierarchy", () => {
         ]);
     });
 });
+
+
+describe("OData DataSource Hierarchy", () => {
+    let sandbox: sinon.SinonSandbox;
+    const options: IProjectOptions = {
+        projectNamespace: "ns",
+        configuration: {
+            target: {
+                url: "https://example.sap.com"
+            },
+            languages: ["EN"]
+        }
+    };
+
+    const METADATA_XML = `<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+    <edmx:Reference Uri="/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/Vocabularies('com.sap.vocabularies.Common.v1')/$value">
+        <edmx:Include Namespace="com.sap.vocabularies.Common.v1" Alias="Common"/>
+    </edmx:Reference>
+    <edmx:DataServices>
+        <Schema Namespace="com.sap.self" Alias="SAP__self"/>
+    </edmx:DataServices>
+</edmx:Edmx>`;
+
+    const BASE_MANIFEST = JSON.stringify({
+        "_version": "1.12.0",
+        "sap.app": {
+            "id": "com.sap.base.app",
+            "type": "application",
+            "applicationVersion": { "version": "1.0.0" },
+            "dataSources": {}
+        }
+    });
+
+    function createAppVariantManifest(reference: string, id: string, serviceNum: number): string {
+        return JSON.stringify({
+            "fileName": "manifest",
+            "layer": "CUSTOMER_BASE",
+            "fileType": "appdescr_variant",
+            "reference": reference,
+            "id": id,
+            "namespace": `apps/${reference}/appVariants/${id}/`,
+            "content": [{
+                "changeType": "appdescr_app_addNewDataSource",
+                "content": {
+                    "dataSource": {
+                        [`customer.odata.service${serviceNum}`]: {
+                            "uri": `/sap/opu/odata/sap/service${serviceNum}/`,
+                            "type": "OData",
+                            "settings": {
+                                "annotations": [`customer.annotation.service${serviceNum}`]
+                            }
+                        },
+                        [`customer.annotation.service${serviceNum}`]: {
+                            "uri": `/sap/annotation/service${serviceNum}`,
+                            "type": "ODataAnnotation"
+                        }
+                    }
+                }
+            }]
+        });
+    }
+
+    after(() => CacheHolder.clear());
+    afterEach(() => sandbox.restore());
+
+    let files = new Map<string, string>();
+    let downloadAnnotationFileStub: sinon.SinonStub;
+    beforeEach(async () => {
+        sandbox = sinon.createSandbox();
+        downloadAnnotationFileStub = sandbox.stub(AbapRepository.prototype, "downloadAnnotationFile")
+            .resolves(new Map([["metadata.xml", METADATA_XML]]));
+        sandbox.stub(AbapRepository.prototype, "getAppVariantIdHierarchy").resolves([
+            { appName: "REPO_3", cacheBusterToken: Promise.resolve("token3") },
+            { appName: "REPO_2", cacheBusterToken: Promise.resolve("token2") },
+            { appName: "REPO_1", cacheBusterToken: Promise.resolve("token1") },
+            { appName: "REPO_0", cacheBusterToken: Promise.resolve("token0") },
+        ]);
+        sandbox.stub(AbapRepository.prototype, "fetch")
+            .withArgs(sinon.match({ appName: "REPO_0" })).resolves(new Map([
+                ["manifest.json", BASE_MANIFEST],
+            ]))
+            .withArgs(sinon.match({ appName: "REPO_1" })).resolves(new Map([
+                ["manifest.appdescr_variant", createAppVariantManifest("com.sap.base.app", "customer.variant.one", 1)],
+            ]))
+            .withArgs(sinon.match({ appName: "REPO_2" })).resolves(new Map([
+                ["manifest.appdescr_variant", createAppVariantManifest("customer.variant.one", "customer.variant.two", 2)],
+            ]))
+            .withArgs(sinon.match({ appName: "REPO_3" })).resolves(new Map([
+                ["manifest.appdescr_variant", createAppVariantManifest("customer.variant.two", "customer.variant.three", 3)],
+            ]));
+
+        const repository = new AbapRepository(options.configuration);
+        const annotationManager = new AbapAnnotationManager(options.configuration, repository);
+        const index = await esmock("../../src/index.js", {}, {
+            "../../src/landscapeConfiguration.js": {
+                initialize: () => ({
+                    repository,
+                    adapter: new AbapAdapter(annotationManager)
+                })
+            }
+        });
+
+        const { workspace, taskUtil } = await TestUtil.getWorkspace("appVariantOData", options.projectNamespace);
+        await index({ workspace, options, taskUtil });
+        const resources: any[] = (await workspace.byGlob("/**/*")).filter(TestUtil.byIsOmited(taskUtil));
+        files = await ResourceUtil.toFileMap(resources, options.projectNamespace);
+    });
+
+    it("should have all OData dataSources from 3 appVariants", () => {
+        const { dataSources } = JSON.parse(files.get("manifest.json")!)["sap.app"];
+        for (const num of [1, 2, 3]) {
+            expect(dataSources[`customer.odata.service${num}`]).to.deep.include({
+                uri: `/sap/opu/odata/sap/service${num}/`,
+                type: "OData",
+            });
+            expect(dataSources[`customer.odata.service${num}`].settings.annotations)
+                .to.include(`customer.annotation.service${num}`);
+        }
+    });
+
+    it("should have all ODataAnnotation dataSources from 3 appVariants", () => {
+        const { dataSources } = JSON.parse(files.get("manifest.json")!)["sap.app"];
+        for (const num of [1, 2, 3]) {
+            const annotation = dataSources[`customer.annotation.service${num}`];
+            expect(annotation.type).to.eql("ODataAnnotation");
+            expect(annotation.uri).to.eql(`annotations/annotation_customer.annotation.service${num}.xml`);
+        }
+    });
+
+    it("should set ignoreAnnotationsFromMetadata on each OData dataSource", () => {
+        const { dataSources } = JSON.parse(files.get("manifest.json")!)["sap.app"];
+        for (const num of [1, 2, 3]) {
+            expect(dataSources[`customer.odata.service${num}`].settings.ignoreAnnotationsFromMetadata).to.eql(true);
+        }
+    });
+
+    it("should download annotations for each OData service exactly once", () => {
+        const downloadedUrls = downloadAnnotationFileStub.getCalls().map((call: any) => call.args[0]);
+        for (const num of [1, 2, 3]) {
+            const matchingCalls = downloadedUrls.filter((url: string) => url.includes(`service${num}`));
+            expect(matchingCalls).to.have.lengthOf(2, `service${num} should be downloaded once for OData and once for ODataAnnotation`);
+        }
+    });
+
+    it("should set id to the adaptation project id", () => {
+        const { id } = JSON.parse(files.get("manifest.json")!)["sap.app"];
+        expect(id).to.eql("customer.variant.adaptation");
+    });
+});

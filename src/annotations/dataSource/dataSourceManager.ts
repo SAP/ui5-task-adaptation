@@ -1,5 +1,4 @@
 import DataSource from "./dataSource.js";
-import DataSourceODataAnnotation from "./dataSourceODataAnnotation.js";
 import I18nManager from "../../i18nManager.js";
 import Language from "../../model/language.js";
 import ServiceRequestor from "../serviceRequestor.js";
@@ -8,6 +7,14 @@ import path from "path/posix";
 export default class DataSourceManager {
 
     private dataSources = new Array<DataSource>();
+
+    private shouldDownload(dataSource: any, type: string) {
+        // is remote service, not local file
+        return dataSource.uri?.startsWith("/") &&
+            // no local metadata file and wasn't downloaded yet
+            !dataSource.settings?.ignoreAnnotationsFromMetadata &&
+            dataSource.type === type;
+    }
 
     /**
      * Parses dataSources from manifest.json.
@@ -18,13 +25,10 @@ export default class DataSourceManager {
             return;
         }
         const odataAnnotationMap = new Map<string, string>();
-        const dataSourceODataEntries = Object.entries<any>(dataSourcesJson).filter(
-            ([, dataSource]) => dataSource.uri?.startsWith("/") && dataSource.type === "OData"
-        );
         // Loop over OData first to collect linked annotation names
-        if (dataSourceODataEntries.length > 0) {
-            const { default: DataSourceOData } = await import("./dataSourceOData.js");
-            for (const [name, dataSource] of dataSourceODataEntries) {
+        for (const [name, dataSource] of Object.entries<any>(dataSourcesJson)) {
+            if (this.shouldDownload(dataSource, "OData")) {
+                const { default: DataSourceOData } = await import("./dataSourceOData.js");
                 const uri = path.normalize(dataSource.uri + "/$metadata");
                 const odata = new DataSourceOData(name, uri, dataSource);
                 odata.getAnnotations().forEach(annotation => odataAnnotationMap.set(annotation, uri))
@@ -33,10 +37,12 @@ export default class DataSourceManager {
         }
         // If ODataAnnotation is in OData annotations, pass metadata url to it
         for (const [name, dataSource] of Object.entries<any>(dataSourcesJson)) {
-            const uri = dataSource.uri;
-            const metadataUrl = odataAnnotationMap.get(name);
-            if (uri?.startsWith("/") && dataSource.type === "ODataAnnotation") {
-                this.dataSources.push(new DataSourceODataAnnotation(name, uri, dataSource, metadataUrl));
+            if (this.shouldDownload(dataSource, "ODataAnnotation")) {
+                const { default: DataSourceODataAnnotation } = await import("./dataSourceODataAnnotation.js");
+                const uri = dataSource.uri;
+                const metadataUrl = odataAnnotationMap.get(name);
+                const odata = new DataSourceODataAnnotation(name, uri, dataSource, metadataUrl);
+                this.dataSources.push(odata);
             }
         }
         for (const dataSource of this.dataSources) {

@@ -1,0 +1,9 @@
+{
+    "fileName": "manifest",
+    "layer": "CUSTOMER_BASE",
+    "fileType": "appdescr_variant",
+    "reference": "customer.variant.three",
+    "id": "customer.variant.adaptation",
+    "namespace": "apps/customer.variant.three/appVariants/customer.variant.adaptation/",
+    "content": []
+}
