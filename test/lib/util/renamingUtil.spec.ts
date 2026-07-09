@@ -234,6 +234,16 @@ describe("when renaming json (renameJson)", () => {
         expect(result).to.be.undefined;
         expect(json.id).to.equal("customer.base.app.variant");
     });
+
+    it("should produce the same result as renaming the manifest as a string", () => {
+        const search = "fin.trm.display.treasury.alerts";
+        const replacement = "customer.app.variant5";
+        const content = TestUtil.getResource("treasury-manifest.json");
+        const renamedAsString = JSON.parse(rename(content, [search], replacement));
+        const renamedAsJson = JSON.parse(content);
+        renameJson(renamedAsJson, new Map([[search, replacement]]), [replacement]);
+        expect(renamedAsJson).to.eql(renamedAsString);
+    });
 });
 
 function assertRename(inputString: string, expectedString: string, search: string, replacement: string) {
