@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { rename, renameJson, renameResources } from "../../../src/util/renamingUtil.js";
+import { rename, renameJson, renameMap, renameResources } from "../../../src/util/renamingUtil.js";
 import TestUtil from "../testUtilities/testUtil.js";
 
 describe("when renaming resources", () => {
@@ -239,7 +239,7 @@ describe("when renaming json (renameJson)", () => {
         const search = "fin.trm.display.treasury.alerts";
         const replacement = "customer.app.variant5";
         const content = TestUtil.getResource("treasury-manifest.json");
-        const renamedAsString = JSON.parse(rename(content, [search], replacement));
+        const renamedAsString = JSON.parse(renameMap(content, new Map([[search, replacement]]), [replacement]));
         const renamedAsJson = JSON.parse(content);
         renameJson(renamedAsJson, new Map([[search, replacement]]), [replacement]);
         expect(renamedAsJson).to.eql(renamedAsString);
