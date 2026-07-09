@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { rename, renameResources } from "../../../src/util/renamingUtil.js";
+import { rename, renameJson, renameResources } from "../../../src/util/renamingUtil.js";
 import TestUtil from "../testUtilities/testUtil.js";
 
 describe("when renaming resources", () => {
@@ -146,6 +146,93 @@ describe("when some search or replacement don't have a dot should ignore renamin
     });
     it("when one of search terms doesn't have a dot and replacement does", () => {
         expect(rename("base.id", ["baseid", "base.id"], "customer.base.appvar1")).to.eql("customer.base.appvar1");
+    });
+});
+
+describe("when renaming json (renameJson)", () => {
+    const refs = () => new Map([["base.app", "customer.base.app.variant"]]);
+    const renameWithRefs = (json: Record<string, unknown>, references = refs()) =>
+        renameJson(json, references, [...references.values()]);
+
+    it("should rename string values", () => {
+        const json = { id: "base.app", other: "unrelated" };
+        renameWithRefs(json);
+        expect(json).to.eql({ id: "customer.base.app.variant", other: "unrelated" });
+    });
+
+    it("should rename slash variant in string values", () => {
+        const json = { uri: "/sap/base/app/service" };
+        renameWithRefs(json);
+        expect(json).to.eql({ uri: "/sap/customer/base/app/variant/service" });
+    });
+
+    it("should rename object keys", () => {
+        const json = { "base.app": "value" };
+        renameWithRefs(json);
+        expect(json).to.eql({ "customer.base.app.variant": "value" });
+    });
+
+    it("should rename keys and their string values together", () => {
+        const json = { "base.app": "base.app" };
+        renameWithRefs(json);
+        expect(json).to.eql({ "customer.base.app.variant": "customer.base.app.variant" });
+    });
+
+    it("should rename recursively in nested objects", () => {
+        const json = { level1: { level2: { id: "base.app" } } };
+        renameWithRefs(json);
+        expect(json).to.eql({ level1: { level2: { id: "customer.base.app.variant" } } });
+    });
+
+    it("should rename string entries inside arrays", () => {
+        const json = { deps: ["base.app", "base/app", "unrelated"] };
+        renameWithRefs(json);
+        expect(json).to.eql({ deps: ["customer.base.app.variant", "customer/base/app/variant", "unrelated"] });
+    });
+
+    it("should rename objects nested inside arrays", () => {
+        const json = { items: [{ id: "base.app" }, { id: "base/app" }] };
+        renameWithRefs(json);
+        expect(json).to.eql({ items: [{ id: "customer.base.app.variant" }, { id: "customer/base/app/variant" }] });
+    });
+
+    it("should not re-rename values that are already the replacement", () => {
+        const json = { id: "customer.base.app.variant", uri: "customer/base/app/variant" };
+        renameWithRefs(json);
+        expect(json).to.eql({ id: "customer.base.app.variant", uri: "customer/base/app/variant" });
+    });
+
+    it("should not touch non-string scalar values", () => {
+        const json = { version: 1, active: true, empty: null, id: "base.app" };
+        renameWithRefs(json);
+        expect(json).to.eql({ version: 1, active: true, empty: null, id: "customer.base.app.variant" });
+    });
+
+    it("should apply multiple references", () => {
+        const references = new Map([
+            ["base.app", "customer.base.app.variant"],
+            ["other.app", "customer.other.app.variant"]
+        ]);
+        const json = { a: "base.app", b: "other.app", c: "other/app" };
+        renameWithRefs(json, references);
+        expect(json).to.eql({
+            a: "customer.base.app.variant",
+            b: "customer.other.app.variant",
+            c: "customer/other/app/variant"
+        });
+    });
+
+    it("should ignore renaming when the dot count doesn't match", () => {
+        const json = { id: "base.id" };
+        renameWithRefs(json, new Map([["base.id", "customerbaseappvar1"]]));
+        expect(json).to.eql({ id: "base.id" });
+    });
+
+    it("should mutate the given object in place and return undefined", () => {
+        const json = { id: "base.app" };
+        const result = renameWithRefs(json);
+        expect(result).to.be.undefined;
+        expect(json.id).to.equal("customer.base.app.variant");
     });
 });
 
