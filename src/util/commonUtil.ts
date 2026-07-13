@@ -18,6 +18,16 @@ export function dotToUnderscore(value: string) {
 }
 
 
+export function bufferToString(buffer: Buffer): string {
+    return buffer.toString("utf8");
+}
+
+
+export function stringToBuffer(value: string): Buffer {
+    return Buffer.from(value, "utf8");
+}
+
+
 export function validateConfiguration<T extends object>(options: T, properties: Array<keyof T>) {
     validateObject(options, properties, "should be specified in ui5.yaml configuration");
 }
@@ -107,9 +117,9 @@ export function getUniqueName(existingNames: string[], template: string) {
     return template + suffixString;
 }
 
-export function isManifestChange(filename: string, content: string): boolean {
+export function isManifestChange(filename: string, content: Buffer): boolean {
     if (filename.endsWith(CHANGES_EXT)) {
-        const change = JSON.parse(content);
+        const change = JSON.parse(bufferToString(content));
         return change.changeType?.startsWith(MANIFEST_CHANGE);
     }
     return false;

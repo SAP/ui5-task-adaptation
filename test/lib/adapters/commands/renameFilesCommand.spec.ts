@@ -1,15 +1,16 @@
 import { expect } from "chai";
 import { xml2js } from "xml-js";
 import RenameFilesCommand from "../../../../src/adapters/commands/renameFilesCommand.js";
+import { toBuffer } from "../../testUtilities/testUtil.js";
 
 describe("rename", () => {
-    let renamedFiles: Map<string, string>;
+    let renamedFiles: Map<string, Buffer>;
     let manifest: any;
     let viewXml: any;
 
     before(async () => {
-        const files = new Map<string, string>();
-        files.set("manifest.json", JSON.stringify({
+        const files = new Map<string, Buffer>();
+        files.set("manifest.json", toBuffer(JSON.stringify({
             "sap.app": {
                 "id": "my.app"
             },
@@ -23,28 +24,28 @@ describe("rename", () => {
                     }
                 }
             }
-        }));
-        files.set("view.xml", `
+        })));
+        files.set("view.xml", toBuffer(`
 <mvc:View xmlns:alias="my.app.reuse.lib" xmlns:mvc="sap.ui.core.mvc" controllerName="my.app.Controller">
     <core:ComponentContainer name="my.app.reuse.component"/>
-</mvc:View>`); // referenced my.app.reuse.lib and "my.app.reuse.component"
-        files.set("controller.js", `
+</mvc:View>`)); // referenced my.app.reuse.lib and "my.app.reuse.component"
+        files.set("controller.js", toBuffer(`
 sap.ui.define(['my.app.reuse.lib'], function (myAppReuseLib) {
     const appId = "my.app";
     sap.ui.core.Component.create({
         name: "my.app.reuse.component",
     });
-});`); // referenced "my.app.reuse.lib" and "my.app.reuse.component"
+});`)); // referenced "my.app.reuse.lib" and "my.app.reuse.component"
 
         const references = new Map<string, string>([
             ["my.app", "customer.app"]
         ]);
 
-        renamedFiles = new Map<string, string>(files);
+        renamedFiles = new Map<string, Buffer>(files);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        manifest = JSON.parse(renamedFiles.get("manifest.json")!);
-        viewXml = xml2js(renamedFiles.get("view.xml")!, { compact: true });
+        manifest = JSON.parse(renamedFiles.get("manifest.json")!.toString("utf8"));
+        viewXml = xml2js(renamedFiles.get("view.xml")!.toString("utf8"), { compact: true });
     });
 
     it("should rename the application id in manifest.json", () => {
@@ -74,7 +75,7 @@ sap.ui.define(['my.app.reuse.lib'], function (myAppReuseLib) {
     });
 
     it("should rename appId in controller.js but not dependency libs or components", () => {
-        const controllerJs = renamedFiles.get("controller.js");
+        const controllerJs = renamedFiles.get("controller.js")?.toString("utf8");
         expect(controllerJs).to.equal(`
 sap.ui.define(['my.app.reuse.lib'], function (myAppReuseLib) {
     const appId = "customer.app";
@@ -104,13 +105,13 @@ describe("restoreWhatShouldntBeRenamed", () => {
                 }
             }
         };
-        const files = new Map<string, string>([["manifest.json", JSON.stringify(manifest)]]);
+        const files = new Map<string, Buffer>([["manifest.json", toBuffer(JSON.stringify(manifest))]]);
         const references = new Map<string, string>([
             ["original.id", "customer.app.var.id"]
         ]);
         const command = new RenameFilesCommand(references);
         command.execute(files);
-        renamedManifest = JSON.parse(files.get("manifest.json")!);
+        renamedManifest = JSON.parse(files.get("manifest.json")!.toString("utf8"));
     });
 
     it("should restore appVariantIdHierarchy", () => {

@@ -141,7 +141,7 @@ describe("PreviewManager adjust xs-app.json", () => {
         expect(ressourceWrite.called, "ResourceUtil.writeInProject should be called to write merged xs-app.json").to.be.true;
         const mergedXsAppMap = ressourceWrite.getCall(0).args[1];
         const mergedXsAppJson = mergedXsAppMap.get("xs-app.json")!;
-        const mergedXsApp = JSON.parse(mergedXsAppJson);
+        const mergedXsApp: XsApp = JSON.parse(mergedXsAppJson.toString("utf8"));
 
         expect(mergedXsApp.routes).to.deep.equal([{
             source: "^/resources/com/example/lib1/test/(.*)$",
@@ -169,7 +169,7 @@ async function getXsAppJsonResult(sandbox: SinonSandbox, xsAppJson: string): Pro
     const promise = await command.result;
     const libFiles = await promise!.get("lib1");
     const adjustedXsAppJson = await libFiles!.get("lib1/xs-app.json");
-    return JSON.parse(adjustedXsAppJson!);
+    return JSON.parse(adjustedXsAppJson!.toString("utf8")) as XsApp;
 }
 
 
@@ -179,7 +179,7 @@ async function preparePreview(sandbox: SinonSandbox, xsAppJson: string): Promise
         appName: "test-app",
         appVersion: "1.0.0"
     });
-    sandbox.stub(repository, "fetch").resolves(new Map<string, string>([["xs-app.json", xsAppJson]]));
+    sandbox.stub(repository, "fetch").resolves(new Map<string, Buffer>([["xs-app.json", Buffer.from(xsAppJson)]]));
     const command = new FetchPreviewResourcesCommand("appId", repository);
     await command.execute();
     return command;

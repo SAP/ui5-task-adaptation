@@ -1,4 +1,4 @@
-import { isManifestChange } from "../commonUtil.js";
+import { bufferToString, isManifestChange } from "../commonUtil.js";
 
 const EXT_DIR = "ext/";
 const CHANGES_DIR = "changes/";
@@ -10,7 +10,7 @@ const nameSpaceRegex = new RegExp(`(?<=ControllerExtension.extend\\(")([^"]*)(?=
 * packed in flexibility-bundle and removed.
 * @param filename - The filename relative to the root
 */
-function shouldMove(filename: string, content: string) {
+function shouldMove(filename: string, content: Buffer): boolean {
     //TODO: is it more reliable to check change/fileType?
     if (isManifestChange(filename, content)) {
         return true;
@@ -24,7 +24,7 @@ function shouldMove(filename: string, content: string) {
  * The namespace needs to be unique for clear identification
  * If controller extension have the same namespace the last one will be used
  * @param filename  - The filename relative to the root
- * @returns 
+ * @returns `true` if the file's namespace should be renamed, `false` otherwise
  */
 function shouldNamespaceRenamed(filename: string): boolean {
     return filename.startsWith(CHANGES_DIR) && filename.endsWith(".js");
@@ -41,8 +41,9 @@ function shouldNamespaceRenamed(filename: string): boolean {
  * we also exclude "changes" or "ext" include the prefix after them and then
  * the filename. Without 'changes' or 'ext' directory, we need to replace
  * only rest: coding/FixingDay.js to app_var_id1/coding/FixingDay.js
- * @param filename 
- * @returns 
+ * @param filename
+ * @returns The path with the leading directory and all file extensions removed,
+ * e.g. `"changes/coding/FixingDay.js"` → `"coding/FixingDay"`
  */
 function getPathWithoutExtensions(filename: string): string {
     const [_dir, ...rest] = filename.split("/");
@@ -51,11 +52,11 @@ function getPathWithoutExtensions(filename: string): string {
     return restWOExt.join("/");
 }
 
-export const moveFiles = (inputFiles: ReadonlyMap<string, string>, prefix: string, id: string) => {
-    const files = new Map<string, string>();
+export const moveFiles = (inputFiles: ReadonlyMap<string, Buffer>, prefix: string, id: string) => {
+    const files = new Map<string, Buffer>();
     let renamingPaths = new Map<string, string>();
 
-    inputFiles.forEach((content: string, filename: string) => {
+    inputFiles.forEach((content: Buffer, filename: string) => {
         const { newFilename, renamingPath } = moveFile(filename, content, prefix, id);
         files.set(newFilename, content);
         renamingPaths = new Map([...renamingPaths, ...renamingPath]);
@@ -63,7 +64,7 @@ export const moveFiles = (inputFiles: ReadonlyMap<string, string>, prefix: strin
     return { files, renamingPaths };
 };
 
-export const moveFile = (filename: string, content: string, prefix: string, id: string): { newFilename: string; renamingPath: Map<string, string> } => {
+export const moveFile = (filename: string, content: Buffer, prefix: string, id: string): { newFilename: string; renamingPath: Map<string, string> } => {
     let newFilename = filename;
     let renamingPath: Map<string, string> = new Map();
 
@@ -75,7 +76,7 @@ export const moveFile = (filename: string, content: string, prefix: string, id: 
     }
 
     if (shouldNamespaceRenamed(filename)) {
-        const namespaceMatch = nameSpaceRegex.exec(content.trim());
+        const namespaceMatch = nameSpaceRegex.exec(bufferToString(content).trim());
         const controllerExtensionPath = namespaceMatch ? namespaceMatch[0] : "";
         const fileName = controllerExtensionPath.replace(id, "");
         renamingPath.set(controllerExtensionPath, `${id}.${prefix}${fileName}`);

@@ -1,4 +1,4 @@
-import { trimExtension } from "./util/commonUtil.js";
+import { bufferToString, trimExtension } from "./util/commonUtil.js";
 import { validateAppId } from "./util/validator/validator.js";
 
 export interface IBaseAppResources {
@@ -27,7 +27,7 @@ const IGNORE_FILES = [
  * @param files - Map of all files
  * @returns Map with .js files replaced by -dbg.js content where applicable
  */
-export function preProcessFiles(files: ReadonlyMap<string, string>): Map<string, string> {
+export function preProcessFiles(files: ReadonlyMap<string, Buffer>): Map<string, Buffer> {
     const processedFiles = new Map(files);
 
     // Find all -dbg.js files that have corresponding .js files
@@ -58,23 +58,23 @@ export default class BaseApp {
     readonly id: string;
     readonly version: string;
     readonly i18nPath: string;
-    readonly files: ReadonlyMap<string, string>;
+    readonly files: ReadonlyMap<string, Buffer>;
 
 
-    static fromFiles(files: ReadonlyMap<string, string>) {
+    static fromFiles(files: ReadonlyMap<string, Buffer>) {
         return new BaseApp(files);
     }
 
-    private constructor(files: ReadonlyMap<string, string>) {
+    private constructor(files: ReadonlyMap<string, Buffer>) {
         if (files.size === 0) {
             throw new Error("Original application sources are empty");
         }
         this.files = preProcessFiles(files);
-        const manifestString = files.get("manifest.json");
-        if (!manifestString) {
+        const manifestBuffer = this.files.get("manifest.json");
+        if (!manifestBuffer) {
             throw new Error("Original application should have manifest.json in root folder");
         }
-        const manifest = JSON.parse(manifestString);
+        const manifest = JSON.parse(bufferToString(manifestBuffer));
         this.id = manifest["sap.app"]?.id as string;
         this.version = manifest["sap.app"]?.applicationVersion?.version as string;
         this.validateProperty(this.id, "sap.app/id");

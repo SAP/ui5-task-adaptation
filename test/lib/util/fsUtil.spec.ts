@@ -32,7 +32,7 @@ describe("FsUtil.readInProject", () => {
             const filename = "ui5AppInfo.json";
             const content = "{\"ok\":true}";
             await fs.writeFile(path.join(temp, filename), content);
-            expect(await FsUtil.readInProject(filename, "utf-8")).to.equal(content);
+            expect((await FsUtil.readInProject(filename)).toString("utf-8")).to.equal(content);
         });
     });
 

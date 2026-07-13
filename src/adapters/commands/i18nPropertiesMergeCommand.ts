@@ -1,4 +1,4 @@
-import { escapeRegex, trimExtension } from "../../util/commonUtil.js";
+import { stringToBuffer, bufferToString, escapeRegex, trimExtension } from "../../util/commonUtil.js";
 import { IChange } from "../../model/types.js";
 import { posix as path } from "path";
 import { MergeCommand } from "./command.js";
@@ -44,16 +44,17 @@ export default class I18nPropertiesMergeCommand extends MergeCommand {
     }
 
 
-    async execute(files: Map<string, string>, filename: string, appVariantContent: string): Promise<void> {
+    async execute(files: Map<string, Buffer>, filename: string, appVariantContent: Buffer): Promise<void> {
         // merge/copy logic
         // check if file matches with regex in merge/copy
         const mergePathMatch = this.mergePaths.map(path => filename.match(path)).find(match => match);
         const copyPathMatch = this.copyPaths.map(path => filename.match(path)).find(match => match);
+        const appVariantFileContent = bufferToString(appVariantContent);
         if (mergePathMatch) {
-            this.mergePropertiesFiles(files, this.i18nPath, appVariantContent, mergePathMatch[1]);
+            this.mergePropertiesFiles(files, this.i18nPath, appVariantFileContent, mergePathMatch[1]);
         }
         if (copyPathMatch) {
-            files.set(path.join(this.prefix, filename), appVariantContent);
+            files.set(path.join(this.prefix, filename), stringToBuffer(appVariantFileContent));
         }
     }
 
@@ -83,14 +84,16 @@ export default class I18nPropertiesMergeCommand extends MergeCommand {
      * app variant Id as prefix => If we filter on them we do not need to remove
      * existing overwritten keys (as there should be none)
      */
-    private mergePropertiesFiles(files: Map<string, string>, i18nPath: string, appVariantFileContent: string, language: string = "") {
+    private mergePropertiesFiles(files: Map<string, Buffer>, i18nPath: string, appVariantFileContent: string, language: string = "") {
         const baseAppI18nPath = i18nPath + language + ".properties";
-        const baseAppFileContent = files.get(baseAppI18nPath);
-        const filteredBaseContent = baseAppFileContent ? this.filterTranslationMetaLines(baseAppFileContent) : "";
+        const baseAppFileBuffer = files.get(baseAppI18nPath);
+        const filteredBaseContent = baseAppFileBuffer
+            ? this.filterTranslationMetaLines(bufferToString(baseAppFileBuffer))
+            : "";
         const content = filteredBaseContent
             ? `${filteredBaseContent}\n\n#App variant specific text file\n\n${appVariantFileContent}`
             : appVariantFileContent;
-        files.set(baseAppI18nPath, content);
+        files.set(baseAppI18nPath, stringToBuffer(content));
     }
 
 }

@@ -1,4 +1,4 @@
 export interface IRenamingHandler {
-    before(files: ReadonlyMap<string, string>): void;
-    after(files: Map<string, string>): void;
+    before(files: ReadonlyMap<string, Buffer>): void;
+    after(files: Map<string, Buffer>): void;
 }

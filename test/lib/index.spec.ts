@@ -3,6 +3,7 @@ import * as sinon from "sinon";
 
 import CacheHolder from "../../src/cache/cacheHolder.js";
 import HTML5Repository from "../../src/repositories/html5Repository.js";
+import AbapRepository from "../../src/repositories/abapRepository.js";
 import { IProjectOptions } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
@@ -11,6 +12,9 @@ import esmock from "esmock";
 import IRepository from "../../src/repositories/repository.js";
 import CFAdapter from "../../src/adapters/cfAdapter.js";
 import CFAnnotationManager from "../../src/annotations/cfAnnotationManager.js";
+import AbapAdapter from "../../src/adapters/abapAdapter.js";
+import AbapAnnotationManager from "../../src/annotations/abapAnnotationManager.js";
+import ResourceUtil from "../../src/util/resourceUtil.js";
 
 const { byIsOmited } = TestUtil;
 
@@ -163,6 +167,51 @@ describe("Index", () => {
             });
         });
 
+    it("should preserve adaptation project files when base app and appVariant are fetched", async () => {
+        // Hierarchy: original app (REPO_NAME_0) → appVariant1 (REPO_NAME_1) → appVariant2 (adaptation project)
+        // Original app and appVariant1 are fetched via repository and written to workspace.
+        // The snapshot taken before fetching must restore adaptation project files so they
+        // are not overwritten by the fetched files.
+        const options: IProjectOptions = {
+            projectNamespace: "ns",
+            configuration: {
+                target: { url: "https://example.sap.com" }
+            }
+        };
+
+        const appVariant1Path = TestUtil.getResourcePath("appVariant1", "webapp");
+        const abapRepository = new AbapRepository(options.configuration);
+        sandbox.stub(AbapAnnotationManager.prototype, "process").resolves(new Map<string, string>());
+        sandbox.stub(abapRepository, "getAppVariantIdHierarchy").resolves([
+            { appName: "REPO_NAME_1", cacheBusterToken: Promise.resolve("token1") },
+            { appName: "REPO_NAME_0", cacheBusterToken: Promise.resolve("token0") }
+        ]);
+        sandbox.stub(abapRepository, "fetch")
+            .withArgs(sinon.match({ appName: "REPO_NAME_0" })).resolves(new Map([
+                ["manifest.json", Buffer.from(TestUtil.getResource("manifest.json"))],
+                ["manifest.appdescr_variant", Buffer.from(JSON.stringify({ id: "should.be.overwritten" }))],
+            ]))
+            .withArgs(sinon.match({ appName: "REPO_NAME_1" })).resolves(await ResourceUtil.byGlob(appVariant1Path, "**/*"));
+
+        const { workspace, taskUtil } = await TestUtil.getWorkspace("appVariant2", options.projectNamespace);
+        const index = await esmock("../../src/index.js", {}, {
+            "../../src/landscapeConfiguration.js": {
+                initialize: () => ({
+                    repository: abapRepository,
+                    adapter: new AbapAdapter(new AbapAnnotationManager(options.configuration, abapRepository))
+                })
+            }
+        });
+        await index({ workspace, options, taskUtil });
+
+        const resources: any[] = await workspace.byGlob("/**/*");
+        const manifestVariant = resources.find(r => r.getPath().endsWith("manifest.appdescr_variant"));
+        expect(manifestVariant, "manifest.appdescr_variant must exist in workspace").to.exist;
+        const content = JSON.parse(await manifestVariant.getString());
+        expect(content.id, "adaptation project manifest.appdescr_variant must not be overwritten by fetched base app file")
+            .to.equal("customer.app.variant.2.id");
+    });
+
     it("XsAppJsonEnhanceRoutesCommand: should rewrite destination->endpoint/service for matching routes and leave unmatched routes intact", async () => {
         const baseAppFiles = new Map([
             ["manifest.json", TestUtil.getResource("manifest.json")],
@@ -251,7 +300,7 @@ const getWorkspace = async (options: IProjectOptions, appVariant: string = "appV
     return { workspace, taskUtil }
 }
 
-const checkResourcePathsAndTempResources = (resourcePaths: any[], resourcePathsMembers: string[], tempResources: Map<string, string>, tempResourcesMembers: string[]) => {
+const checkResourcePathsAndTempResources = (resourcePaths: any[], resourcePathsMembers: string[], tempResources: Map<string, Buffer>, tempResourcesMembers: string[]) => {
     resourcePaths.sort();
     resourcePathsMembers.sort();
     expect(resourcePaths).to.have.members(resourcePathsMembers);

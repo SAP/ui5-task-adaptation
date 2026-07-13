@@ -6,7 +6,7 @@ export default class WriteResourcesCommand extends PostCommand {
         super();
     }
 
-    async execute(files: Map<string, string>): Promise<void> {
+    async execute(files: Map<string, Buffer>): Promise<void> {
         const writePromises = new Array<Promise<void>>();
         files.forEach((content, filename) => {
             const resource = ResourceUtil.createResource(filename, this.projectNamespace, content);

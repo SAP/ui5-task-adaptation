@@ -154,10 +154,10 @@ describe("LocalRepository", () => {
 
             const hierarchy = await localRepository.getAppVariantIdHierarchy("appId1");
             const files = await Promise.all(hierarchy.map((item) => localRepository.fetch(item)));
-            expect(JSON.parse(files[0].get("manifest.appdescr_variant")!)).to.deep.equal({ id: "appId1", reference: "appId2" });
-            expect(JSON.parse(files[1].get("manifest.appdescr_variant")!)).to.deep.equal({ id: "appId2", reference: "appId3" });
-            expect(JSON.parse(files[2].get("manifest.json")!)).to.deep.equal({ "sap.app": { id: "appId3" } });
-            expect(files[2].get("i18n/i18n.properties")).to.equal("hello=world\n");
+            expect(JSON.parse(files[0].get("manifest.appdescr_variant")!.toString("utf-8"))).to.deep.equal({ id: "appId1", reference: "appId2" });
+            expect(JSON.parse(files[1].get("manifest.appdescr_variant")!.toString("utf-8"))).to.deep.equal({ id: "appId2", reference: "appId3" });
+            expect(JSON.parse(files[2].get("manifest.json")!.toString("utf-8"))).to.deep.equal({ "sap.app": { id: "appId3" } });
+            expect(files[2].get("i18n/i18n.properties")?.toString("utf-8")).to.equal("hello=world\n");
         });
     });
 

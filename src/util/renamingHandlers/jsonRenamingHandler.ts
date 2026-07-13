@@ -1,4 +1,5 @@
 import { IRenamingHandler } from "./renamingHandler.js";
+import { stringToBuffer, bufferToString } from "../commonUtil.js";
 
 export default abstract class JsonRenamingHandler implements IRenamingHandler {
 
@@ -7,20 +8,20 @@ export default abstract class JsonRenamingHandler implements IRenamingHandler {
     // path to the JSON properties, forward slash separated, e.g. "sap.ui5/appVariantIdHierarchy"
     protected abstract jsonPathsToRestore: string[];
 
-    before(files: ReadonlyMap<string, string>): void {
+    before(files: ReadonlyMap<string, Buffer>): void {
         const content = files.get(this.filePath);
         if (content) {
-            const json = JSON.parse(content);
+            const json = JSON.parse(bufferToString(content));
             this.jsonPathsToRestore.forEach(path => this.store(json, path));
         }
     }
 
-    after(files: Map<string, string>): void {
+    after(files: Map<string, Buffer>): void {
         const content = files.get(this.filePath);
         if (content) {
-            const json = JSON.parse(content);
+            const json = JSON.parse(bufferToString(content));
             this.restore(json);
-            files.set(this.filePath, JSON.stringify(json));
+            files.set(this.filePath, stringToBuffer(JSON.stringify(json)));
         }
     }
 

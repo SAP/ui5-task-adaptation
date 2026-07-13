@@ -11,13 +11,13 @@ import { initialize } from "./landscapeConfiguration.js";
  * Creates an appVariant bundle from the provided resources.
  */
 export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
-    
+
     const ui5BuilderTools = {
         workspace,
         projectNamespace: options.projectNamespace,
         taskUtil,
     } as UI5BuilderTools;
-    
+
     dotenv.config();
     logBuilderVersion();
 
@@ -35,19 +35,21 @@ export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
     // latest app variant on top. We reverse the list to process original
     // application first and then app variants in chronological order.
     const reversedHierarchy = appVariantIdHierarchy.toReversed();
-    const fetchFilesPromises = reversedHierarchy.map(variant => repository.fetch(variant)) as Promise<ReadonlyMap<string, string>>[];
-    const appVariants = new Array<AppVariant>();
+    const fetchFilesPromises = reversedHierarchy.map(variant => repository.fetch(variant)) as Promise<ReadonlyMap<string, Buffer>>[];
 
-    const adapt = async (baseFiles: ReadonlyMap<string, string>, appVariant: AppVariant) => {
+    const appVariants = new Array<AppVariant>();
+    const adapt = async (baseFiles: ReadonlyMap<string, Buffer>, appVariant: AppVariant) => {
         appVariants.push(appVariant);
         const baseApp = BaseApp.fromFiles(baseFiles);
         return adapter.createAdaptCommandChain(baseApp, appVariant).execute();
     };
 
     let files = await fetchFilesPromises.shift()!; // original app files
-    for (const appVariantFiles of fetchFilesPromises) {
-        files = await adapt(files, AppVariant.fromFiles(await appVariantFiles));
+    for (const appVariantFilesPromise of fetchFilesPromises) {
+        const appVariantFiles = await appVariantFilesPromise;
+        files = await adapt(files, AppVariant.fromFiles(appVariantFiles));
     }
+
     files = await adapt(files, adaptationProject);
 
     const references = getReferences(appVariants, adaptationProject.id);

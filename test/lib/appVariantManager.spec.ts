@@ -5,7 +5,7 @@ import chaiAsPromised from "chai-as-promised";
 import AppVariant from "../../src/appVariant.js";
 import { IAppVariantManifest } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
-import TestUtil from "./testUtilities/testUtil.js";
+import TestUtil, { toBufferMap } from "./testUtilities/testUtil.js";
 import FilterFilesCommand from "../../src/adapters/commands/filterFilesCommand.js";
 import { PostCommandChain } from "../../src/adapters/commands/command.js";
 import RenameFilesCommand from "../../src/adapters/commands/renameFilesCommand.js";
@@ -33,11 +33,11 @@ describe("AppVariantManager", () => {
     describe("when process appvariant resources", () => {
 
         const changes = TestUtil.getResourceJson("appVariant1-renamed/webapp/changes/id_1696839317668_changeInbound.change");
-        let files: Map<string, string>;
+        let files: Map<string, Buffer>;
 
         before(async () => {
             appVariant = await AppVariant.fromWorkspace(workspace, NAMESPACE);
-            files = new Map<string, string>(appVariant.files);
+            files = new Map<string, Buffer>(appVariant.files);
             await new FilterFilesCommand().execute(files);
         });
 
@@ -84,7 +84,7 @@ describe("AppVariantManager", () => {
 
     describe("when process appvariant files", () => {
 
-        let processedFiles: ReadonlyMap<string, string>
+        let processedFiles: ReadonlyMap<string, Buffer>
         before(async () => {
             appVariant = await AppVariant.fromWorkspace(workspace, NAMESPACE);
             const references = new Map([["com.sap.base.app.id", appVariant.id]]);
@@ -148,9 +148,9 @@ describe("AppVariantManager", () => {
                 "changeType": "appdescr_app_addAnnotationsToOData"
             }]
         } as any;
-        const appVariant = (manifest: any) => AppVariant.fromFiles(new Map([["manifest.appdescr_variant", JSON.stringify(manifest)]]));
+        const appVariant = (manifest: any) => AppVariant.fromFiles(toBufferMap([["manifest.appdescr_variant", JSON.stringify(manifest)]]));
         it("shouldn't contain processed files", async () => {
-            const files = new Map<string, string>(appVariant(manifest).files);
+            const files = new Map<string, Buffer>(appVariant(manifest).files);
             await new FilterFilesCommand().execute(files);
             expect(files.size).eq(0);
         });
@@ -172,31 +172,31 @@ describe("AppVariantManager", () => {
         });
 
         it("should throw error when id is empty", () => {
-            expect(() => AppVariant.fromFiles(new Map([
+            expect(() => AppVariant.fromFiles(toBufferMap([
                 ["manifest.appdescr_variant", createManifest("")]
             ]))).to.throw("The application id must not be empty.");
         });
 
         it("should throw error when id has only one segment", () => {
-            expect(() => AppVariant.fromFiles(new Map([
+            expect(() => AppVariant.fromFiles(toBufferMap([
                 ["manifest.appdescr_variant", createManifest("singleSegment")]
             ]))).to.throw("The application id 'singleSegment' must have at least two parts, separated by a period.");
         });
 
         it("should throw error when id has dots but no real segments", () => {
-            expect(() => AppVariant.fromFiles(new Map([
+            expect(() => AppVariant.fromFiles(toBufferMap([
                 ["manifest.appdescr_variant", createManifest(".")]
             ]))).to.throw("must have at least two parts, separated by a period.");
         });
 
         it("should not throw error when id has two segments", () => {
-            expect(() => AppVariant.fromFiles(new Map([
+            expect(() => AppVariant.fromFiles(toBufferMap([
                 ["manifest.appdescr_variant", createManifest("customer.app")]
             ]))).to.not.throw();
         });
 
         it("should not throw error when id is valid", () => {
-            expect(() => AppVariant.fromFiles(new Map([
+            expect(() => AppVariant.fromFiles(toBufferMap([
                 ["manifest.appdescr_variant", createManifest("customer.com.sap.application.variant.id")]
             ]))).to.not.throw();
         });
@@ -232,11 +232,11 @@ describe("AppVariantManager", () => {
             "id": "customer.base.app.id.variant1"
         };
         it("should contain manifest change with correct path", async () => {
-            const appVariant = AppVariant.fromFiles(new Map([
+            const appVariant = AppVariant.fromFiles(toBufferMap([
                 ["manifest.appdescr_variant", JSON.stringify(manifest)],
                 ["changes/id.change", `{ "changeType": "appdescr_change", "reference": "base.app.id" }`]
             ]));
-            const files = new Map<string, string>(appVariant.files);
+            const files = new Map<string, Buffer>(appVariant.files);
             await new FilterFilesCommand().execute(files);
             expect(files.size).eq(0);
             const manifestChanges = appVariant.getProcessedManifestChanges();
@@ -247,7 +247,7 @@ describe("AppVariantManager", () => {
             });
         });
         it("shouldn't contain manifest changes with confusing path", async () => {
-            const appVariant = AppVariant.fromFiles(new Map([
+            const appVariant = AppVariant.fromFiles(toBufferMap([
                 ["manifest.appdescr_variant", JSON.stringify(manifest)],
                 ["changes/manifestid.change", `{ "reference": "base.app.id" }`]
             ]));
@@ -258,7 +258,7 @@ describe("AppVariantManager", () => {
             ]);
             const files = await commandChain.execute(appVariant.files);
             expect(files.size).eq(1);
-            expect(files.get("changes/manifestid.change")).eql(`{ "reference": "customer.base.app.id.variant1" }`);
+            expect(files.get("changes/manifestid.change")?.toString("utf8")).eql(`{ "reference": "customer.base.app.id.variant1" }`);
             expect(appVariant.getProcessedManifestChanges().length).eq(0);
         });
     });
@@ -274,7 +274,7 @@ describe("AppVariantManager", () => {
         });
 
         it("should sort *.change files by creation ASC", () => {
-            const appVariant = AppVariant.fromFiles(new Map([
+            const appVariant = AppVariant.fromFiles(toBufferMap([
                 ["manifest.appdescr_variant", JSON.stringify(manifest)],
                 ["changes/id_3.change", createSimpleChange("2026-01-03T14:14:01.000Z")],
                 ["changes/id_1.change", createSimpleChange("2026-01-01T14:14:02.000Z")],
@@ -296,7 +296,7 @@ describe("AppVariantManager", () => {
                     { "changeType": "appdescr_inline_2", "creation": "2026-01-01T14:14:02.000Z" }
                 ]
             };
-            const appVariant = AppVariant.fromFiles(new Map([
+            const appVariant = AppVariant.fromFiles(toBufferMap([
                 ["manifest.appdescr_variant", JSON.stringify(manifestWithContent)]
             ]));
             const manifestChanges = appVariant.getProcessedManifestChanges();
@@ -314,7 +314,7 @@ describe("AppVariantManager", () => {
                     { "changeType": "appdescr_inline_2", "creation": "2026-01-01T14:14:02.000Z" }
                 ]
             };
-            const appVariant = AppVariant.fromFiles(new Map([
+            const appVariant = AppVariant.fromFiles(toBufferMap([
                 ["manifest.appdescr_variant", JSON.stringify(manifestWithContent)],
                 ["changes/id_3.change", createSimpleChange("2026-01-03T14:14:01.000Z")],
                 ["changes/id_1.change", createSimpleChange("2026-01-01T14:14:02.000Z")],
@@ -358,13 +358,13 @@ describe("AppVariantManager", () => {
 
         it("should adjust paths for change files", () => {
             const processedFiles = appVariant.getProcessedFiles();
-            const codeExtChange = processedFiles.get("changes/id_1753705046493_197_codeExt.change") || "";
+            const codeExtChange = processedFiles.get("changes/id_1753705046493_197_codeExt.change")?.toString("utf8") || "";
             expect(JSON.parse(codeExtChange).content.codeRef).eql("app_variant1/coding/id_12345.js");
         });
 
         it("should adjust namespaces for controller extensions", () => {
             const processedFiles = appVariant.getProcessedFiles();
-            const content = processedFiles.get("changes/app_variant1/coding/id_12345.js")?.trim() || "";
+            const content = processedFiles.get("changes/app_variant1/coding/id_12345.js")?.toString("utf8").trim() || "";
             expect(content).to.include(`ControllerExtension.extend("customer.com.sap.application.variant.id.app_variant1.Worklist.controller"`);
         });
     });
@@ -387,11 +387,11 @@ async function assertChangeUrl(testUrl: string, expectedUrl: string) {
         "id": "customer.base.app.id.variant1",
         "content": []
     });
-    const resources = new Map([
+    const resources = toBufferMap([
         ["changes/id_1707246076536_addAnnotationsToOData.change", changeResource],
         ["manifest.appdescr_variant", manifestResource]]);
     const appVariant = await AppVariant.fromFiles(resources);
-    const files = new Map<string, string>(appVariant.files);
+    const files = new Map<string, Buffer>(appVariant.files);
     await new FilterFilesCommand().execute(files);
     expect(files.has("manifest.appdescr_variant")).to.be.false;
     const change = appVariant.getProcessedManifestChanges().find(change => change.changeType === "appdescr_app_addAnnotationsToOData") as any;
@@ -399,7 +399,7 @@ async function assertChangeUrl(testUrl: string, expectedUrl: string) {
         .to.eq(expectedUrl);
 }
 
-async function assertRename(files: ReadonlyMap<string, string>, filename: string, testResourcesFolder = "appVariant1/webapp") {
+async function assertRename(files: ReadonlyMap<string, Buffer>, filename: string, testResourcesFolder = "appVariant1/webapp") {
     const changeInboundChange = files.get(`changes/${filename}`);
-    expect(changeInboundChange).to.eql(TestUtil.getResource(`${testResourcesFolder}/changes/${filename}`));
+    expect(changeInboundChange?.toString("utf8")).to.eql(TestUtil.getResource(`${testResourcesFolder}/changes/${filename}`));
 }

@@ -5,13 +5,13 @@ import path from "path";
 export default class FsUtil {
     /*
      * Read the file by filepath from the project root (folder where 'webapp',
-     * 'package.json', 'ui5.yaml' located). 
+     * 'package.json', 'ui5.yaml' located).
      * @param filepath The relative file path from the project root (e.g. 'ui5AppInfo.json').
-     * @returns A promise that resolves to the file content as a string.
+     * @returns A promise that resolves to the file content as a Buffer.
      */
-    static async readInProject(filepath: string, encoding?: BufferEncoding): Promise<Buffer | string> {
+    static async readInProject(filepath: string): Promise<Buffer> {
         try {
-            return await fs.readFile(path.join(process.cwd(), filepath), encoding);
+            return await fs.readFile(path.join(process.cwd(), filepath));
         } catch (error: any) {
             const isProjectRoot = await FsUtil.fileExists(path.join(process.cwd(), "ui5.yaml"));
             if (!isProjectRoot) {
@@ -40,15 +40,15 @@ export default class FsUtil {
     }
 
 
-    static async readFilesRecursively(rootDirectory: string): Promise<Map<string, string>> {
+    static async readFilesRecursively(rootDirectory: string): Promise<Map<string, Buffer>> {
         const entries = await fs.readdir(rootDirectory, { withFileTypes: true, recursive: true });
         const fileReadTasks = entries
             .filter(entry => entry.isFile())
-            .map(async (entry): Promise<[string, string]> => {
+            .map(async (entry): Promise<[string, Buffer]> => {
                 const parentPath = entry.parentPath ?? entry.path; // node v20.11.0 fallback
                 const entryPath = path.join(parentPath, entry.name);
                 const relativeFilePath = path.relative(rootDirectory, entryPath).replaceAll("\\", "/");
-                const content = await fs.readFile(entryPath, "utf-8");
+                const content = await fs.readFile(entryPath);
                 return [relativeFilePath, content];
             });
         return new Map(await Promise.all(fileReadTasks));

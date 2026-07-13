@@ -1,6 +1,6 @@
 import { IChange } from "./model/types.js";
-import { dotToUnderscore, isManifestChange } from "./util/commonUtil.js";
-import ResourceUtil from "./util/resourceUtil.js";
+import { bufferToString, dotToUnderscore, isManifestChange } from "./util/commonUtil.js";
+import ResourceUtil, { TEXT_EXTENSIONS } from "./util/resourceUtil.js";
 import { posix as path } from "path";
 import { moveFile, moveFiles } from "./util/movingHandler/changeFileMoveHandler.js";
 import RenameFilesCommand from "./adapters/commands/renameFilesCommand.js";
@@ -10,7 +10,7 @@ const CHANGES_EXT = ".change";
 
 export default class AppVariant {
 
-    readonly files: ReadonlyMap<string, string>;
+    readonly files: ReadonlyMap<string, Buffer>;
     readonly resources?: ReadonlyArray<Resource>;
     readonly id: string;
     readonly reference: string;
@@ -22,28 +22,28 @@ export default class AppVariant {
 
 
     static async fromWorkspace(workspace: IWorkspace, projectNamespace: string): Promise<AppVariant> {
-        const EXTENSIONS_TO_PROCESS = "js,json,xml,html,properties,change,appdescr_variant,ctrl_variant,ctrl_variant_change,ctrl_variant_management_change,variant,fioriversion,codeChange,xmlViewChange,context";
+        const EXTENSIONS_TO_PROCESS = Array.from(TEXT_EXTENSIONS).join(",");
         const resources = await workspace.byGlob(`/**/*.{${EXTENSIONS_TO_PROCESS}}`);
         const files = await ResourceUtil.toFileMap(resources, projectNamespace);
         return new AppVariant(files, resources);
     }
 
 
-    static fromFiles(files: ReadonlyMap<string, string>): AppVariant {
+    static fromFiles(files: ReadonlyMap<string, Buffer>): AppVariant {
         return new AppVariant(files);
     }
 
 
-    private constructor(files: ReadonlyMap<string, string>, resources?: Resource[]) {
+    private constructor(files: ReadonlyMap<string, Buffer>, resources?: Resource[]) {
         if (files.size === 0) {
             throw new Error("Application variant sources are empty");
         }
         this.files = files;
         this.resources = resources;
 
-        const manifestString = files.get("manifest.appdescr_variant");
-        this.validateManifest(manifestString);
-        const { reference, id, layer, content } = JSON.parse(manifestString!);
+        const manifestBuffer = files.get("manifest.appdescr_variant");
+        this.validateManifest(manifestBuffer);
+        const { reference, id, layer, content } = JSON.parse(bufferToString(manifestBuffer!));
         this.reference = reference;
         this.id = id;
         validateAppId(id);
@@ -56,7 +56,7 @@ export default class AppVariant {
     }
 
 
-    getProcessedFiles(): ReadonlyMap<string, string> {
+    getProcessedFiles(): ReadonlyMap<string, Buffer> {
         const { files, renamingPaths } = moveFiles(this.files, this.prefix, this.id);
         // Directly rename files that with new paths, this ensures no conflict in further renaming
         // In later remaming it's not possible to find correct prefix of moved files
@@ -64,7 +64,7 @@ export default class AppVariant {
         return files;
     };
 
-    /** 
+    /**
      * Since we moved files, we need to update paths where they were referenced.
      * To do this we use renameMap function along with renaming ids.
      */
@@ -85,9 +85,9 @@ export default class AppVariant {
 
         this.files.forEach((content, filename) => {
             if (filename.endsWith(CHANGES_EXT)) {
-                const change = JSON.parse(content);
                 if (isManifestChange(filename, content)) {
                     const { newFilename } = moveFile(filename, content, this.prefix, this.id);
+                    const change = JSON.parse(bufferToString(content));
                     this.updateRelativePaths(change, newFilename);
                     changeFileChanges.push(change);
                 }
@@ -109,7 +109,7 @@ export default class AppVariant {
     }
 
 
-    private validateManifest(manifest?: string) {
+    private validateManifest(manifest?: Buffer) {
         if (!manifest) {
             throw new Error("Adaptation project should contain manifest.appdescr_variant");
         }

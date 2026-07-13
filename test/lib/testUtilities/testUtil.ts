@@ -214,6 +214,9 @@ class TaskUtil {
     }
 }
 
+export const toBuffer = (s: string): Buffer => Buffer.from(s, "utf8");
+export const toBufferMap = (entries: [string, string][]): Map<string, Buffer> => new Map(entries.map(([k, v]) => [k, toBuffer(v)]));
+
 export function metadataV4Xml(references: string, annotations = "", schema = '<Schema Namespace="com.sap.self" Alias="SAP__self">') {
     return `<?xml version="1.0" encoding="utf-8"?>
 <edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" xmlns="http://docs.oasis-open.org/odata/ns/edm">

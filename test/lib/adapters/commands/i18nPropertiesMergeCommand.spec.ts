@@ -8,7 +8,7 @@ import BaseApp from "../../../../src/baseApp.js";
 import CacheHolder from "../../../../src/cache/cacheHolder.js";
 import { IProjectOptions } from "../../../../src/model/types.js";
 import CFUtil from "../../../../src/util/cfUtil.js";
-import TestUtil from "../../testUtilities/testUtil.js";
+import TestUtil, { toBufferMap } from "../../testUtilities/testUtil.js";
 import { expect } from "chai";
 
 
@@ -18,7 +18,7 @@ describe("I18nPropertiesMergeCommand", () => {
         it("should copy and merge correctly", async () => {
             const manifest = JSON.parse(TestUtil.getResource("manifest.json"));
             manifest["sap.app"].i18n = "i18n/baseAppI18n";
-            const baseAppFiles = new Map([
+            const baseAppFiles = toBufferMap([
                 ["manifest.json", JSON.stringify(manifest)],
                 ["i18n/baseAppI18n.properties", "base=a\nmerge=a"],
                 ["i18n/baseAppI18n_de.properties", TestUtil.getResource("i18n_de-expected.properties")],
@@ -47,7 +47,7 @@ describe("I18nPropertiesMergeCommand", () => {
                     changeType: "appdescr_app_setTitle",
                     texts: { i18n: "i18n/toMerge/Copy.properties" }
                 }];
-            const appVariantFiles = new Map([
+            const appVariantFiles = toBufferMap([
                 ["manifest.appdescr_variant", JSON.stringify(appVariantManifest)],
                 ["i18n/toMerge.properties", "merge=b"],
                 ["i18n/toMerge_de.properties", TestUtil.getResource("i18n_de-expected.properties")],
@@ -97,7 +97,7 @@ describe("I18nPropertiesMergeCommand", () => {
             const actual = [...files.keys()];
             actual.sort();
             expect(actual).to.have.members(expectedResources);
-            expect(files.get("i18n/baseAppI18n.properties")!.split("\n")).to.include.members([
+            expect(files.get("i18n/baseAppI18n.properties")!.toString("utf8").split("\n")).to.include.members([
                 "base=a",
                 "merge=b",
                 "merge2=c",
@@ -107,7 +107,7 @@ describe("I18nPropertiesMergeCommand", () => {
                 // FIXME Currently merge could duplicate keys which causes undefined behavior
                 //"merge=a"
             );
-            expect(files.get("i18n/baseAppI18n_zh_TW_Traditional.properties")!.split("\n")).to.include.members([
+            expect(files.get("i18n/baseAppI18n_zh_TW_Traditional.properties")!.toString("utf8").split("\n")).to.include.members([
                 "base=zh_TW_Traditional",
                 "merge=zh_TW_Traditional"
             ]);
@@ -134,7 +134,7 @@ describe("I18nPropertiesMergeCommand", () => {
         afterEach(() => sandbox.restore());
 
         it("should copy in target manifest/i18n with same path if not exist", async () => {
-            const baseAppFiles = new Map([
+            const baseAppFiles = toBufferMap([
                 ["manifest.json", JSON.stringify({
                     "sap.app": {
                         "id": "com.sap.base.app.id",
@@ -159,7 +159,7 @@ describe("I18nPropertiesMergeCommand", () => {
         });
 
         it("should create default i18n.properties, if manifest has no i18n", async () => {
-            const baseAppFiles = new Map([
+            const baseAppFiles = toBufferMap([
                 ["manifest.json", JSON.stringify({
                     "sap.app": {
                         "id": "com.sap.base.app.id",
@@ -186,7 +186,7 @@ describe("I18nPropertiesMergeCommand", () => {
         });
 
         it("should merge with target manifest/i18n with same path if exist", async () => {
-            const baseAppFiles = new Map([
+            const baseAppFiles = toBufferMap([
                 ["i18n/i18n.properties", "original"],
                 ["i18n/i18n_de.properties", "original de"],
                 ["manifest.json", JSON.stringify({
@@ -213,7 +213,7 @@ describe("I18nPropertiesMergeCommand", () => {
         });
 
         it("should merge with target manifest/i18n with different path", async () => {
-            const baseAppFiles = new Map([
+            const baseAppFiles = toBufferMap([
                 ["i18n/hugo.properties", "original"],
                 ["i18n/hugo_de.properties", "original de"],
                 ["manifest.json", JSON.stringify({
@@ -240,7 +240,7 @@ describe("I18nPropertiesMergeCommand", () => {
         });
 
         it("should merge custom folder with target manifest/i18n with different path", async () => {
-            const baseAppFiles = new Map([
+            const baseAppFiles = toBufferMap([
                 ["i18n/hugo.properties", "original"],
                 ["i18n/hugo_de.properties", "original de"],
                 ["manifest.json", JSON.stringify({
@@ -267,7 +267,7 @@ describe("I18nPropertiesMergeCommand", () => {
         });
 
         it("should copy enhanceWith properties and update changes", async () => {
-            const baseAppFiles = new Map([
+            const baseAppFiles = toBufferMap([
                 ["manifest.json", JSON.stringify({
                     "sap.app": {
                         "id": "com.sap.base.app.id",
@@ -333,7 +333,7 @@ describe("I18nPropertiesMergeCommand", () => {
         });
 
         it("should copy enhanceWith and merge simple change with same i18n paths", async () => {
-            const baseAppFiles = new Map([
+            const baseAppFiles = toBufferMap([
                 ["i18n/i18n.properties", "original"],
                 ["i18n/i18n_de.properties", "original de"],
                 ["manifest.json", JSON.stringify({
@@ -365,7 +365,7 @@ describe("I18nPropertiesMergeCommand", () => {
         });
 
         it("should not change the properties not referenced in manifest.json or changes not referenced in manifest/i18n target", async () => {
-            const baseAppFiles = new Map([
+            const baseAppFiles = toBufferMap([
                 ["i18n/doe.properties", "original"],
                 ["i18n/doe_de.properties", "original de"],
                 ["manifest.json", JSON.stringify({
@@ -395,7 +395,7 @@ describe("I18nPropertiesMergeCommand", () => {
         });
 
         it("should not change the properties not referenced in manifest.json or changes", async () => {
-            const baseAppFiles = new Map([
+            const baseAppFiles = toBufferMap([
                 ["i18n/hugo.properties", "original"],
                 ["i18n/hugo_de.properties", "original de"],
                 ["manifest.json", JSON.stringify({
@@ -426,7 +426,7 @@ describe("I18nPropertiesMergeCommand", () => {
 
 
         it("should not merge non-referenced i18n.properties file", async () => {
-            const baseAppFiles = new Map([
+            const baseAppFiles = toBufferMap([
                 ["manifest.json", JSON.stringify({
                     "sap.app": {
                         "id": "com.sap.base.app.id",
@@ -453,7 +453,7 @@ describe("I18nPropertiesMergeCommand", () => {
 
 
         it("should merge, copy and create a new i18n.properties file", async () => {
-            const baseAppFiles = new Map([
+            const baseAppFiles = toBufferMap([
                 ["manifest.json", JSON.stringify({
                     "sap.app": {
                         "id": "com.sap.base.app.id",
@@ -525,7 +525,7 @@ describe("I18nPropertiesMergeCommand", () => {
 });
 
 interface ITestParams {
-    baseAppFiles: Map<string, string>;
+    baseAppFiles: Map<string, Buffer>;
     appVariantFolder: string;
     expectLength?: number;
     expectIncluded?: string[];
