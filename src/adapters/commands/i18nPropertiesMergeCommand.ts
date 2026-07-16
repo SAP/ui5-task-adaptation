@@ -1,4 +1,4 @@
-import { stringToBuffer, bufferToString, escapeRegex, trimExtension } from "../../util/commonUtil.js";
+import { stringToBuffer, bufferToString, bufferToNormalizedString, escapeRegex, trimExtension } from "../../util/commonUtil.js";
 import { IChange } from "../../model/types.js";
 import { posix as path } from "path";
 import { MergeCommand } from "./command.js";
@@ -49,7 +49,7 @@ export default class I18nPropertiesMergeCommand extends MergeCommand {
         // check if file matches with regex in merge/copy
         const mergePathMatch = this.mergePaths.map(path => filename.match(path)).find(match => match);
         const copyPathMatch = this.copyPaths.map(path => filename.match(path)).find(match => match);
-        const appVariantFileContent = bufferToString(appVariantContent);
+        const appVariantFileContent = bufferToNormalizedString(appVariantContent);
         if (mergePathMatch) {
             this.mergePropertiesFiles(files, this.i18nPath, appVariantFileContent, mergePathMatch[1]);
         }
