@@ -89,7 +89,7 @@ export function cached() {
             let files = await CacheHolder.read(appName, token);
             CacheHolder.clearOutdatedExcept(appName);
             if (files.size === 0) {
-                log.verbose(`No cache for repo '${appName}' with token '${token}'. Fetching from HTML5 Repository.`);
+                log.verbose(`No cache for repo '${appName}' with token '${token}'. Fetching from repository.`);
                 files = await originalValue.apply(this, args);
                 await CacheHolder.write(appName, token, files!);
             } else {
