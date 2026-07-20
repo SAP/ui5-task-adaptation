@@ -21,31 +21,47 @@ class TestJsonHandler extends JsonRenamingHandler {
 }
 
 describe("JsonRenamingHandler", () => {
+    it("should accept only its own file", () => {
+        const handler = new TestJsonHandler(["a/b"]);
+        expect(handler.accept("test.json")).to.be.true;
+        expect(handler.accept("manifest.json")).to.be.false;
+    });
+
     it("should not throw when storing a path with missing intermediate properties", () => {
         const handler = new TestJsonHandler(["a/b/c"]);
-        const files = new Map<string, string>([
-            ["test.json", JSON.stringify({ a: {} })]
-        ]);
-        expect(() => handler.before(files)).to.not.throw();
+        expect(() => handler.before({ a: {} })).to.not.throw();
     });
 
     it("should not throw when restoring a path with missing intermediate properties", () => {
         const handler = new TestJsonHandler(["a/b/c"]);
-        const files = new Map<string, string>([
-            ["test.json", JSON.stringify({ a: {} })]
-        ]);
-        handler.before(files);
-        const newFiles = new Map(files);
-        expect(() => handler.after(newFiles)).to.not.throw();
+        const json = { a: {} };
+        handler.before(json);
+        expect(() => handler.after(json)).to.not.throw();
     });
 
     it("should handle a completely non-existent path gracefully", () => {
         const handler = new TestJsonHandler(["x/y/z"]);
-        const files = new Map<string, string>([
-            ["test.json", JSON.stringify({ a: { b: 2 } })]
-        ]);
-        expect(() => handler.before(files)).to.not.throw();
-        const newFiles = new Map(files);
-        expect(() => handler.after(newFiles)).to.not.throw();
+        const json = { a: { b: 2 } };
+        expect(() => handler.before(json)).to.not.throw();
+        expect(() => handler.after(json)).to.not.throw();
+    });
+
+    it("should restore a value into a JSON object in-place preserving the reference", () => {
+        const handler = new TestJsonHandler(["a/b"]);
+        const json = { a: { b: "original" } };
+        handler.before(json);
+        json.a.b = "renamed";
+        handler.after(json);
+        expect(json.a.b).to.equal("original");
+    });
+
+    it("should mutate the same JSON object reference passed to after", () => {
+        const handler = new TestJsonHandler(["a/b"]);
+        const json = { a: { b: "original" } };
+        handler.before(json);
+        json.a.b = "renamed";
+        const before = json;
+        handler.after(json);
+        expect(json).to.equal(before);
     });
 });

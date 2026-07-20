@@ -1,6 +1,6 @@
 import ManifestRenamingHandler from "../../util/renamingHandlers/manifestRenamingHandler.js";
-import { IRenamingHandler } from "../../util/renamingHandlers/renamingHandler.js";
-import { stringToBuffer, bufferToString } from "../../util/commonUtil.js";
+import JsonRenamingHandler from "../../util/renamingHandlers/jsonRenamingHandler.js";
+import { stringToBuffer, bufferToString, bufferToJson, jsonToBuffer } from "../../util/commonUtil.js";
 import { renameMap } from "../../util/renamingUtil.js";
 import { TEXT_EXTENSIONS } from "../../util/resourceUtil.js";
 import { posix as path } from "path";
@@ -59,7 +59,7 @@ export default class RenameFilesCommand extends PostCommand {
     private getManifestSAPUI5DependencyIds(files: ReadonlyMap<string, Buffer>) {
         const manifestFile = files.get("manifest.json");
         if (manifestFile) {
-            const manifest = JSON.parse(bufferToString(manifestFile));
+            const manifest = bufferToJson(manifestFile);
             const dependencies = manifest["sap.ui5"]?.dependencies;
             if (dependencies) {
                 const libs = dependencies.libs ? Object.keys(dependencies.libs) : [];
@@ -89,18 +89,49 @@ export default class RenameFilesCommand extends PostCommand {
 
 /**
  * We might rename appVariantIdHierarchy and dependencies, so we restore them after the renaming.
+ *
+ * The decorated method may receive either a Map of files (filename → Buffer) or
+ * a plain JSON object. Each handler is responsible for a single file (via its
+ * `accept`), operating on its parsed JSON content:
+ *  - Map case: every file a handler accepts is parsed, snapshotted before the
+ *    renaming, then restored and written back after.
+ *  - JSON case: the object is mutated in-place (its reference is preserved) and
+ *    every handler is applied to it.
  */
 export function restoreWhatShouldntBeRenamed() {
     return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
-        const handlers = [new ManifestRenamingHandler()] as Array<IRenamingHandler>;
+        const handlers = [new ManifestRenamingHandler()] as Array<JsonRenamingHandler>;
         const originalValue = descriptor.value;
         descriptor.value = function (...args: any[]) {
-            const files = args[0] as Map<string, Buffer>;
-            const references = args[1] as Map<string, string>;
-            handlers.forEach(handler => handler.before(files));
-            originalValue.apply(this, [files, references]);
-            handlers.forEach(handler => handler.after(files));
+            const renaming = args[0];
+            const files = renaming as Map<string, Buffer>;
+            forEachAccepted(files, handlers, (handler, content) => handler.before(bufferToJson(content)));
+            originalValue.apply(this, args);
+            forEachAccepted(files, handlers, (handler, content, filename) => {
+                const json = bufferToJson(content);
+                handler.after(json);
+                files.set(filename, jsonToBuffer(json));
+            });
             return files;
         };
     };
 };
+
+/**
+ * Parses each file that at least one handler accepts, hands the JSON to the
+ * given callback along with the accepting handlers, and — when `writeBack` is
+ * provided — serializes the (possibly mutated) JSON back into that map.
+ */
+function forEachAccepted(
+    files: ReadonlyMap<string, Buffer>,
+    handlers: Array<JsonRenamingHandler>,
+    callback: (handler: JsonRenamingHandler, content: Buffer, filename: string) => void,
+): void {
+    for (const [filename, content] of files) {
+        for (const handler of handlers) {
+            if (handler.accept(filename)) {
+                callback(handler, content, filename);
+            }
+        }
+    }
+}

@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { xml2js } from "xml-js";
-import RenameFilesCommand from "../../../../src/adapters/commands/renameFilesCommand.js";
+import RenameFilesCommand, { restoreWhatShouldntBeRenamed } from "../../../../src/adapters/commands/renameFilesCommand.js";
+import { renameJson } from "../../../../src/util/renamingUtil.js";
 import { toBuffer } from "../../testUtilities/testUtil.js";
 
 describe("rename", () => {
@@ -122,5 +123,46 @@ describe("restoreWhatShouldntBeRenamed", () => {
     });
     it("should rename sap.app id", () => {
         expect(renamedManifest["sap.app"].id).to.equal("customer.app.var.id");
+    });
+});
+
+describe("restoreWhatShouldntBeRenamed with a files map", () => {
+    let renamedManifest: any;
+
+    before(() => {
+        const manifest = {
+            "sap.app": {
+                "id": "original.id"
+            },
+            "sap.ui5": {
+                "appVariantIdHierarchy": [{
+                    "appVariantId": "original.id",
+                }]
+            }
+        };
+        const files = new Map<string, Buffer>([["manifest.json", toBuffer(JSON.stringify(manifest))]]);
+        const references = new Map<string, string>([
+            ["original.id", "customer.app.var.id"]
+        ]);
+        const descriptor: PropertyDescriptor = {
+            value(fileMap: Map<string, Buffer>, refs: Map<string, string>): void {
+                for (const [filename, content] of fileMap) {
+                    const json = JSON.parse(content.toString("utf8"));
+                    renameJson(json, refs, [...refs.values()]);
+                    fileMap.set(filename, toBuffer(JSON.stringify(json)));
+                }
+            }
+        };
+        restoreWhatShouldntBeRenamed()({}, "rename", descriptor);
+        descriptor.value(files, references);
+        renamedManifest = JSON.parse(files.get("manifest.json")!.toString("utf8"));
+    });
+
+    it("should rename sap.app id in the file", () => {
+        expect(renamedManifest["sap.app"].id).to.equal("customer.app.var.id");
+    });
+
+    it("should restore appVariantIdHierarchy in the file", () => {
+        expect(renamedManifest["sap.ui5"].appVariantIdHierarchy[0].appVariantId).to.equal("original.id");
     });
 });

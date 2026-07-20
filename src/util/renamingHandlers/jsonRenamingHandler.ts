@@ -1,32 +1,27 @@
-import { IRenamingHandler } from "./renamingHandler.js";
-import { stringToBuffer, bufferToString } from "../commonUtil.js";
-
-export default abstract class JsonRenamingHandler implements IRenamingHandler {
+export default abstract class JsonRenamingHandler {
 
     private original: Map<string, any> = new Map<string, any>();
     protected abstract filePath: string;
     // path to the JSON properties, forward slash separated, e.g. "sap.ui5/appVariantIdHierarchy"
     protected abstract jsonPathsToRestore: string[];
 
-    before(files: ReadonlyMap<string, Buffer>): void {
-        const content = files.get(this.filePath);
-        if (content) {
-            const json = JSON.parse(bufferToString(content));
-            this.jsonPathsToRestore.forEach(path => this.store(json, path));
-        }
+    accept(filename: string): boolean {
+        return filename.endsWith(this.filePath);
     }
 
-    after(files: Map<string, Buffer>): void {
-        const content = files.get(this.filePath);
-        if (content) {
-            const json = JSON.parse(bufferToString(content));
-            this.restore(json);
-            files.set(this.filePath, stringToBuffer(JSON.stringify(json)));
-        }
+    before(json: any): void {
+        this.jsonPathsToRestore.forEach(path => this.store(json, path));
+    }
+
+    after(json: any): void {
+        this.restore(json);
     }
 
     protected store(obj: any, path: string) {
-        this.original.set(path, this.getByPath(obj, path.split("/")));
+        // Clone so the snapshot is decoupled from `obj`: when the same object is
+        // mutated in-place (JSON renaming), the stored value stays untouched.
+        const value = this.getByPath(obj, path.split("/"));
+        this.original.set(path, value === undefined ? undefined : structuredClone(value));
     }
 
     protected restore(obj: any) {

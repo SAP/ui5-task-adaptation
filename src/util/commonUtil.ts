@@ -23,6 +23,11 @@ export function bufferToString(buffer: Buffer): string {
 }
 
 
+export function bufferToJson(buffer: Buffer): any {
+    return JSON.parse(bufferToString(buffer));
+}
+
+
 export function bufferToNormalizedString(buffer: Buffer): string {
     return bufferToString(buffer).replaceAll("\r\n", "\n");
 }
@@ -30,6 +35,11 @@ export function bufferToNormalizedString(buffer: Buffer): string {
 
 export function stringToBuffer(value: string): Buffer {
     return Buffer.from(value, "utf8");
+}
+
+
+export function jsonToBuffer(json: any): Buffer {
+    return stringToBuffer(JSON.stringify(json));
 }
 
 
