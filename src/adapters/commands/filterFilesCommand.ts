@@ -1,5 +1,5 @@
 import { PostCommand } from "./command.js";
-import { bufferToString } from "../../util/commonUtil.js";
+import { bufferToJson } from "../../util/commonUtil.js";
 
 
 export default class FilterFilesCommand extends PostCommand {
@@ -7,7 +7,7 @@ export default class FilterFilesCommand extends PostCommand {
         const IGNORE_FILES = ["manifest.appdescr_variant"];
         const shouldIgnore = (filename: string, content: Buffer): boolean => {
             if (filename.endsWith(".change")) {
-                return JSON.parse(bufferToString(content)).changeType?.startsWith("appdescr_"); // validate JSON
+                return bufferToJson(content).changeType?.startsWith("appdescr_"); // validate JSON
             }
             return IGNORE_FILES.includes(filename);
         }

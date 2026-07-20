@@ -1,4 +1,4 @@
-import { bufferToString, trimExtension } from "./util/commonUtil.js";
+import { bufferToJson, trimExtension } from "./util/commonUtil.js";
 import { validateAppId } from "./util/validator/validator.js";
 
 export interface IBaseAppResources {
@@ -74,7 +74,7 @@ export default class BaseApp {
         if (!manifestBuffer) {
             throw new Error("Original application should have manifest.json in root folder");
         }
-        const manifest = JSON.parse(bufferToString(manifestBuffer));
+        const manifest = bufferToJson(manifestBuffer);
         this.id = manifest["sap.app"]?.id as string;
         this.version = manifest["sap.app"]?.applicationVersion?.version as string;
         this.validateProperty(this.id, "sap.app/id");

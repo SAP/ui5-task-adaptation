@@ -1,5 +1,5 @@
 import { IChange } from "./model/types.js";
-import { bufferToString, dotToUnderscore, isManifestChange } from "./util/commonUtil.js";
+import { bufferToJson, dotToUnderscore, isManifestChange } from "./util/commonUtil.js";
 import ResourceUtil, { TEXT_EXTENSIONS } from "./util/resourceUtil.js";
 import { posix as path } from "path";
 import { moveFile, moveFiles } from "./util/movingHandler/changeFileMoveHandler.js";
@@ -43,7 +43,7 @@ export default class AppVariant {
 
         const manifestBuffer = files.get("manifest.appdescr_variant");
         this.validateManifest(manifestBuffer);
-        const { reference, id, layer, content } = JSON.parse(bufferToString(manifestBuffer!));
+        const { reference, id, layer, content } = bufferToJson(manifestBuffer!);
         this.reference = reference;
         this.id = id;
         validateAppId(id);
@@ -87,7 +87,7 @@ export default class AppVariant {
             if (filename.endsWith(CHANGES_EXT)) {
                 if (isManifestChange(filename, content)) {
                     const { newFilename } = moveFile(filename, content, this.prefix, this.id);
-                    const change = JSON.parse(bufferToString(content));
+                    const change = bufferToJson(content);
                     this.updateRelativePaths(change, newFilename);
                     changeFileChanges.push(change);
                 }

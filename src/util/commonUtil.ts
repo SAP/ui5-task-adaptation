@@ -134,7 +134,7 @@ export function getUniqueName(existingNames: string[], template: string) {
 
 export function isManifestChange(filename: string, content: Buffer): boolean {
     if (filename.endsWith(CHANGES_EXT)) {
-        const change = JSON.parse(bufferToString(content));
+        const change = bufferToJson(content);
         return change.changeType?.startsWith(MANIFEST_CHANGE);
     }
     return false;

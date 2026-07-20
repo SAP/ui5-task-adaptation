@@ -1,4 +1,4 @@
-import { stringToBuffer, bufferToString } from "../../util/commonUtil.js";
+import { stringToBuffer, bufferToJson } from "../../util/commonUtil.js";
 import { getLogger } from "@ui5/logger";
 const log = getLogger("@ui5/task-adaptation::CommandChain");
 
@@ -77,7 +77,7 @@ export class ManifestUpdateCommandChain extends AdaptCommand {
         if (!manifestContent) {
             throw new Error("Original application should have manifest.json in root folder");
         }
-        const manifest = JSON.parse(bufferToString(manifestContent));
+        const manifest = bufferToJson(manifestContent);
         const timings: Timing[] = [];
         for (const command of this.commands) {
             const start = performance.now();

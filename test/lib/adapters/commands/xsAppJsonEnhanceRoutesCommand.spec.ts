@@ -8,7 +8,7 @@ import ResourceUtil from "../../../../src/util/resourceUtil.js";
 import FsUtil from "../../../../src/util/fsUtil.js";
 import FetchPreviewResourcesCommand from "../../../../src/adapters/commands/fetchPreviewResourcesCommand.js";
 import ProcessPreviewResourcesCommand from "../../../../src/adapters/commands/processPreviewResourcesCommand.js";
-import { bufferToString, stringToBuffer } from "../../../../src/util/commonUtil.js";
+import { bufferToJson, bufferToString, stringToBuffer } from "../../../../src/util/commonUtil.js";
 
 describe("updateXsAppJson", () => {
     let cfUtilStub: sinon.SinonStub;
@@ -85,7 +85,7 @@ describe("updateXsAppJson", () => {
         const baseAppFiles = new Map<string, Buffer>();
         baseAppFiles.set("xs-app.json", stringToBuffer(JSON.stringify(originalXsAppJson)));
         await command.execute(baseAppFiles);
-        const updatedXsAppJson = JSON.parse(bufferToString(baseAppFiles.get("xs-app.json")!));
+        const updatedXsAppJson = bufferToJson(baseAppFiles.get("xs-app.json")!);
         expect(updatedXsAppJson.routes).to.deep.equal(expectedXsAppJson.routes);
     });
 
@@ -133,7 +133,7 @@ describe("updateXsAppJson", () => {
 
         await command.execute(baseAppFiles);
         // xs-app.json should remain unchanged
-        const updated = JSON.parse(bufferToString(baseAppFiles.get("xs-app.json")!));
+        const updated = bufferToJson(baseAppFiles.get("xs-app.json")!);
         expect(updated.routes).to.deep.equal(routes);
     });
 });
@@ -439,7 +439,7 @@ describe("adjust xs-app.json", () => {
         const writtenFiles = resourceWrite.getCall(0).args[1] as ReadonlyMap<string, Buffer>;
         const mergedXsAppJson = writtenFiles.get("xs-app.json");
         expect(mergedXsAppJson).to.not.be.undefined;
-        expect(JSON.parse(bufferToString(mergedXsAppJson!))).to.deep.equal({
+        expect(bufferToJson(mergedXsAppJson!)).to.deep.equal({
             authenticationMethod: "route",
             routes: [{
                 authenticationType: "basic",
@@ -461,7 +461,7 @@ describe("adjust xs-app.json", () => {
         const writtenFiles = resourceWrite.getCall(0).args[1] as ReadonlyMap<string, Buffer>;
         const mergedXsAppJson = writtenFiles.get("xs-app.json");
         expect(mergedXsAppJson).to.not.be.undefined;
-        expect(JSON.parse(bufferToString(mergedXsAppJson!))).to.deep.equal({
+        expect(bufferToJson(mergedXsAppJson!)).to.deep.equal({
             authenticationMethod: "route",
             routes: [
                 {
