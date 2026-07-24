@@ -5,7 +5,7 @@ import { UI5BuilderTools } from "../model/types.js";
 import IRepository from "../repositories/repository.js";
 import AddAppVariantIdHierarchyCommand from "./commands/addAppVariantIdHierarchyCommand.js";
 import ApplyDescriptorChangesCommand from "./commands/applyDescriptorChangesCommand.js";
-import { AdaptCommandChain, IPromiseCommand, ManifestUpdateCommand, PostCommand, PostCommandChain, SetupCommandChain } from "./commands/command.js";
+import { AdaptCommandChain, IPromiseCommand, ManifestUpdateCommand, ManifestUpdateCommandChain, PostCommand, PostCommandChain, SetupCommandChain } from "./commands/command.js";
 import FilterFilesCommand from "./commands/filterFilesCommand.js";
 import OmitDeletedResourcesCommand from "./commands/omitDeletedResourcesCommand.js";
 import RenameFilesCommand from "./commands/renameFilesCommand.js";
@@ -22,6 +22,7 @@ export interface IAdapter {
         adaptationProject: AppVariant,
         ui5BuilderTools: UI5BuilderTools,
     ): PostCommandChain;
+    createManifestPreviewCommandChain(baseApp: BaseApp, appVariant: AppVariant): ManifestUpdateCommandChain;
 }
 
 export function getCommonManifestUpdateCommands(baseApp: BaseApp, appVariant: AppVariant, appVariantIdHierarchyItem: IAppVariantIdHierarchyManifestItem): ManifestUpdateCommand[] {

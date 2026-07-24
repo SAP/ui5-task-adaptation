@@ -46,4 +46,8 @@ export default class AbapAdapter implements IAdapter {
             )
         );
     }
+
+    createManifestPreviewCommandChain(_baseApp: BaseApp, _appVariant: AppVariant): ManifestUpdateCommandChain {
+        throw new Error("previewManifest currently supports Cloud Foundry (CF) landscapes only");
+    }
 }

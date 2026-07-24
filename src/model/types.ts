@@ -153,3 +153,7 @@ export type ServiceCredentials = {
 export type FetchFilesPromise = Map<string, Promise<ReadonlyMap<string, Buffer>>>;
 
 export { IConfiguration };
+
+export interface IInitializeOptions {
+    useCacheRepository?: boolean;
+}

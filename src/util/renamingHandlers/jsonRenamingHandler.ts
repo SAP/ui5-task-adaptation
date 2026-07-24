@@ -17,15 +17,19 @@ export default abstract class JsonRenamingHandler {
         this.restore(json);
     }
 
+    snapshot(json: any): void {
+        this.jsonPathsToRestore.forEach(path => this.store(json, path));
+    }
+
+    restore(obj: any) {
+        this.original.forEach((value, path) => this.setByPath(obj, value, path.split("/")));
+    }
+
     protected store(obj: any, path: string) {
         // Clone so the snapshot is decoupled from `obj`: when the same object is
         // mutated in-place (JSON renaming), the stored value stays untouched.
         const value = this.getByPath(obj, path.split("/"));
         this.original.set(path, value === undefined ? undefined : structuredClone(value));
-    }
-
-    protected restore(obj: any) {
-        this.original.forEach((value, path) => this.setByPath(obj, value, path.split("/")));
     }
 
     private getByPath(obj: any, path: string[]): any {

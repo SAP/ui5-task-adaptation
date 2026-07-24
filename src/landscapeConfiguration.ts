@@ -1,4 +1,4 @@
-import { IConfiguration } from "./model/types.js";
+import { IConfiguration, IInitializeOptions } from "./model/types.js";
 import { IAdapter } from "./adapters/adapter.js";
 import IRepository from "./repositories/repository.js";
 import IAnnotationManager from "./annotations/annotationManager.js";
@@ -12,14 +12,14 @@ import LocalAnnotationManager from "./annotations/localAnnotationManager.js";
 const log = getLogger("@ui5/task-adaptation::LandscapeConfiguration");
 
 
-export async function initialize(configuration: IConfiguration): Promise<{
+export async function initialize(configuration: IConfiguration, options: IInitializeOptions = {}): Promise<{
     adapter: IAdapter,
     repository: IRepository,
     annotationManager: IAnnotationManager
 }> {
     const type = await getTypeByConfiguration(configuration);
     const enhancedConfig = { ...configuration, type };
-    const repository = await getRepository(enhancedConfig);
+    const repository = await getRepository(enhancedConfig, options);
     const annotationManager = await getAnnotationManager(enhancedConfig, repository);
     return {
         adapter: await getAdapter(enhancedConfig, annotationManager),
@@ -71,7 +71,11 @@ async function getAdapter(configuration: IConfiguration, annotationManager: IAnn
 }
 
 
-async function getRepository(configuration: IConfiguration): Promise<IRepository> {
+async function getRepository(configuration: IConfiguration, options: IInitializeOptions): Promise<IRepository> {
+    if (options.useCacheRepository) {
+        const { default: CacheRepository } = await import("./repositories/cacheRepository.js");
+        return new CacheRepository(configuration);
+    }
     if (isLocal()) {
         const { default: LocalRepository } = await import("./repositories/localRepository.js");
         return new LocalRepository();

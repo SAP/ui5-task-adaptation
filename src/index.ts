@@ -1,6 +1,6 @@
 import * as dotenv from "dotenv";
 
-import { getReferences, logBuilderVersion } from "./util/commonUtil.js";
+import { bufferToString, getReferences, logBuilderVersion } from "./util/commonUtil.js";
 
 import AppVariant from "./appVariant.js";
 import BaseApp from "./baseApp.js";
@@ -58,5 +58,26 @@ export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
         adaptationProject,
         ui5BuilderTools,
     ).execute(files);
+};
 
+
+/**
+ * Preview-time entry point (CF only). Produces the same manifest.json a
+ * full build would produce, without going to the HTML5 Repo.
+ * Precondition is a full build must have run at least once so the base app
+ * files are cached by the @cached() decorator on HTML5Repository.fetch. If
+ * the cache is empty, this throws with a message directing the user to run
+ * a full build first.
+ */
+export async function previewManifest({ options }: ITaskParameters): Promise<any> {
+    const { repository, adapter } = await initialize(options.configuration, { useCacheRepository: true });
+    const adaptationProject = await AppVariant.fromProject();
+    const [baseAppResource] = await repository.getAppVariantIdHierarchy(adaptationProject.reference);
+    const cachedBaseAppFiles = await repository.fetch(baseAppResource);
+    const baseApp = BaseApp.fromFiles(cachedBaseAppFiles);
+
+    const files = new Map(cachedBaseAppFiles);
+    const manifestPreviewCommandChain = adapter.createManifestPreviewCommandChain(baseApp, adaptationProject);
+    await manifestPreviewCommandChain.execute(files, "manifest.json");
+    return JSON.parse(bufferToString(files.get("manifest.json")!));
 }

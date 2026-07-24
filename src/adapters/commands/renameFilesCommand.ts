@@ -1,6 +1,7 @@
 import ManifestRenamingHandler from "../../util/renamingHandlers/manifestRenamingHandler.js";
 import JsonRenamingHandler from "../../util/renamingHandlers/jsonRenamingHandler.js";
 import { stringToBuffer, bufferToString, bufferToJson, jsonToBuffer } from "../../util/commonUtil.js";
+import { getSAPUI5DependencyIds } from "../../util/manifestUtil.js";
 import { renameMap } from "../../util/renamingUtil.js";
 import { TEXT_EXTENSIONS } from "../../util/resourceUtil.js";
 import { posix as path } from "path";
@@ -58,16 +59,7 @@ export default class RenameFilesCommand extends PostCommand {
 
     private getManifestSAPUI5DependencyIds(files: ReadonlyMap<string, Buffer>) {
         const manifestFile = files.get("manifest.json");
-        if (manifestFile) {
-            const manifest = bufferToJson(manifestFile);
-            const dependencies = manifest["sap.ui5"]?.dependencies;
-            if (dependencies) {
-                const libs = dependencies.libs ? Object.keys(dependencies.libs) : [];
-                const components = dependencies.components ? Object.keys(dependencies.components) : [];
-                return [...libs, ...components];
-            }
-        }
-        return [];
+        return manifestFile ? getSAPUI5DependencyIds(bufferToJson(manifestFile)) : [];
     }
 
     private getI18nPropertyKeys(files: ReadonlyMap<string, Buffer>) {

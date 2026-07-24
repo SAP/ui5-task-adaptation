@@ -26,6 +26,29 @@ export default class CacheHolder {
         return Promise.resolve(new Map<string, Buffer>());
     }
 
+    /**
+     * Read the most recently cached files for the given repo, without knowing
+     * the cachebuster token up front. The @cached() decorator on
+     * IRepository.fetch calls delete(repoName) before every write, so there is
+     * at most one token subdirectory under <repoName>/ at any time. 
+     * Returns an empty map if the repo has never been fetched 
+     * (i.e. no full build has run yet).
+     */
+    static async readLatest(repoName: string): Promise<Map<string, Buffer>> {
+        if (!this.isValid(repoName, "repoName")) {
+            throw new Error(`Cache read requires 'repoName' to be provided`);
+        }
+        const repoDir = this.getTempDir(repoName);
+        if (!fs.existsSync(repoDir)) {
+            throw new Error(`No cache found for '${repoName}'. Run a full build first.`);
+        }
+        const [tokenDir] = await fsPromises.readdir(repoDir);
+        if (!tokenDir) {
+            throw new Error(`Cache directory for '${repoName}' is empty. Run a full build first.`);
+        }
+        return ResourceUtil.byGlob(path.join(repoDir, tokenDir), "**/*");
+    }
+
     static async write(repoName: string, token: string, files: Map<string, Buffer>): Promise<void> {
         this.delete(repoName);
         if (this.isValid(repoName, "repoName") && this.isValid(token, "token")) {

@@ -28,6 +28,13 @@ export default class AppVariant {
         return new AppVariant(files, resources);
     }
 
+    static async fromProject(): Promise<AppVariant> {
+        // previewManifest only merges manifest changes, that is why we
+        // just need the app variant descriptor and *.change files from the workspace.
+        const EXTENSIONS_TO_PROCESS = "change,appdescr_variant";
+        const files = await ResourceUtil.byGlobInProject(`/**/*.{${EXTENSIONS_TO_PROCESS}}`);
+        return new AppVariant(files);
+    }
 
     static fromFiles(files: ReadonlyMap<string, Buffer>): AppVariant {
         return new AppVariant(files);

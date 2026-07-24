@@ -1,12 +1,13 @@
 import * as chai from "chai";
 import * as sinon from "sinon";
+import chaiAsPromised from "chai-as-promised";
 
 import CacheHolder from "../../src/cache/cacheHolder.js";
 import HTML5Repository from "../../src/repositories/html5Repository.js";
 import AbapRepository from "../../src/repositories/abapRepository.js";
 import { IProjectOptions } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
-import TestUtil from "./testUtilities/testUtil.js";
+import TestUtil, { toBufferMap } from "./testUtilities/testUtil.js";
 import CFUtil from "../../src/util/cfUtil.js";
 import esmock from "esmock";
 import IRepository from "../../src/repositories/repository.js";
@@ -18,7 +19,9 @@ import ResourceUtil from "../../src/util/resourceUtil.js";
 
 const { byIsOmited } = TestUtil;
 
+chai.use(chaiAsPromised);
 const { expect } = chai;
+
 const OPTIONS: IProjectOptions = {
     projectNamespace: "ns",
     configuration: {
@@ -291,6 +294,131 @@ describe("Index", () => {
                 authenticationType: "none"
             }
         ]);
+    });
+});
+
+
+describe("Index.previewManifest", () => {
+    let sandbox: SinonSandbox;
+
+    beforeEach(() => {
+        sandbox = sinon.createSandbox();
+        sandbox.stub(CFUtil, "getOrCreateServiceKeyWithEndpoints").resolves({
+            endpoints: {
+                "api-endpoint": { destination: "ZTEST_DEST" },
+                "view-endpoint": { destination: "" },
+                "ui-endpoint": "ui-dest"
+            },
+            "sap.cloud.service": "test-service"
+        });
+    });
+    afterEach(() => {
+        sandbox.restore();
+        CacheHolder.clear();
+    });
+
+    const setCache = async (files: Map<string, Buffer>, cachebusterToken = "010101") => {
+        await CacheHolder.write(OPTIONS.configuration.appName!, cachebusterToken, files);
+    };
+
+    const baseFiles = () => toBufferMap([
+        ["manifest.json", TestUtil.getResource("manifest.json")],
+        ["i18n/i18n.properties", TestUtil.getResource("i18n.properties")],
+        ["xs-app.json", JSON.stringify({ routes: [] })]
+    ]);
+
+    const runPreview = async (files: Map<string, Buffer> = baseFiles(), options: IProjectOptions = OPTIONS) => {
+        await setCache(files);
+        const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
+        sandbox.stub(ResourceUtil, "byGlobInProject").resolves(new Map(appVariant.files));
+        const { previewManifest } = await import("../../src/index.js");
+        return previewManifest({ options } as any);
+    };
+
+    [{
+        name: "should rename base id and componentName to adaptation project id",
+        assert: (manifest: any) => {
+            expect(manifest["sap.app"].id).to.equal("customer.com.sap.application.variant.id");
+            expect(manifest["sap.ui5"].componentName).to.equal("customer.com.sap.application.variant.id");
+        }
+    }, {
+        name: "should add appVariantIdHierarchy to manifest.json",
+        assert: (manifest: any) => {
+            expect(manifest["sap.ui5"].appVariantIdHierarchy).to.be.an("array");
+            expect(manifest["sap.ui5"].appVariantIdHierarchy[0].appVariantId).to.equal("com.sap.base.app.id");
+        }
+    }, {
+        name: "should set sap.ui5.isCloudDevAdaptation to true",
+        assert: (manifest: any) => expect(manifest["sap.ui5"].isCloudDevAdaptation).to.equal(true)
+    }, {
+        name: "should set sap.cloud.service from configuration",
+        assert: (manifest: any) => expect(manifest["sap.cloud"].service).to.equal(OPTIONS.configuration.sapCloudService)
+    }].forEach(({ name, assert }) => {
+        it(name, async () => assert(await runPreview()));
+    });
+
+    it("should throw if the cache is empty", async () => {
+        const appVariant = await TestUtil.getAppVariant("appVariant1", OPTIONS.projectNamespace);
+        sandbox.stub(ResourceUtil, "byGlobInProject").resolves(new Map(appVariant.files));
+        const { previewManifest } = await import("../../src/index.js");
+        await expect(previewManifest({ options: OPTIONS } as any))
+            .to.be.rejectedWith(`No cache found for 'repoName1'. Run a full build first.`);
+    });
+
+    it("should throw if appName is missing from configuration", async () => {
+        const noAppName = { ...OPTIONS, configuration: { ...OPTIONS.configuration, appName: undefined } };
+        await expect(runPreview(baseFiles(), noAppName)).to.be.rejectedWith(/'appName'/);
+    });
+
+    it("should throw if the cached base app has no manifest.json", async () => {
+        await expect(runPreview(toBufferMap([["i18n/i18n.properties", "hello=world"]])))
+            .to.be.rejectedWith('Original application should have manifest.json in root folder');
+    });
+
+    it("should not call the HTML5 Repo", async () => {
+        const hierarchySpy = sandbox.spy(HTML5Repository.prototype, "getAppVariantIdHierarchy");
+        const fetchSpy = sandbox.spy(HTML5Repository.prototype, "fetch");
+        await runPreview();
+        expect(hierarchySpy.called).to.equal(false);
+        expect(fetchSpy.called).to.equal(false);
+    });
+
+    it("should throw for non-CF landscapes", async () => {
+        const abapOptions: IProjectOptions = { ...OPTIONS, configuration: { ...OPTIONS.configuration, type: "abap" } };
+        await expect(runPreview(baseFiles(), abapOptions))
+            .to.be.rejectedWith("previewManifest currently supports Cloud Foundry (CF) landscapes only");
+    });
+
+    it("should generate a manifest.json that matches the full build", async () => {
+        const repository = new HTML5Repository(OPTIONS.configuration);
+        sandbox.stub(repository, "getMetadata").resolves({ changedOn: "010101" });
+        sandbox.stub(repository, "getHtml5RepoInfo" as any).resolves({});
+        sandbox.stub(repository, "getAppZipEntries" as any).resolves(baseFiles());
+
+        const { workspace: buildWorkspace, taskUtil: buildTaskUtil } =
+            await TestUtil.getWorkspace("appVariant1", OPTIONS.projectNamespace);
+        const indexStub = await esmock("../../src/index.js", {
+            "../../src/landscapeConfiguration.js": {
+                initialize: () => ({
+                    repository,
+                    adapter: new CFAdapter(OPTIONS.configuration),
+                    annotationManager: new CFAnnotationManager()
+                })
+            }
+        });
+        await indexStub({ workspace: buildWorkspace, options: OPTIONS, taskUtil: buildTaskUtil });
+        const buildResources: any[] = (await buildWorkspace.byGlob("/**/*")).filter(byIsOmited(buildTaskUtil));
+        const buildManifestResource = buildResources.find((r: any) => r.getPath().endsWith("manifest.json"));
+        const buildManifest = JSON.parse(await buildManifestResource.getString());
+
+        const appVariant = await TestUtil.getAppVariant("appVariant1", OPTIONS.projectNamespace);
+        sandbox.stub(ResourceUtil, "byGlobInProject").resolves(new Map(appVariant.files));
+        const { previewManifest } = await import("../../src/index.js");
+        const previewOutput = await previewManifest({ options: OPTIONS } as any);
+
+        expect(JSON.stringify(buildManifest)).to.include('"enableMassEdit":true');
+        expect(JSON.stringify(previewOutput)).to.include('"enableMassEdit":true');
+        expect(previewOutput).to.deep.equal(buildManifest);
     });
 });
 

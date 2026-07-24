@@ -5,7 +5,7 @@ import CacheHolder from "../../../src/cache/cacheHolder.js";
 import HTML5Repository from "../../../src/repositories/html5Repository.js";
 import { IProjectOptions } from "../../../src/model/types.js";
 import { SinonSandbox } from "sinon";
-import TestUtil from "../testUtilities/testUtil.js";
+import TestUtil, { toBuffer, toBufferMap } from "../testUtilities/testUtil.js";
 import esmock from "esmock";
 import { expect } from "chai";
 import AbapRepository from "../../../src/repositories/abapRepository.js";
@@ -52,23 +52,23 @@ describe("CacheHolder", () => {
         sandbox = sinon.createSandbox();
 
         await CacheHolder.write("repoName1", "010101",
-            new Map([["manifest.json", JSON.stringify({
+            new Map([["manifest.json", toBuffer(JSON.stringify({
                 "sap.app": {
                     "id": "com.sap.base.app.id",
                     "applicationVersion": {
                         "version": "1.0.0"
                     }
                 }
-            })]]));
+            }))]]));
         await CacheHolder.write("libName1", "010103",
-            new Map([["manifest.json", JSON.stringify({
+            new Map([["manifest.json", toBuffer(JSON.stringify({
                 "sap.app": {
                     "id": "com.sap.reuse.lib.id",
                     "applicationVersion": {
                         "version": "1.0.2"
                     }
                 }
-            })]])
+            }))]])
         );
     });
 
@@ -77,15 +77,15 @@ describe("CacheHolder", () => {
         CacheHolder.clear();
     });
 
-    const assertManifest = (files: Map<string, string>, expectedVersion: string) => {
-        const manifestString = files.get("manifest.json")!;
+    const assertManifest = (files: Map<string, Buffer>, expectedVersion: string) => {
+        const manifestString = files.get("manifest.json")!.toString();
         const manifest = JSON.parse(manifestString);
         expect(manifest["sap.app"].id).to.eql("com.sap.base.app.id");
         expect(manifest["sap.app"].applicationVersion.version).to.eql(expectedVersion);
     };
 
-    const assertReuseLibManifest = (files: Map<string, string>, expectedVersion: string) => {
-        const manifestString = files.get("manifest.json")!;
+    const assertReuseLibManifest = (files: Map<string, Buffer>, expectedVersion: string) => {
+        const manifestString = files.get("manifest.json")!.toString();
         const manifest = JSON.parse(manifestString);
         expect(manifest["sap.app"].id).to.eql("com.sap.reuse.lib.id");
         expect(manifest["sap.app"].applicationVersion.version).to.eql(expectedVersion);
@@ -185,10 +185,14 @@ describe("CacheHolder", () => {
     });
 
     describe("CacheHolder", () => {
-        const manifest = new Map([["manifest.json", "{}"]]);
+        const manifest = toBufferMap([["manifest.json", "{}"]]);
         let log = { message: "" }, CacheHolderMock: typeof CacheHolder;
 
-        before(async () => CacheHolderMock = await getCacheHolderMock(log));
+        before(async () => {
+            CacheHolder.clear();
+            CacheHolderMock = await getCacheHolderMock(log);
+        });
+
         it("shouldn't clear up to date cache", async () => {
             await CacheHolder.write("repoName1", "010101", manifest);
             await CacheHolder.write("repoName2", "010101", manifest);
@@ -226,6 +230,35 @@ describe("CacheHolder", () => {
             await CacheHolderMock.write("", "010101", manifest);
             expect((await CacheHolderMock.read("", "010101")).size).to.equal(0);
             expect(log.message).eql("No 'repoName' provided, skipping cache write");
+        });
+    });
+
+    describe("readLatest", () => {
+        const files = toBufferMap([["manifest.json", "{}"]]);
+
+        beforeEach(() => {
+            CacheHolder.clear();
+        });
+
+        it("should read files from the cached repo", async () => {
+            await CacheHolder.write("repoName1", "010101", files);
+            const result = await CacheHolder.readLatest("repoName1");
+            expect([...result.keys()]).to.have.members(["manifest.json"]);
+        });
+
+        it("should throw for repo that was never cached", async () => {
+            await expect(CacheHolder.readLatest("unknownRepo")).to.be.rejectedWith("Run a full build first");
+        });
+
+        it("should throw for empty repoName", async () => {
+            await expect(CacheHolder.readLatest("")).to.be.rejectedWith("Cache read requires 'repoName' to be provided");
+        });
+
+        it("should read the current token dir after write() rotated the token", async () => {
+            await CacheHolder.write("repoName1", "010101", toBufferMap([["manifest.json", JSON.stringify({ v: 1 })]]));
+            await CacheHolder.write("repoName1", "010102", toBufferMap([["manifest.json", JSON.stringify({ v: 2 })]]));
+            const result = await CacheHolder.readLatest("repoName1");
+            expect(JSON.parse(result.get("manifest.json")!.toString())).to.deep.equal({ v: 2 });
         });
     });
 
