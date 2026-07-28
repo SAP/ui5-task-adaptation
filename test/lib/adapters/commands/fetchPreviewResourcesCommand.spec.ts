@@ -9,6 +9,7 @@ import esmock from "esmock";
 import { ServiceCredentials } from "../../../../src/model/types.js";
 import CFUtil from "../../../../src/util/cfUtil.js";
 import { dependsOn } from "../../../../src/adapters/adapter.js";
+import { REUSE_DIR } from "../../../../src/model/configuration.js";
 
 
 describe("FetchPreviewResourcesCommand", () => {
@@ -61,7 +62,7 @@ describe("FetchPreviewResourcesCommand", () => {
             fetch: async (_: string) => []
         } as any;
 
-        sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfo));
+        sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(Buffer.from(appInfo)));
 
         const command = new FetchPreviewResourcesCommand("reuse.lib1", repositoryStub);
         await command.execute();
@@ -70,7 +71,7 @@ describe("FetchPreviewResourcesCommand", () => {
     });
 
     it("should raise an error if ui5AppInfo.json is missing", async () => {
-        const files = new Map<string, string>();
+        const files = new Map<string, Buffer>();
         sandbox.stub(ResourceUtil, "byGlobInProject").returns(Promise.resolve(files));
 
         const command = new FetchPreviewResourcesCommand("reuse.lib1", {} as any);
@@ -95,7 +96,7 @@ describe("FetchPreviewResourcesCommand", () => {
         const repositoryStub = {
             fetch: async () => new Map<string, string>()
         } as any;
-        sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
+        sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(Buffer.from(appInfoContent)));
 
         const command = new FetchPreviewResourcesCommand("reuse.lib1", repositoryStub);
         await command.execute();
@@ -136,28 +137,94 @@ describe("FetchPreviewResourcesCommand", () => {
 
         const repository = {
             fetch: async () => {
-                const libFiles = new Map<string, string>();
-                libFiles.set("file1.js", "console.log('file1');");
-                libFiles.set("file2.js", "console.log('file2');");
+                const libFiles = new Map<string, Buffer>();
+                libFiles.set("file1.js", Buffer.from("console.log('file1');"));
+                libFiles.set("file2.js", Buffer.from("console.log('file2');"));
                 return libFiles;
             }
         } as any;
 
-        sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
+        sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(Buffer.from(appInfoContent)));
 
         const command = new FetchPreviewResourcesCommand("reuse.lib1", repository);
         await command.execute();
         await command.result;
         const processCommand = new ProcessPreviewResourcesCommand(Promise.resolve({} as unknown as ServiceCredentials), command.result);
-        await processCommand.execute(new Map<string, string>([["xs-app.json", "{}"]]));
+        await processCommand.execute(new Map<string, Buffer>([["xs-app.json", Buffer.from("{}")]]));
 
-        const allFiles = writeStub.getCall(0).args[1] as ReadonlyMap<string, string>;
+        const allFiles = writeStub.getCall(0).args[1] as ReadonlyMap<string, Buffer>;
         expect(allFiles.size).to.equal(5);
         expect(allFiles.has("lib1/file1.js")).to.be.true;
         expect(allFiles.has("lib1/file2.js")).to.be.true;
         expect(allFiles.has("lib2/file1.js")).to.be.true;
         expect(allFiles.has("lib2/file2.js")).to.be.true;
         expect(allFiles.has("xs-app.json")).to.be.true;
+    });
+
+    it("should re-fetch reuse libs and overwrite .adp/reuse when ui5AppInfo.json changes", async () => {
+        const writeStub = sandbox.stub(ResourceUtil, "writeInProject");
+
+        const makeAppInfo = (cacheBusterToken: string) => JSON.stringify({
+            "test.app": {
+                asyncHints: {
+                    libs: [{
+                        name: "com.example.reuseLib",
+                        html5AppName: "reuseLib",
+                        html5AppHostId: "ddc20001-a38e-4dd2-891c-1ad50a6a7f18",
+                        html5AppVersion: "1.0.0",
+                        html5CacheBusterToken: cacheBusterToken,
+                        url: { final: "https://example.com/reuseLib" }
+                    }]
+                },
+                messages: []
+            }
+        });
+
+        const makeLibFiles = (manifestVersion: string) => new Map<string, Buffer>([
+            ["manifest.json", Buffer.from(JSON.stringify({ "_version": manifestVersion }))],
+            ["Component.js", Buffer.from("// component")]
+        ]);
+
+        const readStub = sandbox.stub(FsUtil, "readInProject");
+        readStub.onFirstCall().resolves(Buffer.from(makeAppInfo("token-v1")));
+        readStub.onSecondCall().resolves(Buffer.from(makeAppInfo("token-v2")));
+
+        const fetchStub = sandbox.stub();
+        fetchStub.onFirstCall().resolves(makeLibFiles("1.0.0"));
+        fetchStub.onSecondCall().resolves(makeLibFiles("2.0.0"));
+        const repository = { fetch: fetchStub } as any;
+
+        // First cycle
+        const command1 = new FetchPreviewResourcesCommand("test.app", repository);
+        await command1.execute();
+        const processCommand1 = new ProcessPreviewResourcesCommand(
+            Promise.resolve({} as unknown as ServiceCredentials),
+            command1.result
+        );
+        await processCommand1.execute(new Map([["xs-app.json", Buffer.from("{}")]]));
+
+        const firstWrite = writeStub.getCall(0).args[1] as ReadonlyMap<string, Buffer>;
+        const firstManifest = JSON.parse(firstWrite.get("reuseLib/manifest.json")!.toString("utf8"));
+        expect(firstManifest._version).to.equal("1.0.0");
+
+        // ui5AppInfo.json is updated — second cycle uses new token, different manifest
+        const command2 = new FetchPreviewResourcesCommand("test.app", repository);
+        await command2.execute();
+        const processCommand2 = new ProcessPreviewResourcesCommand(
+            Promise.resolve({} as unknown as ServiceCredentials),
+            command2.result
+        );
+        await processCommand2.execute(new Map([["xs-app.json", Buffer.from("{}")]]));
+
+        // repository.fetch() called again — not served from cache
+        expect(fetchStub.callCount).to.equal(2);
+
+        // second write overwrites .adp/reuse with updated manifest
+        expect(writeStub.callCount).to.equal(2);
+        expect(writeStub.getCall(1).args[0]).to.equal(REUSE_DIR);
+        const secondWrite = writeStub.getCall(1).args[1] as ReadonlyMap<string, Buffer>;
+        const secondManifest = JSON.parse(secondWrite.get("reuseLib/manifest.json")!.toString("utf8"));
+        expect(secondManifest._version).to.equal("2.0.0");
     });
 
     it("should log warn with 'No files found in reuse library ...' message", async () => {
@@ -200,12 +267,12 @@ describe("FetchPreviewResourcesCommand", () => {
             fetch: async () => new Map<string, string>()
         } as any;
 
-        sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(appInfoContent));
+        sandbox.stub(FsUtil, "readInProject").returns(Promise.resolve(Buffer.from(appInfoContent)));
 
         const command = new FetchPreviewResourcesCommand("reuse.libEmpty", repositoryStub);
         await command.execute();
         const processCommand = new ProcessPreviewResourcesCommandClass(Promise.resolve({} as unknown as ServiceCredentials), command.result);
-        await processCommand.execute(new Map<string, string>([["xs-app.json", "{}"]]));
+        await processCommand.execute(new Map<string, Buffer>([["xs-app.json", Buffer.from("{}")]]));
 
         expect(warnSpy.called).to.be.true;
         expect(warnSpy.calledWithMatch(/No files found in reuse library libEmpty for preview/)).to.be.true;
