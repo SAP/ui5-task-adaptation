@@ -10,6 +10,23 @@ import HTML5Repository from "../../../src/repositories/html5Repository.js";
 
 const { assert, expect } = chai;
 
+function makeCliExecute(overrides?: (params: string[]) => string | null) {
+    return (params: string[]) => {
+        if (overrides) {
+            const result = overrides(params);
+            if (result !== null) return TestUtil.getStdOut(result);
+        }
+        const url: string = params[1] ?? "";
+        if (url.includes("service_credential_bindings") && url.includes("/details")) {
+            return TestUtil.getStdOut(TestUtil.getResource("service_credential_details_repo.json"));
+        }
+        if (url.includes("service_credential_bindings")) {
+            return TestUtil.getStdOut(TestUtil.getResource("service_credential_bindings_repo.json"));
+        }
+        return TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json"));
+    };
+}
+
 describe("Html5Repository", () => {
     let sandbox: SinonSandbox;
     const options: IProjectOptions = {
@@ -30,15 +47,9 @@ describe("Html5Repository", () => {
 
     it("should download archive from htlm5 repo", async () => {
         let requestUtilGetCall = 0;
-        const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
         const HTML5Repository = await esmock("../../../src/repositories/html5Repository.js", {}, {
             "@sap/cf-tools/out/src/cli.js": {
-                Cli: {
-                    execute: () => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json"))
-                }
-            },
-            "@sap/cf-tools/out/src/cf-local.js": {
-                cfGetInstanceCredentials: () => Promise.resolve(credentialsJson)
+                Cli: { execute: makeCliExecute() }
             },
             "../../../src/util/requestUtil.js": {
                 default: {
@@ -60,15 +71,9 @@ describe("Html5Repository", () => {
 
     it("should throw an exception because of corrupt archive", async () => {
         let requestUtilGetCall = 0;
-        const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
         const Html5Repository = await esmock("../../../src/repositories/html5Repository.js", {}, {
             "@sap/cf-tools/out/src/cli.js": {
-                Cli: {
-                    execute: () => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json"))
-                }
-            },
-            "@sap/cf-tools/out/src/cf-local.js": {
-                cfGetInstanceCredentials: () => Promise.resolve(credentialsJson)
+                Cli: { execute: makeCliExecute() }
             },
             "../../../src/util/requestUtil.js": {
                 default: {
@@ -99,15 +104,9 @@ describe("Html5Repository", () => {
             applicationVersion: options.configuration.appVersion,
             changedOn: "2100.01.01"
         };
-        const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
         const Html5Repository = await esmock("../../../src/repositories/html5Repository.js", {}, {
             "@sap/cf-tools/out/src/cli.js": {
-                Cli: {
-                    execute: () => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json"))
-                }
-            },
-            "@sap/cf-tools/out/src/cf-local.js": {
-                cfGetInstanceCredentials: () => Promise.resolve(credentialsJson)
+                Cli: { execute: makeCliExecute() }
             },
             "../../../src/util/requestUtil.js": {
                 default: {
@@ -128,15 +127,9 @@ describe("Html5Repository", () => {
 
     it("should download reuse lib from htlm5 repo", async () => {
         let requestUtilGetCall = 0;
-        const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
         const HTML5Repository = await esmock("../../../src/repositories/html5Repository.js", {}, {
             "@sap/cf-tools/out/src/cli.js": {
-                Cli: {
-                    execute: () => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json"))
-                }
-            },
-            "@sap/cf-tools/out/src/cf-local.js": {
-                cfGetInstanceCredentials: () => Promise.resolve(credentialsJson)
+                Cli: { execute: makeCliExecute() }
             },
             "../../../src/util/requestUtil.js": {
                 default: {
@@ -172,15 +165,9 @@ describe("Html5Repository", () => {
 
         statusCases.forEach(({ status, message, shouldError }) => {
             it(`should handle HTTP ${status}`, async () => {
-                const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
                 const HTML5Repository = await esmock("../../../src/repositories/html5Repository.js", {}, {
                     "@sap/cf-tools/out/src/cli.js": {
-                        Cli: {
-                            execute: () => TestUtil.getStdOut(TestUtil.getResource("service_instances_repo.json"))
-                        }
-                    },
-                    "@sap/cf-tools/out/src/cf-local.js": {
-                        cfGetInstanceCredentials: () => Promise.resolve(credentialsJson)
+                        Cli: { execute: makeCliExecute() }
                     },
                     "../../../src/util/requestUtil.js": {
                         default: {

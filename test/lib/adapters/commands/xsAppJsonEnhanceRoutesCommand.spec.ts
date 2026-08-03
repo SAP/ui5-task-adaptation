@@ -89,36 +89,6 @@ describe("updateXsAppJson", () => {
         expect(updatedXsAppJson.routes).to.deep.equal(expectedXsAppJson.routes);
     });
 
-    it("should generate unique service key name when creating new keys", async () => {
-        const mockServiceCredentials = {
-            endpoints: {
-                "api-endpoint": {
-                    destination: "test-destination",
-                    url: "https://api.example.com"
-                }
-            },
-            "sap.cloud.service": "test-cloud-service"
-        };
-
-        cfUtilStub.resolves(mockServiceCredentials);
-
-        // Stub the generateUniqueServiceKeyName method
-        const generateUniqueStub = sinon
-            .stub(CFUtil, "generateUniqueServiceKeyName")
-            .resolves("test-service-instance-key-5");
-
-        const command = new XsAppJsonEnhanceRoutesCommand(Promise.resolve(mockServiceCredentials));
-        const baseAppFiles = new Map<string, Buffer>();
-        // Add a route with destination to trigger the service key function call
-        baseAppFiles.set("xs-app.json", stringToBuffer(JSON.stringify({
-            routes: [{ source: "/api", destination: "api-dest" }]
-        })));
-
-        await command.execute(baseAppFiles);
-        generateUniqueStub.restore();
-    });
-
-
     it("should not throw if no valid endpoints are provided and new key also has no endpoints", async () => {
         // Simulate CFUtil.getOrCreateServiceKeyWithEndpoints returning undefined or empty endpoints
         const command = new XsAppJsonEnhanceRoutesCommand(Promise.resolve({ endpoints: {} }));
