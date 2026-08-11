@@ -6,7 +6,8 @@
         {
             "changeType": "appdescr_ui5_addNewModelEnhanceWith",
             "content": {
-                "modelId": "i18n|sap.suite.ui.generic.template.ListObject"
+                "modelId": "i18n|sap.suite.ui.generic.template.ListObject",
+                "createIfMissing": true
             },
             "texts": {
                 "i18n": "i18n/ListObject/i18n.properties"

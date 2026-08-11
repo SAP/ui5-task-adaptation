@@ -16,7 +16,8 @@
         {
             "changeType": "appdescr_ui5_addNewModelEnhanceWith",
             "content": {
-                "modelId": "i18n|sap.suite.ui.generic.template.ListReport|SEPMRA_C_PD_Product"
+                "modelId": "i18n|sap.suite.ui.generic.template.ListReport|SEPMRA_C_PD_Product",
+                "createIfMissing": true
             },
             "texts": {
                 "i18n": "i18n/ListReport/SEPMRA_C_PD_Product/i18n.properties"
@@ -25,7 +26,8 @@
         {
             "changeType": "appdescr_ui5_addNewModelEnhanceWith",
             "content": {
-                "modelId": "i18n|sap.suite.ui.generic.template.ObjectPage|SEPMRA_C_PD_Product"
+                "modelId": "i18n|sap.suite.ui.generic.template.ObjectPage|SEPMRA_C_PD_Product",
+                "createIfMissing": true
             },
             "texts": {
                 "i18n": "i18n/ObjectPage/SEPMRA_C_PD_Product/i18n.properties"

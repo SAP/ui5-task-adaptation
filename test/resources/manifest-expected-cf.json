@@ -155,6 +155,18 @@
             "fcl": {
                 "type": "sap.ui.model.json.JSONModel"
             },
+            "i18n|sap.suite.ui.generic.template.ListReport|SEPMRA_C_PD_Product": {
+                "settings": {
+                    "bundleName": "customer.com.sap.application.variant.id.customer_com_sap_application_variant_id.i18n.ListReport.SEPMRA_C_PD_Product.i18n"
+                },
+                "type": "sap.ui.model.resource.ResourceModel"
+            },
+            "i18n|sap.suite.ui.generic.template.ObjectPage|SEPMRA_C_PD_Product": {
+                "settings": {
+                    "bundleName": "customer.com.sap.application.variant.id.customer_com_sap_application_variant_id.i18n.ObjectPage.SEPMRA_C_PD_Product.i18n"
+                },
+                "type": "sap.ui.model.resource.ResourceModel"
+            },
             "ui": {
                 "type": "sap.ui.model.json.JSONModel",
                 "settings": {

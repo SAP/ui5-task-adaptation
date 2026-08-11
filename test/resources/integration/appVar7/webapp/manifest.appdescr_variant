@@ -6,7 +6,8 @@
         {
             "changeType": "appdescr_ui5_addNewModelEnhanceWith",
             "content": {
-                "modelId": "i18n"
+                "modelId": "i18n",
+                "createIfMissing": true
             },
             "texts": {
                 "i18n": "i18n/i18n.properties"
