@@ -69,9 +69,9 @@ export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
  * the cache is empty, this throws with a message directing the user to run
  * a full build first.
  */
-export async function previewManifest({ options }: ITaskParameters): Promise<any> {
+export async function previewManifest({ workspace, options }: ITaskParameters): Promise<any> {
     const { repository, adapter } = await initialize(options.configuration, { useCacheRepository: true });
-    const adaptationProject = await AppVariant.fromProject();
+    const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
     const [baseAppResource] = await repository.getAppVariantIdHierarchy(adaptationProject.reference);
     const cachedBaseAppFiles = await repository.fetch(baseAppResource);
     const baseApp = BaseApp.fromFiles(cachedBaseAppFiles);

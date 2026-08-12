@@ -159,9 +159,13 @@ export default class ResourceUtil {
 
     static async toFileMap(resources: ReadonlyArray<Resource>, projectNamespace?: string): Promise<Map<string, Buffer>> {
         const files = new Map<string, Buffer>();
-        const rootFolderLength = projectNamespace ? ResourceUtil.getRootFolder(projectNamespace).length : 0;
+        const rootFolder = projectNamespace ? ResourceUtil.getRootFolder(projectNamespace) : undefined;
         for (const resource of resources) {
-            files.set(resource.getPath().substring(rootFolderLength + 1), await resource.getBuffer());
+            const resourcePath = resource.getPath();
+            const filename = rootFolder && resourcePath.startsWith(rootFolder)
+                ? resourcePath.substring(rootFolder.length + 1)
+                : resourcePath.substring(1);
+            files.set(filename, await resource.getBuffer());
         }
         return files;
     }

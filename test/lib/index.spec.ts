@@ -329,10 +329,9 @@ describe("Index.previewManifest", () => {
 
     const runPreview = async (files: Map<string, Buffer> = baseFiles(), options: IProjectOptions = OPTIONS) => {
         await setCache(files);
-        const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        sandbox.stub(ResourceUtil, "byGlobInProject").resolves(new Map(appVariant.files));
+        const { workspace } = await TestUtil.getWorkspace("appVariant1", options.projectNamespace);
         const { previewManifest } = await import("../../src/index.js");
-        return previewManifest({ options } as any);
+        return previewManifest({ workspace, options } as any);
     };
 
     [{
@@ -358,10 +357,9 @@ describe("Index.previewManifest", () => {
     });
 
     it("should throw if the cache is empty", async () => {
-        const appVariant = await TestUtil.getAppVariant("appVariant1", OPTIONS.projectNamespace);
-        sandbox.stub(ResourceUtil, "byGlobInProject").resolves(new Map(appVariant.files));
+        const { workspace } = await TestUtil.getWorkspace("appVariant1", OPTIONS.projectNamespace);
         const { previewManifest } = await import("../../src/index.js");
-        await expect(previewManifest({ options: OPTIONS } as any))
+        await expect(previewManifest({ workspace, options: OPTIONS } as any))
             .to.be.rejectedWith(`No cache found for 'repoName1'. Run a full build first.`);
     });
 
@@ -411,10 +409,9 @@ describe("Index.previewManifest", () => {
         const buildManifestResource = buildResources.find((r: any) => r.getPath().endsWith("manifest.json"));
         const buildManifest = JSON.parse(await buildManifestResource.getString());
 
-        const appVariant = await TestUtil.getAppVariant("appVariant1", OPTIONS.projectNamespace);
-        sandbox.stub(ResourceUtil, "byGlobInProject").resolves(new Map(appVariant.files));
+        const { workspace: previewWorkspace } = await TestUtil.getWorkspace("appVariant1", OPTIONS.projectNamespace);
         const { previewManifest } = await import("../../src/index.js");
-        const previewOutput = await previewManifest({ options: OPTIONS } as any);
+        const previewOutput = await previewManifest({ workspace: previewWorkspace, options: OPTIONS } as any);
 
         expect(JSON.stringify(buildManifest)).to.include('"enableMassEdit":true');
         expect(JSON.stringify(previewOutput)).to.include('"enableMassEdit":true');
