@@ -6,7 +6,8 @@ import { IProjectOptions } from "../../src/model/types.js";
 import RequestUtil from "../../src/util/requestUtil.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
-import AbapAnnotationManager from "../../src/annotations/abapAnnotationManager.js";
+import DownloadAnnotationsCommand from "../../src/adapters/commands/downloadAnnotationsCommand.js";
+import { stringToBuffer } from "../../src/util/commonUtil.js";
 
 const { expect } = chai;
 
@@ -31,8 +32,9 @@ describe("AnnotationManager Failed Request", () => {
         const abapRepository = new AbapRepository(options.configuration);
         sandbox.stub(RequestUtil, "get").throws(new Error("Not found"));
         sandbox.stub(RequestUtil, "head").throws(new Error("Not found"));
-        const annotationManager = new AbapAnnotationManager(options.configuration, abapRepository);
-        expect(annotationManager.process(manifest, "appVarId", "prefix")).
+        const annotationManager = new DownloadAnnotationsCommand("appVarId", "prefix", options.configuration, abapRepository);
+        const files = new Map<string, Buffer>([["manifest.json", stringToBuffer(JSON.stringify(manifest))]]);
+        expect(annotationManager.execute(files, "manifest.json")).
             to.be.rejectedWith("Failed to fetch annotation by '/sap/opu/odata4/sap/f4_fv_airlines_mduu_04/utyr/sap/f4_sd_airlines_mduu/0001/': Not found");
     });
 

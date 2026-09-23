@@ -3,15 +3,17 @@ import { AdaptCommandChain, ManifestUpdateCommandChain, PostCommandChain, SetupC
 import { IAppVariantIdHierarchyManifestItem } from "../model/appVariantIdHierarchyItem.js";
 import BaseApp from "../baseApp.js";
 import AppVariant from "../appVariant.js";
-import IAnnotationManager from "../annotations/annotationManager.js";
 import DownloadAnnotationsCommand from "./commands/downloadAnnotationsCommand.js";
 import I18nPropertiesMergeCommand from "./commands/i18nPropertiesMergeCommand.js";
-import { UI5BuilderTools } from "../model/types.js";
+import { IConfiguration, UI5BuilderTools } from "../model/types.js";
 import IRepository from "../repositories/repository.js";
 
 
 export default class AbapAdapter implements IAdapter {
-    constructor(private annotationManager: IAnnotationManager) { }
+    constructor(
+        private configuration: IConfiguration,
+        private repository: IRepository,
+    ) { }
 
     createSetupCommandChain(_appId: string, _repository: IRepository): SetupCommandChain {
         return new SetupCommandChain([]);
@@ -28,7 +30,7 @@ export default class AbapAdapter implements IAdapter {
             new ManifestUpdateCommandChain([
                 ...getCommonManifestUpdateCommands(baseApp, appVariant, appVariantIdHierarchyItem),
             ]),
-            new DownloadAnnotationsCommand(appVariant.id, appVariant.prefix, this.annotationManager),
+            new DownloadAnnotationsCommand(appVariant.id, appVariant.prefix, this.configuration, this.repository),
             new I18nPropertiesMergeCommand(baseApp.i18nPath, appVariant.prefix, manifestChanges),
         ]);
     }

@@ -498,9 +498,6 @@ describe("I18nPropertiesMergeCommand", () => {
                             }],
                             fetch: async () => baseAppFiles,
                             downloadAnnotationFile: async () => new Map<string, string>()
-                        },
-                        annotationManager: {
-                            process: async () => new Map<string, string>()
                         }
                     })
                 }

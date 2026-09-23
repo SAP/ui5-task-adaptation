@@ -170,7 +170,7 @@ describe("TraverseReferences", () => {
         });
         const languages = Language.create(["EN", "DE"]);
         const i18nManager = new I18nManager("model1", "appVariantId1", languages);
-        const serviceRequestor = new ServiceRequestor(options.configuration, repository);
+        const serviceRequestor = new ServiceRequestor(repository);
         sandbox.stub(serviceRequestor, "downloadAnnotation")
             // level 0
             .withArgs(PARENT_URL + (isOData ? "$metadata" : ""), PARENT_NAME, languages.find(l => l.isDefault))
@@ -207,7 +207,7 @@ describe("TraverseReferences", () => {
         await dataSourceManager.addDataSources(structuredClone(dataSources));
         const languages = [new Language("EN", "en", true)];
         const i18nManager = new I18nManager("model1", "appVariantId1", languages);
-        const serviceRequestor = new ServiceRequestor({}, repository);
+        const serviceRequestor = new ServiceRequestor(repository);
         const stub = sandbox.stub(serviceRequestor, "downloadAnnotation");
         for (const { uri, name, xml } of annotations) {
             stub.withArgs(uri, name, languages.find(l => l.isDefault)).resolves(xml);

@@ -1,8 +1,6 @@
-import { IConfiguration } from "../model/types.js";
 import Language from "../model/language.js";
 import ServerError from "../model/serverError.js";
 import { getLogger } from "@ui5/logger";
-import { writeTempAnnotations } from "../util/commonUtil.js";
 import IRepository from "../repositories/repository.js";
 
 const log = getLogger("@ui5/task-adaptation::ServiceRequestor");
@@ -35,11 +33,9 @@ function retryOnError(maxRetries: number): MethodDecorator {
 
 export default class ServiceRequestor {
     private repository: IRepository;
-    private configuration: IConfiguration;
 
-    constructor(configuration: IConfiguration, repository: IRepository) {
+    constructor(repository: IRepository) {
         this.repository = repository;
-        this.configuration = configuration;
     }
 
     //@ts-ignore tsx (esbuild) is not yet implemented the new decorators, but
@@ -54,7 +50,6 @@ export default class ServiceRequestor {
             throw new Error(`No files were fetched for '${name}' by '${uri}'`);
         }
         const xml = [...files][0][1];
-        writeTempAnnotations(this.configuration, name, language, xml);
         return xml;
     }
 }

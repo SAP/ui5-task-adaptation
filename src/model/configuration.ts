@@ -13,7 +13,6 @@ export interface IConfiguration {
     languages?: any[] | undefined;
     enableAnnotationCache?: boolean;
     enableBetaFeatures?: boolean;
-    writeTempFiles?: any;
     target?: AbapTarget & IAbapTargetMeta;
     serviceInstanceName?: string;
 }

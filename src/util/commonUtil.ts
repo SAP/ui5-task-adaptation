@@ -1,8 +1,6 @@
 import * as Log from "@ui5/logger";
 import * as fs from "fs";
 
-import { IConfiguration } from "../model/types.js";
-import Language from "../model/language.js";
 import { fileURLToPath } from "url";
 import { posix as path } from "path";
 import AppVariant from "../appVariant.js";
@@ -62,19 +60,6 @@ export function escapeRegex(update: string) {
 
 export function insertInArray<T>(array: T[], index: number, insert: T) {
     array.splice(index, 0, insert);
-}
-
-export function writeTempAnnotations({ writeTempFiles }: IConfiguration, name: string, language: Language, content: string) {
-    const TEMP_DIST_FOLDER = path.join(process.cwd(), "dist-debug", name);
-    if (writeTempFiles) {
-        if (!fs.existsSync(TEMP_DIST_FOLDER)) {
-            fs.mkdirSync(TEMP_DIST_FOLDER, { recursive: true });
-        }
-        if (language) {
-            name += "-" + language.i18n;
-        }
-        fs.writeFileSync(path.join(TEMP_DIST_FOLDER, name + ".xml"), content);
-    }
 }
 
 export function trimExtension(filePath: string) {

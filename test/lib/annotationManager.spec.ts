@@ -4,12 +4,13 @@ import * as sinon from "sinon";
 import { expect } from "chai";
 
 import AbapRepository from "../../src/repositories/abapRepository.js";
-import AbapAnnotationManager from "../../src/annotations/abapAnnotationManager.js";
+import DownloadAnnotationsCommand from "../../src/adapters/commands/downloadAnnotationsCommand.js";
 import { IProjectOptions } from "../../src/model/types.js";
 import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
 import { renameResources } from "../../src/util/renamingUtil.js";
+import { stringToBuffer, bufferToJson, bufferToString } from "../../src/util/commonUtil.js";
 
 let sandbox: SinonSandbox = sinon.createSandbox();
 const options: IProjectOptions = {
@@ -36,14 +37,14 @@ describe("AnnotationManager", () => {
     it("should process annotations", async () => {
         const abapRepository = new AbapRepository(options.configuration);
         stubAnnotations(abapRepository);
-        const annotationManager = new AbapAnnotationManager(options.configuration, abapRepository);
+        const annotationManager = new DownloadAnnotationsCommand("customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id", options.configuration, abapRepository);
         const MANIFEST_FILENAME = "manifest.json";
         const baseAppFiles = new Map<string, string>([[MANIFEST_FILENAME, manifestString]]);
         const renamedFiles = renameResources(baseAppFiles, ["com.sap.base.app.id"], "customer.com.sap.application.variant.id");
         const manifest = JSON.parse(renamedFiles.get(MANIFEST_FILENAME)!);
-        const annotationFiles = await annotationManager.process(manifest, "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
+        const { manifest: resultManifest, annotationFiles } = await runDownload(annotationManager, manifest);
         expect(annotationFiles.get("annotations/annotation_annotationName1.xml")).to.be.eql(expectedAnnotationName1);
-        expect(manifest).to.be.eql(JSON.parse(expectedManifest));
+        expect(resultManifest).to.be.eql(JSON.parse(expectedManifest));
         expect([...annotationFiles.keys()]).to.have.members([
             "annotations/annotation_annotationName1.xml",
             "annotations/annotation_annotationName2.xml",
@@ -89,16 +90,16 @@ describe("AnnotationManager", () => {
         it("should process annotations without enhancing @i18n model if only one language is active", async () => {
             const abapRepository = new AbapRepository(options.configuration);
             stubAnnotations(abapRepository);
-            const annotationManager = new AbapAnnotationManager(options.configuration, abapRepository);
+            const annotationManager = new DownloadAnnotationsCommand("customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id", options.configuration, abapRepository);
             const getAnnotationI18nsSpy = sandbox.spy(annotationManager, "getAdaptedAnnotation" as any);
             const MANIFEST_FILENAME = "manifest.json";
             const baseAppFiles = new Map<string, string>([[MANIFEST_FILENAME, manifestString]]);
             const renamedFiles = renameResources(baseAppFiles, ["com.sap.base.app.id"], "customer.com.sap.application.variant.id");
             const manifest = JSON.parse(renamedFiles.get(MANIFEST_FILENAME)!);
-            const result = await annotationManager.process(manifest, "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
+            const { manifest: resultManifest, annotationFiles: result } = await runDownload(annotationManager, manifest);
             expect(getAnnotationI18nsSpy.getCalls().length).to.eql(0);
             expect(result.get("annotations/annotation_annotationName1.xml")).to.be.eql(expectedAnnotationName1WithoutI18NModel);
-            expect(manifest).to.be.eql(JSON.parse(expectedManifestForOneLanguage));
+            expect(resultManifest).to.be.eql(JSON.parse(expectedManifestForOneLanguage));
             expect([...result.keys()]).to.have.members([
                 "annotations/annotation_annotationName1.xml",
                 "annotations/annotation_annotationName2.xml",
@@ -205,9 +206,9 @@ describe("AnnotationManager", () => {
                 }
             };
             const actual = { ...sapAppActual, ...sapUi5 };
-            const annotationManager = new AbapAnnotationManager(options.configuration, abapRepository);
-            await annotationManager.process(actual, "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
-            expect(actual).to.be.eql({ ...sapAppExpected, ...expectedSapUi5 });
+            const annotationManager = new DownloadAnnotationsCommand("customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id", options.configuration, abapRepository);
+            const { manifest: resultManifest } = await runDownload(annotationManager, actual);
+            expect(resultManifest).to.be.eql({ ...sapAppExpected, ...expectedSapUi5 });
         }
     });
 
@@ -242,7 +243,7 @@ async function processAnnotations(folder: string, languages = ["EN", "DE"], expe
     const abapRepository = new AbapRepository(configCopy);
     const ODATA_URI = "/sap/opu/odata4/m2_sd_travel_mduu/";
     const stub = MockServer.stubAnnotations(sandbox, abapRepository, [{ folder, url: ODATA_URI + "$metadata" }], numberOfFailedRequests);
-    const annotationManager = new AbapAnnotationManager(configCopy, abapRepository);
+    const annotationManager = new DownloadAnnotationsCommand("customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id", configCopy, abapRepository);
     const MANIFEST_FILENAME = "manifest.json";
     const baseAppFiles = new Map<string, string>([[MANIFEST_FILENAME, JSON.stringify({
         "sap.app": {
@@ -261,7 +262,7 @@ async function processAnnotations(folder: string, languages = ["EN", "DE"], expe
     })]]);
     const renamedFiles = renameResources(baseAppFiles, ["com.sap.base.app.id"], "customer.com.sap.application.variant.id");
     const manifest = JSON.parse(renamedFiles.get(MANIFEST_FILENAME)!);
-    const result = await annotationManager.process(manifest, "customer.com.sap.application.variant.id", "customer_com_sap_application_variant_id");
+    const { annotationFiles: result } = await runDownload(annotationManager, manifest);
     const expectedFolder = `${folder}-expected/metadata.xml`;
     if (fs.existsSync(TestUtil.getResourcePath(expectedFolder))) {
         const expected = TestUtil.getResourceXml(expectedFolder);
@@ -280,6 +281,18 @@ async function processAnnotations(folder: string, languages = ["EN", "DE"], expe
 
 function getI18ns(files: Map<string, string>, fileName: string) {
     return files.get(`customer_com_sap_application_variant_id/i18n/annotations/${fileName}.properties`)!.split("\n");
+}
+
+async function runDownload(command: DownloadAnnotationsCommand, manifest: any) {
+    const files = new Map<string, Buffer>([["manifest.json", stringToBuffer(JSON.stringify(manifest))]]);
+    await command.execute(files, "manifest.json");
+    const annotationFiles = new Map<string, string>();
+    for (const [name, content] of files) {
+        if (name !== "manifest.json") {
+            annotationFiles.set(name, bufferToString(content));
+        }
+    }
+    return { manifest: bufferToJson(files.get("manifest.json")!), annotationFiles };
 }
 
 function stubAnnotations(abapRepository: AbapRepository) {
