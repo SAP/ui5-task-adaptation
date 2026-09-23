@@ -11,6 +11,7 @@ import { IProjectOptions } from "../../src/model/types.js";
 import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";
 import TestUtil, { toBufferMap } from "./testUtilities/testUtil.js";
+import { bufferToJson, bufferToString } from "../../src/util/commonUtil.js";
 import CFAdapter from "../../src/adapters/cfAdapter.js";
 import AbapAdapter from "../../src/adapters/abapAdapter.js";
 import UpdateCloudDevAdaptationCommand from "../../src/adapters/commands/updateCloudDevAdaptationCommand.js";
@@ -92,7 +93,7 @@ describe("BaseAppManager getBaseAppManifest", () => {
             })]
         ]));
         const files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
-        const inbouds = JSON.parse(files.get("manifest.json")!)["sap.app"].crossNavigation.inbounds;
+        const inbouds = bufferToJson(files.get("manifest.json")!)["sap.app"].crossNavigation.inbounds;
         expect(Object.keys(inbouds)).to.eql(["customer.ci.settleman.fcadoc.opgs1.InboundID"]);
         expect(inbouds["customer.ci.settleman.fcadoc.opgs1.InboundID"].title).to.eql("ak");
         expect(inbouds["customer.ci.settleman.fcadoc.opgs1.InboundID"].subTitle).to.eql("test");
@@ -111,7 +112,7 @@ describe("BaseAppManager getBaseAppManifest", () => {
     });
 
     it("should filter files correctly in constructor", () => {
-        const inputFiles = new Map([
+        const inputFiles = toBufferMap([
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["manifest-bundle.zip", "zip content"],
             ["Component-preload.js", "preload content"],
@@ -135,9 +136,9 @@ describe("BaseAppManager getBaseAppManifest", () => {
         ]);
 
         // Verify that Component.js content has been replaced with Component-dbg.js content
-        expect(baseApp.files.get("Component.js")).to.equal("debug content");
-        expect(baseApp.files.get("Controller-dbg.js")).to.equal("debug only content");
-        expect(baseApp.files.get("regular-file.js")).to.equal("regular content");
+        expect(baseApp.files.get("Component.js")?.toString("utf8")).to.equal("debug content");
+        expect(baseApp.files.get("Controller-dbg.js")?.toString("utf8")).to.equal("debug only content");
+        expect(baseApp.files.get("regular-file.js")?.toString("utf8")).to.equal("regular content");
     });
 });
 
@@ -173,7 +174,7 @@ describe("BaseAppManager CF", () => {
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
 
-        const actualManifest = JSON.parse(renamedFiles.get("manifest.json")!.toString("utf8"));
+        const actualManifest = bufferToJson(renamedFiles.get("manifest.json")!);
         const actualCPreload = renamedFiles.get("component-preload.js")?.toString("utf8");
         expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected-cf.json")));
         expect(actualCPreload).to.eql(TestUtil.getResource("component-preload-expected.js"));
@@ -226,7 +227,7 @@ describe("BaseAppManager CF", () => {
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        const manifest = JSON.parse(renamedFiles.get("manifest.json")!.toString("utf8"));
+        const manifest = bufferToJson(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.be.undefined;
         assertManifestInfo(renamedFiles);
     });
@@ -241,7 +242,7 @@ describe("BaseAppManager CF", () => {
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        const manifest = JSON.parse(renamedFiles.get("manifest.json")!.toString("utf8"));
+        const manifest = bufferToJson(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.eql({ service: "sapCloudService" });
         assertManifestInfo(renamedFiles);
     });
@@ -348,7 +349,7 @@ describe("BaseAppManager Abap", () => {
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        const actualManifest = JSON.parse(renamedFiles.get("manifest.json")!.toString("utf8"));
+        const actualManifest = bufferToJson(renamedFiles.get("manifest.json")!);
         const actualCPreload = renamedFiles.get("component-preload.js")?.toString("utf8");
         expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected-abap.json")));
         expect(actualCPreload).to.eql(TestUtil.getResource("component-preload-expected.js"));
@@ -408,7 +409,7 @@ describe("BaseAppManager Abap", () => {
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        const manifest = JSON.parse(renamedFiles.get("manifest.json")!.toString("utf8"));
+        const manifest = bufferToJson(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.eql({ service: "com.sap.manifest.default.service", public: true });
         assertAnnotations(renamedFiles, 19);
         assertManifestInfo(renamedFiles);
@@ -423,7 +424,7 @@ describe("BaseAppManager Abap", () => {
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        const manifest = JSON.parse(renamedFiles.get("manifest.json")!.toString("utf8"));
+        const manifest = bufferToJson(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.be.undefined;
         assertAnnotations(renamedFiles, 19);
         assertManifestInfo(renamedFiles);
@@ -461,7 +462,7 @@ describe("BaseAppManager Abap", () => {
 
 
 function assertManifestInfo(files: ReadonlyMap<string, Buffer>) {
-    const sapApp = JSON.parse(files.get("manifest.json")!.toString("utf8"))["sap.app"];
+    const sapApp = bufferToJson(files.get("manifest.json")!)["sap.app"];
     expect(sapApp.id).to.eql("customer.com.sap.application.variant.id");
     expect(sapApp.applicationVersion.version).to.eql("1.0.0");
 }
@@ -476,7 +477,7 @@ function assertAnnotations(files: ReadonlyMap<string, Buffer>, resourceCountExpe
     const annotationName1Actual = files.get("annotations/annotation_annotationName1.xml");
     const annotationName2Actual = files.get("annotations/annotation_annotationName2.xml");
     expect(files.size).to.eql(resourceCountExpected);
-    expect(name1i18nDf!.toString("utf8").split("\n")).to.have.members([
+    expect(bufferToString(name1i18nDf!).split("\n")).to.have.members([
         "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculateTotalPrice",
         "customer.com.sap.application.variant.id_AIRLINE=Airline",
         "customer.com.sap.application.variant.id_AIRLINE0=Airline",
@@ -487,7 +488,7 @@ function assertAnnotations(files: ReadonlyMap<string, Buffer>, resourceCountExpe
         "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_travel_mduu",
         "customer.com.sap.application.variant.id_CURRENCY0=currency"
     ]);
-    expect(name1i18nEn!.toString("utf8").split("\n")).to.have.members([
+    expect(bufferToString(name1i18nEn!).split("\n")).to.have.members([
         "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculateTotalPrice",
         "customer.com.sap.application.variant.id_AIRLINE=Airline",
         "customer.com.sap.application.variant.id_AIRLINE0=Airline",
@@ -498,7 +499,7 @@ function assertAnnotations(files: ReadonlyMap<string, Buffer>, resourceCountExpe
         "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_travel_mduu",
         "customer.com.sap.application.variant.id_CURRENCY0=currency"
     ]);
-    expect(name1i18nDe!.toString("utf8").split("\n")).to.have.members([
+    expect(bufferToString(name1i18nDe!).split("\n")).to.have.members([
         "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculateTotalPrice",
         "customer.com.sap.application.variant.id_AIRLINE=Fluglinie",
         "customer.com.sap.application.variant.id_AIRLINE0=Fluglinie",
@@ -509,7 +510,7 @@ function assertAnnotations(files: ReadonlyMap<string, Buffer>, resourceCountExpe
         "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_reise_mduu",
         "customer.com.sap.application.variant.id_CURRENCY0=währung"
     ]);
-    expect(name1i18nFr!.toString("utf8").split("\n")).to.have.members([
+    expect(bufferToString(name1i18nFr!).split("\n")).to.have.members([
         "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculer le prix total",
         "customer.com.sap.application.variant.id_AIRLINE=Compagnie aérienne",
         "customer.com.sap.application.variant.id_AIRLINE0=Compagnie aérienne",
