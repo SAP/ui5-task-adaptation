@@ -90,7 +90,7 @@ sap.ui.define(['my.app.reuse.lib'], function (myAppReuseLib) {
 describe("restoreWhatShouldntBeRenamed", () => {
     let renamedManifest: any;
 
-    before(() => {
+    before(async () => {
         const manifest = {
             "sap.app": {
                 "id": "original.id"
@@ -111,7 +111,7 @@ describe("restoreWhatShouldntBeRenamed", () => {
             ["original.id", "customer.app.var.id"]
         ]);
         const command = new RenameFilesCommand(references);
-        command.execute(files);
+        await command.execute(files);
         renamedManifest = JSON.parse(files.get("manifest.json")!.toString("utf8"));
     });
 
@@ -164,5 +164,53 @@ describe("restoreWhatShouldntBeRenamed with a files map", () => {
 
     it("should restore appVariantIdHierarchy in the file", () => {
         expect(renamedManifest["sap.ui5"].appVariantIdHierarchy[0].appVariantId).to.equal("original.id");
+    });
+});
+
+describe("restoreWhatShouldntBeRenamed with multiple manifest.json files", () => {
+    // Regression: more than one file ends with "manifest.json" (the root
+    // manifest and e.g. a nested integration card manifest). Each file's
+    // protected paths must be snapshotted and restored independently; a shared
+    // snapshot let the last-processed manifest clobber the others, wiping the
+    // root manifest's appVariantIdHierarchy when the nested one had none.
+    let rootManifest: any;
+    let cardManifest: any;
+
+    before(() => {
+        const root = {
+            "sap.app": { "id": "original.id" },
+            "sap.ui5": {
+                "appVariantIdHierarchy": [
+                    { "appVariantId": "original.id", "version": "0.0.1", "layer": "VENDOR" }
+                ]
+            }
+        };
+        // Nested card manifest WITHOUT appVariantIdHierarchy, inserted after the
+        // root so a shared snapshot would be overwritten by this (empty) one.
+        const card = {
+            "sap.app": { "id": "some.card.id" },
+            "sap.ui5": {}
+        };
+        const files = new Map<string, Buffer>([
+            ["manifest.json", toBuffer(JSON.stringify(root))],
+            ["cards/op/CARD/manifest.json", toBuffer(JSON.stringify(card))]
+        ]);
+        const references = new Map<string, string>([
+            ["original.id", "customer.app.var.id"]
+        ]);
+        const command = new RenameFilesCommand(references);
+        command.execute(files);
+        rootManifest = JSON.parse(files.get("manifest.json")!.toString("utf8"));
+        cardManifest = JSON.parse(files.get("cards/op/CARD/manifest.json")!.toString("utf8"));
+    });
+
+    it("should keep the root manifest's appVariantIdHierarchy when a nested manifest has none", () => {
+        expect(rootManifest["sap.ui5"].appVariantIdHierarchy).to.eql([
+            { "appVariantId": "original.id", "version": "0.0.1", "layer": "VENDOR" }
+        ]);
+    });
+
+    it("should not inject the root manifest's appVariantIdHierarchy into the nested manifest", () => {
+        expect(cardManifest["sap.ui5"].appVariantIdHierarchy).to.be.undefined;
     });
 });

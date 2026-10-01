@@ -92,38 +92,36 @@ export default class RenameFilesCommand extends PostCommand {
  */
 export function restoreWhatShouldntBeRenamed() {
     return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
-        const handlers = [new ManifestRenamingHandler()] as Array<JsonRenamingHandler>;
+        const handlerFactories = [() => new ManifestRenamingHandler()];
         const originalValue = descriptor.value;
         descriptor.value = function (...args: any[]) {
-            const renaming = args[0];
-            const files = renaming as Map<string, Buffer>;
-            forEachAccepted(files, handlers, (handler, content) => handler.before(bufferToJson(content)));
+            const files = args[0] as Map<string, Buffer>;
+            // Snapshot the protected paths with a dedicated handler instance per
+            // file, so one file's snapshot can't clobber another's. Multiple
+            // files can match a handler (e.g. the root manifest.json and a
+            // nested cards/.../manifest.json both end with "manifest.json"); a
+            // shared handler would let the last-snapshotted file (which may lack
+            // appVariantIdHierarchy) wipe the root manifest's value on restore.
+            const snapshots: Array<{ filename: string, handler: JsonRenamingHandler }> = [];
+            for (const [filename, content] of files) {
+                for (const createHandler of handlerFactories) {
+                    const handler = createHandler();
+                    if (handler.accept(filename)) {
+                        handler.before(bufferToJson(content));
+                        snapshots.push({ filename, handler });
+                    }
+                }
+            }
             originalValue.apply(this, args);
-            forEachAccepted(files, handlers, (handler, content, filename) => {
-                const json = bufferToJson(content);
-                handler.after(json);
-                files.set(filename, jsonToBuffer(json));
-            });
+            for (const { filename, handler } of snapshots) {
+                const content = files.get(filename);
+                if (content) {
+                    const json = bufferToJson(content);
+                    handler.after(json);
+                    files.set(filename, jsonToBuffer(json));
+                }
+            }
             return files;
         };
     };
 };
-
-/**
- * Parses each file that at least one handler accepts, hands the JSON to the
- * given callback along with the accepting handlers, and — when `writeBack` is
- * provided — serializes the (possibly mutated) JSON back into that map.
- */
-function forEachAccepted(
-    files: ReadonlyMap<string, Buffer>,
-    handlers: Array<JsonRenamingHandler>,
-    callback: (handler: JsonRenamingHandler, content: Buffer, filename: string) => void,
-): void {
-    for (const [filename, content] of files) {
-        for (const handler of handlers) {
-            if (handler.accept(filename)) {
-                callback(handler, content, filename);
-            }
-        }
-    }
-}
