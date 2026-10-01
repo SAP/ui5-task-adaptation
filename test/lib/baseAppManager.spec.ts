@@ -7,7 +7,7 @@ import AbapRepository from "../../src/repositories/abapRepository.js";
 import AbapAnnotationManager from "../../src/annotations/abapAnnotationManager.js";
 import AppVariant from "../../src/appVariant.js";
 import BaseApp, { preProcessFiles } from "../../src/baseApp.js";
-import { IProjectOptions } from "../../src/model/types.js";
+import { IProjectOptions, UI5BuilderTools } from "../../src/model/types.js";
 import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";
 import TestUtil, { toBufferMap } from "./testUtilities/testUtil.js";
@@ -344,16 +344,31 @@ describe("BaseAppManager Abap", () => {
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
         ]));
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        const files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        const actualManifest = bufferToJson(renamedFiles.get("manifest.json")!);
         const actualCPreload = renamedFiles.get("component-preload.js")?.toString("utf8");
-        expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected-abap.json")));
         expect(actualCPreload).to.eql(TestUtil.getResource("component-preload-expected.js"));
-        assertAnnotations(files, 20);
+        expect(files.size).to.eql(14);
+        assertManifestInfo(files);
+    });
+
+    it("should download annotations in the full setup, adapt and post cycle", async () => {
+        const baseApp = BaseApp.fromFiles(toBufferMap([
+            ["manifest.json", TestUtil.getResource("manifest.json")],
+            ["component-preload.js", TestUtil.getResource("component-preload.js")]
+        ]));
+        const { workspace, taskUtil } = await TestUtil.getWorkspace("appVariant1", options.projectNamespace);
+        const ui5BuilderTools = { workspace, taskUtil, projectNamespace: options.projectNamespace } as UI5BuilderTools;
+        await adapter.createSetupCommandChain(appVariant.reference, abapRepository).execute();
+        const adaptedFiles = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        const references = new Map([[baseApp.id, appVariant.id]]);
+        const files = await adapter.createPostCommandChain(references, appVariant, ui5BuilderTools).execute(adaptedFiles);
+        const actualManifest = bufferToJson(files.get("manifest.json")!);
+        expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected-abap.json")));
+        assertAnnotations(files, 18);
         assertManifestInfo(files);
     });
 
@@ -367,22 +382,15 @@ describe("BaseAppManager Abap", () => {
             ["Component.js", "production content"],
             ["Controller-dbg.js", "debug only content"]
         ]));
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        const files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        assertAnnotations(renamedFiles, 21);
         expect(Array.from(renamedFiles.keys())).to.include.members([
             "manifest.json",
             "Component.js",
-            "Controller-dbg.js",
-            "annotations/annotation_annotationName1.xml",
-            "customer_com_sap_application_variant_id/i18n/annotations/i18n.properties",
-            "customer_com_sap_application_variant_id/i18n/annotations/i18n_en.properties",
-            "customer_com_sap_application_variant_id/i18n/annotations/i18n_de.properties",
-            "customer_com_sap_application_variant_id/i18n/annotations/i18n_fr.properties",
-            "annotations/annotation_annotationName2.xml"
+            "Controller-dbg.js"
         ]);
         expect(renamedFiles.has("manifest-bundle.zip")).to.be.false;
         expect(renamedFiles.has("Component-preload.js")).to.be.false;
@@ -404,14 +412,13 @@ describe("BaseAppManager Abap", () => {
         const baseApp = BaseApp.fromFiles(toBufferMap([["manifest.json", TestUtil.getResource("manifest.json")]]));
         const optionsClone = { ...options, configuration: { ...options.configuration } };
         delete optionsClone.configuration["sapCloudService"];
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        const files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
         const manifest = bufferToJson(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.eql({ service: "com.sap.manifest.default.service", public: true });
-        assertAnnotations(renamedFiles, 19);
         assertManifestInfo(renamedFiles);
     });
 
@@ -419,14 +426,13 @@ describe("BaseAppManager Abap", () => {
         const baseAppManifest = JSON.parse(TestUtil.getResource("manifest.json"));
         delete baseAppManifest["sap.cloud"];
         const baseApp = BaseApp.fromFiles(toBufferMap([["manifest.json", JSON.stringify(baseAppManifest)]]));
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        const files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
         const manifest = bufferToJson(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.be.undefined;
-        assertAnnotations(renamedFiles, 19);
         assertManifestInfo(renamedFiles);
     });
 

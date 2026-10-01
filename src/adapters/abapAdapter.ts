@@ -28,7 +28,6 @@ export default class AbapAdapter implements IAdapter {
             new ManifestUpdateCommandChain([
                 ...getCommonManifestUpdateCommands(baseApp, appVariant, appVariantIdHierarchyItem),
             ]),
-            new DownloadAnnotationsCommand(appVariant.id, appVariant.prefix, this.annotationManager),
             new I18nPropertiesMergeCommand(baseApp.i18nPath, appVariant.prefix, manifestChanges),
         ]);
     }
@@ -38,13 +37,14 @@ export default class AbapAdapter implements IAdapter {
         adaptationProject: AppVariant,
         ui5BuilderTools: UI5BuilderTools,
     ): PostCommandChain {
-        return new PostCommandChain(
-            getCommonPostCommands(
+        return new PostCommandChain([
+            new DownloadAnnotationsCommand(adaptationProject.id, adaptationProject.prefix, this.annotationManager),
+            ...getCommonPostCommands(
                 references,
                 adaptationProject,
                 ui5BuilderTools,
             )
-        );
+        ]);
     }
 
     createManifestPreviewCommandChain(_baseApp: BaseApp, _appVariant: AppVariant): ManifestUpdateCommandChain {

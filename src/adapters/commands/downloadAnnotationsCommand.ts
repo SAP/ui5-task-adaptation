@@ -1,8 +1,8 @@
-import { AdaptCommand } from "./command.js";
+import { PostCommand } from "./command.js";
 import IAnnotationManager from "../../annotations/annotationManager.js";
 import { stringToBuffer, bufferToJson } from "../../util/commonUtil.js";
 
-export default class DownloadAnnotationsCommand extends AdaptCommand {
+export default class DownloadAnnotationsCommand extends PostCommand {
     constructor(
         private appVariantId: string,
         private prefix: string,
@@ -11,9 +11,8 @@ export default class DownloadAnnotationsCommand extends AdaptCommand {
         super();
     }
 
-    accept = (filename: string) => filename === "manifest.json";
-
-    async execute(files: Map<string, Buffer>, filename: string): Promise<void> {
+    async execute(files: Map<string, Buffer>): Promise<void> {
+        const filename = "manifest.json";
         const baseAppManifest = bufferToJson(files.get(filename)!);
         let newFiles = await this.annotationManager.process(baseAppManifest, this.appVariantId, this.prefix);
         if (newFiles) {
