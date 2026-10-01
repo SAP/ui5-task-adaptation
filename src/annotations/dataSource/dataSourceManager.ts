@@ -1,7 +1,7 @@
 import DataSource from "./dataSource.js";
 import I18nManager from "../../i18nManager.js";
+import IRepository from "../../repositories/repository.js";
 import Language from "../../model/language.js";
-import ServiceRequestor from "../serviceRequestor.js";
 import path from "path/posix";
 
 export default class DataSourceManager {
@@ -50,10 +50,10 @@ export default class DataSourceManager {
         }
     }
 
-    async createAnnotationFiles(languages: Language[], i18nManager: I18nManager, serviceRequestor: ServiceRequestor) {
+    async createAnnotationFiles(languages: Language[], i18nManager: I18nManager, repository: IRepository) {
         const annotationFiles = new Map<string, string>();
         for (const dataSource of this.dataSources) {
-            const { filename, xml } = await dataSource.createAnnotationFile(languages, i18nManager, serviceRequestor);
+            const { filename, xml } = await dataSource.createAnnotationFile(languages, i18nManager, repository);
             annotationFiles.set(filename, xml);
         }
         return annotationFiles;

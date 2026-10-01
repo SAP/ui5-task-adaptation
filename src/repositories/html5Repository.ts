@@ -141,9 +141,9 @@ export default class HTML5Repository implements IRepository {
         });
     }
 
-    downloadAnnotationFile(_uri: string): Promise<Map<string, string>> {
+    downloadAnnotationFile(_uri: string): Promise<string> {
         log.verbose("No annotation processing in CF");
-        return Promise.resolve(new Map<string, string>());
+        return Promise.resolve("");
     }
 
 }

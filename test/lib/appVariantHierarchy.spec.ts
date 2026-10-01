@@ -7,7 +7,7 @@ import XmlUtil from "../../src/util/xmlUtil.js";
 import esmock from "esmock";
 import { expect } from "chai";
 import sinon from "sinon";
-import DownloadAnnotationsCommand from "../../src/adapters/commands/downloadAnnotationsCommand.js";
+import AbapAnnotationManager from "../../src/annotations/abapAnnotationManager.js";
 import AbapAdapter from "../../src/adapters/abapAdapter.js";
 
 describe("App Variant Hierarchy", () => {
@@ -27,7 +27,7 @@ describe("App Variant Hierarchy", () => {
     let files = new Map<string, string>();
     beforeEach(async () => {
         sandbox = sinon.createSandbox();
-        sandbox.stub(DownloadAnnotationsCommand.prototype, "process" as any).resolves(new Map<string, string>());
+        sandbox.stub(AbapAnnotationManager.prototype, "process").resolves(new Map<string, string>());
         sandbox.stub(AbapRepository.prototype, "getAppVariantIdHierarchy").resolves([
             {
                 appName: "REPO_NAME_1",
@@ -47,11 +47,12 @@ describe("App Variant Hierarchy", () => {
             ]))
             .withArgs(sinon.match({ appName: "REPO_NAME_1" })).resolves(await ResourceUtil.byGlob(appVariant1Path, "**/*"));
         const repository = new AbapRepository(options.configuration);
+        const annotationManager = new AbapAnnotationManager(options.configuration, repository);
         const index = await esmock("../../src/index.js", {}, {
             "../../src/landscapeConfiguration.js": {
                 initialize: () => ({
                     repository,
-                    adapter: new AbapAdapter(options.configuration, repository)
+                    adapter: new AbapAdapter(annotationManager)
                 })
             }
         });
@@ -203,7 +204,7 @@ describe("OData DataSource Hierarchy", () => {
     beforeEach(async () => {
         sandbox = sinon.createSandbox();
         downloadAnnotationFileStub = sandbox.stub(AbapRepository.prototype, "downloadAnnotationFile")
-            .resolves(new Map([["metadata.xml", METADATA_XML]]));
+            .resolves(METADATA_XML);
         sandbox.stub(AbapRepository.prototype, "getAppVariantIdHierarchy").resolves([
             { appName: "REPO_3", cacheBusterToken: Promise.resolve("token3") },
             { appName: "REPO_2", cacheBusterToken: Promise.resolve("token2") },
@@ -225,11 +226,12 @@ describe("OData DataSource Hierarchy", () => {
             ]));
 
         const repository = new AbapRepository(options.configuration);
+        const annotationManager = new AbapAnnotationManager(options.configuration, repository);
         const index = await esmock("../../src/index.js", {}, {
             "../../src/landscapeConfiguration.js": {
                 initialize: () => ({
                     repository,
-                    adapter: new AbapAdapter(options.configuration, repository)
+                    adapter: new AbapAdapter(annotationManager)
                 })
             }
         });

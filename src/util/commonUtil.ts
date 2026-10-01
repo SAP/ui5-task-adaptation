@@ -4,11 +4,39 @@ import * as fs from "fs";
 import { fileURLToPath } from "url";
 import { posix as path } from "path";
 import AppVariant from "../appVariant.js";
+import ServerError from "../model/serverError.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const log = Log.getLogger("rollup-plugin-ui5-resolve-task-adaptation");
 const CHANGES_EXT = ".change";
 const MANIFEST_CHANGE = "appdescr_";
+
+
+export function retryOnError(maxRetries: number): MethodDecorator {
+    return (_target: any, _propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+        const originalMethod = descriptor.value;
+
+        descriptor.value = async function (...args: any[]) {
+            let retries = 0;
+            while (true) {
+                try {
+                    return await originalMethod.apply(this, args);
+                } catch (error: any) {
+                    if (error instanceof ServerError) {
+                        if (retries === maxRetries) {
+                            throw new Error(`Error occurred: ${error.message}. Please try again if this is a temporary issue. If not, please create a ticket on CA-UI5-ABA-AIDX`);
+                        }
+                        retries++;
+                    } else {
+                        const message = error?.response?.data ?? error.message;
+                        throw new Error(`Failed to fetch annotation by '${args[0]}': ${message}`);
+                    }
+                }
+            }
+        };
+        return descriptor;
+    };
+}
 
 
 export function dotToUnderscore(value: string) {

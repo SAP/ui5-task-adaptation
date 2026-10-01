@@ -30,7 +30,7 @@ export default class CacheRepository implements IRepository {
     }
 
 
-    downloadAnnotationFile(uri: string): Promise<Map<string, string>> {
+    downloadAnnotationFile(uri: string): Promise<string> {
         throw new Error(`Download annotation file for uri: ${uri} is not available for CacheRepository.`);
     }
 }

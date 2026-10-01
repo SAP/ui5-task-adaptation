@@ -1,9 +1,13 @@
 import I18nManager from "../../i18nManager.js";
 import { IAnnotationDownloadParams } from "./dataSourceOData.js";
+import IRepository from "../../repositories/repository.js";
 import Language from "../../model/language.js";
-import ServiceRequestor from "../serviceRequestor.js";
 import Transformer from "../transformers/transformer.js";
 import XmlUtil from "../../util/xmlUtil.js";
+import { getLogger } from "@ui5/logger";
+import { retryOnError } from "../../util/commonUtil.js";
+
+const log = getLogger("@ui5/task-adaptation::DataSource");
 
 export default class DataSource {
 
@@ -34,8 +38,8 @@ export default class DataSource {
     }
 
 
-    async createAnnotationFile(languages: Language[], i18nManager: I18nManager, serviceRequestor: ServiceRequestor): Promise<{ filename: string, xml: string }> {
-        const annotationJsons = this.getPromisesPerLanguage(languages, serviceRequestor);
+    async createAnnotationFile(languages: Language[], i18nManager: I18nManager, repository: IRepository): Promise<{ filename: string, xml: string }> {
+        const annotationJsons = this.getPromisesPerLanguage(languages, repository);
         const annotationJson = await i18nManager.populateTranslations(annotationJsons);
         const xml = XmlUtil.jsonToXml(await annotationJson.json);
         return {
@@ -48,14 +52,14 @@ export default class DataSource {
     /**
      * Download the annotation for all configured languages
      * @param languages from configuration
-     * @param serviceRequestor will download the annotation for all languages
+     * @param repository will download the annotation for all languages
      */
-    private getPromisesPerLanguage(languages: Language[], serviceRequestor: ServiceRequestor): Map<Language, Promise<any>> {
+    private getPromisesPerLanguage(languages: Language[], repository: IRepository): Map<Language, Promise<any>> {
         const promises = new Map<Language, Promise<any>>();
         for (const language of languages) {
             promises.set(
                 language,
-                this.downloadAnnotation(language, serviceRequestor)
+                this.downloadAnnotation(language, repository)
             );
         }
         return promises;
@@ -65,19 +69,31 @@ export default class DataSource {
     /**
      * Download annotations and process xml string after it
      */
-    async downloadAnnotation(language: Language, serviceRequestor: ServiceRequestor) {
-        const languageXmlContent = await serviceRequestor.downloadAnnotation(this.uri, this.name, language);
-        if (!languageXmlContent) {
-            throw new Error(`Xml is undefined for '${this.uri}', name '${this.name}' and language '${language.sap}'`);
-        }
-        return this.afterXmlDownload({ xml: languageXmlContent, language, serviceRequestor, uri: this.uri });
+    async downloadAnnotation(language: Language, repository: IRepository) {
+        const xml = await this.fetchAnnotation(this.uri, language, repository);
+        return this.afterXmlDownload({ xml, language, repository, uri: this.uri });
     }
 
 
-    async afterXmlDownload({ xml, language, serviceRequestor, uri }: IAnnotationDownloadParams): Promise<any> {
+    //@ts-ignore tsx (esbuild) is not yet implemented the new decorators, but
+    //old decorators are already subject of compiler error, but it works. So we
+    //wait till esbuild implement it correctly.
+    @retryOnError(1)
+    async fetchAnnotation(uri: string, language: Language, repository: IRepository): Promise<string> {
+        const languageUri = `${uri}?sap-language=${language.sap}`;
+        log.verbose(`Getting annotation '${this.name}' ${language} by '${languageUri}'`);
+        const xml = await repository.downloadAnnotationFile(languageUri);
+        if (!xml) {
+            throw new Error(`No files were fetched for '${this.name}' by '${languageUri}'`);
+        }
+        return xml;
+    }
+
+
+    async afterXmlDownload({ xml, language, repository, uri }: IAnnotationDownloadParams): Promise<any> {
         let json = XmlUtil.xmlToJson(xml);
         for (const transformer of this.jsonTransformers) {
-            json = await transformer.transform({ xml, json, language, serviceRequestor, uri });
+            json = await transformer.transform({ xml, json, language, repository, uri });
         }
         return json;
     }

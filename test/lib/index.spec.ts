@@ -12,8 +12,9 @@ import CFUtil from "../../src/util/cfUtil.js";
 import esmock from "esmock";
 import IRepository from "../../src/repositories/repository.js";
 import CFAdapter from "../../src/adapters/cfAdapter.js";
+import CFAnnotationManager from "../../src/annotations/cfAnnotationManager.js";
 import AbapAdapter from "../../src/adapters/abapAdapter.js";
-import DownloadAnnotationsCommand from "../../src/adapters/commands/downloadAnnotationsCommand.js";
+import AbapAnnotationManager from "../../src/annotations/abapAnnotationManager.js";
 import ResourceUtil from "../../src/util/resourceUtil.js";
 
 const { byIsOmited } = TestUtil;
@@ -111,7 +112,8 @@ describe("Index", () => {
                     "../../src/landscapeConfiguration.js": {
                         initialize: () => ({
                             repository,
-                            adapter: new CFAdapter(OPTIONS.configuration)
+                            adapter: new CFAdapter(OPTIONS.configuration),
+                            annotationManager: new CFAnnotationManager()
                         })
                     }
                 });
@@ -182,7 +184,7 @@ describe("Index", () => {
 
         const appVariant1Path = TestUtil.getResourcePath("appVariant1", "webapp");
         const abapRepository = new AbapRepository(options.configuration);
-        sandbox.stub(DownloadAnnotationsCommand.prototype, "process" as any).resolves(new Map<string, string>());
+        sandbox.stub(AbapAnnotationManager.prototype, "process").resolves(new Map<string, string>());
         sandbox.stub(abapRepository, "getAppVariantIdHierarchy").resolves([
             { appName: "REPO_NAME_1", cacheBusterToken: Promise.resolve("token1") },
             { appName: "REPO_NAME_0", cacheBusterToken: Promise.resolve("token0") }
@@ -199,7 +201,7 @@ describe("Index", () => {
             "../../src/landscapeConfiguration.js": {
                 initialize: () => ({
                     repository: abapRepository,
-                    adapter: new AbapAdapter(options.configuration, abapRepository)
+                    adapter: new AbapAdapter(new AbapAnnotationManager(options.configuration, abapRepository))
                 })
             }
         });
@@ -250,7 +252,8 @@ describe("Index", () => {
             "../../src/landscapeConfiguration.js": {
                 initialize: () => ({
                     repository,
-                    adapter: new CFAdapter(OPTIONS.configuration)
+                    adapter: new CFAdapter(OPTIONS.configuration),
+                    annotationManager: new CFAnnotationManager()
                 })
             }
         });
@@ -396,7 +399,8 @@ describe("Index.previewManifest", () => {
             "../../src/landscapeConfiguration.js": {
                 initialize: () => ({
                     repository,
-                    adapter: new CFAdapter(OPTIONS.configuration)
+                    adapter: new CFAdapter(OPTIONS.configuration),
+                    annotationManager: new CFAnnotationManager()
                 })
             }
         });

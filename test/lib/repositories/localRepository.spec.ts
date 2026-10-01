@@ -162,10 +162,10 @@ describe("LocalRepository", () => {
     });
 
     describe("downloadAnnotationFile", () => {
-        it("returns an empty map", async () => {
+        it("returns an empty string", async () => {
             const localRepository = new LocalRepository();
             const annotationFiles = await localRepository.downloadAnnotationFile("test/uri");
-            expect(annotationFiles.size).to.equal(0);
+            expect(annotationFiles).to.equal("");
         });
     });
 

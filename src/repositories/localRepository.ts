@@ -23,9 +23,9 @@ interface ManifestEntry {
 
 export default class LocalRepository implements IRepository {
 
-    async downloadAnnotationFile(_uri: string): Promise<Map<string, string>> {
+    async downloadAnnotationFile(_uri: string): Promise<string> {
         log.verbose("Downloading annotation files is not supported in LocalRepository.");
-        return new Map<string, string>();
+        return "";
     }
 
 

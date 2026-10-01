@@ -13,7 +13,7 @@ export default class MockServer {
         const regex = /\w+-([a-z]*).xml/gi;
         for (const { folder, url } of annotationFolders) {
             const defaultServerError = new ServerError(url, { response: { status: 500 } });
-            const filesPerLanguage = new Map<string, Promise<Map<string, string>>>();
+            const filesPerLanguage = new Map<string, string>();
             const annotations = fs.readdirSync(TestUtil.getResourcePath(folder));
             for (const annotation of annotations) {
                 const matches = annotation.matchAll(regex);
@@ -23,14 +23,14 @@ export default class MockServer {
                         languageUrl += "?sap-language=" + match[1].toUpperCase();
                     }
                     const filename = path.join(TestUtil.getResourcePath(folder), annotation);
-                    const map = new Map([["annotation.xml", fs.readFileSync(filename, { encoding: "utf-8" })]]);
+                    const content = fs.readFileSync(filename, { encoding: "utf-8" });
                     if (numberOfFailedRequests) {
                         for (let i = 0; i < numberOfFailedRequests; i++) {
                             stub.withArgs(languageUrl).onCall(i).rejects(defaultServerError);
                         }
                     }
-                    stub.withArgs(languageUrl).resolves(map);
-                    filesPerLanguage.set(match[1].toUpperCase(), Promise.resolve(map));
+                    stub.withArgs(languageUrl).resolves(content);
+                    filesPerLanguage.set(match[1].toUpperCase(), content);
                 }
             }
             if (numberOfFailedRequests) {
@@ -44,11 +44,11 @@ export default class MockServer {
     }
 
 
-    private static getDefaultJson(filesPerLanguage: Map<string, Promise<Map<string, string>>>) {
-        for (const [language, json] of filesPerLanguage.entries()) {
+    private static getDefaultJson(filesPerLanguage: Map<string, string>) {
+        for (const [language, content] of filesPerLanguage.entries()) {
             for (const defaultLanguage of ["", "EN"]) {
                 if (language === defaultLanguage) {
-                    return json;
+                    return content;
                 }
             }
         }

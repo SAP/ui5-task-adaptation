@@ -7,7 +7,6 @@ import DataSourceManager from "../../../../src/annotations/dataSource/dataSource
 import I18nManager from "../../../../src/i18nManager.js";
 import { IProjectOptions } from "../../../../src/model/types.js";
 import Language from "../../../../src/model/language.js";
-import ServiceRequestor from "../../../../src/annotations/serviceRequestor.js";
 import { SinonSandbox } from "sinon";
 import { expect } from "chai";
 
@@ -154,10 +153,8 @@ describe("TraverseReferences", () => {
         const PARENT_NAME = "mainService";
         const PARENT_URL = "/odata/v2/ManifestConfigurationService/";
         const PARENT_FOLDER = "annotations/v4/metadata-2-v4/";
-        const CHILD1_NAME = "FCO_WORKCENTER_COST_SRV";
         const CHILD1_URL = "/sap/fco_workcenter_cost_srv/$metadata";
         const CHILD1_FOLDER = "annotations/v4/metadata-2-child1-v4/";
-        const CHILD2_NAME = "FCO_WORKCENTER_COST_SRV_2";
         const CHILD2_URL = "/sap/opu/odata/sap/fco_workcenter_cost_srv_2/$metadata";
         const CHILD2_FOLDER = "annotations/v4/metadata-2-child2-v4/";
 
@@ -170,25 +167,25 @@ describe("TraverseReferences", () => {
         });
         const languages = Language.create(["EN", "DE"]);
         const i18nManager = new I18nManager("model1", "appVariantId1", languages);
-        const serviceRequestor = new ServiceRequestor(repository);
-        sandbox.stub(serviceRequestor, "downloadAnnotation")
+        const parentUri = PARENT_URL + (isOData ? "$metadata" : "");
+        sandbox.stub(repository, "downloadAnnotationFile")
             // level 0
-            .withArgs(PARENT_URL + (isOData ? "$metadata" : ""), PARENT_NAME, languages.find(l => l.isDefault))
+            .withArgs(`${parentUri}?sap-language=EN`)
             .resolves(TestUtil.getResourceXml(PARENT_FOLDER + "metadata-en.xml"))
-            .withArgs(PARENT_URL + (isOData ? "$metadata" : ""), PARENT_NAME, languages.find(l => l.sap === "DE"))
+            .withArgs(`${parentUri}?sap-language=DE`)
             .resolves(TestUtil.getResourceXml(PARENT_FOLDER + "metadata-de.xml"))
             // level -1
-            .withArgs(CHILD1_URL, CHILD1_NAME, languages.find(l => l.isDefault))
+            .withArgs(`${CHILD1_URL}?sap-language=EN`)
             .resolves(TestUtil.getResourceXml(CHILD1_FOLDER + "metadata-en.xml"))
-            .withArgs(CHILD1_URL, CHILD1_NAME, languages.find(l => l.sap === "DE"))
+            .withArgs(`${CHILD1_URL}?sap-language=DE`)
             .resolves(TestUtil.getResourceXml(CHILD1_FOLDER + "metadata-de.xml"))
             // level -2
-            .withArgs(CHILD2_URL, CHILD2_NAME, languages.find(l => l.isDefault))
+            .withArgs(`${CHILD2_URL}?sap-language=EN`)
             .resolves(TestUtil.getResourceXml(CHILD2_FOLDER + "metadata-en.xml"))
-            .withArgs(CHILD2_URL, CHILD2_NAME, languages.find(l => l.sap === "DE"))
+            .withArgs(`${CHILD2_URL}?sap-language=DE`)
             .resolves(TestUtil.getResourceXml(CHILD2_FOLDER + "metadata-de.xml"));
 
-        const files = await dataSourceManager.createAnnotationFiles(languages, i18nManager, serviceRequestor);
+        const files = await dataSourceManager.createAnnotationFiles(languages, i18nManager, repository);
         expect(files.size).to.eql(filesCount);
         const expectedFilename = isOData
             ? "annotations/v4/metadata-2-v4-expected-odata/metadata.xml"
@@ -207,12 +204,11 @@ describe("TraverseReferences", () => {
         await dataSourceManager.addDataSources(structuredClone(dataSources));
         const languages = [new Language("EN", "en", true)];
         const i18nManager = new I18nManager("model1", "appVariantId1", languages);
-        const serviceRequestor = new ServiceRequestor(repository);
-        const stub = sandbox.stub(serviceRequestor, "downloadAnnotation");
-        for (const { uri, name, xml } of annotations) {
-            stub.withArgs(uri, name, languages.find(l => l.isDefault)).resolves(xml);
+        const stub = sandbox.stub(repository, "downloadAnnotationFile");
+        for (const { uri, xml } of annotations) {
+            stub.withArgs(`${uri}?sap-language=EN`).resolves(xml);
         }
-        return { stub, files: dataSourceManager.createAnnotationFiles(languages, i18nManager, serviceRequestor) };
+        return { stub, files: dataSourceManager.createAnnotationFiles(languages, i18nManager, repository) };
     }
 
 

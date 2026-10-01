@@ -73,7 +73,7 @@ export default class AbapRepository implements IRepository {
         const response = await provider.get(uri, {
             headers: REQUEST_OPTIONS_XML.headers
         });
-        return new Map([["annotation.xml", response.data]]);
+        return response.data;
     }
 
 

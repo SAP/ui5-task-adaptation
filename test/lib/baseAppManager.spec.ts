@@ -4,6 +4,7 @@ import { RawApplier, AppDescriptorChange } from "../../dist/bundle.js";
 import { assert, expect } from "chai";
 
 import AbapRepository from "../../src/repositories/abapRepository.js";
+import AbapAnnotationManager from "../../src/annotations/abapAnnotationManager.js";
 import AppVariant from "../../src/appVariant.js";
 import BaseApp, { preProcessFiles } from "../../src/baseApp.js";
 import { IProjectOptions } from "../../src/model/types.js";
@@ -309,7 +310,8 @@ describe("BaseAppManager Abap", () => {
         }
     };
     const abapRepository = new AbapRepository(options.configuration);
-    const adapter = new AbapAdapter(options.configuration, abapRepository);
+    const annotationManager = new AbapAnnotationManager(options.configuration, abapRepository);
+    const adapter = new AbapAdapter(annotationManager);
 
     beforeEach(async () => sandbox = sinon.createSandbox());
     afterEach(() => sandbox.restore());
