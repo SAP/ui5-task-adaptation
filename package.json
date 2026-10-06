@@ -10,8 +10,9 @@
         }
     },
     "scripts": {
-        "test": "npm run lint && npm run build && npm run coverage",
+        "test": "npm run lint && npm run build && npm run typecheck:test && npm run coverage",
         "lint": "eslint ./src ./test/lib",
+        "typecheck:test": "tsc -p ./test/lib/tsconfig.json --noEmit",
         "dev": "mocha --no-timeouts --no-warnings --import=tsx \"test/lib/**/*.spec.ts\"",
         "perf": "mocha --no-timeouts --no-warnings --import=tsx \"test/lib/**/*.perf.ts\"",
         "coverage": "c8 npm run dev",

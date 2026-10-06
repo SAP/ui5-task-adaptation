@@ -7,6 +7,7 @@ import AppVariant from "../../../src/appVariant.js";
 import { AdaptCommandChain } from "../../../src/adapters/commands/command.js";
 import XsAppJsonMergeCommand from "../../../src/adapters/commands/xsAppJsonMergeCommand.js";
 import { UI5BuilderTools } from "../../../src/model/types.js";
+import { bufferToJson } from "../../../src/util/commonUtil.js";
 import TaskUtil from "@ui5/project/build/helpers/TaskUtil";
 
 const { expect } = chai;
@@ -44,8 +45,8 @@ describe("CFAdapter", () => {
                 ]
             };
 
-            const files = new Map<string, string>([[XSAPP_JSON_FILENAME, JSON.stringify(baseXsApp)]]);
-            const appVariantFiles = new Map<string, string>([[XSAPP_JSON_FILENAME, JSON.stringify(variantXsApp)]]);
+            const files = new Map<string, Buffer>([[XSAPP_JSON_FILENAME, Buffer.from(JSON.stringify(baseXsApp))]]);
+            const appVariantFiles = new Map<string, Buffer>([[XSAPP_JSON_FILENAME, Buffer.from(JSON.stringify(variantXsApp))]]);
 
             sandbox.stub(CFUtil, "getOrCreateServiceKeyWithEndpoints").resolves({
                 endpoints: {
@@ -77,9 +78,9 @@ describe("CFAdapter", () => {
             await setupCommandChain.execute();
             const postCommandChain = adapter.createPostCommandChain(references, appVariantStub, ui5BuilderTools);
             const mergedMap = await adaptCommandChain.execute();
-            mergedXsAppJson = JSON.parse(mergedMap.get(XSAPP_JSON_FILENAME)!);
+            mergedXsAppJson = bufferToJson(mergedMap.get(XSAPP_JSON_FILENAME)!);
             const enhancedMap = await postCommandChain.execute(mergedMap);
-            enhancedXsAppJson = JSON.parse(enhancedMap.get(XSAPP_JSON_FILENAME)!);
+            enhancedXsAppJson = bufferToJson(enhancedMap.get(XSAPP_JSON_FILENAME)!);
         });
 
         it("sets the variant welcomeFile", () => {

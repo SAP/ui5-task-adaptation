@@ -47,7 +47,7 @@ describe("PreviewManager adjust xs-app.json", () => {
     });
 
     it("should adjust source path in xs-app.json", async () => {
-        sandbox.stub(FsUtil, "readInProject").resolves(JSON.stringify({ "appId": reuseLib }));
+        sandbox.stub(FsUtil, "readInProject").resolves(Buffer.from(JSON.stringify({ "appId": reuseLib })));
         const xsAppJson = JSON.stringify({
             "routes": [
                 {
@@ -76,7 +76,7 @@ describe("PreviewManager adjust xs-app.json", () => {
     });
 
     it("should adjust source path in xs-app.json for html5-apps-repo-rt service", async () => {
-        sandbox.stub(FsUtil, "readInProject").resolves(JSON.stringify({ "appId": reuseLib }));
+        sandbox.stub(FsUtil, "readInProject").resolves(Buffer.from(JSON.stringify({ "appId": reuseLib })));
         const xsAppJson = JSON.stringify({
             "routes": [{
                 "source": "^(.*)$",
@@ -94,7 +94,7 @@ describe("PreviewManager adjust xs-app.json", () => {
     });
 
     it("should merge xs-app.json files", async () => {
-        sandbox.stub(FsUtil, "readInProject").resolves(JSON.stringify({ "appId": reuseLib }));
+        sandbox.stub(FsUtil, "readInProject").resolves(Buffer.from(JSON.stringify({ "appId": reuseLib })));
         const serviceKeyCredentials = {
             endpoints: {
                 "api-endpoint": {
@@ -120,8 +120,8 @@ describe("PreviewManager adjust xs-app.json", () => {
                 }
             ]
         });
-        const baseFiles = new Map<string, string>();
-        baseFiles.set("xs-app.json", JSON.stringify({
+        const baseFiles = new Map<string, Buffer>();
+        baseFiles.set("xs-app.json", Buffer.from(JSON.stringify({
             "authenticationMethod": "route",
             "routes": [
                 {
@@ -130,7 +130,7 @@ describe("PreviewManager adjust xs-app.json", () => {
                     "authenticationType": "none"
                 }
             ]
-        }));
+        })));
 
         const ressourceWrite = sandbox.stub(ResourceUtil, "writeInProject");
 

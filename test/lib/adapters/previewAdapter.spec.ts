@@ -7,6 +7,7 @@ import { REUSE_DIR } from "../../../src/model/configuration.js";
 import { UI5BuilderTools } from "../../../src/model/types.js";
 import CFUtil from "../../../src/util/cfUtil.js";
 import AppVariant from "../../../src/appVariant.js";
+import { bufferToJson } from "../../../src/util/commonUtil.js";
 import TaskUtil from "@ui5/project/build/helpers/TaskUtil";
 
 
@@ -72,7 +73,7 @@ describe("PreviewAdapter preview resources", () => {
             ])
         } as any;
 
-        sandbox.stub(FsUtil, "readInProject").resolves(appInfoContent);
+        sandbox.stub(FsUtil, "readInProject").resolves(Buffer.from(appInfoContent));
         sandbox.stub(CFUtil, "getOrCreateServiceKeyWithEndpoints").resolves({
             endpoints: {
                 "api-endpoint": { destination: "ZTEST_DEST" },
@@ -106,18 +107,18 @@ describe("PreviewAdapter preview resources", () => {
             projectNamespace: "projectNamespace"
         } as UI5BuilderTools;
         const postChain = adapter.createPostCommandChain(references, adaptationProject, ui5BuilderTools);
-        const baseFiles = new Map<string, string>([["xs-app.json", baseXsAppJson]]);
+        const baseFiles = new Map<string, Buffer>([["xs-app.json", Buffer.from(baseXsAppJson)]]);
         await postChain.execute(baseFiles);
 
         expect(writeInProjectStub.calledOnce).to.be.true;
         expect(writeInProjectStub.getCall(0).args[0]).to.equal(REUSE_DIR);
 
-        const writtenFiles = writeInProjectStub.getCall(0).args[1] as ReadonlyMap<string, string>;
+        const writtenFiles = writeInProjectStub.getCall(0).args[1] as ReadonlyMap<string, Buffer>;
         expect(writtenFiles.has("lib1/file1.js")).to.be.true;
         expect(writtenFiles.has("lib1/file2.js")).to.be.true;
         expect(writtenFiles.has("xs-app.json")).to.be.true;
 
-        const mergedXsAppJson = JSON.parse(writtenFiles.get("xs-app.json")!);
+        const mergedXsAppJson = bufferToJson(writtenFiles.get("xs-app.json")!);
         expect(mergedXsAppJson.authenticationMethod).to.equal("route");
         expect(mergedXsAppJson.routes.length).to.equal(2);
         expect(mergedXsAppJson.routes[0].source).to.equal("^/resources/com/example/lib1/test/(.*)$");
@@ -140,8 +141,8 @@ describe("PreviewAdapter preview resources", () => {
                 "sap.cloud.service": "test-service"
             });
 
-            const files = new Map<string, string>([
-                ["xs-app.json", JSON.stringify({
+            const files = new Map<string, Buffer>([
+                ["xs-app.json", Buffer.from(JSON.stringify({
                     routes: [{
                         source: "^/sap/opu/odata/sap/ZTEST_SRV/",
                         target: "/sap/opu/odata/sap/ZTEST_SRV/",
@@ -153,12 +154,12 @@ describe("PreviewAdapter preview resources", () => {
                         authenticationType: "none",
                         destination: "ZTEST_DEST"
                     }]
-                })]
+                }))]
             ]);
 
             const postCommandChain = adapter.createPostCommandChain(new Map<string, string>(), {} as AppVariant, {} as UI5BuilderTools);
             const enhancedFiles = await postCommandChain.execute(files);
-            const xsAppJson = JSON.parse(enhancedFiles.get("xs-app.json")!);
+            const xsAppJson = bufferToJson(enhancedFiles.get("xs-app.json")!);
 
             expect(xsAppJson.routes).to.deep.equal([{
                 source: "^/sap/opu/odata/sap/ZTEST_SRV/",

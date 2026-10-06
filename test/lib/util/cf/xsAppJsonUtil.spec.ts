@@ -2,6 +2,7 @@ import * as chai from "chai";
 
 import { enhanceRoutesWithEndpointAndService, merge } from "../../../../src/util/cf/xsAppJsonUtil.js";
 import XsAppJsonEnhanceRoutesCommand from "../../../../src/adapters/commands/xsAppJsonEnhanceRoutesCommand.js";
+import { bufferToJson } from "../../../../src/util/commonUtil.js";
 
 const { expect } = chai;
 
@@ -156,10 +157,10 @@ describe("xsAppJsonUtil.enhanceRoutesWithEndpointAndService", () => {
         const command = new XsAppJsonEnhanceRoutesCommand(
             Promise.resolve(mockServiceCredentials)
         );
-        const baseAppFiles = new Map<string, string>();
-        baseAppFiles.set("xs-app.json", JSON.stringify(originalXsAppJson));
+        const baseAppFiles = new Map<string, Buffer>();
+        baseAppFiles.set("xs-app.json", Buffer.from(JSON.stringify(originalXsAppJson)));
         await command.execute(baseAppFiles);
-        const updatedXsAppJson = JSON.parse(baseAppFiles.get("xs-app.json")!);
+        const updatedXsAppJson = bufferToJson(baseAppFiles.get("xs-app.json")!);
         expect(updatedXsAppJson.routes).to.deep.equal(expectedXsAppJson.routes);
     });
 });
