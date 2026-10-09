@@ -32,11 +32,11 @@ describe("App Variant Hierarchy", () => {
         sandbox.stub(AbapRepository.prototype, "getAppVariantIdHierarchy").resolves([
             {
                 appName: "REPO_NAME_1",
-                cacheBusterToken: Promise.resolve("cachebusterToken1")
+                token: Promise.resolve("cachebusterToken1")
             },
             {
                 appName: "REPO_NAME_0",
-                cacheBusterToken: Promise.resolve("cachebusterToken0")
+                token: Promise.resolve("cachebusterToken0")
             }
         ]);
         const appVariant1Path = TestUtil.getResourcePath("appVariant1", "webapp");
@@ -207,10 +207,10 @@ describe("OData DataSource Hierarchy", () => {
         downloadAnnotationFileStub = sandbox.stub(AbapRepository.prototype, "downloadAnnotationFile")
             .resolves(METADATA_XML);
         sandbox.stub(AbapRepository.prototype, "getAppVariantIdHierarchy").resolves([
-            { appName: "REPO_3", cacheBusterToken: Promise.resolve("token3") },
-            { appName: "REPO_2", cacheBusterToken: Promise.resolve("token2") },
-            { appName: "REPO_1", cacheBusterToken: Promise.resolve("token1") },
-            { appName: "REPO_0", cacheBusterToken: Promise.resolve("token0") },
+            { appName: "REPO_3", token: Promise.resolve("token3") },
+            { appName: "REPO_2", token: Promise.resolve("token2") },
+            { appName: "REPO_1", token: Promise.resolve("token1") },
+            { appName: "REPO_0", token: Promise.resolve("token0") },
         ]);
         sandbox.stub(AbapRepository.prototype, "fetch")
             .withArgs(sinon.match({ appName: "REPO_0" })).resolves(new Map([

@@ -62,7 +62,7 @@ describe("Html5Repository", () => {
         const html5Repository = new HTML5Repository(options.configuration) as HTML5Repository;
         const baseAppFiles = await html5Repository.fetch({
             appName: "appName1",
-            cacheBusterToken: Promise.resolve("token123"),
+            token: Promise.resolve("token123"),
             appHostId: "appHostId",
             appVersion: "appVersion",
         });
@@ -87,7 +87,7 @@ describe("Html5Repository", () => {
             const html5Repository = new Html5Repository(options.configuration) as HTML5Repository;
             await html5Repository.fetch({
                 appName: "1",
-                cacheBusterToken: Promise.resolve("2"),
+                token: Promise.resolve("2"),
                 appHostId: "3",
                 appVersion: "4"
             });
@@ -144,7 +144,7 @@ describe("Html5Repository", () => {
             appHostId: "appHostId",
             appName: "appName",
             appVersion: "appVersion",
-            cacheBusterToken: Promise.resolve("token123"),
+            token: Promise.resolve("token123"),
         });
         expect([...reuseLibFiles.keys()]).to.have.members(["i18n.properties", "manifest.json"]);
     });
@@ -195,7 +195,7 @@ describe("Html5Repository", () => {
                     try {
                         await html5Repository.fetch({
                             appName: "appName1",
-                            cacheBusterToken: Promise.resolve(`token-${status}`),
+                            token: Promise.resolve(`token-${status}`),
                             appHostId: "appHostId",
                             appVersion: "appVersion"
                         });
@@ -210,7 +210,7 @@ describe("Html5Repository", () => {
                 } else {
                     const baseAppFiles = await html5Repository.fetch({
                         appName: "appName1",
-                        cacheBusterToken: Promise.resolve(`token-${status}`),
+                        token: Promise.resolve(`token-${status}`),
                         appHostId: "appHostId",
                         appVersion: "appVersion"
                     });

@@ -18,12 +18,13 @@ export default class CacheHolder {
         return path.join(os.tmpdir(), this.TEMP_TASK_DIR, ...paths.map(part => encodeFilename(part, { replacement: "_" })));
     }
 
-    static read(repoName: string, token: string): Promise<Map<string, Buffer>> {
-        const directory = this.getTempDir(repoName, token);
-        if (this.isValid(repoName, "repoName") && this.isValid(token, "token") && fs.existsSync(directory)) {
-            return ResourceUtil.byGlob(directory, "**/*");
+    static async read(resource: ICachedResource): Promise<Map<string, Buffer>> {
+        const directory = this.getTempDir(resource.appName, await resource.token);
+        if (!fs.existsSync(directory)) {
+            log.verbose(`No cache directory '${directory}' found`);
+            return new Map<string, Buffer>();
         }
-        return Promise.resolve(new Map<string, Buffer>());
+        return ResourceUtil.byGlob(directory, "**/*");
     }
 
     /**
@@ -35,7 +36,7 @@ export default class CacheHolder {
      * (i.e. no full build has run yet).
      */
     static async readLatest(repoName: string): Promise<Map<string, Buffer>> {
-        if (!this.isValid(repoName, "repoName")) {
+        if (!repoName) {
             throw new Error(`Cache read requires 'repoName' to be provided`);
         }
         const repoDir = this.getTempDir(repoName);
@@ -49,19 +50,16 @@ export default class CacheHolder {
         return ResourceUtil.byGlob(path.join(repoDir, tokenDir), "**/*");
     }
 
-    static async write(repoName: string, token: string, files: Map<string, Buffer>): Promise<void> {
-        this.delete(repoName);
-        if (this.isValid(repoName, "repoName") && this.isValid(token, "token")) {
-            await ResourceUtil.write(this.getTempDir(repoName, token), files);
+    static async write(resource: ICachedResource, files: Map<string, Buffer>): Promise<void> {
+        const token = await resource.token;
+        if (resource.appName == null || token == null) {
+            log.verbose(`No 'appName' or 'token' provided, skipping cache write`);
+            return;
         }
-    }
-
-    private static isValid(value: string, name: string) {
-        if (value == null || value === "") {
-            log.warn(`No '${name}' provided, skipping cache write`);
-            return false;
+        if (!resource.keepAppNameDir) {
+            this.delete(resource.appName);
         }
-        return true;
+        await ResourceUtil.write(this.getTempDir(resource.appName, token), files);
     }
 
     /**
@@ -107,14 +105,14 @@ export function cached() {
         const originalValue = descriptor.value
         descriptor.value = async function (...args: any[]) {
             const cachedResource = args[0] as ICachedResource;
-            const { appName, cacheBusterToken: cachebusterToken } = cachedResource;
-            const token = await cachebusterToken;
-            let files = await CacheHolder.read(appName, token);
+            let files = await CacheHolder.read(cachedResource);
+            const appName = cachedResource.appName;
+            const token = await cachedResource.token;
             CacheHolder.clearOutdatedExcept(appName);
             if (files.size === 0) {
                 log.verbose(`No cache for repo '${appName}' with token '${token}'. Fetching from repository.`);
                 files = await originalValue.apply(this, args);
-                await CacheHolder.write(appName, token, files!);
+                await CacheHolder.write(cachedResource, files!);
             } else {
                 log.verbose(`Using cached files for repo '${appName}' with token '${token}'.`);
             }

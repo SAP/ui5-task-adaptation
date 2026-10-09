@@ -88,7 +88,7 @@ export default class FetchPreviewResourcesCommand extends SetupCommand implement
                 appName: lib.html5AppName,
                 appVersion: lib.html5AppVersion,
                 appHostId: lib.html5AppHostId,
-                cacheBusterToken: Promise.resolve(lib.html5CacheBusterToken)
+                token: Promise.resolve(lib.html5CacheBusterToken)
             }
             const promise = repository
                 .fetch(resource)

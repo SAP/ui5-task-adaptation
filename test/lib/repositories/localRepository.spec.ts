@@ -64,22 +64,22 @@ describe("LocalRepository", () => {
         it("returns the complete hierarchy from dynamically generated files", async () => {
             const localRepository = await setup();
             const hierarchy = await localRepository.getAppVariantIdHierarchy("appId1");
-            const actual = await Promise.all(hierarchy.map(async (item) => ({ ...item, cacheBusterToken: await item.cacheBusterToken })));
+            const actual = await Promise.all(hierarchy.map(async (item) => ({ ...item, token: await item.token })));
             expect(actual).to.deep.equal([
-                { appName: "appId1", absolutePath: path.join(adpDir, "appId1", "webapp"), cacheBusterToken: "local" },
-                { appName: "appId2", absolutePath: path.join(adpDir, "appId2", "webapp"), cacheBusterToken: "local" },
-                { appName: "appId3", absolutePath: path.join(adpDir, "appId3", "webapp"), cacheBusterToken: "local" }
+                { appName: "appId1", absolutePath: path.join(adpDir, "appId1", "webapp"), token: "local" },
+                { appName: "appId2", absolutePath: path.join(adpDir, "appId2", "webapp"), token: "local" },
+                { appName: "appId3", absolutePath: path.join(adpDir, "appId3", "webapp"), token: "local" }
             ]);
         });
 
         it("returns the complete hierarchy from dynamically generated files with classifier", async () => {
             const localRepository = await setup(true);
             const hierarchy = await localRepository.getAppVariantIdHierarchy("appId1");
-            const actual = await Promise.all(hierarchy.map(async (item) => ({ ...item, cacheBusterToken: await item.cacheBusterToken })));
+            const actual = await Promise.all(hierarchy.map(async (item) => ({ ...item, token: await item.token })));
             expect(actual).to.deep.equal([
-                { appName: "appId1", absolutePath: path.join(adpDir, "appId1-opt-static-abap"), cacheBusterToken: "local" },
-                { appName: "appId2", absolutePath: path.join(adpDir, "appId2-opt-static-abap"), cacheBusterToken: "local" },
-                { appName: "appId3", absolutePath: path.join(adpDir, "appId3-opt-static-abap"), cacheBusterToken: "local" }
+                { appName: "appId1", absolutePath: path.join(adpDir, "appId1-opt-static-abap"), token: "local" },
+                { appName: "appId2", absolutePath: path.join(adpDir, "appId2-opt-static-abap"), token: "local" },
+                { appName: "appId3", absolutePath: path.join(adpDir, "appId3-opt-static-abap"), token: "local" }
             ]);
         });
 

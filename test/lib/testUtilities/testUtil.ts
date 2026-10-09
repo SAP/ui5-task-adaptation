@@ -3,6 +3,7 @@ import * as fs from "fs";
 import * as util from "util";
 
 import AppVariant from "../../../src/appVariant.js";
+import ICachedResource from "../../../src/cache/cachedResource.js";
 import Language from "../../../src/model/language.js";
 import ResourceUtil from "../../../src/util/resourceUtil.js";
 import { glob } from "glob";
@@ -216,6 +217,9 @@ class TaskUtil {
 
 export const toBuffer = (s: string): Buffer => Buffer.from(s, "utf8");
 export const toBufferMap = (entries: [string, string][]): Map<string, Buffer> => new Map(entries.map(([k, v]) => [k, toBuffer(v)]));
+
+export const cachedResource = (appName?: string, token?: string): ICachedResource =>
+    ({ appName: appName!, token: Promise.resolve(token!) });
 
 export function metadataV4Xml(references: string, annotations = "", schema = '<Schema Namespace="com.sap.self" Alias="SAP__self">') {
     return `<?xml version="1.0" encoding="utf-8"?>

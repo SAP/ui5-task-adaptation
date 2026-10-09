@@ -34,7 +34,7 @@ export default class HTML5Repository implements IRepository {
         }
         return [{
             appName,
-            cacheBusterToken: this.getMetadata().then(metadata => metadata.changedOn),
+            token: this.getMetadata().then(metadata => metadata.changedOn),
             appVersion,
             appHostId,
         }];

@@ -47,7 +47,7 @@ export default class LocalRepository implements IRepository {
             }
             items.push({
                 appName: currentAppId,
-                cacheBusterToken: Promise.resolve("local"),
+                token: Promise.resolve("local"),
                 absolutePath: entry.absolutePath,
             });
             if (entry.isVariant) {

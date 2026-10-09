@@ -15,7 +15,7 @@ export default class CacheRepository implements IRepository {
         }
         return [{
             appName,
-            cacheBusterToken: Promise.resolve("")
+            token: Promise.resolve("")
         }];
     }
 

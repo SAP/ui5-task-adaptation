@@ -7,7 +7,7 @@ import HTML5Repository from "../../src/repositories/html5Repository.js";
 import AbapRepository from "../../src/repositories/abapRepository.js";
 import { IProjectOptions } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
-import TestUtil, { toBufferMap } from "./testUtilities/testUtil.js";
+import TestUtil, { cachedResource, toBufferMap } from "./testUtilities/testUtil.js";
 import CFUtil from "../../src/util/cfUtil.js";
 import esmock from "esmock";
 import IRepository from "../../src/repositories/repository.js";
@@ -135,7 +135,7 @@ describe("Index", () => {
                     "/resources/ns/changes/notsupported.testfile",
                     "/resources/ns/xs-app.json"
                 ];
-                const tempResources = await CacheHolder.read("repoName1", "2100.01.01");
+                const tempResources = await CacheHolder.read(cachedResource("repoName1", "2100.01.01"));
                 const tempResourcesMembers = [
                     "i18n/i18n.properties",
                     "manifest.json",
@@ -186,8 +186,8 @@ describe("Index", () => {
         const abapRepository = new AbapRepository(options.configuration);
         sandbox.stub(AbapAnnotationManager.prototype, "process").resolves(new Map<string, string>());
         sandbox.stub(abapRepository, "getAppVariantIdHierarchy").resolves([
-            { appName: "REPO_NAME_1", cacheBusterToken: Promise.resolve("token1") },
-            { appName: "REPO_NAME_0", cacheBusterToken: Promise.resolve("token0") }
+            { appName: "REPO_NAME_1", token: Promise.resolve("token1") },
+            { appName: "REPO_NAME_0", token: Promise.resolve("token0") }
         ]);
         sandbox.stub(abapRepository, "fetch")
             .withArgs(sinon.match({ appName: "REPO_NAME_0" })).resolves(new Map([
@@ -318,7 +318,7 @@ describe("Index.previewManifest", () => {
     });
 
     const setCache = async (files: Map<string, Buffer>, cachebusterToken = "010101") => {
-        await CacheHolder.write(OPTIONS.configuration.appName!, cachebusterToken, files);
+        await CacheHolder.write(cachedResource(OPTIONS.configuration.appName!, cachebusterToken), files);
     };
 
     const baseFiles = () => toBufferMap([
@@ -467,6 +467,6 @@ const runUi5TaskAdaptation = async (options: IProjectOptions, hasEnhanceWithForI
         "/resources/ns/changes/notsupported.testfile",
         "/resources/ns/xs-app.json"
     ];
-    const tempResources = await CacheHolder.read("repoName1", "010101");
+    const tempResources = await CacheHolder.read(cachedResource("repoName1", "010101"));
     checkResourcePathsAndTempResources(resourcePaths, resourcePathsMembers, tempResources!, ["manifest.json"]);
 }

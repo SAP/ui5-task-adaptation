@@ -48,13 +48,13 @@ export default class AbapRepository implements IRepository {
             const hierarchy = JSON.parse(response.data)?.appVariantIdHierarchy as IAppVariantIdHierarchyItem[];
             return hierarchy.map(item => ({
                 appName: item.repoName,
-                cacheBusterToken: Promise.resolve(item.cachebusterToken)
+                token: Promise.resolve(item.cachebusterToken)
             }));
         } else if (this.configuration.appName) {
             // Fallback to old API on old ABAP backend or CF for backward compatibility
             return [{
                 appName: this.configuration.appName,
-                cacheBusterToken: this.getMetadata(id).then(metadata => metadata.changedOn),
+                token: this.getMetadata(id).then(metadata => metadata.changedOn),
             }];
         }
         throw new Error(`App variant id hierarchy for app id '${id}' is not provided`);

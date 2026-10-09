@@ -164,7 +164,7 @@ describe("FetchPreviewResourcesCommand", () => {
     it("should re-fetch reuse libs and overwrite .adp/reuse when ui5AppInfo.json changes", async () => {
         const writeStub = sandbox.stub(ResourceUtil, "writeInProject");
 
-        const makeAppInfo = (cacheBusterToken: string) => JSON.stringify({
+        const makeAppInfo = (token: string) => JSON.stringify({
             "test.app": {
                 asyncHints: {
                     libs: [{
@@ -172,7 +172,7 @@ describe("FetchPreviewResourcesCommand", () => {
                         html5AppName: "reuseLib",
                         html5AppHostId: "ddc20001-a38e-4dd2-891c-1ad50a6a7f18",
                         html5AppVersion: "1.0.0",
-                        html5CacheBusterToken: cacheBusterToken,
+                        html5CacheBusterToken: token,
                         url: { final: "https://example.com/reuseLib" }
                     }]
                 },
