@@ -1,8 +1,7 @@
 import { IConfiguration } from "../model/configuration.js";
-import { dependsOn, getCommonManifestUpdateCommands, getCommonPostCommands, IAdapter } from "./adapter.js";
+import { dependsOn, getCommonManifestUpdateCommands, getCommonPostBaseAdaptCommands, getCommonPostCommands, IAdapter } from "./adapter.js";
 import { AdaptCommandChain, ManifestUpdateCommandChain, PostCommandChain, SetupCommandChain } from "./commands/command.js";
 import { IAppVariantIdHierarchyManifestItem } from "../model/appVariantIdHierarchyItem.js";
-import { getReferences } from "../util/commonUtil.js";
 import XsAppJsonEnhanceRoutesCommand from "./commands/xsAppJsonEnhanceRoutesCommand.js";
 import BaseApp from "../baseApp.js";
 import AppVariant from "../appVariant.js";
@@ -59,12 +58,16 @@ export default class CFAdapter implements IAdapter {
         ]);
     }
 
+    createPostBaseAdaptCommandChain(references: Map<string, string>): PostCommandChain {
+        return new PostCommandChain(getCommonPostBaseAdaptCommands(references));
+    }
+
     createManifestPreviewCommandChain(baseApp: BaseApp, appVariant: AppVariant): ManifestUpdateCommandChain {
         const appVariantIdHierarchyItem = {
             appVariantId: baseApp.id,
             version: baseApp.version
         } as IAppVariantIdHierarchyManifestItem;
-        const references = getReferences([appVariant], appVariant.id);
+        const references = new Map([[appVariant.reference, appVariant.id]]);
         return new ManifestUpdateCommandChain([
             ...getCommonManifestUpdateCommands(baseApp, appVariant, appVariantIdHierarchyItem),
             new UpdateCloudPlatformCommand(this.configuration.sapCloudService),

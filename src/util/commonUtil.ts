@@ -3,7 +3,6 @@ import * as fs from "fs";
 
 import { fileURLToPath } from "url";
 import { posix as path } from "path";
-import AppVariant from "../appVariant.js";
 import ServerError from "../model/serverError.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -151,22 +150,4 @@ export function isManifestChange(filename: string, content: Buffer): boolean {
         return change.changeType?.startsWith(MANIFEST_CHANGE);
     }
     return false;
-}
-
-/**
- * 4p. Reference map contains searchTerm as key and replacement as value. Base
- * id and app variant ids are renamed to adaptation project id.
- */
-export function getReferences(appVariants: AppVariant[], adaptationProjectId: string): Map<string, string> {
-    const references = new Map<string, string>();
-    appVariants.forEach((variant, i) => {
-        if (i === 0) {
-            references.set(variant.reference, adaptationProjectId);
-        }
-        if (variant.id !== adaptationProjectId) {
-            references.set(variant.id, adaptationProjectId);
-        }
-        variant.getRenamingForMovedFiles().forEach((value, key) => references.set(key, value));
-    });
-    return references;
 }

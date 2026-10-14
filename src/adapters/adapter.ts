@@ -22,6 +22,7 @@ export interface IAdapter {
         adaptationProject: AppVariant,
         ui5BuilderTools: UI5BuilderTools,
     ): PostCommandChain;
+    createPostBaseAdaptCommandChain(references: Map<string, string>): PostCommandChain;
     createManifestPreviewCommandChain(baseApp: BaseApp, appVariant: AppVariant): ManifestUpdateCommandChain;
 }
 
@@ -36,6 +37,13 @@ export function getCommonManifestUpdateCommands(baseApp: BaseApp, appVariant: Ap
     ];
 }
 
+export function getCommonPostBaseAdaptCommands(references: Map<string, string>): PostCommand[] {
+    return [
+        new FilterFilesCommand(),
+        new RenameFilesCommand(references),
+    ];
+}
+
 export function getCommonPostCommands(
     references: Map<string, string>,
     adaptationProject: AppVariant,
@@ -44,8 +52,7 @@ export function getCommonPostCommands(
     const { movedFiles, resources } = adaptationProject;
     const { workspace, taskUtil, projectNamespace } = ui5BuilderTools;
     return [
-        new FilterFilesCommand(),
-        new RenameFilesCommand(references),
+        ...getCommonPostBaseAdaptCommands(references),
         new OmitDeletedResourcesCommand(taskUtil, movedFiles, resources, projectNamespace),
         new WriteResourcesCommand(workspace, projectNamespace),
     ];

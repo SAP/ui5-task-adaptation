@@ -3,7 +3,7 @@ import BaseApp from "../baseApp.js";
 import { IConfiguration } from "../model/configuration.js";
 import { UI5BuilderTools } from "../model/types.js";
 import IRepository from "../repositories/repository.js";
-import { dependsOn, getCommonPostCommands, IAdapter } from "./adapter.js";
+import { dependsOn, getCommonPostBaseAdaptCommands, getCommonPostCommands, IAdapter } from "./adapter.js";
 import CFAdapter from "./cfAdapter.js";
 import { AdaptCommandChain, ManifestUpdateCommandChain, PostCommandChain, SetupCommandChain } from "./commands/command.js";
 import FetchEndpointsCommand from "./commands/fetchEndpointsCommand.js";
@@ -54,5 +54,9 @@ export default class PreviewAdapter implements IAdapter {
                 ui5BuilderTools,
             )
         ]);
+    }
+
+    createPostBaseAdaptCommandChain(references: Map<string, string>): PostCommandChain {
+        return new PostCommandChain(getCommonPostBaseAdaptCommands(references));
     }
 }

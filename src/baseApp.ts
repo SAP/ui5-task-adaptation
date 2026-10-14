@@ -1,4 +1,6 @@
+import { IAppVariantIdHierarchyManifestItem } from "./model/appVariantIdHierarchyItem.js";
 import { bufferToJson, trimExtension } from "./util/commonUtil.js";
+import { get } from "./util/objectPath.js";
 import { validateAppId } from "./util/validator/validator.js";
 
 export interface IBaseAppResources {
@@ -110,5 +112,15 @@ export default class BaseApp {
         }
     }
 
+
+    static getAppVariantHierarchy(files: ReadonlyMap<string, Buffer>): string[] {
+        const manifestBuffer = files.get("manifest.json");
+        if (!manifestBuffer) {
+            throw new Error("Original application should have manifest.json in root folder");
+        }
+        const manifest = bufferToJson(manifestBuffer);
+        const appVariantIdHierarchy = get(manifest, ["sap.ui5", "appVariantIdHierarchy"], [] as IAppVariantIdHierarchyManifestItem[]);
+        return appVariantIdHierarchy.map(item => item.appVariantId);
+    }
 
 }

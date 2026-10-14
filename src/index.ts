@@ -1,9 +1,10 @@
 import * as dotenv from "dotenv";
 
-import { bufferToString, getReferences, logBuilderVersion } from "./util/commonUtil.js";
+import { bufferToString, logBuilderVersion } from "./util/commonUtil.js";
 
 import AppVariant from "./appVariant.js";
 import BaseApp from "./baseApp.js";
+import ReferencesBuilder from "./util/referencesBuilder.js";
 import { ITaskParameters, UI5BuilderTools } from "./model/types.js";
 import { initialize } from "./landscapeConfiguration.js";
 
@@ -49,10 +50,16 @@ export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
         const appVariantFiles = await appVariantFilesPromise;
         files = await adapt(files, AppVariant.fromFiles(appVariantFiles));
     }
+    const hierarchyRenamings = new ReferencesBuilder()
+        .addMovedFiles(appVariants)
+        .build();
+    files = await adapter.createPostBaseAdaptCommandChain(hierarchyRenamings).execute(files);
 
     files = await adapt(files, adaptationProject);
-
-    const references = getReferences(appVariants, adaptationProject.id);
+    const references = new ReferencesBuilder()
+        .addReferences(files, adaptationProject.id)
+        .addMovedFiles(adaptationProject)
+        .build();
     return adapter.createPostCommandChain(
         references,
         adaptationProject,
