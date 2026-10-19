@@ -3,7 +3,7 @@ import { bufferToJson, dotToUnderscore, isManifestChange } from "./util/commonUt
 import ResourceUtil, { TEXT_EXTENSIONS } from "./util/resourceUtil.js";
 import { posix as path } from "path";
 import { moveFile, moveFiles } from "./util/movingHandler/changeFileMoveHandler.js";
-import RenameFilesCommand from "./adapters/commands/renameFilesCommand.js";
+import FileRenamer from "./util/renaming/fileRenamer.js";
 import { validateAppId } from "./util/validator/validator.js";
 
 const CHANGES_EXT = ".change";
@@ -16,9 +16,7 @@ export default class AppVariant {
     readonly reference: string;
     readonly layer: any;
     readonly content: any;
-    prefix: string = "";
-    movedFiles = new Map<string, string>();
-    private renaming = new Map<string, string>();
+    readonly prefix: string;
 
 
     static async fromWorkspace(workspace: IWorkspace, projectNamespace: string): Promise<AppVariant> {
@@ -27,7 +25,7 @@ export default class AppVariant {
         const files = await ResourceUtil.toFileMap(resources, projectNamespace);
         return new AppVariant(files, resources);
     }
-    
+
 
     static fromFiles(files: ReadonlyMap<string, Buffer>): AppVariant {
         return new AppVariant(files);
@@ -51,7 +49,7 @@ export default class AppVariant {
         this.content = content;
         // Prefix is a subfolder for the app variant to store js, fragments,
         // annotations and i18n files. It can be anything, but for convenience
-        // it is an app variant id.
+        // it is the app variant id.
         this.prefix = dotToUnderscore(this.id);
     }
 
@@ -60,22 +58,19 @@ export default class AppVariant {
         const { files, renamingPaths } = moveFiles(this.files, this.prefix, this.id);
         // Directly rename files that with new paths, this ensures no conflict in further renaming
         // In later remaming it's not possible to find correct prefix of moved files
-        new RenameFilesCommand(renamingPaths).execute(files);
+        FileRenamer.rename(files, renamingPaths);
         return files;
     };
 
+
     /**
-     * Since we moved files, we need to update paths where they were referenced.
-     * To do this we use renameMap function along with renaming ids.
+     * The files moved under the prefix folder, as original path -> new path.
+     * Computed on demand from the (readonly) sources, so there is no stored
+     * cross-phase state to go stale between getProcessedFiles and the post step.
      */
-    getRenamingForMovedFiles(): Map<string, string> {
-        const renaming = new Map<string, string>();
-        const slashToDot = (str: string) => str.replaceAll("\/", ".");
-        this.renaming.forEach((newPath, oldPath) => {
-            renaming.set(slashToDot(oldPath), slashToDot(newPath));
-        });
-        return renaming;
-    };
+    getMovedFiles(): ReadonlyMap<string, string> {
+        return moveFiles(this.files, this.prefix, this.id).movedFiles;
+    }
 
 
     getProcessedManifestChanges() {

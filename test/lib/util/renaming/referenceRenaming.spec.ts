@@ -1,6 +1,6 @@
 import { expect } from "chai";
-import { rename, renameJson, renameMap, renameResources } from "../../../src/util/renamingUtil.js";
-import TestUtil from "../testUtilities/testUtil.js";
+import { rename, renameJson, renameMap, renameResources } from "../../../../src/util/renaming/referenceRenaming.js";
+import TestUtil from "../../testUtilities/testUtil.js";
 
 describe("when renaming resources", () => {
     it("should replace search string", () => {

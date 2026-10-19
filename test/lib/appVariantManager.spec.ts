@@ -343,29 +343,39 @@ describe("AppVariantManager", () => {
         let appVariant: AppVariant;
         before(async () => {
             appVariant = await AppVariant.fromWorkspace(workspace, NAMESPACE);
-            appVariant.prefix = "app_variant1";
-
         });
 
         it("should return moved files", () => {
+            const { prefix } = appVariant;
             const processedFiles = appVariant.getProcessedFiles();
-            expect(!processedFiles.has("changes/coding/id_12345.js"));
-            expect(processedFiles.has("changes/app_variant1/coding/id_12345.js"));
+            expect(processedFiles.has("changes/coding/id_12345.js")).to.be.false;
+            expect(processedFiles.has(`changes/${prefix}/coding/id_12345.js`)).to.be.true;
 
-            expect(!processedFiles.has("changes/fragments/AdlChart.fragment.xml"));
-            expect(processedFiles.has("changes/app_variant1/fragments/AdlChart.fragment.xml"));
+            expect(processedFiles.has("changes/fragments/AdlChart.fragment.xml")).to.be.false;
+            expect(processedFiles.has(`changes/${prefix}/fragments/AdlChart.fragment.xml`)).to.be.true;
+        });
+
+        it("should record moved files in movedFiles (original -> new path)", () => {
+            const { prefix } = appVariant;
+            appVariant.getProcessedFiles();
+            expect(appVariant.getMovedFiles().get("changes/coding/id_12345.js"))
+                .to.equal(`changes/${prefix}/coding/id_12345.js`);
+            expect(appVariant.getMovedFiles().get("changes/fragments/AdlChart.fragment.xml"))
+                .to.equal(`changes/${prefix}/fragments/AdlChart.fragment.xml`);
         });
 
         it("should adjust paths for change files", () => {
+            const { prefix } = appVariant;
             const processedFiles = appVariant.getProcessedFiles();
             const codeExtChange = processedFiles.get("changes/id_1753705046493_197_codeExt.change")?.toString("utf8") || "";
-            expect(JSON.parse(codeExtChange).content.codeRef).eql("app_variant1/coding/id_12345.js");
+            expect(JSON.parse(codeExtChange).content.codeRef).eql(`${prefix}/coding/id_12345.js`);
         });
 
         it("should adjust namespaces for controller extensions", () => {
+            const { id, prefix } = appVariant;
             const processedFiles = appVariant.getProcessedFiles();
-            const content = processedFiles.get("changes/app_variant1/coding/id_12345.js")?.toString("utf8").trim() || "";
-            expect(content).to.include(`ControllerExtension.extend("customer.com.sap.application.variant.id.app_variant1.Worklist.controller"`);
+            const content = processedFiles.get(`changes/${prefix}/coding/id_12345.js`)?.toString("utf8").trim() || "";
+            expect(content).to.include(`ControllerExtension.extend("${id}.${prefix}.Worklist.controller"`);
         });
     });
 });

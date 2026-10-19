@@ -9,14 +9,6 @@ export default abstract class JsonRenamingHandler {
         return filename.endsWith(this.filePath);
     }
 
-    before(json: any): void {
-        this.jsonPathsToRestore.forEach(path => this.store(json, path));
-    }
-
-    after(json: any): void {
-        this.restore(json);
-    }
-
     snapshot(json: any): void {
         this.jsonPathsToRestore.forEach(path => this.store(json, path));
     }

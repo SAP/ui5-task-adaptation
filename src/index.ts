@@ -38,27 +38,15 @@ export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
     const reversedHierarchy = appVariantIdHierarchy.toReversed();
     const fetchFilesPromises = reversedHierarchy.map(variant => repository.fetch(variant)) as Promise<ReadonlyMap<string, Buffer>>[];
 
-    const appVariants = new Array<AppVariant>();
-    const adapt = async (baseFiles: ReadonlyMap<string, Buffer>, appVariant: AppVariant) => {
-        appVariants.push(appVariant);
-        const baseApp = BaseApp.fromFiles(baseFiles);
-        return adapter.createAdaptCommandChain(baseApp, appVariant).execute();
-    };
-
     let files = await fetchFilesPromises.shift()!; // original app files
     for (const appVariantFilesPromise of fetchFilesPromises) {
-        const appVariantFiles = await appVariantFilesPromise;
-        files = await adapt(files, AppVariant.fromFiles(appVariantFiles));
+        const appVariant = AppVariant.fromFiles(await appVariantFilesPromise);
+        files = await adapter.createAdaptCommandChain(files, appVariant).execute();
     }
-    const hierarchyRenamings = new ReferencesBuilder()
-        .addMovedFiles(appVariants)
-        .build();
-    files = await adapter.createPostBaseAdaptCommandChain(hierarchyRenamings).execute(files);
 
-    files = await adapt(files, adaptationProject);
+    files = await adapter.createAdaptCommandChain(files, adaptationProject).execute();
     const references = new ReferencesBuilder()
         .addReferences(files, adaptationProject.id)
-        .addMovedFiles(adaptationProject)
         .build();
     return adapter.createPostCommandChain(
         references,

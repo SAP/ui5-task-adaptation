@@ -16,13 +16,12 @@ import WriteResourcesCommand from "./commands/writeResourcesCommand.js";
 
 export interface IAdapter {
     createSetupCommandChain(appId: string, repository: IRepository): SetupCommandChain;
-    createAdaptCommandChain(baseApp: BaseApp, appVariant: AppVariant): AdaptCommandChain;
+    createAdaptCommandChain(files: ReadonlyMap<string, Buffer>, appVariant: AppVariant): AdaptCommandChain;
     createPostCommandChain(
         references: Map<string, string>,
         adaptationProject: AppVariant,
         ui5BuilderTools: UI5BuilderTools,
     ): PostCommandChain;
-    createPostBaseAdaptCommandChain(references: Map<string, string>): PostCommandChain;
     createManifestPreviewCommandChain(baseApp: BaseApp, appVariant: AppVariant): ManifestUpdateCommandChain;
 }
 
@@ -49,7 +48,8 @@ export function getCommonPostCommands(
     adaptationProject: AppVariant,
     ui5BuilderTools: UI5BuilderTools,
 ): PostCommand[] {
-    const { movedFiles, resources } = adaptationProject;
+    const { resources } = adaptationProject;
+    const movedFiles = adaptationProject.getMovedFiles();
     const { workspace, taskUtil, projectNamespace } = ui5BuilderTools;
     return [
         ...getCommonPostBaseAdaptCommands(references),

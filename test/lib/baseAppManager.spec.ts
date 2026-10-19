@@ -81,7 +81,7 @@ describe("BaseAppManager getBaseAppManifest", () => {
 
     it("should apply manifest.json changes first, then *.change files", async () => {
         const appVariant = await TestUtil.getAppVariant("ci.settleman.fcadoc.opgs1", options.projectNamespace);
-        const baseApp = BaseApp.fromFiles(toBufferMap([
+        const baseAppFiles = toBufferMap([
             ["manifest.json", JSON.stringify({
                 "_version": "1.12.0",
                 "sap.app": {
@@ -91,8 +91,8 @@ describe("BaseAppManager getBaseAppManifest", () => {
                     }
                 }
             })]
-        ]));
-        const files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        ]);
+        const files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const inbouds = bufferToJson(files.get("manifest.json")!)["sap.app"].crossNavigation.inbounds;
         expect(Object.keys(inbouds)).to.eql(["customer.ci.settleman.fcadoc.opgs1.InboundID"]);
         expect(inbouds["customer.ci.settleman.fcadoc.opgs1.InboundID"].title).to.eql("ak");
@@ -163,12 +163,13 @@ describe("BaseAppManager CF", () => {
 
 
     it("should update base app manifest", async () => {
-        const baseApp = BaseApp.fromFiles(toBufferMap([
+        const baseAppFiles = toBufferMap([
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
-        ]));
+        ]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        let files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
@@ -182,7 +183,7 @@ describe("BaseAppManager CF", () => {
     });
 
     it("should skip base app files", async () => {
-        const baseApp = BaseApp.fromFiles(toBufferMap([
+        const baseAppFiles = toBufferMap([
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["manifest-bundle.zip", ""],
             ["Component-preload.js", ""],
@@ -190,9 +191,10 @@ describe("BaseAppManager CF", () => {
             ["Component-dbg.js", "debug content"],
             ["Component.js", "production content"],
             ["Controller-dbg.js", "debug only content"]
-        ]));
+        ]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        let files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
@@ -218,11 +220,12 @@ describe("BaseAppManager CF", () => {
 
     it("should delete 'sap.cloud' if sapCloudService is not presented in config", async () => {
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        const baseApp = BaseApp.fromFiles(toBufferMap([["manifest.json", TestUtil.getResource("manifest.json")]]));
+        const baseAppFiles = toBufferMap([["manifest.json", TestUtil.getResource("manifest.json")]]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
         const optionsClone = { ...options, configuration: { ...options.configuration } };
         delete optionsClone.configuration["sapCloudService"];
         const adapter = new CFAdapter(optionsClone.configuration);
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        let files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
@@ -236,8 +239,9 @@ describe("BaseAppManager CF", () => {
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
         const baseAppManifest = TestUtil.getResourceJson("manifest.json");
         delete baseAppManifest["sap.cloud"];
-        const baseApp = BaseApp.fromFiles(toBufferMap([["manifest.json", JSON.stringify(baseAppManifest)]]));
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        const baseAppFiles = toBufferMap([["manifest.json", JSON.stringify(baseAppManifest)]]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
+        let files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
@@ -249,9 +253,9 @@ describe("BaseAppManager CF", () => {
 
     it("should fill change layer", async () => {
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        const baseApp = BaseApp.fromFiles(toBufferMap([["manifest.json", TestUtil.getResource("manifest.json")]]));
+        const baseAppFiles = toBufferMap([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const stub = sandbox.stub(RawApplier, "applyChanges")!;
-        await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const layers = stub.getCall(0).args[2].map((change: AppDescriptorChange) => change.getLayer());
         expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
@@ -285,9 +289,9 @@ describe("BaseAppManager CF", () => {
 
     const assertValidation = async (appVariant: AppVariant, options: IProjectOptions, expectedError: string, manifest: any) => {
         try {
-            const baseApp = BaseApp.fromFiles(toBufferMap([["manifest.json", JSON.stringify(manifest)]]));
+            const baseAppFiles = toBufferMap([["manifest.json", JSON.stringify(manifest)]]);
             const adapter = new CFAdapter(options.configuration);
-            await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+            await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
             assert.fail(true, false, "Exception not thrown");
         } catch (error: any) {
             expect(error.message).to.equal(expectedError);
@@ -340,11 +344,12 @@ describe("BaseAppManager Abap", () => {
     });
 
     it("should update base app manifest", async () => {
-        const baseApp = BaseApp.fromFiles(toBufferMap([
+        const baseAppFiles = toBufferMap([
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
-        ]));
-        const files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        ]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
+        const files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
@@ -356,14 +361,15 @@ describe("BaseAppManager Abap", () => {
     });
 
     it("should download annotations in the full setup, adapt and post cycle", async () => {
-        const baseApp = BaseApp.fromFiles(toBufferMap([
+        const baseAppFiles = toBufferMap([
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
-        ]));
+        ]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
         const { workspace, taskUtil } = await TestUtil.getWorkspace("appVariant1", options.projectNamespace);
         const ui5BuilderTools = { workspace, taskUtil, projectNamespace: options.projectNamespace } as UI5BuilderTools;
         await adapter.createSetupCommandChain(appVariant.reference, abapRepository).execute();
-        const adaptedFiles = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        const adaptedFiles = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const references = new Map([[baseApp.id, appVariant.id]]);
         const files = await adapter.createPostCommandChain(references, appVariant, ui5BuilderTools).execute(adaptedFiles);
         const actualManifest = bufferToJson(files.get("manifest.json")!);
@@ -373,7 +379,7 @@ describe("BaseAppManager Abap", () => {
     });
 
     it("should skip base app files", async () => {
-        const baseApp = BaseApp.fromFiles(toBufferMap([
+        const baseAppFiles = toBufferMap([
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["manifest-bundle.zip", ""],
             ["Component-preload.js", ""],
@@ -381,8 +387,9 @@ describe("BaseAppManager Abap", () => {
             ["Component-dbg.js", "debug content"],
             ["Component.js", "production content"],
             ["Controller-dbg.js", "debug only content"]
-        ]));
-        const files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        ]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
+        const files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
@@ -409,10 +416,11 @@ describe("BaseAppManager Abap", () => {
     });
 
     it("should delete 'sap.cloud' if sapCloudService is not presented in config", async () => {
-        const baseApp = BaseApp.fromFiles(toBufferMap([["manifest.json", TestUtil.getResource("manifest.json")]]));
+        const baseAppFiles = toBufferMap([["manifest.json", TestUtil.getResource("manifest.json")]]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
         const optionsClone = { ...options, configuration: { ...options.configuration } };
         delete optionsClone.configuration["sapCloudService"];
-        const files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        const files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
@@ -425,8 +433,9 @@ describe("BaseAppManager Abap", () => {
     it("should create default 'sap.cloud'", async () => {
         const baseAppManifest = JSON.parse(TestUtil.getResource("manifest.json"));
         delete baseAppManifest["sap.cloud"];
-        const baseApp = BaseApp.fromFiles(toBufferMap([["manifest.json", JSON.stringify(baseAppManifest)]]));
-        const files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        const baseAppFiles = toBufferMap([["manifest.json", JSON.stringify(baseAppManifest)]]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
+        const files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
@@ -437,9 +446,9 @@ describe("BaseAppManager Abap", () => {
     });
 
     it("should fill change layer", async () => {
-        const baseApp = BaseApp.fromFiles(toBufferMap([["manifest.json", TestUtil.getResource("manifest.json")]]));
+        const baseAppFiles = toBufferMap([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const stub = sandbox.stub(RawApplier, "applyChanges")!;
-        await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const layers = stub.getCall(0).args[2].map((change: AppDescriptorChange) => change.getLayer());
         expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
@@ -456,8 +465,8 @@ describe("BaseAppManager Abap", () => {
 
     const assertValidation = async (appVariant: AppVariant, expectedError: string, manifest: any) => {
         try {
-            const baseApp = BaseApp.fromFiles(toBufferMap([["manifest.json", JSON.stringify(manifest)]]));
-            await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+            const baseAppFiles = toBufferMap([["manifest.json", JSON.stringify(manifest)]]);
+            await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
             assert.fail(true, false, "Exception not thrown");
         } catch (error: any) {
             expect(error.message).to.equal(expectedError);
@@ -568,27 +577,15 @@ describe("preProcessFiles", () => {
         expect(result.get("regular-file.js")?.toString("utf8")).to.equal("regular content");
     });
 
-    it("should not modify .js files when no corresponding -dbg.js exists", () => {
+    it("should keep -dbg.js file if no corresponding .js exists", () => {
         const files = toBufferMap([
-            ["Component.js", "production content"],
+            ["Controller-dbg.js", "debug only content"],
             ["regular-file.js", "regular content"]
         ]);
 
         const result = preProcessFiles(files);
 
-        expect(result.get("Component.js")?.toString("utf8")).to.equal("production content");
-        expect(result.get("regular-file.js")?.toString("utf8")).to.equal("regular content");
-    });
-
-    it("should keep -dbg.js files when no corresponding .js exists", () => {
-        const files = toBufferMap([
-            ["Component-dbg.js", "debug content"],
-            ["regular-file.js", "regular content"]
-        ]);
-
-        const result = preProcessFiles(files);
-
-        expect(result.get("Component-dbg.js")?.toString("utf8")).to.equal("debug content");
+        expect(result.get("Controller-dbg.js")?.toString("utf8")).to.equal("debug only content");
         expect(result.get("regular-file.js")?.toString("utf8")).to.equal("regular content");
     });
 

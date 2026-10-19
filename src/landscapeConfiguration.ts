@@ -51,23 +51,64 @@ async function getTypeByConfiguration(configuration: IConfiguration): Promise<La
 }
 
 
+/**
+ * Per-landscape factories for the type-specific building blocks. Adding a new
+ * landscape type is a single entry here instead of a new case in three parallel
+ * switches. Imports stay lazy so only the active landscape's modules are loaded.
+ */
+interface LandscapeFactory {
+    adapter(configuration: IConfiguration, annotationManager: IAnnotationManager): Promise<IAdapter>;
+    repository(configuration: IConfiguration): Promise<IRepository>;
+    annotationManager(configuration: IConfiguration, repository: IRepository): Promise<IAnnotationManager>;
+}
+
+const LANDSCAPE_FACTORIES: Record<LandscapeType, LandscapeFactory> = {
+    abap: {
+        adapter: async (_configuration, annotationManager) => {
+            const { default: AbapAdapter } = await import("./adapters/abapAdapter.js");
+            return new AbapAdapter(annotationManager);
+        },
+        repository: async (configuration) => {
+            const { default: AbapRepository } = await import("./repositories/abapRepository.js");
+            return new AbapRepository(configuration);
+        },
+        annotationManager: async (configuration, repository) => {
+            const { default: AbapAnnotationManager } = await import("./annotations/abapAnnotationManager.js");
+            return new AbapAnnotationManager(configuration, repository);
+        },
+    },
+    cf: {
+        adapter: async (configuration) => {
+            const { default: CFAdapter } = await import("./adapters/cfAdapter.js");
+            return new CFAdapter(configuration);
+        },
+        repository: async (configuration) => {
+            const { default: HTML5Repository } = await import("./repositories/html5Repository.js");
+            return new HTML5Repository(configuration);
+        },
+        annotationManager: async () => {
+            const { default: CFAnnotationManager } = await import("./annotations/cfAnnotationManager.js");
+            return new CFAnnotationManager();
+        },
+    },
+};
+
+
+function landscapeFactory(configuration: IConfiguration): LandscapeFactory {
+    const factory = LANDSCAPE_FACTORIES[configuration.type as LandscapeType];
+    if (!factory) {
+        throw new Error(`No landscape factory found for the given configuration type '${configuration.type}'`);
+    }
+    return factory;
+}
+
+
 async function getAdapter(configuration: IConfiguration, annotationManager: IAnnotationManager): Promise<IAdapter> {
     if (isPreview()) {
         const { default: PreviewAdapter } = await import("./adapters/previewAdapter.js");
         return new PreviewAdapter(configuration);
     }
-    switch (configuration.type) {
-        case "abap": {
-            const { default: AbapAdapter } = await import("./adapters/abapAdapter.js");
-            return new AbapAdapter(annotationManager);
-        }
-        case "cf": {
-            const { default: CFAdapter } = await import("./adapters/cfAdapter.js");
-            return new CFAdapter(configuration);
-        }
-        default:
-            throw new Error(`No adapter found for the given configuration type '${configuration.type}'`);
-    }
+    return landscapeFactory(configuration).adapter(configuration, annotationManager);
 }
 
 
@@ -80,18 +121,7 @@ async function getRepository(configuration: IConfiguration, options: IInitialize
         const { default: LocalRepository } = await import("./repositories/localRepository.js");
         return new LocalRepository();
     }
-    switch (configuration.type) {
-        case "abap": {
-            const { default: AbapRepository } = await import("./repositories/abapRepository.js");
-            return new AbapRepository(configuration);
-        }
-        case "cf": {
-            const { default: HTML5Repository } = await import("./repositories/html5Repository.js");
-            return new HTML5Repository(configuration);
-        }
-        default:
-            throw new Error(`No repository found for the given configuration type '${configuration.type}'`);
-    }
+    return landscapeFactory(configuration).repository(configuration);
 }
 
 
@@ -99,18 +129,7 @@ async function getAnnotationManager(configuration: IConfiguration, repository: I
     if (isLocal()) {
         return new LocalAnnotationManager();
     }
-    switch (configuration.type) {
-        case "abap": {
-            const { default: AbapAnnotationManager } = await import("./annotations/abapAnnotationManager.js");
-            return new AbapAnnotationManager(configuration, repository);
-        }
-        case "cf": {
-            const { default: CFAnnotationManager } = await import("./annotations/cfAnnotationManager.js");
-            return new CFAnnotationManager();
-        }
-        default:
-            throw new Error(`No annotation manager found for the given configuration type '${configuration.type}'`);
-    }
+    return landscapeFactory(configuration).annotationManager(configuration, repository);
 }
 
 

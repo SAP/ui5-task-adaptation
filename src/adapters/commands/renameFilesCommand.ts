@@ -1,16 +1,5 @@
-import ManifestRenamingHandler from "../../util/renamingHandlers/manifestRenamingHandler.js";
-import JsonRenamingHandler from "../../util/renamingHandlers/jsonRenamingHandler.js";
-import { stringToBuffer, bufferToString, bufferToJson, jsonToBuffer } from "../../util/commonUtil.js";
-import { getSAPUI5DependencyIds } from "../../util/manifestUtil.js";
-import { renameMap } from "../../util/renamingUtil.js";
-import { TEXT_EXTENSIONS } from "../../util/resourceUtil.js";
-import { posix as path } from "path";
+import FileRenamer from "../../util/renaming/fileRenamer.js";
 import { PostCommand } from "./command.js";
-
-
-function isTextFile(filename: string): boolean {
-    return TEXT_EXTENSIONS.has(path.extname(filename).slice(1));
-}
 
 
 export default class RenameFilesCommand extends PostCommand {
@@ -19,109 +8,6 @@ export default class RenameFilesCommand extends PostCommand {
     }
 
     async execute(files: Map<string, Buffer>): Promise<void> {
-        this.rename(files, this.references);
-    }
-
-
-    /**
-         * 1p. i18n.properties are not renamed and property keys are ignored during
-         * the renaming across the files.
-         * @param files - all files both base and appVariants
-         * @param references - Reference maps of the app variant
-         * @returns A map of renamed files
-         */
-    @restoreWhatShouldntBeRenamed()
-    rename(files: Map<string, Buffer>, references: Map<string, string>): void {
-        const IGNORE_EXTENSIONS = [".properties"];
-        const ignoreInString = [
-            ...this.getI18nPropertyKeys(files),
-            ...this.getManifestSAPUI5DependencyIds(files)
-        ];
-        const updates = new Map<string, Buffer>();
-        for (const [filename, content] of files) {
-            if (!isTextFile(filename)) {
-                continue;
-            }
-            if (!IGNORE_EXTENSIONS.some(ext => filename.endsWith(ext))) {
-                // 5p. We pass replacements as ignores since we don't want to
-                // rename them again. E.g. we replace app.id with
-                // customer.app.id, but if we found customer.app.id somewhere,
-                // because we applied changes or something, we don't want to
-                // rename it again to customer.customer.app.id.
-                const renamed = renameMap(bufferToString(content), references, [...references.values(), ...ignoreInString]);
-                updates.set(filename, stringToBuffer(renamed));
-            }
-        }
-        for (const [filename, content] of updates) {
-            files.set(filename, content);
-        }
-    }
-
-    private getManifestSAPUI5DependencyIds(files: ReadonlyMap<string, Buffer>) {
-        const manifestFile = files.get("manifest.json");
-        return manifestFile ? getSAPUI5DependencyIds(bufferToJson(manifestFile)) : [];
-    }
-
-    private getI18nPropertyKeys(files: ReadonlyMap<string, Buffer>) {
-        const keys = new Set<string>();
-        files.forEach((content, filename) => {
-            if (filename.endsWith(".properties")) {
-                const lines = bufferToString(content).split("\n").filter(line => !line.startsWith("#"));
-                for (const line of lines) {
-                    const [key] = line.split("=");
-                    if (key) {
-                        keys.add(key);
-                    }
-                }
-            }
-        })
-        return [...keys];
+        FileRenamer.rename(files, this.references);
     }
 }
-
-/**
- * We might rename appVariantIdHierarchy and dependencies, so we restore them after the renaming.
- *
- * The decorated method may receive either a Map of files (filename → Buffer) or
- * a plain JSON object. Each handler is responsible for a single file (via its
- * `accept`), operating on its parsed JSON content:
- *  - Map case: every file a handler accepts is parsed, snapshotted before the
- *    renaming, then restored and written back after.
- *  - JSON case: the object is mutated in-place (its reference is preserved) and
- *    every handler is applied to it.
- */
-export function restoreWhatShouldntBeRenamed() {
-    return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
-        const handlerFactories = [() => new ManifestRenamingHandler()];
-        const originalValue = descriptor.value;
-        descriptor.value = function (...args: any[]) {
-            const files = args[0] as Map<string, Buffer>;
-            // Snapshot the protected paths with a dedicated handler instance per
-            // file, so one file's snapshot can't clobber another's. Multiple
-            // files can match a handler (e.g. the root manifest.json and a
-            // nested cards/.../manifest.json both end with "manifest.json"); a
-            // shared handler would let the last-snapshotted file (which may lack
-            // appVariantIdHierarchy) wipe the root manifest's value on restore.
-            const snapshots: Array<{ filename: string, handler: JsonRenamingHandler }> = [];
-            for (const [filename, content] of files) {
-                for (const createHandler of handlerFactories) {
-                    const handler = createHandler();
-                    if (handler.accept(filename)) {
-                        handler.before(bufferToJson(content));
-                        snapshots.push({ filename, handler });
-                    }
-                }
-            }
-            originalValue.apply(this, args);
-            for (const { filename, handler } of snapshots) {
-                const content = files.get(filename);
-                if (content) {
-                    const json = bufferToJson(content);
-                    handler.after(json);
-                    files.set(filename, jsonToBuffer(json));
-                }
-            }
-            return files;
-        };
-    };
-};

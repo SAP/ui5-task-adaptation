@@ -6,7 +6,7 @@ export default class OmitDeletedResourcesCommand extends PostCommand {
 
     constructor(
         private taskUtil: TaskUtil,
-        private movedFiles: Map<string, string>,
+        private movedFiles: ReadonlyMap<string, string>,
         private resources: ReadonlyArray<Resource> = [],
         private projectNamespace: string
     ) {

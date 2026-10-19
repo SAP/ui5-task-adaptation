@@ -92,7 +92,7 @@ describe("PreviewAdapter preview resources", () => {
 
         const references = new Map<string, string>();
         const adaptationProject = {
-            movedFiles: new Map<string, string>(),
+            getMovedFiles: () => new Map<string, string>(),
             resources: []
         } as any;
 

@@ -1,0 +1,213 @@
+import { expect } from "chai";
+import { xml2js } from "xml-js";
+import FileRenamer, { restoreWhatShouldntBeRenamed } from "../../../../src/util/renaming/fileRenamer.js";
+import { renameJson } from "../../../../src/util/renaming/referenceRenaming.js";
+import { toBuffer } from "../../testUtilities/testUtil.js";
+
+describe("FileRenamer.rename", () => {
+    let renamedFiles: Map<string, Buffer>;
+    let manifest: any;
+    let viewXml: any;
+
+    before(async () => {
+        const files = new Map<string, Buffer>();
+        files.set("manifest.json", toBuffer(JSON.stringify({
+            "sap.app": {
+                "id": "my.app"
+            },
+            "sap.ui5": {
+                "dependencies": {
+                    "libs": {
+                        "my.app.reuse.lib": {}
+                    },
+                    "components": {
+                        "my.app.reuse.component": {}
+                    }
+                }
+            }
+        })));
+        files.set("view.xml", toBuffer(`
+<mvc:View xmlns:alias="my.app.reuse.lib" xmlns:mvc="sap.ui.core.mvc" controllerName="my.app.Controller">
+    <core:ComponentContainer name="my.app.reuse.component"/>
+</mvc:View>`)); // referenced my.app.reuse.lib and "my.app.reuse.component"
+        files.set("controller.js", toBuffer(`
+sap.ui.define(['my.app.reuse.lib'], function (myAppReuseLib) {
+    const appId = "my.app";
+    sap.ui.core.Component.create({
+        name: "my.app.reuse.component",
+    });
+});`)); // referenced "my.app.reuse.lib" and "my.app.reuse.component"
+
+        const references = new Map<string, string>([
+            ["my.app", "customer.app"]
+        ]);
+
+        renamedFiles = new Map<string, Buffer>(files);
+        FileRenamer.rename(renamedFiles, references);
+        manifest = JSON.parse(renamedFiles.get("manifest.json")!.toString("utf8"));
+        viewXml = xml2js(renamedFiles.get("view.xml")!.toString("utf8"), { compact: true });
+    });
+
+    it("should rename the application id in manifest.json", () => {
+        expect(manifest["sap.app"].id).to.equal("customer.app");
+    });
+
+    it("should not rename dependency libs in manifest.json", () => {
+        const dependencies = manifest["sap.ui5"].dependencies;
+        expect(Object.keys(dependencies.libs)).to.deep.equal(["my.app.reuse.lib"]);
+    });
+
+    it("should not rename dependency components in manifest.json", () => {
+        const dependencies = manifest["sap.ui5"].dependencies;
+        expect(Object.keys(dependencies.components)).to.deep.equal(["my.app.reuse.component"]);
+    });
+
+    it("should rename controllerName in view.xml since it matches the application id", () => {
+        expect(viewXml["mvc:View"]._attributes.controllerName).to.equal("customer.app.Controller");
+    });
+
+    it("should not rename xmlns:alias in view.xml since it matches the dependency lib", () => {
+        expect(viewXml["mvc:View"]._attributes["xmlns:alias"]).to.equal("my.app.reuse.lib");
+    });
+
+    it("should not rename name in view.xml since it matches the dependency component", () => {
+        expect(viewXml["mvc:View"]["core:ComponentContainer"]._attributes.name).to.equal("my.app.reuse.component");
+    });
+
+    it("should rename appId in controller.js but not dependency libs or components", () => {
+        const controllerJs = renamedFiles.get("controller.js")?.toString("utf8");
+        expect(controllerJs).to.equal(`
+sap.ui.define(['my.app.reuse.lib'], function (myAppReuseLib) {
+    const appId = "customer.app";
+    sap.ui.core.Component.create({
+        name: "my.app.reuse.component",
+    });
+});`);
+    });
+});
+
+describe("restoreWhatShouldntBeRenamed", () => {
+    let renamedManifest: any;
+
+    before(async () => {
+        const manifest = {
+            "sap.app": {
+                "id": "original.id"
+            },
+            "sap.ui5": {
+                "appVariantIdHierarchy": [{
+                    "appVariantId": "original.id",
+                }],
+                "dependencies": {
+                    "libs": {
+                        "sap.original.id.reuse": {}
+                    }
+                }
+            }
+        };
+        const files = new Map<string, Buffer>([["manifest.json", toBuffer(JSON.stringify(manifest))]]);
+        const references = new Map<string, string>([
+            ["original.id", "customer.app.var.id"]
+        ]);
+        FileRenamer.rename(files, references);
+        renamedManifest = JSON.parse(files.get("manifest.json")!.toString("utf8"));
+    });
+
+    it("should restore appVariantIdHierarchy", () => {
+        expect(renamedManifest["sap.ui5"].appVariantIdHierarchy[0].appVariantId).to.equal("original.id");
+    });
+    it("should restore dependencies", () => {
+        expect(renamedManifest["sap.ui5"].dependencies.libs["sap.original.id.reuse"]).to.exist;
+    });
+    it("should rename sap.app id", () => {
+        expect(renamedManifest["sap.app"].id).to.equal("customer.app.var.id");
+    });
+});
+
+describe("restoreWhatShouldntBeRenamed with a files map", () => {
+    let renamedManifest: any;
+
+    before(() => {
+        const manifest = {
+            "sap.app": {
+                "id": "original.id"
+            },
+            "sap.ui5": {
+                "appVariantIdHierarchy": [{
+                    "appVariantId": "original.id",
+                }]
+            }
+        };
+        const files = new Map<string, Buffer>([["manifest.json", toBuffer(JSON.stringify(manifest))]]);
+        const references = new Map<string, string>([
+            ["original.id", "customer.app.var.id"]
+        ]);
+        const descriptor: PropertyDescriptor = {
+            value(fileMap: Map<string, Buffer>, refs: Map<string, string>): void {
+                for (const [filename, content] of fileMap) {
+                    const json = JSON.parse(content.toString("utf8"));
+                    renameJson(json, refs, [...refs.values()]);
+                    fileMap.set(filename, toBuffer(JSON.stringify(json)));
+                }
+            }
+        };
+        restoreWhatShouldntBeRenamed()({}, "rename", descriptor);
+        descriptor.value(files, references);
+        renamedManifest = JSON.parse(files.get("manifest.json")!.toString("utf8"));
+    });
+
+    it("should rename sap.app id in the file", () => {
+        expect(renamedManifest["sap.app"].id).to.equal("customer.app.var.id");
+    });
+
+    it("should restore appVariantIdHierarchy in the file", () => {
+        expect(renamedManifest["sap.ui5"].appVariantIdHierarchy[0].appVariantId).to.equal("original.id");
+    });
+});
+
+describe("restoreWhatShouldntBeRenamed with multiple manifest.json files", () => {
+    // Regression: more than one file ends with "manifest.json" (the root
+    // manifest and e.g. a nested integration card manifest). Each file's
+    // protected paths must be snapshotted and restored independently; a shared
+    // snapshot let the last-processed manifest clobber the others, wiping the
+    // root manifest's appVariantIdHierarchy when the nested one had none.
+    let rootManifest: any;
+    let cardManifest: any;
+
+    before(() => {
+        const root = {
+            "sap.app": { "id": "original.id" },
+            "sap.ui5": {
+                "appVariantIdHierarchy": [
+                    { "appVariantId": "original.id", "version": "0.0.1", "layer": "VENDOR" }
+                ]
+            }
+        };
+        // Nested card manifest WITHOUT appVariantIdHierarchy, inserted after the
+        // root so a shared snapshot would be overwritten by this (empty) one.
+        const card = {
+            "sap.app": { "id": "some.card.id" },
+            "sap.ui5": {}
+        };
+        const files = new Map<string, Buffer>([
+            ["manifest.json", toBuffer(JSON.stringify(root))],
+            ["cards/op/CARD/manifest.json", toBuffer(JSON.stringify(card))]
+        ]);
+        const references = new Map<string, string>([
+            ["original.id", "customer.app.var.id"]
+        ]);
+        FileRenamer.rename(files, references);
+        rootManifest = JSON.parse(files.get("manifest.json")!.toString("utf8"));
+        cardManifest = JSON.parse(files.get("cards/op/CARD/manifest.json")!.toString("utf8"));
+    });
+
+    it("should keep the root manifest's appVariantIdHierarchy when a nested manifest has none", () => {
+        expect(rootManifest["sap.ui5"].appVariantIdHierarchy).to.eql([
+            { "appVariantId": "original.id", "version": "0.0.1", "layer": "VENDOR" }
+        ]);
+    });
+
+    it("should not inject the root manifest's appVariantIdHierarchy into the nested manifest", () => {
+        expect(cardManifest["sap.ui5"].appVariantIdHierarchy).to.be.undefined;
+    });
+});

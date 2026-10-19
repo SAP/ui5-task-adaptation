@@ -1,4 +1,4 @@
-import { getCommonManifestUpdateCommands, getCommonPostBaseAdaptCommands, getCommonPostCommands, IAdapter } from "./adapter.js";
+import { getCommonManifestUpdateCommands, getCommonPostCommands, IAdapter } from "./adapter.js";
 import { AdaptCommandChain, ManifestUpdateCommandChain, PostCommandChain, SetupCommandChain } from "./commands/command.js";
 import { IAppVariantIdHierarchyManifestItem } from "../model/appVariantIdHierarchyItem.js";
 import BaseApp from "../baseApp.js";
@@ -17,7 +17,8 @@ export default class AbapAdapter implements IAdapter {
         return new SetupCommandChain([]);
     }
 
-    createAdaptCommandChain(baseApp: BaseApp, appVariant: AppVariant): AdaptCommandChain {
+    createAdaptCommandChain(files: ReadonlyMap<string, Buffer>, appVariant: AppVariant): AdaptCommandChain {
+        const baseApp = BaseApp.fromFiles(files);
         const appVariantIdHierarchyItem = {
             appVariantId: baseApp.id,
             version: baseApp.version,
@@ -45,10 +46,6 @@ export default class AbapAdapter implements IAdapter {
                 ui5BuilderTools,
             )
         ]);
-    }
-
-    createPostBaseAdaptCommandChain(references: Map<string, string>): PostCommandChain {
-        return new PostCommandChain(getCommonPostBaseAdaptCommands(references));
     }
 
     createManifestPreviewCommandChain(_baseApp: BaseApp, _appVariant: AppVariant): ManifestUpdateCommandChain {

@@ -61,7 +61,8 @@ describe("CFAdapter", () => {
                 id: "base.app.variant",
                 prefix: "customer.base.app.variant",
                 getProcessedManifestChanges: sandbox.stub().returns([]),
-                getProcessedFiles: sandbox.stub().returns(appVariantFiles)
+                getProcessedFiles: sandbox.stub().returns(appVariantFiles),
+                getMovedFiles: sandbox.stub().returns(new Map())
             } as unknown as AppVariant;
             const references = new Map<string, string>([["base.app.variant", "customer.base.app.variant"]]);
             const adaptCommandChain = new AdaptCommandChain(files, appVariantFiles, [

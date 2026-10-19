@@ -9,7 +9,7 @@ import { IProjectOptions } from "../../src/model/types.js";
 import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
-import { renameResources } from "../../src/util/renamingUtil.js";
+import { renameResources } from "../../src/util/renaming/referenceRenaming.js";
 
 let sandbox: SinonSandbox = sinon.createSandbox();
 const options: IProjectOptions = {

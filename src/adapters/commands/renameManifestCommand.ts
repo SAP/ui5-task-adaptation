@@ -1,7 +1,7 @@
 import { ManifestUpdateCommand } from "./command.js";
-import { renameJson } from "../../util/renamingUtil.js";
+import { renameJson } from "../../util/renaming/referenceRenaming.js";
 import { getSAPUI5DependencyIds } from "../../util/manifestUtil.js";
-import ManifestRenamingHandler from "../../util/renamingHandlers/manifestRenamingHandler.js";
+import ManifestRenamingHandler from "../../util/renaming/handlers/manifestRenamingHandler.js";
 
 /**
  * Renames app variant references (base app id -> app variant id) inside the

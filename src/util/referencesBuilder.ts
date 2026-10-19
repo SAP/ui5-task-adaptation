@@ -1,9 +1,8 @@
-import AppVariant from "../appVariant.js";
 import BaseApp from "../baseApp.js";
 
 /**
  * Fluent builder for the reference map (old id → adaptation project id) used to
- * rename files. Chain `addReferences`/`addMovedFiles` and finish with `build`.
+ * rename files. Chain `addReferences` and finish with `build`.
  */
 export default class ReferencesBuilder {
     private readonly references = new Map<string, string>();
@@ -16,19 +15,6 @@ export default class ReferencesBuilder {
         const hierarchy = BaseApp.getAppVariantHierarchy(files);
         const references = this.getReferences(hierarchy, adaptationProjectId);
         references.forEach((value, key) => this.references.set(key, value));
-        return this;
-    }
-
-    /**
-     * Adds the renamings of the moved files of the given app variant(s).
-     */
-    addMovedFiles(appVariants: AppVariant[] | AppVariant): this {
-        const variants = Array.isArray(appVariants) ? appVariants : [appVariants];
-        for (const appVariant of variants) {
-            for (const [key, value] of appVariant.getRenamingForMovedFiles()) {
-                this.references.set(key, value);
-            }
-        }
         return this;
     }
 

@@ -1,5 +1,5 @@
 import { getLogger } from "@ui5/logger";
-const log = getLogger("@ui5/task-adaptation::RenamingUtil");
+const log = getLogger("@ui5/task-adaptation::ReferenceRenaming");
 
 const dotToSlash = (string: string) => string.replaceAll(".", "/");
 const escapeRegex = (string: string) => string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -11,23 +11,23 @@ export function rename(content: string, references: string[], replacement: strin
 
 
 /**
- * A precompiled renamer: the regex, replacement lookup and ignore set are built
+ * A precompiled replacer: the regex, replacement lookup and ignore set are built
  * once and can be applied to many strings via `replace` without recompilation.
  */
-export interface Renamer {
+export interface CompiledReplacer {
     replace(content: string): string;
 }
 
 
 /**
- * Builds a reusable {@link Renamer} from the given references and ignore list.
+ * Builds a reusable {@link CompiledReplacer} from the given references and ignore list.
  * The expensive work (regex compilation, lookup construction) happens here once;
  * the returned `replace` is a cheap single pass over each input string. Prefer
  * this over calling {@link renameMap} repeatedly with the same references.
  *
  * Note: mutates `references` by dropping entries whose dot-count doesn't match.
  */
-export function compileRenamer(references: Map<string, string>, ignoreInStrings: string[]): Renamer {
+export function compileReplacer(references: Map<string, string>, ignoreInStrings: string[]): CompiledReplacer {
     const ignoredReferenceKeys: string[] = [];
     for (const [key, value] of references) {
         if (value.includes(".") !== key.includes(".")) {
@@ -118,18 +118,18 @@ export function compileRenamer(references: Map<string, string>, ignoreInStrings:
 
 
 export function renameMap(content: string, references: Map<string, string>, ignoreInStrings: string[]): string {
-    return compileRenamer(references, ignoreInStrings).replace(content);
+    return compileReplacer(references, ignoreInStrings).replace(content);
 }
 
 
 export function renameJson(json: Record<string, unknown>, references: Map<string, string>, ignoreInStrings: string[]): void {
-    const renamer = compileRenamer(references, ignoreInStrings);
+    const replacer = compileReplacer(references, ignoreInStrings);
 
     type Indexable = Record<string | number, unknown>;
 
     function processObject(obj: Record<string, unknown>): void {
         for (const key of Object.keys(obj)) {
-            const renamedKey = renamer.replace(key);
+            const renamedKey = replacer.replace(key);
             const value = obj[key];
             if (renamedKey !== key) {
                 obj[renamedKey] = value;
@@ -143,7 +143,7 @@ export function renameJson(json: Record<string, unknown>, references: Map<string
         const target = container as Indexable;
         const value = target[index];
         if (typeof value === "string") {
-            target[index] = renamer.replace(value);
+            target[index] = replacer.replace(value);
         } else if (Array.isArray(value)) {
             value.forEach((_, i) => processValue(value, i));
         } else if (value !== null && typeof value === "object") {

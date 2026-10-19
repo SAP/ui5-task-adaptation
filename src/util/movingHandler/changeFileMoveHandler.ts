@@ -54,14 +54,22 @@ function getPathWithoutExtensions(filename: string): string {
 
 export const moveFiles = (inputFiles: ReadonlyMap<string, Buffer>, prefix: string, id: string) => {
     const files = new Map<string, Buffer>();
-    let renamingPaths = new Map<string, string>();
+    const renamingPaths = new Map<string, string>();
+    // Maps original filename -> new filename for files that were actually
+    // moved, so callers can resolve the new location of an omitted resource.
+    const movedFiles = new Map<string, string>();
 
     inputFiles.forEach((content: Buffer, filename: string) => {
         const { newFilename, renamingPath } = moveFile(filename, content, prefix, id);
         files.set(newFilename, content);
-        renamingPaths = new Map([...renamingPaths, ...renamingPath]);
+        for (const [from, to] of renamingPath) {
+            renamingPaths.set(from, to);
+        }
+        if (newFilename !== filename) {
+            movedFiles.set(filename, newFilename);
+        }
     });
-    return { files, renamingPaths };
+    return { files, renamingPaths, movedFiles };
 };
 
 export const moveFile = (filename: string, content: Buffer, prefix: string, id: string): { newFilename: string; renamingPath: Map<string, string> } => {
