@@ -12,10 +12,10 @@ import CFUtil from "../../src/util/cfUtil.js";
 import esmock from "esmock";
 import IRepository from "../../src/repositories/repository.js";
 import CFAdapter from "../../src/adapters/cfAdapter.js";
-import CFAnnotationManager from "../../src/annotations/cfAnnotationManager.js";
 import AbapAdapter from "../../src/adapters/abapAdapter.js";
 import AbapAnnotationManager from "../../src/annotations/abapAnnotationManager.js";
 import ResourceUtil from "../../src/util/resourceUtil.js";
+import { AbapServiceProvider } from "@sap-ux/axios-extension/dist/abap/abap-service-provider.js";
 
 const { byIsOmited } = TestUtil;
 
@@ -110,11 +110,13 @@ describe("Index", () => {
 
                 const indexStub = await esmock("../../src/index.js", {
                     "../../src/landscapeConfiguration.js": {
-                        initialize: () => ({
-                            repository,
-                            adapter: new CFAdapter(OPTIONS.configuration),
-                            annotationManager: new CFAnnotationManager()
-                        })
+                        initialize: () => {
+                            const adapter = new CFAdapter(OPTIONS.configuration);
+                            return {
+                                repository,
+                                adapter
+                            };
+                        }
                     }
                 });
                 await indexStub({ workspace, options: OPTIONS, taskUtil });
@@ -199,10 +201,13 @@ describe("Index", () => {
         const { workspace, taskUtil } = await TestUtil.getWorkspace("appVariant2", options.projectNamespace);
         const index = await esmock("../../src/index.js", {}, {
             "../../src/landscapeConfiguration.js": {
-                initialize: () => ({
-                    repository: abapRepository,
-                    adapter: new AbapAdapter(new AbapAnnotationManager(options.configuration, abapRepository))
-                })
+                initialize: () => {
+                    const adapter = new AbapAdapter(new AbapAnnotationManager(options.configuration, abapRepository));
+                    return {
+                        repository: abapRepository,
+                        adapter
+                    };
+                }
             }
         });
         await index({ workspace, options, taskUtil });
@@ -250,11 +255,13 @@ describe("Index", () => {
 
         const indexStub = await esmock("../../src/index.js", {
             "../../src/landscapeConfiguration.js": {
-                initialize: () => ({
-                    repository,
-                    adapter: new CFAdapter(OPTIONS.configuration),
-                    annotationManager: new CFAnnotationManager()
-                })
+                initialize: () => {
+                    const adapter = new CFAdapter(OPTIONS.configuration);
+                    return {
+                        repository,
+                        adapter
+                    };
+                }
             }
         });
         await indexStub({ workspace, options: OPTIONS, taskUtil });
@@ -317,8 +324,10 @@ describe("Index.previewManifest", () => {
         CacheHolder.clear();
     });
 
-    const setCache = async (files: Map<string, Buffer>, cachebusterToken = "010101") => {
-        await CacheHolder.write(cachedResource(OPTIONS.configuration.appName!, cachebusterToken), files);
+    const REFERENCE = "com.sap.base.app.id";
+
+    const setCache = async (files: Map<string, Buffer>) => {
+        await CacheHolder.write(CacheHolder.mergedResource(REFERENCE), files);
     };
 
     const baseFiles = () => toBufferMap([
@@ -356,35 +365,52 @@ describe("Index.previewManifest", () => {
         it(name, async () => assert(await runPreview()));
     });
 
-    it("should throw if the cache is empty", async () => {
-        const { workspace } = await TestUtil.getWorkspace("appVariant1", OPTIONS.projectNamespace);
-        const { previewManifest } = await import("../../src/index.js");
-        await expect(previewManifest({ workspace, options: OPTIONS } as any))
-            .to.be.rejectedWith(`No cache found for 'repoName1'. Run a full build first.`);
-    });
-
-    it("should throw if appName is missing from configuration", async () => {
-        const noAppName = { ...OPTIONS, configuration: { ...OPTIONS.configuration, appName: undefined } };
-        await expect(runPreview(baseFiles(), noAppName)).to.be.rejectedWith(/'appName'/);
-    });
-
     it("should throw if the cached base app has no manifest.json", async () => {
         await expect(runPreview(toBufferMap([["i18n/i18n.properties", "hello=world"]])))
             .to.be.rejectedWith('Original application should have manifest.json in root folder');
     });
 
-    it("should not call the HTML5 Repo", async () => {
+    it("should not call the HTML5 Repo when files are already cached", async () => {
         const hierarchySpy = sandbox.spy(HTML5Repository.prototype, "getAppVariantIdHierarchy");
-        const fetchSpy = sandbox.spy(HTML5Repository.prototype, "fetch");
+        const getSpaceGuid = sandbox.spy(CFUtil, "getSpaceGuid");
+        const writeSpy = sandbox.spy(CacheHolder, "write");
         await runPreview();
         expect(hierarchySpy.called).to.equal(false);
-        expect(fetchSpy.called).to.equal(false);
+        expect(getSpaceGuid.called).to.equal(false);
+        expect(writeSpy.calledTwice, "test setup writes once, previewManifest re-writes the merged cache").to.equal(true);
     });
 
-    it("should throw for non-CF landscapes", async () => {
+    it("should preview ABAP manifests from the merged cache without calling the repo", async () => {
         const abapOptions: IProjectOptions = { ...OPTIONS, configuration: { ...OPTIONS.configuration, type: "abap" } };
-        await expect(runPreview(baseFiles(), abapOptions))
-            .to.be.rejectedWith("previewManifest currently supports Cloud Foundry (CF) landscapes only");
+        const hierarchySpy = sandbox.spy(AbapRepository.prototype, "getAppVariantIdHierarchy");
+        const fetchSpy = sandbox.spy(AbapServiceProvider.prototype, "getUi5AbapRepository");
+        const manifest = await runPreview(baseFiles(), abapOptions);
+        expect(hierarchySpy.called).to.equal(false);
+        expect(fetchSpy.called).to.equal(false);
+        expect(manifest["sap.app"].id).to.equal("customer.com.sap.application.variant.id");
+        expect(manifest["sap.ui5"].componentName).to.equal("customer.com.sap.application.variant.id");
+        expect(manifest["sap.ui5"].appVariantIdHierarchy[0].appVariantId).to.equal("com.sap.base.app.id");
+        expect(manifest["sap.ui5"].appVariantIdHierarchy[0].layer).to.equal("VENDOR");
+    });
+
+    it("should fall back to fetching and folding when the merged cache is empty", async () => {
+        const abapOptions: IProjectOptions = { ...OPTIONS, configuration: { ...OPTIONS.configuration, type: "abap" } };
+        const hierarchyStub = sandbox.stub(AbapRepository.prototype, "getAppVariantIdHierarchy")
+            .resolves([{ appName: "repoName1", token: Promise.resolve("token0") }]);
+        const fetchStub = sandbox.stub(AbapRepository.prototype, "fetch").resolves(baseFiles());
+        const writeSpy = sandbox.spy(CacheHolder, "write");
+        const { workspace } = await TestUtil.getWorkspace("appVariant1", abapOptions.projectNamespace);
+        const { previewManifest } = await import("../../src/index.js");
+        const manifest = await previewManifest({ workspace, options: abapOptions } as any);
+        expect(hierarchyStub.called).to.equal(true);
+        expect(fetchStub.called).to.equal(true);
+        expect(writeSpy.calledOnce, "cache misses populate the merged cache").to.equal(true);
+        const cached = await CacheHolder.read(CacheHolder.mergedResource(REFERENCE));
+        expect([...cached.keys()]).to.have.members([...baseFiles().keys()]);
+        expect(JSON.parse(cached.get("manifest.json")!.toString()))
+            .to.deep.equal(JSON.parse(baseFiles().get("manifest.json")!.toString()));
+        expect(manifest["sap.app"].id).to.equal("customer.com.sap.application.variant.id");
+        expect(manifest["sap.ui5"].componentName).to.equal("customer.com.sap.application.variant.id");
     });
 
     it("should generate a manifest.json that matches the full build", async () => {
@@ -397,11 +423,13 @@ describe("Index.previewManifest", () => {
             await TestUtil.getWorkspace("appVariant1", OPTIONS.projectNamespace);
         const indexStub = await esmock("../../src/index.js", {
             "../../src/landscapeConfiguration.js": {
-                initialize: () => ({
-                    repository,
-                    adapter: new CFAdapter(OPTIONS.configuration),
-                    annotationManager: new CFAnnotationManager()
-                })
+                initialize: () => {
+                    const adapter = new CFAdapter(OPTIONS.configuration);
+                    return {
+                        repository,
+                        adapter
+                    };
+                }
             }
         });
         await indexStub({ workspace: buildWorkspace, options: OPTIONS, taskUtil: buildTaskUtil });
@@ -416,6 +444,59 @@ describe("Index.previewManifest", () => {
         expect(JSON.stringify(buildManifest)).to.include('"enableMassEdit":true');
         expect(JSON.stringify(previewOutput)).to.include('"enableMassEdit":true');
         expect(previewOutput).to.deep.equal(buildManifest);
+    });
+});
+
+
+describe("Index.downloadAppResources", () => {
+    let sandbox: SinonSandbox;
+
+    beforeEach(() => {
+        sandbox = sinon.createSandbox();
+    });
+    afterEach(() => {
+        sandbox.restore();
+        CacheHolder.clear();
+    });
+
+    it("downloads and folds the whole hierarchy and writes it to outputDir", async () => {
+        const abapOptions: IProjectOptions = { ...OPTIONS, configuration: { ...OPTIONS.configuration, type: "abap" } };
+        const appVariant1Path = TestUtil.getResourcePath("appVariant1", "webapp");
+        const processStub = sandbox.stub(AbapAnnotationManager.prototype, "process" as any)
+            .resolves(new Map<string, string>([["annotations/annotation_test.xml", "<edmx/>"]]));
+        const hierarchyStub = sandbox.stub(AbapRepository.prototype, "getAppVariantIdHierarchy").resolves([
+            { appName: "REPO_NAME_1", token: Promise.resolve("token1") },
+            { appName: "REPO_NAME_0", token: Promise.resolve("token0") }
+        ]);
+        const fetchStub = sandbox.stub(AbapRepository.prototype, "fetch");
+        fetchStub.withArgs(sinon.match({ appName: "REPO_NAME_0" })).resolves(toBufferMap([
+            ["manifest.json", TestUtil.getResource("manifest.json")]
+        ]));
+        fetchStub.withArgs(sinon.match({ appName: "REPO_NAME_1" })).resolves(await ResourceUtil.byGlob(appVariant1Path, "**/*"));
+
+        await CacheHolder.write(CacheHolder.mergedResource("com.sap.base.app.id"), toBufferMap([
+            ["manifest.json", JSON.stringify({ "sap.app": { id: "foo" } })]
+        ]));
+        const readSpy = sandbox.spy(CacheHolder, "read");
+        const writeSpy = sandbox.spy(CacheHolder, "write");
+
+        const outputDir = CacheHolder.getTempDir("downloadAppResources-test");
+        const { workspace } = await TestUtil.getWorkspace("appVariant2", abapOptions.projectNamespace);
+        const { downloadAppResources } = await import("../../src/index.js");
+        await downloadAppResources({ workspace, options: abapOptions } as any, outputDir);
+
+        expect(hierarchyStub.called, "fetches the hierarchy rather than reading the merged cache").to.equal(true);
+        expect(fetchStub.called).to.equal(true);
+        expect(readSpy.called, "downloads do not read the merged cache").to.equal(false);
+        expect(writeSpy.called, "downloads do not write the merged cache").to.equal(false);
+
+        const written = await ResourceUtil.byGlob(outputDir, "**/*");
+        const manifest = JSON.parse(written.get("manifest.json")!.toString());
+
+        expect(manifest["sap.app"].id).to.equal("customer.com.sap.application.variant.id");
+        expect(manifest["sap.app"].id).to.not.equal("foo");
+        expect(processStub.called, "annotations must not be downloaded").to.equal(false);
+        expect(written.has("annotations/annotation_test.xml")).to.equal(false);
     });
 });
 
@@ -436,10 +517,13 @@ const runUi5TaskAdaptation = async (options: IProjectOptions, hasEnhanceWithForI
     const { workspace, taskUtil } = await getWorkspace(options);
     const indexStub = await esmock("../../src/index.js", {
         "../../src/landscapeConfiguration.js": {
-            initialize: () => ({
-                repository,
-                adapter: new CFAdapter(OPTIONS.configuration)
-            })
+            initialize: () => {
+                const adapter = new CFAdapter(OPTIONS.configuration);
+                return {
+                    repository,
+                    adapter
+                };
+            }
         }
     });
     await indexStub({ workspace, options, taskUtil });

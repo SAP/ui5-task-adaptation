@@ -1,30 +1,33 @@
-import { IConfiguration, IInitializeOptions } from "./model/types.js";
+import { IConfiguration } from "./model/types.js";
 import { IAdapter } from "./adapters/adapter.js";
 import IRepository from "./repositories/repository.js";
-import IAnnotationManager from "./annotations/annotationManager.js";
 import CFValidator from "./util/validator/cfValidator.js";
 import IValidator, { isOneOf } from "./util/validator/validator.js";
 import { LANDSCAPE_TYPES, LandscapeType } from "./model/configuration.js";
 import { getLogger } from "@ui5/logger";
 import AbapValidator from "./util/validator/abapValidator.js";
+import IAnnotationManager from "./annotations/annotationManager.js";
 import LocalAnnotationManager from "./annotations/localAnnotationManager.js";
 
 const log = getLogger("@ui5/task-adaptation::LandscapeConfiguration");
 
 
-export async function initialize(configuration: IConfiguration, options: IInitializeOptions = {}): Promise<{
+export async function initialize(configuration: IConfiguration, options: { useCache?: boolean } = {}): Promise<{
     adapter: IAdapter,
-    repository: IRepository,
-    annotationManager: IAnnotationManager
+    repository: IRepository
 }> {
     const type = await getTypeByConfiguration(configuration);
     const enhancedConfig = { ...configuration, type };
-    const repository = await getRepository(enhancedConfig, options);
+    let repository = await getRepository(enhancedConfig);
     const annotationManager = await getAnnotationManager(enhancedConfig, repository);
+    if (options.useCache) {
+        const { default: CacheRepository } = await import("./repositories/cacheRepository.js");
+        repository = new CacheRepository(repository);
+    }
+    const adapter = await getAdapter(enhancedConfig, annotationManager);
     return {
-        adapter: await getAdapter(enhancedConfig, annotationManager),
-        repository,
-        annotationManager
+        adapter,
+        repository
     };
 }
 
@@ -112,17 +115,15 @@ async function getAdapter(configuration: IConfiguration, annotationManager: IAnn
 }
 
 
-async function getRepository(configuration: IConfiguration, options: IInitializeOptions): Promise<IRepository> {
-    if (options.useCacheRepository) {
-        const { default: CacheRepository } = await import("./repositories/cacheRepository.js");
-        return new CacheRepository(configuration);
-    }
+async function getRepository(configuration: IConfiguration): Promise<IRepository> {
     if (isLocal()) {
         const { default: LocalRepository } = await import("./repositories/localRepository.js");
         return new LocalRepository();
     }
     return landscapeFactory(configuration).repository(configuration);
 }
+
+
 
 
 async function getAnnotationManager(configuration: IConfiguration, repository: IRepository): Promise<IAnnotationManager> {

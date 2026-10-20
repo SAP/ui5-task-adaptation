@@ -6,12 +6,12 @@ import XsAppJsonEnhanceRoutesCommand from "./commands/xsAppJsonEnhanceRoutesComm
 import BaseApp from "../baseApp.js";
 import AppVariant from "../appVariant.js";
 import UpdateCloudPlatformCommand from "./commands/updateCloudPlatformCommand.js";
-import RenameManifestCommand from "./commands/renameManifestCommand.js";
 import I18nPropertiesMergeCommand from "./commands/i18nPropertiesMergeCommand.js";
 import XsAppJsonMergeCommand from "./commands/xsAppJsonMergeCommand.js";
 import { UI5BuilderTools } from "../model/types.js";
 import FetchEndpointsCommand from "./commands/fetchEndpointsCommand.js";
 import IRepository from "../repositories/repository.js";
+import RenameManifestCommand from "./commands/renameManifestCommand.js";
 
 
 export default class CFAdapter implements IAdapter {
@@ -43,6 +43,18 @@ export default class CFAdapter implements IAdapter {
         ]);
     }
 
+    createManifestPreviewCommandChain(baseApp: BaseApp, appVariant: AppVariant, references: Map<string, string>): ManifestUpdateCommandChain {
+        const appVariantIdHierarchyItem = {
+            appVariantId: baseApp.id,
+            version: baseApp.version
+        } as IAppVariantIdHierarchyManifestItem;
+        return new ManifestUpdateCommandChain([
+            ...getCommonManifestUpdateCommands(baseApp, appVariant, appVariantIdHierarchyItem),
+            new UpdateCloudPlatformCommand(this.configuration.sapCloudService),
+            new RenameManifestCommand(references),
+        ]);
+    }
+
     createPostCommandChain(
         references: Map<string, string>,
         adaptationProject: AppVariant,
@@ -56,19 +68,6 @@ export default class CFAdapter implements IAdapter {
                 adaptationProject,
                 ui5BuilderTools,
             )
-        ]);
-    }
-
-    createManifestPreviewCommandChain(baseApp: BaseApp, appVariant: AppVariant): ManifestUpdateCommandChain {
-        const appVariantIdHierarchyItem = {
-            appVariantId: baseApp.id,
-            version: baseApp.version
-        } as IAppVariantIdHierarchyManifestItem;
-        const references = new Map([[appVariant.reference, appVariant.id]]);
-        return new ManifestUpdateCommandChain([
-            ...getCommonManifestUpdateCommands(baseApp, appVariant, appVariantIdHierarchyItem),
-            new UpdateCloudPlatformCommand(this.configuration.sapCloudService),
-            new RenameManifestCommand(references),
         ]);
     }
 }

@@ -13,42 +13,28 @@ const log = getLogger("@ui5/task-adaptation::CacheHolder");
 export default class CacheHolder {
 
     private static TEMP_TASK_DIR = "ui5-task-adaptation";
+    private static MERGED_DIR = "merged";
 
     static getTempDir(...paths: string[]) {
         return path.join(os.tmpdir(), this.TEMP_TASK_DIR, ...paths.map(part => encodeFilename(part, { replacement: "_" })));
     }
 
+
+    static async hasDirectory(resource: ICachedResource) {
+        const directory = this.getTempDir(resource.appName, await resource.token);
+        return fs.existsSync(directory);
+    }
+
+
     static async read(resource: ICachedResource): Promise<Map<string, Buffer>> {
         const directory = this.getTempDir(resource.appName, await resource.token);
-        if (!fs.existsSync(directory)) {
+        if (!await this.hasDirectory(resource)) {
             log.verbose(`No cache directory '${directory}' found`);
             return new Map<string, Buffer>();
         }
         return ResourceUtil.byGlob(directory, "**/*");
     }
 
-    /**
-     * Read the most recently cached files for the given repo, without knowing
-     * the cachebuster token up front. The @cached() decorator on
-     * IRepository.fetch calls delete(repoName) before every write, so there is
-     * at most one token subdirectory under <repoName>/ at any time. 
-     * Returns an empty map if the repo has never been fetched 
-     * (i.e. no full build has run yet).
-     */
-    static async readLatest(repoName: string): Promise<Map<string, Buffer>> {
-        if (!repoName) {
-            throw new Error(`Cache read requires 'repoName' to be provided`);
-        }
-        const repoDir = this.getTempDir(repoName);
-        if (!fs.existsSync(repoDir)) {
-            throw new Error(`No cache found for '${repoName}'. Run a full build first.`);
-        }
-        const [tokenDir] = await fsPromises.readdir(repoDir);
-        if (!tokenDir) {
-            throw new Error(`Cache directory for '${repoName}' is empty. Run a full build first.`);
-        }
-        return ResourceUtil.byGlob(path.join(repoDir, tokenDir), "**/*");
-    }
 
     static async write(resource: ICachedResource, files: Map<string, Buffer>): Promise<void> {
         const token = await resource.token;
@@ -58,9 +44,17 @@ export default class CacheHolder {
         }
         if (!resource.keepAppNameDir) {
             this.delete(resource.appName);
+        } else {
+            this.delete(resource.appName, token);
         }
         await ResourceUtil.write(this.getTempDir(resource.appName, token), files);
     }
+
+
+    static mergedResource(reference: string): ICachedResource {
+        return { appName: reference, token: Promise.resolve(this.MERGED_DIR), keepAppNameDir: true };
+    }
+
 
     /**
      * Clears cached files by repo name and token

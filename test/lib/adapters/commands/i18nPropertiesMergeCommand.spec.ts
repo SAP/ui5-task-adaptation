@@ -488,9 +488,9 @@ describe("I18nPropertiesMergeCommand", () => {
         async function test({ baseAppFiles, appVariantFolder, expectLength, expectIncluded, expectExcluded }: ITestParams) {
             const index = await esmock("../../../../src/index.js", {}, {
                 "../../../../src/landscapeConfiguration.js": {
-                    initialize: () => ({
-                        adapter: new CFAdapter(OPTIONS.configuration),
-                        repository: {
+                    initialize: () => {
+                        const adapter = new CFAdapter(OPTIONS.configuration);
+                        const repository = {
                             getAppVariantIdHierarchy: async (appId: string) => [{
                                 repoName: OPTIONS.configuration.appName,
                                 appVariantId: appId,
@@ -498,11 +498,15 @@ describe("I18nPropertiesMergeCommand", () => {
                             }],
                             fetch: async () => baseAppFiles,
                             downloadAnnotationFile: async () => ""
-                        },
-                        annotationManager: {
-                            process: async () => new Map<string, string>()
-                        }
-                    })
+                        };
+                        return {
+                            adapter,
+                            repository,
+                            annotationManager: {
+                                process: async () => new Map<string, string>()
+                            }
+                        };
+                    }
                 }
             });
             const { workspace, taskUtil } = await TestUtil.getWorkspace(appVariantFolder, OPTIONS.projectNamespace);

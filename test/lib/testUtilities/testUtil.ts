@@ -42,7 +42,7 @@ export default class TestUtil {
         return path.join(...[TestUtil.cwd, "test", "resources", ...filename]);
     }
 
-    static async getWorkspace(projectName: string, namespace: string) {
+    static async getWorkspace(projectName: string, namespace: string, baseDir: string[] = ["test", "resources"]) {
         // TODO: switch to this if BuilContext made public again
         // const cwd = path.join(process.cwd(), "test", "resources", projectName);
         // const projectGraph = await graphFromPackageDependencies({ cwd });
@@ -60,7 +60,7 @@ export default class TestUtil {
         //     projectBuildContext: buildContext.createProjectContext({ project })
         // });
         // return { workspace, taskUtil };
-        const folder = path.join(TestUtil.cwd, "test", "resources", projectName);
+        const folder = path.join(TestUtil.cwd, ...baseDir, projectName);
         return { workspace: new Workspace(folder, namespace), taskUtil: new TaskUtil() };
     }
 

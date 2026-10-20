@@ -22,7 +22,7 @@ export interface IAdapter {
         adaptationProject: AppVariant,
         ui5BuilderTools: UI5BuilderTools,
     ): PostCommandChain;
-    createManifestPreviewCommandChain(baseApp: BaseApp, appVariant: AppVariant): ManifestUpdateCommandChain;
+    createManifestPreviewCommandChain(baseApp: BaseApp, appVariant: AppVariant, references: Map<string, string>): ManifestUpdateCommandChain;
 }
 
 export function getCommonManifestUpdateCommands(baseApp: BaseApp, appVariant: AppVariant, appVariantIdHierarchyItem: IAppVariantIdHierarchyManifestItem): ManifestUpdateCommand[] {

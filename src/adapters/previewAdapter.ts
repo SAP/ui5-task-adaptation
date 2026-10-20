@@ -34,8 +34,8 @@ export default class PreviewAdapter implements IAdapter {
         return this.cfAdapter.createAdaptCommandChain(files, appVariant);
     }
 
-    createManifestPreviewCommandChain(baseApp: BaseApp, appVariant: AppVariant): ManifestUpdateCommandChain {
-        return this.cfAdapter.createManifestPreviewCommandChain(baseApp, appVariant);
+    createManifestPreviewCommandChain(baseApp: BaseApp, appVariant: AppVariant, references: Map<string, string>): ManifestUpdateCommandChain {
+        return this.cfAdapter.createManifestPreviewCommandChain(baseApp, appVariant, references);
     }
 
     createPostCommandChain(

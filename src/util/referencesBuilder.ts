@@ -18,9 +18,17 @@ export default class ReferencesBuilder {
         return this;
     }
 
+
+    addReference(from: string, to: string): this {
+        this.references.set(from, to);
+        return this;
+    }
+
+
     build(): Map<string, string> {
         return this.references;
     }
+
 
     private getReferences(appVariantIdHierarchy: string[], adaptationProjectId: string): Map<string, string> {
         const references = new Map<string, string>();

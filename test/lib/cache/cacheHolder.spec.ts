@@ -234,32 +234,46 @@ describe("CacheHolder", () => {
         });
     });
 
-    describe("readLatest", () => {
-        const files = toBufferMap([["manifest.json", "{}"]]);
 
+    describe("merged cache", () => {
         beforeEach(() => {
             CacheHolder.clear();
         });
 
-        it("should read files from the cached repo", async () => {
-            await CacheHolder.write(cachedResource("repoName1", "010101"), files);
-            const result = await CacheHolder.readLatest("repoName1");
+        it("should round-trip the merged hierarchy by reference", async () => {
+            await CacheHolder.write(CacheHolder.mergedResource("com.sap.base.app.id"), toBufferMap([["manifest.json", JSON.stringify({ "sap.app": { id: "com.sap.base.app.id" } })]]));
+            const result = await CacheHolder.read(CacheHolder.mergedResource("com.sap.base.app.id"));
             expect([...result.keys()]).to.have.members(["manifest.json"]);
+            expect(JSON.parse(result.get("manifest.json")!.toString())["sap.app"].id).to.equal("com.sap.base.app.id");
         });
 
-        it("should throw for repo that was never cached", async () => {
-            await expect(CacheHolder.readLatest("unknownRepo")).to.be.rejectedWith("Run a full build first");
+        it("should return an empty map when nothing is cached for the reference", async () => {
+            expect((await CacheHolder.read(CacheHolder.mergedResource("never.cached"))).size).to.equal(0);
         });
 
-        it("should throw for empty repoName", async () => {
-            await expect(CacheHolder.readLatest("")).to.be.rejectedWith("Cache read requires 'repoName' to be provided");
+        it("should return an empty map for an empty reference instead of throwing", async () => {
+            expect((await CacheHolder.read(CacheHolder.mergedResource(""))).size).to.equal(0);
         });
 
-        it("should read the current token dir after write() rotated the token", async () => {
-            await CacheHolder.write(cachedResource("repoName1", "010101"), toBufferMap([["manifest.json", JSON.stringify({ v: 1 })]]));
-            await CacheHolder.write(cachedResource("repoName1", "010102"), toBufferMap([["manifest.json", JSON.stringify({ v: 2 })]]));
-            const result = await CacheHolder.readLatest("repoName1");
+        it("should overwrite the previous merged files for the same reference", async () => {
+            await CacheHolder.write(CacheHolder.mergedResource("ref"), toBufferMap([["old.json", "{}"], ["manifest.json", "{}"]]));
+            await CacheHolder.write(CacheHolder.mergedResource("ref"), toBufferMap([["manifest.json", JSON.stringify({ v: 2 })]]));
+            const result = await CacheHolder.read(CacheHolder.mergedResource("ref"));
+            expect([...result.keys()]).to.have.members(["manifest.json"]);
             expect(JSON.parse(result.get("manifest.json")!.toString())).to.deep.equal({ v: 2 });
+        });
+
+        it("should be isolated from the per-repo cache", async () => {
+            await CacheHolder.write(cachedResource("repoName1", "010101"), toBufferMap([["manifest.json", JSON.stringify({ v: "repo" })]]));
+            await CacheHolder.write(CacheHolder.mergedResource("repoName1"), toBufferMap([["manifest.json", JSON.stringify({ v: "merged" })]]));
+            expect(JSON.parse((await CacheHolder.read(cachedResource("repoName1", "010101"))).get("manifest.json")!.toString())).to.deep.equal({ v: "repo" });
+            expect(JSON.parse((await CacheHolder.read(CacheHolder.mergedResource("repoName1"))).get("manifest.json")!.toString())).to.deep.equal({ v: "merged" });
+        });
+
+        it("should be removed by clear()", async () => {
+            await CacheHolder.write(CacheHolder.mergedResource("ref"), toBufferMap([["manifest.json", "{}"]]));
+            CacheHolder.clear();
+            expect((await CacheHolder.read(CacheHolder.mergedResource("ref"))).size).to.equal(0);
         });
     });
 

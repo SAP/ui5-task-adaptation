@@ -1,37 +1,28 @@
 import ICachedResource from "../cache/cachedResource.js";
 import CacheHolder from "../cache/cacheHolder.js";
-import { IConfiguration } from "../model/types.js";
 import IRepository from "./repository.js";
+
 
 export default class CacheRepository implements IRepository {
 
-    constructor(private configuration: IConfiguration) { }
+    constructor(private repository: IRepository) { }
 
 
-    async getAppVariantIdHierarchy(_appId: string): Promise<ICachedResource[]> {
-        const { appName } = this.configuration;
-        if (!appName) {
-            throw new Error("previewManifest requires 'appName' in the ui5.yaml configuration");
+    async getAppVariantIdHierarchy(appId: string): Promise<ICachedResource[]> {
+        const mergedResource = CacheHolder.mergedResource(appId);
+        if (await CacheHolder.hasDirectory(mergedResource)) {
+            return [mergedResource];
         }
-        return [{
-            appName,
-            token: Promise.resolve("")
-        }];
+        return this.repository.getAppVariantIdHierarchy(appId);
     }
 
 
     async fetch(resource: ICachedResource): Promise<Map<string, Buffer>> {
-        const appName = resource.appName;
-        const cachedFiles = await CacheHolder.readLatest(appName);
-        if (cachedFiles.size === 0) {
-            throw new Error(`No cached base app found for '${appName}'. Please check the appName or run a full build first to populate the cache.`);
-        }
-        return cachedFiles;
+        return this.repository.fetch(resource);
     }
 
 
     downloadAnnotationFile(uri: string): Promise<string> {
-        throw new Error(`Download annotation file for uri: ${uri} is not available for CacheRepository.`);
+        return this.repository.downloadAnnotationFile(uri);
     }
 }
-

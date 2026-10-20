@@ -51,10 +51,13 @@ describe("App Variant Hierarchy", () => {
         const annotationManager = new AbapAnnotationManager(options.configuration, repository);
         const index = await esmock("../../src/index.js", {}, {
             "../../src/landscapeConfiguration.js": {
-                initialize: () => ({
-                    repository,
-                    adapter: new AbapAdapter(annotationManager)
-                })
+                initialize: () => {
+                    const adapter = new AbapAdapter(annotationManager);
+                    return {
+                        repository,
+                        adapter
+                    };
+                }
             }
         });
 
@@ -230,10 +233,13 @@ describe("OData DataSource Hierarchy", () => {
         const annotationManager = new AbapAnnotationManager(options.configuration, repository);
         const index = await esmock("../../src/index.js", {}, {
             "../../src/landscapeConfiguration.js": {
-                initialize: () => ({
-                    repository,
-                    adapter: new AbapAdapter(annotationManager)
-                })
+                initialize: () => {
+                    const adapter = new AbapAdapter(annotationManager);
+                    return {
+                        repository,
+                        adapter
+                    };
+                }
             }
         });
 
