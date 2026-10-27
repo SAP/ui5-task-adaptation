@@ -17,6 +17,9 @@ export default class DataSource {
 
 
     constructor(name: string, uri: string) {
+        if (!/^[\w.\-]+$/.test(name)) {
+            throw new Error(`Invalid dataSource name '${name}': must contain only letters, digits, underscores, dots, or hyphens`);
+        }
         this.name = name;
         this.uri = uri;
     }
