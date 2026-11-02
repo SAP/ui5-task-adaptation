@@ -5,6 +5,13 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0...HEAD).
 
 <a name="v1.6.6"></a>
+## [1.8.0](https://github.com/SAP/ui5-task-adaptation/compare/v1.7.0...v1.8.0) (2026-11-02)
+
+
+### Features
+
+* Release 1.6.4 ([7bd7c5c](https://github.com/SAP/ui5-task-adaptation/commit/7bd7c5ce8c3009f3fb0aa28bd0aa4bc95b4add83))
+
 ## [v1.6.6] - 2026-06-30
 ### Fixed
 - CF: await `XsAppJsonEnhanceRoutesCommand` in `ProcessPreviewResourcesCommand` so the reuse-library `xs-app.json` is written with `endpoint`/`service` rewritten from `destination` (previously the enhance ran fire-and-forget and could race against `ResourceUtil.writeInProject`)
