@@ -6,6 +6,12 @@
 ## Description
 A custom task for [ui5-builder](https://github.com/SAP/ui5-builder) that allows you to build SAPUI5 adaptation projects for [SAP S/4HANA Cloud](https://help.sap.com/docs/bas/584e0bcbfd4a4aff91c815cefa0bce2d/6fc4e11a4b1941efa8e37a428d046f8f.html?locale=en-US&state=PRODUCTION&version=Cloud) and [SAP BTP, Cloud Foundry environment](https://help.sap.com/viewer/584e0bcbfd4a4aff91c815cefa0bce2d/Cloud/en-US/019b0c38a6b043d1a66b11d992eed290.html).
 
+The package exports the following functions:
+
+- **Default export**: custom task for [ui5-builder](https://ui5.github.io/cli/v4/pages/extensibility/CustomTasks/); builds an app variant bundle from project resources.
+- **`previewManifest`**: applies manifest changes to `manifest.json` and returns the updated manifest. Used to preview manifest changes at development time.
+- **`downloadAppResources`**: downloads original application files and following app-variant hierarchy, builds the base application to a local output directory (SAP S/4HANA, SAP S/4HANA Cloud, or SAP BTP Cloud Foundry and ABAP environments). Used by [open-ux-tools](https://github.com/SAP/open-ux-tools) to fetch base applications sources of selected SAP Fiori applications.
+
 ### Configuration
 #### Connection
 When creating an adaptation project, the Yeoman generator automatically generates the following connection configurations in the `ui5.yaml` file, depending on your IDE:
