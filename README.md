@@ -36,7 +36,9 @@ For more information, see [Create an Adaptation Project](https://help.sap.com/do
 
 ## Branch Structure
 * `main` (npm `latest`) — The stable version, ready for production use.
-* `rc` (npm `rc`) — Active development. The code here may be unstable and features are subject to change. Use at your own risk.
+* `rc` (npm `alpha`) — Alpha prereleases for active development. The code here may be unstable and features are subject to change. Use at your own risk.
+
+Release Please uses `release-please-config.json` for stable releases from `main` and `release-please-config.rc.json` for `alpha` versions and GitHub prereleases from `rc`. Each branch tracks its current version in `.release-please-manifest.json`.
 
 
 ## How to obtain support

@@ -23,6 +23,7 @@ jobs:
         with:
           token: ${{secrets.GITHUB_TOKEN}}
           target-branch: ${{github.ref_name}}
+          config-file: ${{github.ref_name == 'rc' && 'release-please-config.rc.json' || 'release-please-config.json'}}
 
   publish-package:
     needs: pull-request
@@ -47,7 +48,7 @@ jobs:
           REF: ${{github.ref_name}}
         run: |
           if [ "$REF" = "rc" ]; then
-            npm publish --access public --tag next --ignore-scripts
+            npm publish --access public --tag alpha --ignore-scripts
           else
             npm publish --access public --tag latest --ignore-scripts
           fi
