@@ -36,7 +36,7 @@ For more information, see [Create an Adaptation Project](https://help.sap.com/do
 
 ## Branch Structure
 * `main` (npm `latest`) — The stable version, ready for production use.
-* `rc` (npm `rc`) — Active development. The code here may be unstable and features are subject to change. Use at your own risk.
+* `rc` (npm `alpha`) — Alpha prereleases for active development. The code here may be unstable and features are subject to change. Use at your own risk.
 
 
 ## How to obtain support
