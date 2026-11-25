@@ -53,8 +53,6 @@ The files contain the original responses before annotation conversion and transl
 * `main` (npm `latest`) — The stable version, ready for production use.
 * `rc` (npm `alpha`) — Alpha prereleases for active development. The code here may be unstable and features are subject to change. Use at your own risk.
 
-Release Please reads `release-please-config.json` from the target branch: `main` keeps stable release settings, while `rc` enables `alpha` versions and GitHub prereleases. Each branch tracks its current version in `.release-please-manifest.json`. When merging `rc` into `main`, retain the stable release settings on `main`.
-
 
 ## How to obtain support
 In case you need any support, please create a [GitHub issue](https://github.com/SAP/ui5-task-adaptation/issues).
