@@ -1,6 +1,4 @@
-import ManifestRenamingHandler from "../../util/renamingHandlers/manifestRenamingHandler.js";
-import { IRenamingHandler } from "../../util/renamingHandlers/renamingHandler.js";
-import { renameMap } from "../../util/renamingUtil.js";
+import FileRenamer from "../../util/renaming/fileRenamer.js";
 import { PostCommand } from "./command.js";
 
 
@@ -9,86 +7,7 @@ export default class RenameFilesCommand extends PostCommand {
         super();
     }
 
-    async execute(files: Map<string, string>): Promise<void> {
-        this.rename(files, this.references);
-    }
-
-
-    /**
-         * 1p. i18n.properties are not renamed and property keys are ignored during
-         * the renaming across the files.
-         * @param files - all files both base and appVariants
-         * @param references - Reference maps of the app variant
-         * @returns A map of renamed files
-         */
-    @restoreWhatShouldntBeRenamed()
-    rename(files: Map<string, string>, references: Map<string, string>): void {
-        const IGNORE_EXTENSIONS = [".properties"];
-        const ignoreInString = [
-            ...this.getI18nPropertyKeys(files),
-            ...this.getManifestSAPUI5DependencyIds(files)
-        ];
-        const updates = new Map<string, string>();
-        for (const [filename, content] of files) {
-            if (!IGNORE_EXTENSIONS.some(ext => filename.endsWith(ext))) {
-                // 5p. We pass replacements as ignores since we don't want to
-                // rename them again. E.g. we replace app.id with
-                // customer.app.id, but if we found customer.app.id somewhere,
-                // because we applied changes or something, we don't want to
-                // rename it again to customer.customer.app.id.
-                updates.set(filename, renameMap(content, references, [...references.values(), ...ignoreInString]));
-            }
-        }
-        for (const [filename, content] of updates) {
-            files.set(filename, content);
-        }
-    }
-
-    private getManifestSAPUI5DependencyIds(files: ReadonlyMap<string, string>) {
-        const manifestFile = files.get("manifest.json");
-        if (manifestFile) {
-            const manifest = JSON.parse(manifestFile);
-            const dependencies = manifest["sap.ui5"]?.dependencies;
-            if (dependencies) {
-                const libs = dependencies.libs ? Object.keys(dependencies.libs) : [];
-                const components = dependencies.components ? Object.keys(dependencies.components) : [];
-                return [...libs, ...components];
-            }
-        }
-        return [];
-    }
-
-    private getI18nPropertyKeys(files: ReadonlyMap<string, string>) {
-        const keys = new Set<string>();
-        files.forEach((content, filename) => {
-            if (filename.endsWith(".properties")) {
-                const lines = content.split("\n").filter(line => !line.startsWith("#"));
-                for (const line of lines) {
-                    const [key] = line.split("=");
-                    if (key) {
-                        keys.add(key);
-                    }
-                }
-            }
-        })
-        return [...keys];
+    async execute(files: Map<string, Buffer>): Promise<void> {
+        FileRenamer.rename(files, this.references);
     }
 }
-
-/** 
- * We might rename appVariantIdHierarchy and dependencies, so we restore them after the renaming.
- */
-export function restoreWhatShouldntBeRenamed() {
-    return function (_target: any, _propertyKey: string, descriptor: PropertyDescriptor) {
-        const handlers = [new ManifestRenamingHandler()] as Array<IRenamingHandler>;
-        const originalValue = descriptor.value;
-        descriptor.value = function (...args: any[]) {
-            const files = args[0] as Map<string, string>;
-            const references = args[1] as Map<string, string>;
-            handlers.forEach(handler => handler.before(files));
-            originalValue.apply(this, [files, references]);
-            handlers.forEach(handler => handler.after(files));
-            return files;
-        };
-    };
-};

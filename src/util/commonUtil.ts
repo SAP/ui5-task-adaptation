@@ -1,11 +1,9 @@
 import * as Log from "@ui5/logger";
 import * as fs from "fs";
 
-import { IConfiguration } from "../model/types.js";
-import Language from "../model/language.js";
 import { fileURLToPath } from "url";
 import { posix as path } from "path";
-import AppVariant from "../appVariant.js";
+import ServerError from "../model/serverError.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const log = Log.getLogger("rollup-plugin-ui5-resolve-task-adaptation");
@@ -13,8 +11,60 @@ const CHANGES_EXT = ".change";
 const MANIFEST_CHANGE = "appdescr_";
 
 
+export function retryOnError(maxRetries: number): MethodDecorator {
+    return (_target: any, _propertyKey: string | symbol, descriptor: PropertyDescriptor) => {
+        const originalMethod = descriptor.value;
+
+        descriptor.value = async function (...args: any[]) {
+            let retries = 0;
+            while (true) {
+                try {
+                    return await originalMethod.apply(this, args);
+                } catch (error: any) {
+                    if (error instanceof ServerError) {
+                        if (retries === maxRetries) {
+                            throw new Error(`Error occurred: ${error.message}. Please try again if this is a temporary issue. If not, please create a ticket on CA-UI5-ABA-AIDX`);
+                        }
+                        retries++;
+                    } else {
+                        const message = error?.response?.data ?? error.message;
+                        throw new Error(`Failed to fetch annotation by '${args[0]}': ${message}`);
+                    }
+                }
+            }
+        };
+        return descriptor;
+    };
+}
+
+
 export function dotToUnderscore(value: string) {
     return value.replace(/\./g, "_");
+}
+
+
+export function bufferToString(buffer: Buffer): string {
+    return buffer.toString("utf8");
+}
+
+
+export function bufferToJson(buffer: Buffer): any {
+    return JSON.parse(bufferToString(buffer));
+}
+
+
+export function bufferToNormalizedString(buffer: Buffer): string {
+    return bufferToString(buffer).replaceAll("\r\n", "\n");
+}
+
+
+export function stringToBuffer(value: string): Buffer {
+    return Buffer.from(value, "utf8");
+}
+
+
+export function jsonToBuffer(json: any): Buffer {
+    return stringToBuffer(JSON.stringify(json));
 }
 
 
@@ -37,19 +87,6 @@ export function escapeRegex(update: string) {
 
 export function insertInArray<T>(array: T[], index: number, insert: T) {
     array.splice(index, 0, insert);
-}
-
-export function writeTempAnnotations({ writeTempFiles }: IConfiguration, name: string, language: Language, content: string) {
-    const TEMP_DIST_FOLDER = path.join(process.cwd(), "dist-debug", name);
-    if (writeTempFiles) {
-        if (!fs.existsSync(TEMP_DIST_FOLDER)) {
-            fs.mkdirSync(TEMP_DIST_FOLDER, { recursive: true });
-        }
-        if (language) {
-            name += "-" + language.i18n;
-        }
-        fs.writeFileSync(path.join(TEMP_DIST_FOLDER, name + ".xml"), content);
-    }
 }
 
 export function trimExtension(filePath: string) {
@@ -107,28 +144,10 @@ export function getUniqueName(existingNames: string[], template: string) {
     return template + suffixString;
 }
 
-export function isManifestChange(filename: string, content: string): boolean {
+export function isManifestChange(filename: string, content: Buffer): boolean {
     if (filename.endsWith(CHANGES_EXT)) {
-        const change = JSON.parse(content);
+        const change = bufferToJson(content);
         return change.changeType?.startsWith(MANIFEST_CHANGE);
     }
     return false;
-}
-
-/**
- * 4p. Reference map contains searchTerm as key and replacement as value. Base
- * id and app variant ids are renamed to adaptation project id.
- */
-export function getReferences(appVariants: AppVariant[], adaptationProjectId: string): Map<string, string> {
-    const references = new Map<string, string>();
-    appVariants.forEach((variant, i) => {
-        if (i === 0) {
-            references.set(variant.reference, adaptationProjectId);
-        }
-        if (variant.id !== adaptationProjectId) {
-            references.set(variant.id, adaptationProjectId);
-        }
-        variant.getRenamingForMovedFiles().forEach((value, key) => references.set(key, value));
-    });
-    return references;
 }

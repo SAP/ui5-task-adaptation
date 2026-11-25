@@ -11,6 +11,7 @@ import XsAppJsonMergeCommand from "./commands/xsAppJsonMergeCommand.js";
 import { UI5BuilderTools } from "../model/types.js";
 import FetchEndpointsCommand from "./commands/fetchEndpointsCommand.js";
 import IRepository from "../repositories/repository.js";
+import RenameManifestCommand from "./commands/renameManifestCommand.js";
 
 
 export default class CFAdapter implements IAdapter {
@@ -25,7 +26,8 @@ export default class CFAdapter implements IAdapter {
         ]);
     }
 
-    createAdaptCommandChain(baseApp: BaseApp, appVariant: AppVariant): AdaptCommandChain {
+    createAdaptCommandChain(files: ReadonlyMap<string, Buffer>, appVariant: AppVariant): AdaptCommandChain {
+        const baseApp = BaseApp.fromFiles(files);
         const appVariantIdHierarchyItem = {
             appVariantId: baseApp.id,
             version: baseApp.version
@@ -38,6 +40,18 @@ export default class CFAdapter implements IAdapter {
             ]),
             new I18nPropertiesMergeCommand(baseApp.i18nPath, appVariant.prefix, manifestChanges),
             new XsAppJsonMergeCommand(),
+        ]);
+    }
+
+    createManifestPreviewCommandChain(baseApp: BaseApp, appVariant: AppVariant, references: Map<string, string>): ManifestUpdateCommandChain {
+        const appVariantIdHierarchyItem = {
+            appVariantId: baseApp.id,
+            version: baseApp.version
+        } as IAppVariantIdHierarchyManifestItem;
+        return new ManifestUpdateCommandChain([
+            ...getCommonManifestUpdateCommands(baseApp, appVariant, appVariantIdHierarchyItem),
+            new UpdateCloudPlatformCommand(this.configuration.sapCloudService),
+            new RenameManifestCommand(references),
         ]);
     }
 

@@ -1,12 +1,12 @@
 import Language from "../../model/language.js";
-import ServiceRequestor from "../serviceRequestor.js";
+import IRepository from "../../repositories/repository.js";
 
 export interface TransformerInput {
     uri: string;
     json: any;
     xml: string;
     language: Language;
-    serviceRequestor: ServiceRequestor
+    repository: IRepository
 }
 
 export default interface Transformer {

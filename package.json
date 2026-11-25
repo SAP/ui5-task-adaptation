@@ -2,10 +2,17 @@
     "name": "@ui5/task-adaptation",
     "version": "1.6.5-rc.4",
     "description": "Custom task for ui5-builder which allows building UI5 Flexibility Adaptation Projects for SAP BTP, Cloud Foundry environment",
-    "main": "index.js",
+    "main": "dist/index.js",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
     "scripts": {
-        "test": "npm run lint && npm run build && npm run coverage",
+        "test": "npm run lint && npm run build && npm run typecheck:test && npm run coverage",
         "lint": "eslint ./src ./test/lib",
+        "typecheck:test": "tsc -p ./test/lib/tsconfig.json --noEmit",
         "dev": "mocha --no-timeouts --no-warnings --import=tsx \"test/lib/**/*.spec.ts\"",
         "perf": "mocha --no-timeouts --no-warnings --import=tsx \"test/lib/**/*.perf.ts\"",
         "coverage": "c8 npm run dev",
@@ -32,15 +39,15 @@
     "author": "SAP SE",
     "license": "Apache-2.0",
     "dependencies": {
-        "@sap-ux/axios-extension": "^2.0.1",
-        "@sap-ux/btp-utils": "^2.0.1",
-        "@sap-ux/store": "^2.0.1",
-        "@sap-ux/system-access": "^1.0.1",
+        "@sap-ux/axios-extension": "^2.0.8",
+        "@sap-ux/btp-utils": "^2.0.6",
+        "@sap-ux/store": "^2.0.6",
+        "@sap-ux/system-access": "^1.0.10",
         "@sap/cf-tools": "^3.2.2",
         "@ui5/fs": "^4.0.1",
         "@ui5/logger": "^4.0.1",
-        "adm-zip": "^0.5.5",
-        "axios": "^1.8.3",
+        "adm-zip": "^0.6.0",
+        "axios": "^1.18.1",
         "crc": "^4.3.2",
         "dotenv": "^16.0.3",
         "filenamify": "^6.0.0",

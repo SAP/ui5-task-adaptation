@@ -1,4 +1,5 @@
 import { PostCommand } from "./command.js";
+import { stringToBuffer, bufferToString } from "../../util/commonUtil.js";
 import { getLogger } from "@ui5/logger";
 import { fetchCredentialsAndEnhanceRoutes, merge, XSAPP_JSON_FILENAME } from "../../util/cf/xsAppJsonUtil.js";
 import ResourceUtil from "../../util/resourceUtil.js";
@@ -15,14 +16,15 @@ export default class ProcessPreviewResourcesCommand extends PostCommand {
         super();
     }
 
-    async execute(files: Map<string, string>): Promise<void> {
+    async execute(files: Map<string, Buffer>): Promise<void> {
         log.verbose(`Downloading reuse libraries to reuse folder`);
-        const baseAppXsAppJson = files.get(XSAPP_JSON_FILENAME);
+        const baseAppXsAppJsonBuffer = files.get(XSAPP_JSON_FILENAME);
+        const baseAppXsAppJson = baseAppXsAppJsonBuffer ? bufferToString(baseAppXsAppJsonBuffer) : undefined;
         const mergedFiles = await this.collectReuseLibFiles(await this.previewPromise, baseAppXsAppJson);
         const xsAppJson = mergedFiles.get(XSAPP_JSON_FILENAME);
         if (xsAppJson) {
-            const enhanced = await fetchCredentialsAndEnhanceRoutes(xsAppJson.toString("utf8"), this.serviceCredentialsPromise);
-            mergedFiles.set(XSAPP_JSON_FILENAME, Buffer.from(enhanced, "utf8"));
+            const enhanced = await fetchCredentialsAndEnhanceRoutes(bufferToString(xsAppJson), this.serviceCredentialsPromise);
+            mergedFiles.set(XSAPP_JSON_FILENAME, stringToBuffer(enhanced));
         }
         if (mergedFiles.size === 0) {
             return;
@@ -31,7 +33,8 @@ export default class ProcessPreviewResourcesCommand extends PostCommand {
     }
 
 
-    private async collectReuseLibFiles(fetchLibsPromises: FetchFilesPromise | undefined, mergedXsAppJson: string | undefined): Promise<Map<string, Buffer>> {
+    private async collectReuseLibFiles(fetchLibsPromises: FetchFilesPromise | undefined, baseAppXsAppJson: string | undefined): Promise<Map<string, Buffer>> {
+        let mergedXsAppJson = baseAppXsAppJson;
         const mergedFiles = new Map<string, Buffer>();
         if (!fetchLibsPromises) {
             log.verbose("No reuse libraries defined in ui5AppInfo.json for preview");
@@ -45,14 +48,14 @@ export default class ProcessPreviewResourcesCommand extends PostCommand {
             }
             for (const [filename, content] of libFiles) {
                 if (filename.endsWith(XSAPP_JSON_FILENAME)) {
-                    const xsAppText = content.toString("utf8");
+                    const xsAppText = bufferToString(content);
                     mergedXsAppJson = mergedXsAppJson ? merge([xsAppText, mergedXsAppJson]) : xsAppText;
                 }
                 mergedFiles.set(filename, content);
             }
         }
         if (mergedXsAppJson) {
-            mergedFiles.set(XSAPP_JSON_FILENAME, Buffer.from(mergedXsAppJson, "utf8"));
+            mergedFiles.set(XSAPP_JSON_FILENAME, stringToBuffer(mergedXsAppJson));
         }
         return mergedFiles;
     }

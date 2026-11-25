@@ -13,7 +13,8 @@ export interface IConfiguration {
     languages?: any[] | undefined;
     enableAnnotationCache?: boolean;
     enableBetaFeatures?: boolean;
-    writeTempFiles?: any;
+    /** Save downloaded annotation XML files to .adp/debug/annotations. Defaults to false. */
+    enableDebug?: boolean;
     target?: AbapTarget & IAbapTargetMeta;
     serviceInstanceName?: string;
 }

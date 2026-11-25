@@ -1,18 +1,22 @@
 import * as dotenv from "dotenv";
 
-import { getReferences, logBuilderVersion } from "./util/commonUtil.js";
+import { bufferToJson, logBuilderVersion } from "./util/commonUtil.js";
 
 import AppVariant from "./appVariant.js";
 import BaseApp from "./baseApp.js";
+import CacheHolder from "./cache/cacheHolder.js";
+import ResourceUtil from "./util/resourceUtil.js";
+import ReferencesBuilder from "./util/referencesBuilder.js";
 import { ITaskParameters, UI5BuilderTools } from "./model/types.js";
 import { initialize } from "./landscapeConfiguration.js";
-import WorkspaceManager from "./util/workspaceManager.js";
+import IRepository from "./repositories/repository.js";
+import { IAdapter } from "./adapters/adapter.js";
+
 
 /**
  * Creates an appVariant bundle from the provided resources.
  */
 export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
-
     const ui5BuilderTools = {
         workspace,
         projectNamespace: options.projectNamespace,
@@ -22,51 +26,67 @@ export default async ({ workspace, options, taskUtil }: ITaskParameters) => {
     dotenv.config();
     logBuilderVersion();
 
-    // We write original app files and appVariant files to workspace as they
-    // fetched, in this case these files will overwrite the adaptation project
-    // files, so we create a snapshot to later on overwrite the workspace files
-    // with adapatation project files again to make sure they are on top
-    const workspaceManager = new WorkspaceManager(workspace, options.projectNamespace);
-    await workspaceManager.createSnapshot();
-
-    const { repository, adapter } = await initialize(options.configuration);
+    const { adapter, repository } = await initialize(options.configuration);
     const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
-    const setupCommandChain = adapter.createSetupCommandChain(adaptationProject.reference, repository);
-    await setupCommandChain.execute();
 
-    const appVariantIdHierarchy = await repository.getAppVariantIdHierarchy(adaptationProject.reference);
-    if (appVariantIdHierarchy.length === 0) {
-        throw new Error(`No app variant found for reference ${adaptationProject.reference}`);
-    }
+    const { files: baseFiles } = await foldBaseHierarchy(adapter, repository, adaptationProject.reference);
+    await CacheHolder.write(CacheHolder.mergedResource(adaptationProject.reference), new Map(baseFiles));
 
-    // appVariantIdHierarchy contains original application on bottom and the
-    // latest app variant on top. We reverse the list to process original
-    // application first and then app variants in chronological order.
-    const reversedHierarchy = appVariantIdHierarchy.toReversed();
-    const fetchFilesPromises = reversedHierarchy.map(variant => repository.fetch(variant)) as Promise<ReadonlyMap<string, Buffer>>[];
+    const files = await adapter.createAdaptCommandChain(baseFiles, adaptationProject).execute();
 
-    const appVariants = new Array<AppVariant>();
-    const adapt = async (baseFiles: ReadonlyMap<string, string>, appVariant: AppVariant) => {
-        appVariants.push(appVariant);
-        const baseApp = BaseApp.fromFiles(baseFiles);
-        return adapter.createAdaptCommandChain(baseApp, appVariant).execute();
-    };
+    const references = new ReferencesBuilder()
+        .addReferences(files, adaptationProject.id)
+        .build();
+    return adapter.createPostCommandChain(references, adaptationProject, ui5BuilderTools).execute(files);
+};
 
-    let files = await workspaceManager.saveAndConvert(fetchFilesPromises.shift()!); // original app files
-    for (const appVariantFilesPromise of fetchFilesPromises) {
-        const appVariantFiles = await workspaceManager.saveAndConvert(appVariantFilesPromise);
-        files = await adapt(files, AppVariant.fromFiles(appVariantFiles));
-    }
 
-    // We need to overwrite base files with the adaptation project files
-    await workspaceManager.restoreSnapshot();
-    files = await adapt(files, adaptationProject);
+/**
+ * Produces the manifest.json a full build would produce, without a full UI5 build.
+ */
+export async function previewManifest({ workspace, options }: ITaskParameters): Promise<any> {
+    const { adapter, repository } = await initialize(options.configuration, { useCache: true });
+    const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
 
-    const references = getReferences(appVariants, adaptationProject.id);
-    return adapter.createPostCommandChain(
-        references,
-        adaptationProject,
-        ui5BuilderTools,
-    ).execute(files);
+    const { files: baseFiles } = await foldBaseHierarchy(adapter, repository, adaptationProject.reference);
+    await CacheHolder.write(CacheHolder.mergedResource(adaptationProject.reference), new Map(baseFiles));
 
+    const baseApp = BaseApp.fromFiles(baseFiles);
+    const references = new ReferencesBuilder()
+        .addReference(adaptationProject.reference, adaptationProject.id)
+        .addReferences(baseFiles, adaptationProject.id)
+        .build();
+
+    const files = new Map(baseFiles);
+    await adapter.createManifestPreviewCommandChain(baseApp, adaptationProject, references).execute(files, "manifest.json");
+    return bufferToJson(files.get("manifest.json")!);
 }
+
+
+/**
+ * Downloads the base app and all resources along the app-variant hierarchy and writes the merged files to `outputDir`.
+ */
+export async function downloadAppResources({ workspace, options }: ITaskParameters, outputDir: string): Promise<void> {
+    const { adapter, repository } = await initialize(options.configuration);
+    const adaptationProject = await AppVariant.fromWorkspace(workspace, options.projectNamespace);
+
+    const { files } = await foldBaseHierarchy(adapter, repository, adaptationProject.reference);
+    await ResourceUtil.write(outputDir, new Map(files));
+}
+
+async function foldBaseHierarchy(adapter: IAdapter, repository: IRepository, reference: string): Promise<{ files: ReadonlyMap<string, Buffer> }> {
+        await adapter.createSetupCommandChain(reference, repository).execute();
+        const hierarchy = await repository.getAppVariantIdHierarchy(reference);
+        if (hierarchy.length === 0) {
+            throw new Error(`No app variant found for reference ${reference}`);
+        }
+        const fetchFilesPromises = hierarchy.toReversed()
+            .map(variant => repository.fetch(variant)) as Promise<ReadonlyMap<string, Buffer>>[];
+
+        let files = await fetchFilesPromises.shift()!; // original base app files
+        for (const filesPromise of fetchFilesPromises) {
+            const appVariant = AppVariant.fromFiles(await filesPromise);
+            files = await adapter.createAdaptCommandChain(files, appVariant).execute();
+        }
+        return { files };
+    }

@@ -64,22 +64,22 @@ describe("LocalRepository", () => {
         it("returns the complete hierarchy from dynamically generated files", async () => {
             const localRepository = await setup();
             const hierarchy = await localRepository.getAppVariantIdHierarchy("appId1");
-            const actual = await Promise.all(hierarchy.map(async (item) => ({ ...item, cacheBusterToken: await item.cacheBusterToken })));
+            const actual = await Promise.all(hierarchy.map(async (item) => ({ ...item, token: await item.token })));
             expect(actual).to.deep.equal([
-                { appName: "appId1", absolutePath: path.join(adpDir, "appId1", "webapp"), cacheBusterToken: "local" },
-                { appName: "appId2", absolutePath: path.join(adpDir, "appId2", "webapp"), cacheBusterToken: "local" },
-                { appName: "appId3", absolutePath: path.join(adpDir, "appId3", "webapp"), cacheBusterToken: "local" }
+                { appName: "appId1", absolutePath: path.join(adpDir, "appId1", "webapp"), token: "local" },
+                { appName: "appId2", absolutePath: path.join(adpDir, "appId2", "webapp"), token: "local" },
+                { appName: "appId3", absolutePath: path.join(adpDir, "appId3", "webapp"), token: "local" }
             ]);
         });
 
         it("returns the complete hierarchy from dynamically generated files with classifier", async () => {
             const localRepository = await setup(true);
             const hierarchy = await localRepository.getAppVariantIdHierarchy("appId1");
-            const actual = await Promise.all(hierarchy.map(async (item) => ({ ...item, cacheBusterToken: await item.cacheBusterToken })));
+            const actual = await Promise.all(hierarchy.map(async (item) => ({ ...item, token: await item.token })));
             expect(actual).to.deep.equal([
-                { appName: "appId1", absolutePath: path.join(adpDir, "appId1-opt-static-abap"), cacheBusterToken: "local" },
-                { appName: "appId2", absolutePath: path.join(adpDir, "appId2-opt-static-abap"), cacheBusterToken: "local" },
-                { appName: "appId3", absolutePath: path.join(adpDir, "appId3-opt-static-abap"), cacheBusterToken: "local" }
+                { appName: "appId1", absolutePath: path.join(adpDir, "appId1-opt-static-abap"), token: "local" },
+                { appName: "appId2", absolutePath: path.join(adpDir, "appId2-opt-static-abap"), token: "local" },
+                { appName: "appId3", absolutePath: path.join(adpDir, "appId3-opt-static-abap"), token: "local" }
             ]);
         });
 
@@ -157,15 +157,15 @@ describe("LocalRepository", () => {
             expect(JSON.parse(files[0].get("manifest.appdescr_variant")!.toString("utf-8"))).to.deep.equal({ id: "appId1", reference: "appId2" });
             expect(JSON.parse(files[1].get("manifest.appdescr_variant")!.toString("utf-8"))).to.deep.equal({ id: "appId2", reference: "appId3" });
             expect(JSON.parse(files[2].get("manifest.json")!.toString("utf-8"))).to.deep.equal({ "sap.app": { id: "appId3" } });
-            expect(files[2].get("i18n/i18n.properties")!.toString("utf-8")).to.equal("hello=world\n");
+            expect(files[2].get("i18n/i18n.properties")?.toString("utf-8")).to.equal("hello=world\n");
         });
     });
 
     describe("downloadAnnotationFile", () => {
-        it("returns an empty map", async () => {
+        it("returns an empty string", async () => {
             const localRepository = new LocalRepository();
             const annotationFiles = await localRepository.downloadAnnotationFile("test/uri");
-            expect(annotationFiles.size).to.equal(0);
+            expect(annotationFiles).to.equal("");
         });
     });
 

@@ -5,8 +5,7 @@ import CacheHolder from "../../../src/cache/cacheHolder.js";
 import HTML5Repository from "../../../src/repositories/html5Repository.js";
 import { IProjectOptions } from "../../../src/model/types.js";
 import { SinonSandbox } from "sinon";
-import TestUtil from "../testUtilities/testUtil.js";
-import esmock from "esmock";
+import TestUtil, { cachedResource, toBuffer, toBufferMap } from "../testUtilities/testUtil.js";
 import { expect } from "chai";
 import AbapRepository from "../../../src/repositories/abapRepository.js";
 import AbapProvider from "../../../src/repositories/abapProvider.js";
@@ -51,24 +50,24 @@ describe("CacheHolder", () => {
     beforeEach(async () => {
         sandbox = sinon.createSandbox();
 
-        await CacheHolder.write("repoName1", "010101",
-            new Map([["manifest.json", JSON.stringify({
+        await CacheHolder.write(cachedResource("repoName1", "010101"),
+            new Map([["manifest.json", toBuffer(JSON.stringify({
                 "sap.app": {
                     "id": "com.sap.base.app.id",
                     "applicationVersion": {
                         "version": "1.0.0"
                     }
                 }
-            })]]));
-        await CacheHolder.write("libName1", "010103",
-            new Map([["manifest.json", JSON.stringify({
+            }))]]));
+        await CacheHolder.write(cachedResource("libName1", "010103"),
+            new Map([["manifest.json", toBuffer(JSON.stringify({
                 "sap.app": {
                     "id": "com.sap.reuse.lib.id",
                     "applicationVersion": {
                         "version": "1.0.2"
                     }
                 }
-            })]])
+            }))]])
         );
     });
 
@@ -77,15 +76,15 @@ describe("CacheHolder", () => {
         CacheHolder.clear();
     });
 
-    const assertManifest = (files: Map<string, string>, expectedVersion: string) => {
-        const manifestString = files.get("manifest.json")!;
+    const assertManifest = (files: Map<string, Buffer>, expectedVersion: string) => {
+        const manifestString = files.get("manifest.json")!.toString();
         const manifest = JSON.parse(manifestString);
         expect(manifest["sap.app"].id).to.eql("com.sap.base.app.id");
         expect(manifest["sap.app"].applicationVersion.version).to.eql(expectedVersion);
     };
 
-    const assertReuseLibManifest = (files: Map<string, string>, expectedVersion: string) => {
-        const manifestString = files.get("manifest.json")!;
+    const assertReuseLibManifest = (files: Map<string, Buffer>, expectedVersion: string) => {
+        const manifestString = files.get("manifest.json")!.toString();
         const manifest = JSON.parse(manifestString);
         expect(manifest["sap.app"].id).to.eql("com.sap.reuse.lib.id");
         expect(manifest["sap.app"].applicationVersion.version).to.eql(expectedVersion);
@@ -108,16 +107,16 @@ describe("CacheHolder", () => {
             const abapProvider = { get: () => provider };
             repository = new AbapRepository(options.configuration, abapProvider as unknown as AbapProvider);
         });
-        it("should get files from cache with same cacheBusterToken", async () => {
-            assertManifest(await repository.fetch({ appName: "repoName1", cacheBusterToken: Promise.resolve("010101") }), "1.0.0");
-            assertManifest((await CacheHolder.read("repoName1", "010101"))!, "1.0.0");
+        it("should get files from cache with same token", async () => {
+            assertManifest(await repository.fetch({ appName: "repoName1", token: Promise.resolve("010101") }), "1.0.0");
+            assertManifest((await CacheHolder.read(cachedResource("repoName1", "010101")))!, "1.0.0");
             expect(fetchCalls).to.equal(0);
         });
 
-        it("should download files with different cacheBusterToken", async () => {
-            assertManifest(await repository.fetch({ appName: "repoName1", cacheBusterToken: Promise.resolve("010102") }), "1.0.1");
-            assertManifest((await CacheHolder.read("repoName1", "010102"))!, "1.0.1");
-            expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // old cache should be deleted
+        it("should download files with different token", async () => {
+            assertManifest(await repository.fetch({ appName: "repoName1", token: Promise.resolve("010102") }), "1.0.1");
+            assertManifest((await CacheHolder.read(cachedResource("repoName1", "010102")))!, "1.0.1");
+            expect((await CacheHolder.read(cachedResource("repoName1", "010101"))).size).to.equal(0); // old cache should be deleted
             expect(fetchCalls).to.equal(1);
         });
     });
@@ -136,96 +135,145 @@ describe("CacheHolder", () => {
                 }
             );
         });
-        it("should get files from cache with same cacheBusterToken", async () => {
+        it("should get files from cache with same token", async () => {
             assertManifest(await repository.fetch({
                 appName: "repoName1",
-                cacheBusterToken: Promise.resolve("010101"),
+                token: Promise.resolve("010101"),
                 appVersion: "1.0.0", appHostId: "libHostId",
             }), "1.0.0");
-            assertManifest((await CacheHolder.read("repoName1", "010101"))!, "1.0.0");
+            assertManifest((await CacheHolder.read(cachedResource("repoName1", "010101")))!, "1.0.0");
             expect(fetchStub.getCalls().length).to.equal(0);
         });
 
-        it("should download files with different cacheBusterToken", async () => {
+        it("should download files with different token", async () => {
             assertManifest(await repository.fetch({
                 appName: "repoName1",
-                cacheBusterToken: Promise.resolve("010102"),
+                token: Promise.resolve("010102"),
                 appVersion: "1.0.1",
                 appHostId: "libHostId",
             }), "1.0.1");
-            assertManifest((await CacheHolder.read("repoName1", "010102"))!, "1.0.1");
-            expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // old cache should be deleted
+            assertManifest((await CacheHolder.read(cachedResource("repoName1", "010102")))!, "1.0.1");
+            expect((await CacheHolder.read(cachedResource("repoName1", "010101"))).size).to.equal(0); // old cache should be deleted
             expect(fetchStub.getCalls().length).to.equal(1);
         });
 
-        it("should get reuse lib files from cache with same cacheBusterToken", async () => {
+        it("should get reuse lib files from cache with same token", async () => {
             sandbox.stub(repository as HTML5Repository, "getMetadata").resolves({ applicationName: "libName1", changedOn: "010103" });
             assertReuseLibManifest(await repository.fetch({
                 appName: "libName1",
                 appVersion: "1.0.2",
                 appHostId: "libHostId",
-                cacheBusterToken: Promise.resolve("010103"),
+                token: Promise.resolve("010103"),
             }), "1.0.2");
-            assertReuseLibManifest(await CacheHolder.read("libName1", "010103"), "1.0.2");
+            assertReuseLibManifest(await CacheHolder.read(cachedResource("libName1", "010103")), "1.0.2");
             expect(fetchStub.getCalls().length).to.equal(0);
         });
 
-        it("should download files with different cacheBusterToken", async () => {
+        it("should download files with different token", async () => {
             sandbox.stub(repository as HTML5Repository, "getMetadata").resolves({ applicationName: "libName1", changedOn: "010104" });
             assertReuseLibManifest(await repository.fetch({
                 appName: "libName1",
                 appVersion: "1.0.2",
                 appHostId: "libHostId",
-                cacheBusterToken: Promise.resolve("010104"),
+                token: Promise.resolve("010104"),
             }), "1.0.2");
-            assertReuseLibManifest(await CacheHolder.read("libName1", "010104"), "1.0.2");
-            expect((await CacheHolder.read("libName1", "010103")).size).to.equal(0); // old cache should be deleted
+            assertReuseLibManifest(await CacheHolder.read(cachedResource("libName1", "010104")), "1.0.2");
+            expect((await CacheHolder.read(cachedResource("libName1", "010103"))).size).to.equal(0); // old cache should be deleted
             expect(fetchStub.getCalls().length).to.equal(1);
         });
     });
 
     describe("CacheHolder", () => {
-        const manifest = new Map([["manifest.json", "{}"]]);
-        let log = { message: "" }, CacheHolderMock: typeof CacheHolder;
+        const manifest = toBufferMap([["manifest.json", "{}"]]);
 
-        before(async () => CacheHolderMock = await getCacheHolderMock(log));
+        before(async () => {
+            CacheHolder.clear();
+        });
+
         it("shouldn't clear up to date cache", async () => {
-            await CacheHolder.write("repoName1", "010101", manifest);
-            await CacheHolder.write("repoName2", "010101", manifest);
+            await CacheHolder.write(cachedResource("repoName1", "010101"), manifest);
+            await CacheHolder.write(cachedResource("repoName2", "010101"), manifest);
             await CacheHolder.clearOutdatedExcept("repoName2", 50);
-            expect((await CacheHolder.read("repoName1", "010101"))!.size).to.eql(1);
-            expect((await CacheHolder.read("repoName2", "010101"))!.size).to.eql(1);
+            expect((await CacheHolder.read(cachedResource("repoName1", "010101")))!.size).to.eql(1);
+            expect((await CacheHolder.read(cachedResource("repoName2", "010101")))!.size).to.eql(1);
         });
         it("should clear outdated cache except one", async () => {
-            await CacheHolder.write("repoName1", "010101", manifest);
-            await CacheHolder.write("repoName2", "010101", manifest);
+            await CacheHolder.write(cachedResource("repoName1", "010101"), manifest);
+            await CacheHolder.write(cachedResource("repoName2", "010101"), manifest);
             await TestUtil.wait(5);
             await CacheHolder.clearOutdatedExcept("repoName2", 1);
-            expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // old cache should be deleted
+            expect((await CacheHolder.read(cachedResource("repoName1", "010101"))).size).to.equal(0); // old cache should be deleted
         });
         it("should clear outdated cache even with non-existing cache folder", async () => {
             await CacheHolder.clear();
             await CacheHolder.clearOutdatedExcept(undefined, 1);
-            expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // cache shouldn't exist
-            expect((await CacheHolder.read("repoName2", "010101")).size).to.equal(0); // cache shouldn't exist
+            expect((await CacheHolder.read(cachedResource("repoName1", "010101"))).size).to.equal(0); // cache shouldn't exist
+            expect((await CacheHolder.read(cachedResource("repoName2", "010101"))).size).to.equal(0); // cache shouldn't exist
         });
         it("should clear all outdated cache", async () => {
-            await CacheHolder.write("repoName1", "010101", manifest);
-            await CacheHolder.write("repoName2", "010101", manifest);
+            await CacheHolder.write(cachedResource("repoName1", "010101"), manifest);
+            await CacheHolder.write(cachedResource("repoName2", "010101"), manifest);
             await TestUtil.wait(5);
             await CacheHolder.clearOutdatedExcept(undefined, 1);
-            expect((await CacheHolder.read("repoName1", "010101")).size).to.equal(0); // old cache should be deleted
-            expect((await CacheHolder.read("repoName2", "010101")).size).to.equal(0); // old cache should be deleted
+            expect((await CacheHolder.read(cachedResource("repoName1", "010101"))).size).to.equal(0); // old cache should be deleted
+            expect((await CacheHolder.read(cachedResource("repoName2", "010101"))).size).to.equal(0); // old cache should be deleted
         });
-        it("should not cache with empty token", async () => {
-            await CacheHolderMock.write("repoName1", "", manifest);
-            expect((await CacheHolderMock.read("repoName1", "")).size).to.equal(0);
-            expect(log.message).eql("No 'token' provided, skipping cache write");
+        it("should not cache with undefined token", async () => {
+            await CacheHolder.write(cachedResource("undefinedTokenRepo", undefined), manifest);
+            expect((await CacheHolder.read(cachedResource("undefinedTokenRepo", "010101"))).size).to.equal(0);
         });
-        it("should not cache with empty repoName", async () => {
-            await CacheHolderMock.write("", "010101", manifest);
-            expect((await CacheHolderMock.read("", "010101")).size).to.equal(0);
-            expect(log.message).eql("No 'repoName' provided, skipping cache write");
+        it("should not cache with undefined appName", async () => {
+            await CacheHolder.write(cachedResource(undefined, "010101"), manifest);
+            expect((await CacheHolder.read(cachedResource("undefinedAppNameRepo", "010101"))).size).to.equal(0);
+        });
+        it("should keep other tokens of the same app when keepAppNameDir is set", async () => {
+            await CacheHolder.write(cachedResource("keepRepo", "010101"), manifest);
+            await CacheHolder.write({ appName: "keepRepo", token: Promise.resolve("010102"), keepAppNameDir: true }, manifest);
+            expect((await CacheHolder.read(cachedResource("keepRepo", "010101"))).size).to.equal(1);
+            expect((await CacheHolder.read(cachedResource("keepRepo", "010102"))).size).to.equal(1);
+        });
+    });
+
+
+    describe("merged cache", () => {
+        beforeEach(() => {
+            CacheHolder.clear();
+        });
+
+        it("should round-trip the merged hierarchy by reference", async () => {
+            await CacheHolder.write(CacheHolder.mergedResource("com.sap.base.app.id"), toBufferMap([["manifest.json", JSON.stringify({ "sap.app": { id: "com.sap.base.app.id" } })]]));
+            const result = await CacheHolder.read(CacheHolder.mergedResource("com.sap.base.app.id"));
+            expect([...result.keys()]).to.have.members(["manifest.json"]);
+            expect(JSON.parse(result.get("manifest.json")!.toString())["sap.app"].id).to.equal("com.sap.base.app.id");
+        });
+
+        it("should return an empty map when nothing is cached for the reference", async () => {
+            expect((await CacheHolder.read(CacheHolder.mergedResource("never.cached"))).size).to.equal(0);
+        });
+
+        it("should return an empty map for an empty reference instead of throwing", async () => {
+            expect((await CacheHolder.read(CacheHolder.mergedResource(""))).size).to.equal(0);
+        });
+
+        it("should overwrite the previous merged files for the same reference", async () => {
+            await CacheHolder.write(CacheHolder.mergedResource("ref"), toBufferMap([["old.json", "{}"], ["manifest.json", "{}"]]));
+            await CacheHolder.write(CacheHolder.mergedResource("ref"), toBufferMap([["manifest.json", JSON.stringify({ v: 2 })]]));
+            const result = await CacheHolder.read(CacheHolder.mergedResource("ref"));
+            expect([...result.keys()]).to.have.members(["manifest.json"]);
+            expect(JSON.parse(result.get("manifest.json")!.toString())).to.deep.equal({ v: 2 });
+        });
+
+        it("should be isolated from the per-repo cache", async () => {
+            await CacheHolder.write(cachedResource("repoName1", "010101"), toBufferMap([["manifest.json", JSON.stringify({ v: "repo" })]]));
+            await CacheHolder.write(CacheHolder.mergedResource("repoName1"), toBufferMap([["manifest.json", JSON.stringify({ v: "merged" })]]));
+            expect(JSON.parse((await CacheHolder.read(cachedResource("repoName1", "010101"))).get("manifest.json")!.toString())).to.deep.equal({ v: "repo" });
+            expect(JSON.parse((await CacheHolder.read(CacheHolder.mergedResource("repoName1"))).get("manifest.json")!.toString())).to.deep.equal({ v: "merged" });
+        });
+
+        it("should be removed by clear()", async () => {
+            await CacheHolder.write(CacheHolder.mergedResource("ref"), toBufferMap([["manifest.json", "{}"]]));
+            CacheHolder.clear();
+            expect((await CacheHolder.read(CacheHolder.mergedResource("ref"))).size).to.equal(0);
         });
     });
 
@@ -238,19 +286,4 @@ function mapToBase64Zip(files: Map<string, string>): string {
         zip.addFile(name, Buffer.from(content, "utf8"));
     }
     return zip.toBuffer().toString("base64");
-}
-
-function getCacheHolderMock(log: any) {
-    return esmock("../../../src/cache/cacheHolder.js", {}, {
-        "@ui5/logger": {
-            getLogger: () => {
-                return {
-                    warn: (message: string) => {
-                        log.message = message;
-                    },
-                    silly: () => { }
-                };
-            }
-        }
-    });
 }

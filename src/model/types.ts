@@ -26,6 +26,7 @@ export interface IGetServiceInstanceParams {
 export interface IServiceInstance {
     name: string;
     guid: string;
+    type?: string;
 }
 
 export interface IResource {

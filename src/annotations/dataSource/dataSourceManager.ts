@@ -1,8 +1,7 @@
 import DataSource from "./dataSource.js";
-import DataSourceODataAnnotation from "./dataSourceODataAnnotation.js";
 import I18nManager from "../../i18nManager.js";
+import IRepository from "../../repositories/repository.js";
 import Language from "../../model/language.js";
-import ServiceRequestor from "../serviceRequestor.js";
 import path from "path/posix";
 
 export default class DataSourceManager {
@@ -26,13 +25,10 @@ export default class DataSourceManager {
             return;
         }
         const odataAnnotationMap = new Map<string, string>();
-        const dataSourceODataEntries = Object.entries<any>(dataSourcesJson).filter(
-            ([, dataSource]) => dataSource.uri?.startsWith("/") && dataSource.type === "OData"
-        );
-        const { default: DataSourceOData } = await import("./dataSourceOData.js");
         // Loop over OData first to collect linked annotation names
-        for (const [name, dataSource] of dataSourceODataEntries) {
+        for (const [name, dataSource] of Object.entries<any>(dataSourcesJson)) {
             if (this.shouldDownload(dataSource, "OData")) {
+                const { default: DataSourceOData } = await import("./dataSourceOData.js");
                 const uri = path.normalize(dataSource.uri + "/$metadata");
                 const odata = new DataSourceOData(name, uri, dataSource);
                 odata.getAnnotations().forEach(annotation => odataAnnotationMap.set(annotation, uri))
@@ -41,9 +37,10 @@ export default class DataSourceManager {
         }
         // If ODataAnnotation is in OData annotations, pass metadata url to it
         for (const [name, dataSource] of Object.entries<any>(dataSourcesJson)) {
-            const metadataUrl = odataAnnotationMap.get(name);
             if (this.shouldDownload(dataSource, "ODataAnnotation")) {
+                const { default: DataSourceODataAnnotation } = await import("./dataSourceODataAnnotation.js");
                 const uri = dataSource.uri;
+                const metadataUrl = odataAnnotationMap.get(name);
                 const odata = new DataSourceODataAnnotation(name, uri, dataSource, metadataUrl);
                 this.dataSources.push(odata);
             }
@@ -53,10 +50,10 @@ export default class DataSourceManager {
         }
     }
 
-    async createAnnotationFiles(languages: Language[], i18nManager: I18nManager, serviceRequestor: ServiceRequestor) {
+    async createAnnotationFiles(languages: Language[], i18nManager: I18nManager, repository: IRepository) {
         const annotationFiles = new Map<string, string>();
         for (const dataSource of this.dataSources) {
-            const { filename, xml } = await dataSource.createAnnotationFile(languages, i18nManager, serviceRequestor);
+            const { filename, xml } = await dataSource.createAnnotationFile(languages, i18nManager, repository);
             annotationFiles.set(filename, xml);
         }
         return annotationFiles;

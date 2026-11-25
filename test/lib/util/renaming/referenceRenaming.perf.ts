@@ -1,4 +1,4 @@
-import { rename, renameMap, renameResources } from "../../../src/util/renamingUtil.js";
+import { rename, renameMap, renameResources } from "../../../../src/util/renaming/referenceRenaming.js";
 
 const ITERATIONS = 50;
 

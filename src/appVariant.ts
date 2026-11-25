@@ -1,24 +1,22 @@
 import { IChange } from "./model/types.js";
-import { dotToUnderscore, isManifestChange } from "./util/commonUtil.js";
+import { bufferToJson, dotToUnderscore, isManifestChange } from "./util/commonUtil.js";
 import ResourceUtil, { TEXT_EXTENSIONS } from "./util/resourceUtil.js";
 import { posix as path } from "path";
 import { moveFile, moveFiles } from "./util/movingHandler/changeFileMoveHandler.js";
-import RenameFilesCommand from "./adapters/commands/renameFilesCommand.js";
+import FileRenamer from "./util/renaming/fileRenamer.js";
 import { validateAppId } from "./util/validator/validator.js";
 
 const CHANGES_EXT = ".change";
 
 export default class AppVariant {
 
-    readonly files: ReadonlyMap<string, string>;
+    readonly files: ReadonlyMap<string, Buffer>;
     readonly resources?: ReadonlyArray<Resource>;
     readonly id: string;
     readonly reference: string;
     readonly layer: any;
     readonly content: any;
-    prefix: string = "";
-    movedFiles = new Map<string, string>();
-    private renaming = new Map<string, string>();
+    readonly prefix: string;
 
 
     static async fromWorkspace(workspace: IWorkspace, projectNamespace: string): Promise<AppVariant> {
@@ -29,21 +27,21 @@ export default class AppVariant {
     }
 
 
-    static fromFiles(files: ReadonlyMap<string, string>): AppVariant {
+    static fromFiles(files: ReadonlyMap<string, Buffer>): AppVariant {
         return new AppVariant(files);
     }
 
 
-    private constructor(files: ReadonlyMap<string, string>, resources?: Resource[]) {
+    private constructor(files: ReadonlyMap<string, Buffer>, resources?: Resource[]) {
         if (files.size === 0) {
             throw new Error("Application variant sources are empty");
         }
         this.files = files;
         this.resources = resources;
 
-        const manifestString = files.get("manifest.appdescr_variant");
-        this.validateManifest(manifestString);
-        const { reference, id, layer, content } = JSON.parse(manifestString!);
+        const manifestBuffer = files.get("manifest.appdescr_variant");
+        this.validateManifest(manifestBuffer);
+        const { reference, id, layer, content } = bufferToJson(manifestBuffer!);
         this.reference = reference;
         this.id = id;
         validateAppId(id);
@@ -51,31 +49,28 @@ export default class AppVariant {
         this.content = content;
         // Prefix is a subfolder for the app variant to store js, fragments,
         // annotations and i18n files. It can be anything, but for convenience
-        // it is an app variant id.
+        // it is the app variant id.
         this.prefix = dotToUnderscore(this.id);
     }
 
 
-    getProcessedFiles(): ReadonlyMap<string, string> {
+    getProcessedFiles(): ReadonlyMap<string, Buffer> {
         const { files, renamingPaths } = moveFiles(this.files, this.prefix, this.id);
         // Directly rename files that with new paths, this ensures no conflict in further renaming
         // In later remaming it's not possible to find correct prefix of moved files
-        new RenameFilesCommand(renamingPaths).execute(files);
+        FileRenamer.rename(files, renamingPaths);
         return files;
     };
 
-    /** 
-     * Since we moved files, we need to update paths where they were referenced.
-     * To do this we use renameMap function along with renaming ids.
+
+    /**
+     * The files moved under the prefix folder, as original path -> new path.
+     * Computed on demand from the (readonly) sources, so there is no stored
+     * cross-phase state to go stale between getProcessedFiles and the post step.
      */
-    getRenamingForMovedFiles(): Map<string, string> {
-        const renaming = new Map<string, string>();
-        const slashToDot = (str: string) => str.replaceAll("\/", ".");
-        this.renaming.forEach((newPath, oldPath) => {
-            renaming.set(slashToDot(oldPath), slashToDot(newPath));
-        });
-        return renaming;
-    };
+    getMovedFiles(): ReadonlyMap<string, string> {
+        return moveFiles(this.files, this.prefix, this.id).movedFiles;
+    }
 
 
     getProcessedManifestChanges() {
@@ -85,9 +80,9 @@ export default class AppVariant {
 
         this.files.forEach((content, filename) => {
             if (filename.endsWith(CHANGES_EXT)) {
-                const change = JSON.parse(content);
                 if (isManifestChange(filename, content)) {
                     const { newFilename } = moveFile(filename, content, this.prefix, this.id);
+                    const change = bufferToJson(content);
                     this.updateRelativePaths(change, newFilename);
                     changeFileChanges.push(change);
                 }
@@ -109,7 +104,7 @@ export default class AppVariant {
     }
 
 
-    private validateManifest(manifest?: string) {
+    private validateManifest(manifest?: Buffer) {
         if (!manifest) {
             throw new Error("Adaptation project should contain manifest.appdescr_variant");
         }

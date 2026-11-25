@@ -9,6 +9,7 @@ import { expect } from "chai";
 import sinon from "sinon";
 import AbapAnnotationManager from "../../src/annotations/abapAnnotationManager.js";
 import AbapAdapter from "../../src/adapters/abapAdapter.js";
+import { bufferToJson, bufferToString } from "../../src/util/commonUtil.js";
 
 describe("App Variant Hierarchy", () => {
     let sandbox: sinon.SinonSandbox;
@@ -24,18 +25,18 @@ describe("App Variant Hierarchy", () => {
     after(() => CacheHolder.clear());
     afterEach(() => sandbox.restore());
 
-    let files = new Map<string, string>();
+    let files = new Map<string, Buffer>();
     beforeEach(async () => {
         sandbox = sinon.createSandbox();
         sandbox.stub(AbapAnnotationManager.prototype, "process").resolves(new Map<string, string>());
         sandbox.stub(AbapRepository.prototype, "getAppVariantIdHierarchy").resolves([
             {
                 appName: "REPO_NAME_1",
-                cacheBusterToken: Promise.resolve("cachebusterToken1")
+                token: Promise.resolve("cachebusterToken1")
             },
             {
                 appName: "REPO_NAME_0",
-                cacheBusterToken: Promise.resolve("cachebusterToken0")
+                token: Promise.resolve("cachebusterToken0")
             }
         ]);
         const appVariant1Path = TestUtil.getResourcePath("appVariant1", "webapp");
@@ -50,10 +51,13 @@ describe("App Variant Hierarchy", () => {
         const annotationManager = new AbapAnnotationManager(options.configuration, repository);
         const index = await esmock("../../src/index.js", {}, {
             "../../src/landscapeConfiguration.js": {
-                initialize: () => ({
-                    repository,
-                    adapter: new AbapAdapter(annotationManager)
-                })
+                initialize: () => {
+                    const adapter = new AbapAdapter(annotationManager);
+                    return {
+                        repository,
+                        adapter
+                    };
+                }
             }
         });
 
@@ -64,12 +68,12 @@ describe("App Variant Hierarchy", () => {
     });
 
     it("should rename id to one of appVariant2", () => {
-        const { id } = JSON.parse(files.get("manifest.json")!)["sap.app"];
+        const { id } = bufferToJson(files.get("manifest.json")!)["sap.app"];
         expect(id).to.eql("customer.app.variant.2.id"); // id of the appVariant2
     });
 
     it("should have inbouds of original app, appVariant1 and appVariant2", () => {
-        const { crossNavigation } = JSON.parse(files.get("manifest.json")!)["sap.app"];
+        const { crossNavigation } = bufferToJson(files.get("manifest.json")!)["sap.app"];
         expect(Object.keys(crossNavigation.inbounds)).to.have.members([
             "manifest-configure", // was in original app
             "customer.contactCreate", // created by appVariant1
@@ -78,20 +82,20 @@ describe("App Variant Hierarchy", () => {
     });
 
     it("should contain fragment renamed to appVariant2", () => {
-        const fragment = XmlUtil.xmlToJson(files.get("changes/customer_com_sap_application_variant_id/fragments/AdlChart.fragment.xml")!);
+        const fragment = XmlUtil.xmlToJson(bufferToString(files.get("changes/customer_com_sap_application_variant_id/fragments/AdlChart.fragment.xml")!));
         expect(fragment.Popover.content["viz:VizFrame"]._attributes.appId).eql("customer.app.variant.2.id");
         expect(fragment.Popover.content["viz:VizFrame"]._attributes.appIdSlashes).eql("customer/app/variant/2/id");
     });
 
     it("should contain control change renamed to appVariant2", () => {
-        const change = JSON.parse(files.get("changes/id_1707749484509_240_setDefault.ctrl_variant_management_change")!);
+        const change = bufferToJson(files.get("changes/id_1707749484509_240_setDefault.ctrl_variant_management_change")!);
         expect(change.reference).eql("customer.app.variant.2.id");
         expect(change.selector.id).eql("customer.app.variant.2.id::FreightCostAllocationDocumentList--fe::PageVariantManagement");
         expect(change.namespace).eql("apps/customer.app.variant.2.id/changes/");
     });
 
     it("should contain control change from appVariant2", () => {
-        const change = JSON.parse(files.get("changes/id_1707749484510_240_setDefault.ctrl_variant_management_change")!);
+        const change = bufferToJson(files.get("changes/id_1707749484510_240_setDefault.ctrl_variant_management_change")!);
         expect(change.reference).eql("customer.app.variant.2.id");
         expect(change.selector.id).eql("customer.app.variant.2.id::FreightCostAllocationDocumentList--fe::PageVariantManagement");
         expect(change.namespace).eql("apps/customer.app.variant.2.id/changes/");
@@ -106,13 +110,13 @@ describe("App Variant Hierarchy", () => {
             "changes/customer_app_variant_2_id/fragments/AdlChart.fragment.xml",
             "changes/customer_com_sap_application_variant_id/coding/id_12345.js",
             "changes/customer_com_sap_application_variant_id/fragments/AdlChart.fragment.xml",
+            "changes/customer_com_sap_application_variant_id/notsupported.testfile",
             "changes/id_1696839317667_propertyChange.change",
             "changes/id_1707741869990_200_flVariant.ctrl_variant",
             "changes/id_1707749484507_210_setTitle.ctrl_variant_change",
             "changes/id_1707749484509_240_setDefault.ctrl_variant_management_change",
             "changes/id_1707749484510_240_setDefault.ctrl_variant_management_change",
             "changes/id_1753705046493_197_codeExt.change",
-            "changes/notsupported.testfile",
             "xs-app.json"
         ]);
         // It has replaced id_12345 of appVariant1 with the appVariant2
@@ -199,40 +203,43 @@ describe("OData DataSource Hierarchy", () => {
     after(() => CacheHolder.clear());
     afterEach(() => sandbox.restore());
 
-    let files = new Map<string, string>();
+    let files = new Map<string, Buffer>();
     let downloadAnnotationFileStub: sinon.SinonStub;
     beforeEach(async () => {
         sandbox = sinon.createSandbox();
         downloadAnnotationFileStub = sandbox.stub(AbapRepository.prototype, "downloadAnnotationFile")
-            .resolves(new Map([["metadata.xml", METADATA_XML]]));
+            .resolves(METADATA_XML);
         sandbox.stub(AbapRepository.prototype, "getAppVariantIdHierarchy").resolves([
-            { appName: "REPO_3", cacheBusterToken: Promise.resolve("token3") },
-            { appName: "REPO_2", cacheBusterToken: Promise.resolve("token2") },
-            { appName: "REPO_1", cacheBusterToken: Promise.resolve("token1") },
-            { appName: "REPO_0", cacheBusterToken: Promise.resolve("token0") },
+            { appName: "REPO_3", token: Promise.resolve("token3") },
+            { appName: "REPO_2", token: Promise.resolve("token2") },
+            { appName: "REPO_1", token: Promise.resolve("token1") },
+            { appName: "REPO_0", token: Promise.resolve("token0") },
         ]);
         sandbox.stub(AbapRepository.prototype, "fetch")
             .withArgs(sinon.match({ appName: "REPO_0" })).resolves(new Map([
-                ["manifest.json", BASE_MANIFEST],
+                ["manifest.json", Buffer.from(BASE_MANIFEST)],
             ]))
             .withArgs(sinon.match({ appName: "REPO_1" })).resolves(new Map([
-                ["manifest.appdescr_variant", createAppVariantManifest("com.sap.base.app", "customer.variant.one", 1)],
+                ["manifest.appdescr_variant", Buffer.from(createAppVariantManifest("com.sap.base.app", "customer.variant.one", 1))],
             ]))
             .withArgs(sinon.match({ appName: "REPO_2" })).resolves(new Map([
-                ["manifest.appdescr_variant", createAppVariantManifest("customer.variant.one", "customer.variant.two", 2)],
+                ["manifest.appdescr_variant", Buffer.from(createAppVariantManifest("customer.variant.one", "customer.variant.two", 2))],
             ]))
             .withArgs(sinon.match({ appName: "REPO_3" })).resolves(new Map([
-                ["manifest.appdescr_variant", createAppVariantManifest("customer.variant.two", "customer.variant.three", 3)],
+                ["manifest.appdescr_variant", Buffer.from(createAppVariantManifest("customer.variant.two", "customer.variant.three", 3))],
             ]));
 
         const repository = new AbapRepository(options.configuration);
         const annotationManager = new AbapAnnotationManager(options.configuration, repository);
         const index = await esmock("../../src/index.js", {}, {
             "../../src/landscapeConfiguration.js": {
-                initialize: () => ({
-                    repository,
-                    adapter: new AbapAdapter(annotationManager)
-                })
+                initialize: () => {
+                    const adapter = new AbapAdapter(annotationManager);
+                    return {
+                        repository,
+                        adapter
+                    };
+                }
             }
         });
 
@@ -243,7 +250,7 @@ describe("OData DataSource Hierarchy", () => {
     });
 
     it("should have all OData dataSources from 3 appVariants", () => {
-        const { dataSources } = JSON.parse(files.get("manifest.json")!)["sap.app"];
+        const { dataSources } = bufferToJson(files.get("manifest.json")!)["sap.app"];
         for (const num of [1, 2, 3]) {
             expect(dataSources[`customer.odata.service${num}`]).to.deep.include({
                 uri: `/sap/opu/odata/sap/service${num}/`,
@@ -255,7 +262,7 @@ describe("OData DataSource Hierarchy", () => {
     });
 
     it("should have all ODataAnnotation dataSources from 3 appVariants", () => {
-        const { dataSources } = JSON.parse(files.get("manifest.json")!)["sap.app"];
+        const { dataSources } = bufferToJson(files.get("manifest.json")!)["sap.app"];
         for (const num of [1, 2, 3]) {
             const annotation = dataSources[`customer.annotation.service${num}`];
             expect(annotation.type).to.eql("ODataAnnotation");
@@ -264,7 +271,7 @@ describe("OData DataSource Hierarchy", () => {
     });
 
     it("should set ignoreAnnotationsFromMetadata on each OData dataSource", () => {
-        const { dataSources } = JSON.parse(files.get("manifest.json")!)["sap.app"];
+        const { dataSources } = bufferToJson(files.get("manifest.json")!)["sap.app"];
         for (const num of [1, 2, 3]) {
             expect(dataSources[`customer.odata.service${num}`].settings.ignoreAnnotationsFromMetadata).to.eql(true);
         }
@@ -279,7 +286,7 @@ describe("OData DataSource Hierarchy", () => {
     });
 
     it("should set id to the adaptation project id", () => {
-        const { id } = JSON.parse(files.get("manifest.json")!)["sap.app"];
+        const { id } = bufferToJson(files.get("manifest.json")!)["sap.app"];
         expect(id).to.eql("customer.variant.adaptation");
     });
 });

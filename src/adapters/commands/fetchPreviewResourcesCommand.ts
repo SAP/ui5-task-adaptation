@@ -1,4 +1,5 @@
 import FsUtil from "../../util/fsUtil.js";
+import { stringToBuffer, bufferToString } from "../../util/commonUtil.js";
 import { posix as path } from "path";
 import { IPromiseCommand, SetupCommand } from "./command.js";
 import { FetchFilesPromise, IReuseLibInfo } from "../../model/types.js";
@@ -40,7 +41,7 @@ export default class FetchPreviewResourcesCommand extends SetupCommand implement
     private async preparePreview(): Promise<FetchFilesPromise> {
         let ui5AppInfo: string = "";
         try {
-            ui5AppInfo = await FsUtil.readInProject("ui5AppInfo.json", "utf-8") as string;
+            ui5AppInfo = bufferToString(await FsUtil.readInProject("ui5AppInfo.json"));
         } catch (error) {
             throw new Error(`ui5AppInfo.json is missing in project root, cannot process preview resources: ${error instanceof Error ? error.message : String(error)}`);
         }
@@ -87,7 +88,7 @@ export default class FetchPreviewResourcesCommand extends SetupCommand implement
                 appName: lib.html5AppName,
                 appVersion: lib.html5AppVersion,
                 appHostId: lib.html5AppHostId,
-                cacheBusterToken: Promise.resolve(lib.html5CacheBusterToken)
+                token: Promise.resolve(lib.html5CacheBusterToken)
             }
             const promise = repository
                 .fetch(resource)
@@ -104,8 +105,8 @@ export default class FetchPreviewResourcesCommand extends SetupCommand implement
 
             // Source path in xs-app.json needs to be adjusted to new location
             if (filename.includes("xs-app.json")) {
-                const modified = this.modifyRoutes(content.toString("utf8"), libraryName, libId);
-                content = Buffer.from(modified, "utf8");
+                const modified = this.modifyRoutes(bufferToString(content), libraryName, libId);
+                content = stringToBuffer(modified);
             }
 
             files.set(newFilename, content);

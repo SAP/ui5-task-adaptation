@@ -7,7 +7,6 @@ import { Cli } from "@sap/cf-tools/out/src/cli.js";
 import { IGetServiceInstanceParams } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
 import TestUtil from "./testUtilities/testUtil.js";
-import { eFilters } from "@sap/cf-tools/out/src/types.js";
 import esmock from "esmock";
 
 chai.use(chaiAsPromised);
@@ -22,7 +21,7 @@ describe("CFUtil", () => {
     // Helper function to create common CLI mocks for service key endpoint tests
     const createServiceKeyEndpointMocks = (options: {
         createKeyCallCount?: number;
-        deleteKeyCallCount?: number;
+        hasExistingKey?: boolean;
         hasValidEndpoints?: boolean;
         serviceExists?: boolean;
         serviceInstanceName?: string;
@@ -30,7 +29,7 @@ describe("CFUtil", () => {
     } = {}) => {
         const {
             createKeyCallCount = 0,
-            deleteKeyCallCount = 0,
+            hasExistingKey = false,
             hasValidEndpoints = true,
             serviceExists = true,
             serviceInstanceName = "test-service",
@@ -38,24 +37,31 @@ describe("CFUtil", () => {
         } = options;
 
         let createCallCount = createKeyCallCount;
-        let deleteCallCount = deleteKeyCallCount;
+        const keyHasData = () => hasExistingKey || createCallCount > 0;
+        const serviceKeyName = `${serviceInstanceName}_key`;
 
-        const credentialsWithValidEndpoints = {
-            credentials: {
-                endpoints: {
-                    "api-endpoint": {
-                        url: "https://api.example.com",
-                        destination: "api-dest"
-                    }
+        const validEndpoints = {
+            endpoints: {
+                "api-endpoint": {
+                    url: "https://api.example.com",
+                    destination: "api-dest"
                 }
             }
         };
 
-        const credentialsWithInvalidEndpoints = {
-            credentials: {
-                endpoints: "invalid-string-endpoint"  // endpoints as string instead of object
-            }
+        const invalidEndpoints = {
+            endpoints: "invalid-string-endpoint"
         };
+
+        const credentialsWithValidEndpoints = {
+            credentials: validEndpoints
+        };
+
+        const credentialsWithInvalidEndpoints = {
+            credentials: invalidEndpoints
+        };
+
+        const keyGuid = "test-key-guid";
 
         return {
             "@sap/cf-tools/out/src/cli.js": {
@@ -70,54 +76,27 @@ describe("CFUtil", () => {
                                 return TestUtil.getStdOut({ "resources": [] });
                             }
                         } else if (args[1] === "/v3/service_credential_bindings?type=key&service_instance_guids=test-guid") {
-                            if (createCallCount === 0) {
+                            if (!keyHasData()) {
                                 return TestUtil.getStdOut({ "resources": [] });
                             } else {
-                                return TestUtil.getStdOut({ "resources": [{ "name": `${serviceInstanceName}-key-0` }] });
+                                return TestUtil.getStdOut({
+                                    "resources": [{ "name": serviceKeyName, "guid": keyGuid, "created_at": "2024-01-01T00:00:00Z" }]
+                                });
                             }
-                        } else if (args[0] === "create-service-key" && args[1] === serviceInstanceName && args[2] === `${serviceInstanceName}-key-0`) {
+                        } else if (args[1] === `/v3/service_credential_bindings/${keyGuid}/details`) {
+                            return TestUtil.getStdOut({ credentials: hasValidEndpoints ? validEndpoints : invalidEndpoints });
+                        } else if (args[0] === "create-service-key" && args[1] === serviceInstanceName && args[2] === serviceKeyName) {
                             createCallCount++;
                             return TestUtil.getStdOut("");
-                        } else if (args[0] === "delete-service-key" && args[1] === serviceInstanceName && args[2] === `${serviceInstanceName}-key-0` && args[3] === "-f") {
-                            deleteCallCount++;
-                            return TestUtil.getStdOut("");
                         }
-                    }
-                }
-            },
-            "@sap/cf-tools/out/src/cf-local.js": {
-                cfGetInstanceCredentials: () => {
-                    if (createCallCount === 0) {
-                        return Promise.resolve([]);
-                    } else {
-                        return Promise.resolve([hasValidEndpoints ? credentialsWithValidEndpoints : credentialsWithInvalidEndpoints]);
                     }
                 }
             },
             "@sap/cf-tools/out/src/utils.js": {
                 getSpaceGuidThrowIfUndefined: () => Promise.resolve(spaceGuid)
             },
-            getCounters: () => ({ createCallCount, deleteCallCount }),
+            getCounters: () => ({ createCallCount }),
             getCredentials: () => hasValidEndpoints ? credentialsWithValidEndpoints : credentialsWithInvalidEndpoints
-        };
-    };
-
-    // Helper function to create CLI mocks for service key name generation tests
-    const createServiceKeyNameMocks = (serviceKeyNames: string[] = [], shouldError = false) => {
-        return {
-            "@sap/cf-tools/out/src/cli.js": {
-                Cli: {
-                    execute: (args: string[]) => {
-                        if (args[1] === "/v3/service_credential_bindings?type=key&service_instance_guids=test-guid") {
-                            if (shouldError) {
-                                return TestUtil.getStdOut({}, 1, "CF API error");
-                            }
-                            const resources = serviceKeyNames.map(name => ({ name }));
-                            return TestUtil.getStdOut({ "resources": resources });
-                        }
-                    }
-                }
-            }
         };
     };
 
@@ -319,28 +298,24 @@ describe("CFUtil", () => {
 
         it("should succesfully create and return service keys and serviceInstance info", async () => {
             const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
-            let call = 0;
+            const keyGuid = "serviceInstance1KeyGuid";
+            let bindingsCallCount = 0;
             const CFUtil = await esmock("../../src/util/cfUtil.js", {}, {
                 "@sap/cf-tools/out/src/cli.js": {
                     Cli: {
                         execute: (args: string[]) => {
                             if (args[1] === "/v3/service_instances?space_guids=spaceGuid1&names=serviceInstance1") {
                                 return TestUtil.getStdOut(TestUtil.getResource("service_instances_bs.json"));
+                            } else if (args[1] === "/v3/service_credential_bindings?type=key&service_instance_guids=serviceInstance1Guid") {
+                                if (bindingsCallCount++ === 0) {
+                                    return TestUtil.getStdOut({ resources: [] });
+                                }
+                                return TestUtil.getStdOut({ resources: [{ name: "serviceInstance1_key", guid: keyGuid, created_at: "2024-01-01T00:00:00Z" }] });
+                            } else if (args[1] === `/v3/service_credential_bindings/${keyGuid}/details`) {
+                                return TestUtil.getStdOut({ credentials: credentialsJson[0].credentials });
                             } else if (args[0] === "create-service-key" && args[1] === "serviceInstance1" && args[2] === "serviceInstance1_key") {
                                 return TestUtil.getStdOut("");
-                            } else if (args[1] === "/v3/service_instances?per_page=200&page=3") {
-                                return TestUtil.getStdOut({}, 1, "Error from 3 page");
                             }
-                        }
-                    }
-                },
-                "@sap/cf-tools/out/src/cf-local.js": {
-                    cfGetInstanceCredentials: () => {
-                        if (call === 0) {
-                            call++;
-                            return Promise.resolve([]);
-                        } else {
-                            return Promise.resolve(credentialsJson);
                         }
                     }
                 }
@@ -353,9 +328,47 @@ describe("CFUtil", () => {
                 credentials: credentialsJson[0].credentials,
                 serviceInstance: {
                     guid: "serviceInstance1Guid",
-                    name: "serviceInstance1"
+                    name: "serviceInstance1",
+                    type: "managed"
                 }
             });
+        });
+
+        it("should return existing service keys without creating a new one", async () => {
+            const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
+            const keyGuid = "serviceInstance1KeyGuid";
+            let createCallCount = 0;
+            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, {
+                "@sap/cf-tools/out/src/cli.js": {
+                    Cli: {
+                        execute: (args: string[]) => {
+                            if (args[1] === "/v3/service_instances?space_guids=spaceGuid1&names=serviceInstance1") {
+                                return TestUtil.getStdOut(TestUtil.getResource("service_instances_bs.json"));
+                            } else if (args[1] === "/v3/service_credential_bindings?type=key&service_instance_guids=serviceInstance1Guid") {
+                                return TestUtil.getStdOut({ resources: [{ name: "serviceInstance1_key", guid: keyGuid, created_at: "2024-01-01T00:00:00Z" }] });
+                            } else if (args[1] === `/v3/service_credential_bindings/${keyGuid}/details`) {
+                                return TestUtil.getStdOut({ credentials: credentialsJson[0].credentials });
+                            } else if (args[0] === "create-service-key") {
+                                createCallCount++;
+                                return TestUtil.getStdOut("");
+                            }
+                        }
+                    }
+                }
+            });
+            const result = await CFUtil.getServiceInstanceKeys({
+                spaceGuids: ["spaceGuid1"],
+                names: ["serviceInstance1"]
+            });
+            expect(result).to.eql({
+                credentials: credentialsJson[0].credentials,
+                serviceInstance: {
+                    guid: "serviceInstance1Guid",
+                    name: "serviceInstance1",
+                    type: "managed"
+                }
+            });
+            expect(createCallCount).to.equal(0);
         });
 
         it("should throw an exception when after creating service keys are not found", async () => {
@@ -365,16 +378,13 @@ describe("CFUtil", () => {
                         execute: (args: string[]) => {
                             if (args[1] === "/v3/service_instances?space_guids=spaceGuid1&names=serviceInstance1") {
                                 return TestUtil.getStdOut(TestUtil.getResource("service_instances_bs.json"));
+                            } else if (args[1] === "/v3/service_credential_bindings?type=key&service_instance_guids=serviceInstance1Guid") {
+                                return TestUtil.getStdOut({ resources: [] });
                             } else if (args[0] === "create-service-key" && args[1] === "serviceInstance1" && args[2] === "serviceInstance1_key") {
                                 return TestUtil.getStdOut("");
-                            } else if (args[1] === "/v3/service_instances?per_page=200&page=3") {
-                                return TestUtil.getStdOut({}, 1, "Error from 3 page");
                             }
                         }
                     }
-                },
-                "@sap/cf-tools/out/src/cf-local.js": {
-                    cfGetInstanceCredentials: () => Promise.resolve([])
                 }
             });
             try {
@@ -384,7 +394,7 @@ describe("CFUtil", () => {
                 });
                 assert.fail(true, false, "Exception not thrown");
             } catch (error: any) {
-                expect(error.message).to.equal("Cannot get service keys for 'serviceInstance1' service in current space: spaceGuid1");
+                expect(error.message).to.equal("Service key was created for 'serviceInstance1' but could not be retrieved");
             }
         });
 
@@ -409,6 +419,33 @@ describe("CFUtil", () => {
             } catch (error: any) {
                 expect(error.message).to.equal("Cannot find 'serviceInstance1' service in current space: spaceGuid1");
             }
+        });
+
+        it("should fetch credentials directly for user-provided service instance", async () => {
+            const expectedCredentials = { uri: "https://my-service.example.com", username: "user", password: "pass" };
+            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, {
+                "@sap/cf-tools/out/src/cli.js": {
+                    Cli: {
+                        execute: (args: string[]) => {
+                            if (args[1] === "/v3/service_instances?space_guids=spaceGuid1&names=myUpsi") {
+                                return TestUtil.getStdOut({
+                                    resources: [{ name: "myUpsi", guid: "upsiGuid", type: "user-provided" }]
+                                });
+                            } else if (args[1] === "/v3/service_instances/upsiGuid/credentials") {
+                                return TestUtil.getStdOut({ credentials: expectedCredentials });
+                            }
+                        }
+                    }
+                }
+            });
+            const result = await CFUtil.getServiceInstanceKeys({
+                spaceGuids: ["spaceGuid1"],
+                names: ["myUpsi"]
+            });
+            expect(result).to.eql({
+                credentials: expectedCredentials,
+                serviceInstance: { guid: "upsiGuid", name: "myUpsi", type: "user-provided" }
+            });
         });
 
         it("should create uri with single parameters", async () => {
@@ -460,6 +497,7 @@ describe("CFUtil", () => {
         async function createService(serviceOfferings: string, plans: string) {
             let call = 0;
             const credentialsJson = JSON.parse(TestUtil.getResource("credentials_bs.json"));
+            const keyGuid = "serviceInstance1KeyGuid";
             const CFUtil = await esmock("../../src/util/cfUtil.js", {}, {
                 "@sap/cf-tools/out/src/cli.js": {
                     Cli: {
@@ -475,24 +513,16 @@ describe("CFUtil", () => {
                                 return TestUtil.getStdOut(serviceOfferings);
                             } else if (args[1] === `/v3/service_plans?service_offering_guids=B8F4D0AC-9F30-4C18-B808-D8C1C6E2646E`) {
                                 return TestUtil.getStdOut(plans);
+                            } else if (args[1] === "/v3/service_credential_bindings?type=key&service_instance_guids=serviceInstance1Guid") {
+                                return TestUtil.getStdOut({ resources: [{ name: "serviceInstance1_key", guid: keyGuid, created_at: "2024-01-01T00:00:00Z" }] });
+                            } else if (args[1] === `/v3/service_credential_bindings/${keyGuid}/details`) {
+                                return TestUtil.getStdOut({ credentials: credentialsJson[0].credentials });
                             }
                         }
                     }
                 },
                 "@sap/cf-tools/out/src/cf-local.js": {
-                    cfCreateService: () => Promise.resolve(),
-                    cfGetInstanceCredentials: (args: any) => {
-                        if (JSON.stringify(args) === JSON.stringify({
-                            filters: [{
-                                value: "serviceInstance1Guid",
-                                key: eFilters.service_instance_guids
-                            }]
-                        })) {
-                            return Promise.resolve(credentialsJson);
-                        } else {
-                            return Promise.resolve([]);
-                        }
-                    }
+                    cfCreateService: () => Promise.resolve()
                 }
             });
             const result = await CFUtil.getServiceInstanceKeys({
@@ -509,7 +539,8 @@ describe("CFUtil", () => {
                 credentials: credentialsJson[0].credentials,
                 serviceInstance: {
                     guid: "serviceInstance1Guid",
-                    name: "serviceInstance1"
+                    name: "serviceInstance1",
+                    type: "managed"
                 }
             });
         }
@@ -567,82 +598,28 @@ describe("CFUtil", () => {
         });
     });
 
-    describe("when generating unique service key names", () => {
-
-        it("should get all service key names for a service instance", async () => {
-            const mocks = createServiceKeyNameMocks(["service-key-1", "service-key-2", "custom-key"]);
-            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, mocks);
-
-            const keyNames = await CFUtil["getAllServiceKeyNames"]("test-guid");
-            expect(keyNames).to.deep.equal(["service-key-1", "service-key-2", "custom-key"]);
-        });
-
-        it("should return empty array when no service keys exist", async () => {
-            const mocks = createServiceKeyNameMocks([]);
-            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, mocks);
-
-            const keyNames = await CFUtil["getAllServiceKeyNames"]("test-guid");
-            expect(keyNames).to.deep.equal([]);
-        });
-
-        it("should generate unique service key name when no existing keys", async () => {
-            const mocks = createServiceKeyNameMocks([]);
-            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, mocks);
-
-            const uniqueName = await CFUtil.generateUniqueServiceKeyName("my-service", "test-guid");
-            expect(uniqueName).to.equal("my-service-key-0");
-        });
-
-        it("should generate unique service key name avoiding existing names", async () => {
-            const mocks = createServiceKeyNameMocks(["my-service-key-0", "my-service-key-1", "custom-key"]);
-            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, mocks);
-
-            const uniqueName = await CFUtil.generateUniqueServiceKeyName("my-service", "test-guid");
-            expect(uniqueName).to.equal("my-service-key-2");
-        });
-
-        it("should generate unique service key name with gaps in existing names", async () => {
-            const mocks = createServiceKeyNameMocks(["my-service-key-0", "my-service-key-2", "other-key"]);
-            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, mocks);
-
-            const uniqueName = await CFUtil.generateUniqueServiceKeyName("my-service", "test-guid");
-            expect(uniqueName).to.equal("my-service-key-1");
-        });
-
-        it("should handle error when getting service key names", async () => {
-            const mocks = createServiceKeyNameMocks([], true);
-            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, mocks);
-
-            await expect(CFUtil["getAllServiceKeyNames"]("test-guid"))
-                .to.be.rejectedWith("Failed to get service key names");
-        });
-    });
-
     describe("when getting or creating service keys with endpoints", () => {
 
         it("should use existing service key with valid endpoints", async () => {
-            const mocks = createServiceKeyEndpointMocks();
+            const mocks = createServiceKeyEndpointMocks({ hasExistingKey: true });
             const credentials = mocks.getCredentials();
 
             const CFUtil = await esmock("../../src/util/cfUtil.js", {}, {
                 "@sap/cf-tools/out/src/cli.js": mocks["@sap/cf-tools/out/src/cli.js"],
-                "@sap/cf-tools/out/src/cf-local.js": {
-                    cfGetInstanceCredentials: () => Promise.resolve([credentials])
-                },
                 "@sap/cf-tools/out/src/utils.js": mocks["@sap/cf-tools/out/src/utils.js"]
             });
 
             const result = await CFUtil.getOrCreateServiceKeyWithEndpoints("test-service", "test-space");
             expect(result).to.deep.equal(credentials.credentials);
+            expect(mocks.getCounters().createCallCount).to.equal(0);
         });
 
-        it("should create new service key when no valid endpoints found", async () => {
+        it("should create new service key when none exist", async () => {
             const mocks = createServiceKeyEndpointMocks();
             const credentials = mocks.getCredentials();
 
             const CFUtil = await esmock("../../src/util/cfUtil.js", {}, {
                 "@sap/cf-tools/out/src/cli.js": mocks["@sap/cf-tools/out/src/cli.js"],
-                "@sap/cf-tools/out/src/cf-local.js": mocks["@sap/cf-tools/out/src/cf-local.js"],
                 "@sap/cf-tools/out/src/utils.js": mocks["@sap/cf-tools/out/src/utils.js"]
             });
 
@@ -675,11 +652,50 @@ describe("CFUtil", () => {
 
             const CFUtil = await esmock("../../src/util/cfUtil.js", {}, {
                 "@sap/cf-tools/out/src/cli.js": mocks["@sap/cf-tools/out/src/cli.js"],
-                "@sap/cf-tools/out/src/cf-local.js": mocks["@sap/cf-tools/out/src/cf-local.js"],
                 "@sap/cf-tools/out/src/utils.js": mocks["@sap/cf-tools/out/src/utils.js"]
             });
 
-            await CFUtil.getOrCreateServiceKeyWithEndpoints("test-service");
+            const result = await CFUtil.getOrCreateServiceKeyWithEndpoints("test-service");
+            expect(result).to.deep.equal(mocks.getCredentials().credentials);
+        });
+
+        it("should use the newest service key when multiple keys exist", async () => {
+            const newestKeyGuid = "newest-key-guid";
+            const validEndpoints = {
+                endpoints: { "api-endpoint": { url: "https://api.example.com", destination: "api-dest" } }
+            };
+            let createCallCount = 0;
+            const CFUtil = await esmock("../../src/util/cfUtil.js", {}, {
+                "@sap/cf-tools/out/src/cli.js": {
+                    Cli: {
+                        execute: (args: string[]) => {
+                            if (args[1] === "/v3/service_instances?names=test-service&space_guids=test-space") {
+                                return TestUtil.getStdOut({ "resources": [{ "name": "test-service", "guid": "test-guid" }] });
+                            } else if (args[1] === "/v3/service_credential_bindings?type=key&service_instance_guids=test-guid") {
+                                return TestUtil.getStdOut({
+                                    "resources": [
+                                        { "name": "old-key", "guid": "old-key-guid", "created_at": "2023-01-01T00:00:00Z" },
+                                        { "name": "newest-key", "guid": newestKeyGuid, "created_at": "2025-01-01T00:00:00Z" },
+                                        { "name": "mid-key", "guid": "mid-key-guid", "created_at": "2024-01-01T00:00:00Z" }
+                                    ]
+                                });
+                            } else if (args[1] === `/v3/service_credential_bindings/${newestKeyGuid}/details`) {
+                                return TestUtil.getStdOut({ credentials: validEndpoints });
+                            } else if (args[0] === "create-service-key") {
+                                createCallCount++;
+                                return TestUtil.getStdOut("");
+                            }
+                        }
+                    }
+                },
+                "@sap/cf-tools/out/src/utils.js": {
+                    getSpaceGuidThrowIfUndefined: () => Promise.resolve("test-space")
+                }
+            });
+
+            const result = await CFUtil.getOrCreateServiceKeyWithEndpoints("test-service");
+            expect(result).to.deep.equal(validEndpoints);
+            expect(createCallCount).to.equal(0);
         });
     });
 

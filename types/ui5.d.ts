@@ -16,6 +16,8 @@ declare class Resource {
     setPath(path: string): void;
     getString(): Promise<string>;
     setString(string: string): void;
+    getBuffer(): Promise<Buffer>;
+    setBuffer(buffer: Buffer): void;
 }
 
 declare interface IWorkspace {

@@ -5,7 +5,7 @@ import { UI5BuilderTools } from "../model/types.js";
 import IRepository from "../repositories/repository.js";
 import { dependsOn, getCommonPostCommands, IAdapter } from "./adapter.js";
 import CFAdapter from "./cfAdapter.js";
-import { AdaptCommandChain, PostCommandChain, SetupCommandChain } from "./commands/command.js";
+import { AdaptCommandChain, ManifestUpdateCommandChain, PostCommandChain, SetupCommandChain } from "./commands/command.js";
 import FetchEndpointsCommand from "./commands/fetchEndpointsCommand.js";
 import FetchPreviewResourcesCommand from "./commands/fetchPreviewResourcesCommand.js";
 import ProcessPreviewResourcesCommand from "./commands/processPreviewResourcesCommand.js";
@@ -30,8 +30,12 @@ export default class PreviewAdapter implements IAdapter {
         ]);
     }
 
-    createAdaptCommandChain(baseApp: BaseApp, appVariant: AppVariant): AdaptCommandChain {
-        return this.cfAdapter.createAdaptCommandChain(baseApp, appVariant);
+    createAdaptCommandChain(files: ReadonlyMap<string, Buffer>, appVariant: AppVariant): AdaptCommandChain {
+        return this.cfAdapter.createAdaptCommandChain(files, appVariant);
+    }
+
+    createManifestPreviewCommandChain(baseApp: BaseApp, appVariant: AppVariant, references: Map<string, string>): ManifestUpdateCommandChain {
+        return this.cfAdapter.createManifestPreviewCommandChain(baseApp, appVariant, references);
     }
 
     createPostCommandChain(

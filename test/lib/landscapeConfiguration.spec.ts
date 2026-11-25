@@ -1,13 +1,9 @@
 import { initialize } from "../../src/landscapeConfiguration.js";
-import * as chai from "chai";
-import chaiAsPromised from "chai-as-promised";
+import { expect } from "chai";
 import AbapAdapter from "../../src/adapters/abapAdapter.js";
 import CFAdapter from "../../src/adapters/cfAdapter.js";
 import LocalRepository from "../../src/repositories/localRepository.js";
 import { IConfiguration } from "../../src/model/configuration.js";
-
-chai.use(chaiAsPromised);
-const { expect } = chai;
 
 describe("LandscapeConfiguration", () => {
 

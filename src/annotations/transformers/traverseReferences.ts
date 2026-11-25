@@ -12,7 +12,7 @@ export default class TraverseReferences implements Transformer {
         this.metadataUrl = metadataUrl;
     }
 
-    async transform({ json, language, serviceRequestor, uri: parentUrl }: TransformerInput): Promise<void> {
+    async transform({ json, language, repository, uri: parentUrl }: TransformerInput): Promise<void> {
         const references = MetadataJsonUtil.getReferences(json).filter(TraverseReferences.isTraversable);
         const promises = [];
         for (const { includes, uri: relativeUrl } of references) {
@@ -24,7 +24,7 @@ export default class TraverseReferences implements Transformer {
             }
             const name = includes[0]?.namespace;
             const dataSource = new DataSourceODataAnnotation(name, absoluteUrl, {}, this.metadataUrl);
-            promises.push(dataSource.downloadAnnotation(language, serviceRequestor)
+            promises.push(dataSource.downloadAnnotation(language, repository)
                 .then(childAnnotation => ({ name, childAnnotation })));
         }
         const childAnnotations = await Promise.all(promises);

@@ -8,6 +8,7 @@ import ResourceUtil from "../../../../src/util/resourceUtil.js";
 import FsUtil from "../../../../src/util/fsUtil.js";
 import FetchPreviewResourcesCommand from "../../../../src/adapters/commands/fetchPreviewResourcesCommand.js";
 import ProcessPreviewResourcesCommand from "../../../../src/adapters/commands/processPreviewResourcesCommand.js";
+import { bufferToJson, bufferToString, stringToBuffer } from "../../../../src/util/commonUtil.js";
 
 describe("updateXsAppJson", () => {
     let cfUtilStub: sinon.SinonStub;
@@ -81,58 +82,28 @@ describe("updateXsAppJson", () => {
         };
 
         const command = new XsAppJsonEnhanceRoutesCommand(Promise.resolve(mockServiceCredentials));
-        const baseAppFiles = new Map<string, string>();
-        baseAppFiles.set("xs-app.json", JSON.stringify(originalXsAppJson));
+        const baseAppFiles = new Map<string, Buffer>();
+        baseAppFiles.set("xs-app.json", stringToBuffer(JSON.stringify(originalXsAppJson)));
         await command.execute(baseAppFiles);
-        const updatedXsAppJson = JSON.parse(baseAppFiles.get("xs-app.json")!);
+        const updatedXsAppJson = bufferToJson(baseAppFiles.get("xs-app.json")!);
         expect(updatedXsAppJson.routes).to.deep.equal(expectedXsAppJson.routes);
     });
-
-    it("should generate unique service key name when creating new keys", async () => {
-        const mockServiceCredentials = {
-            endpoints: {
-                "api-endpoint": {
-                    destination: "test-destination",
-                    url: "https://api.example.com"
-                }
-            },
-            "sap.cloud.service": "test-cloud-service"
-        };
-
-        cfUtilStub.resolves(mockServiceCredentials);
-
-        // Stub the generateUniqueServiceKeyName method
-        const generateUniqueStub = sinon
-            .stub(CFUtil, "generateUniqueServiceKeyName")
-            .resolves("test-service-instance-key-5");
-
-        const command = new XsAppJsonEnhanceRoutesCommand(Promise.resolve(mockServiceCredentials));
-        const baseAppFiles = new Map<string, string>();
-        // Add a route with destination to trigger the service key function call
-        baseAppFiles.set("xs-app.json", JSON.stringify({
-            routes: [{ source: "/api", destination: "api-dest" }]
-        }));
-
-        await command.execute(baseAppFiles);
-        generateUniqueStub.restore();
-    });
-
 
     it("should not throw if no valid endpoints are provided and new key also has no endpoints", async () => {
         // Simulate CFUtil.getOrCreateServiceKeyWithEndpoints returning undefined or empty endpoints
         const command = new XsAppJsonEnhanceRoutesCommand(Promise.resolve({ endpoints: {} }));
-        const baseAppFiles = new Map<string, string>();
+        const baseAppFiles = new Map<string, Buffer>();
         const routes = [{
             source: "/api/(.*)",
             destination: "test-destination",
             authenticationType: "xsuaa"
         }];
-        baseAppFiles.set("xs-app.json", JSON.stringify({ routes }));
-        baseAppFiles.set("manifest.json", "{}");
+        baseAppFiles.set("xs-app.json", stringToBuffer(JSON.stringify({ routes })));
+        baseAppFiles.set("manifest.json", stringToBuffer("{}"));
 
         await command.execute(baseAppFiles);
         // xs-app.json should remain unchanged
-        const updated = JSON.parse(baseAppFiles.get("xs-app.json")!);
+        const updated = bufferToJson(baseAppFiles.get("xs-app.json")!);
         expect(updated.routes).to.deep.equal(routes);
     });
 });
@@ -307,14 +278,14 @@ describe("adjust xs-app.json", () => {
     });
 
     const createBaseFiles = (xsAppJson?: string) => {
-        const baseFiles = new Map<string, string>();
+        const baseFiles = new Map<string, Buffer>();
         if (xsAppJson) {
-            baseFiles.set("xs-app.json", xsAppJson);
+            baseFiles.set("xs-app.json", stringToBuffer(xsAppJson));
         }
         return baseFiles;
     };
 
-    const createRepository = (libFiles: ReadonlyMap<string, string>) => ({
+    const createRepository = (libFiles: ReadonlyMap<string, Buffer>) => ({
         fetch: async () => libFiles
     }) as any;
 
@@ -385,7 +356,7 @@ describe("adjust xs-app.json", () => {
     });
 
     it("should merge xs-app.json files", async () => {
-        const libFiles = new Map<string, string>([["xs-app.json", JSON.stringify({
+        const libFiles = new Map<string, Buffer>([["xs-app.json", stringToBuffer(JSON.stringify({
             "authenticationMethod": "route",
             "routes": [
                 {
@@ -401,13 +372,13 @@ describe("adjust xs-app.json", () => {
                     "authenticationType": "xsuaa"
                 }
             ]
-        })]]);
+        }))]]);
 
         const resourceWrite = await prepareFiles([createReuseLibInfo()], libFiles, createBaseXsAppJson());
 
         expect(resourceWrite.called, "ResourceUtil.writeInProject should be called to write merged xs-app.json").to.be.true;
         const mergedXsAppMap = resourceWrite.getCall(0).args[1];
-        const mergedXsAppJson = mergedXsAppMap.get("xs-app.json")!;
+        const mergedXsAppJson = bufferToString(mergedXsAppMap.get("xs-app.json")!);
         const mergedXsApp = JSON.parse(mergedXsAppJson);
 
         expect(mergedXsApp.routes).to.deep.equal([{
@@ -431,14 +402,14 @@ describe("adjust xs-app.json", () => {
 
     it("should merge base app xs-app.json and reuse xs-app.json to .adp/reuse", async () => {
         const resourceWrite = await prepareFiles([createReuseLibInfo()], new Map([[
-            "xs-app.json", createReuseLibXsAppJson()
+            "xs-app.json", stringToBuffer(createReuseLibXsAppJson())
         ]]), createBaseXsAppJson());
 
         expect(resourceWrite.calledOnce, "ResourceUtil.writeInProject should be called").to.be.true;
-        const writtenFiles = resourceWrite.getCall(0).args[1] as ReadonlyMap<string, string>;
+        const writtenFiles = resourceWrite.getCall(0).args[1] as ReadonlyMap<string, Buffer>;
         const mergedXsAppJson = writtenFiles.get("xs-app.json");
         expect(mergedXsAppJson).to.not.be.undefined;
-        expect(JSON.parse(mergedXsAppJson!)).to.deep.equal({
+        expect(bufferToJson(mergedXsAppJson!)).to.deep.equal({
             authenticationMethod: "route",
             routes: [{
                 authenticationType: "basic",
@@ -457,10 +428,10 @@ describe("adjust xs-app.json", () => {
         const resourceWrite = await prepareFiles([createReuseLibInfo()], new Map(), createBaseXsAppJson());
 
         expect(resourceWrite.calledOnce, "ResourceUtil.writeInProject should be called").to.be.true;
-        const writtenFiles = resourceWrite.getCall(0).args[1] as ReadonlyMap<string, string>;
+        const writtenFiles = resourceWrite.getCall(0).args[1] as ReadonlyMap<string, Buffer>;
         const mergedXsAppJson = writtenFiles.get("xs-app.json");
         expect(mergedXsAppJson).to.not.be.undefined;
-        expect(JSON.parse(mergedXsAppJson!)).to.deep.equal({
+        expect(bufferToJson(mergedXsAppJson!)).to.deep.equal({
             authenticationMethod: "route",
             routes: [
                 {
@@ -476,8 +447,8 @@ describe("adjust xs-app.json", () => {
         const resourceWrite = await prepareFiles([createReuseLibInfo()]);
 
         expect(resourceWrite.calledOnce, "ResourceUtil.writeInProject should be called once (for Component.js)").to.be.true;
-        const writtenFiles = resourceWrite.getCall(0).args[1] as ReadonlyMap<string, string>;
-        expect(writtenFiles.get("lib1/Component.js")).to.equal("sap.ui.define([], function() {});");
+        const writtenFiles = resourceWrite.getCall(0).args[1] as ReadonlyMap<string, Buffer>;
+        expect(bufferToString(writtenFiles.get("lib1/Component.js")!)).to.equal("sap.ui.define([], function() {});");
         expect(writtenFiles.has("xs-app.json")).to.be.false;
     });
 
@@ -486,18 +457,65 @@ describe("adjust xs-app.json", () => {
         expect(resourceWrite.calledOnce, "ResourceUtil.writeInProject should not be called with no files").to.be.false;
     });
 
-    async function prepareFiles(ui5AppInfoJson: IReuseLibInfo[], reuseLibFiles?: Map<string, string>, xsAppJson?: string): Promise<SinonStub<[dir: string, files: Map<string, string>], Promise<void[]>>> {
+    it("should await XsAppJsonEnhanceRoutesCommand before writing xs-app.json to project (regression: fire-and-forget)", async () => {
+        // Regression: if processPreviewResourcesCommand.ts forgets to await
+        // XsAppJsonEnhanceRoutesCommand, ResourceUtil.writeInProject is called
+        // BEFORE the routes get rewritten with endpoint/service. A reference-based
+        // assertion misses it because the Map gets mutated after the fact, so we
+        // snapshot the xs-app.json content at the moment of writeInProject.
+        const libFiles = new Map<string, Buffer>([["xs-app.json", stringToBuffer(JSON.stringify({
+            authenticationMethod: "route",
+            routes: [{
+                source: "^/test/(.*)$",
+                target: "/test/$1",
+                authenticationType: "xsuaa",
+                destination: "ZTEST_DEST"
+            }]
+        }))]]);
+        const defaultReuseLibFiles = new Map<string, Buffer>([
+            ["Component.js", stringToBuffer("sap.ui.define([], function() {});")],
+            ...libFiles
+        ]);
+        const repository = createRepository(defaultReuseLibFiles);
+        let xsAppJsonAtWriteTime: string | undefined;
+        sandbox.stub(ResourceUtil, "writeInProject").callsFake(async (_dir: string, files: Map<string, Buffer>) => {
+            // snapshot content in the very moment writeInProject is invoked
+            const buffer = files.get("xs-app.json");
+            xsAppJsonAtWriteTime = buffer ? bufferToString(buffer) : undefined;
+            return [];
+        });
+        sandbox.stub(FsUtil, "readInProject").resolves(stringToBuffer(createAppInfoContent([createReuseLibInfo()])));
+        // Delay service credentials so fire-and-forget enhance cannot win the race
+        const slowCredentials = new Promise<ServiceCredentials>(resolve => {
+            setTimeout(() => resolve(credentials), 50);
+        });
+        const fetchCommand = new FetchPreviewResourcesCommand("reuse.lib1", repository);
+        await fetchCommand.execute();
+        const processCommand = new ProcessPreviewResourcesCommand(slowCredentials, fetchCommand.result);
+        await processCommand.execute(createBaseFiles(createBaseXsAppJson()));
+
+        expect(xsAppJsonAtWriteTime, "writeInProject was not called").to.not.be.undefined;
+        const written = JSON.parse(xsAppJsonAtWriteTime!);
+        const enhancedRoute = written.routes.find((r: any) => r.source === "^/resources/com/example/lib1/test/(.*)$");
+        expect(enhancedRoute, "route with matching destination should be enhanced").to.deep.include({
+            endpoint: "api-endpoint",
+            service: "test-service"
+        });
+        expect(enhancedRoute).to.not.have.property("destination");
+    });
+
+    async function prepareFiles(ui5AppInfoJson: IReuseLibInfo[], reuseLibFiles?: Map<string, Buffer>, xsAppJson?: string): Promise<SinonStub<[dir: string, files: Map<string, Buffer>], Promise<void[]>>> {
         const appInfoContent = createAppInfoContent(ui5AppInfoJson);
         // input for preview process: contain baseApp and appVar merged files
         const baseFiles = createBaseFiles(xsAppJson);
-        const defaultReuseLibFiles = new Map<string, string>();
+        const defaultReuseLibFiles = new Map<string, Buffer>();
         if (ui5AppInfoJson.length > 0) {
-            defaultReuseLibFiles.set("Component.js", "sap.ui.define([], function() {});");
+            defaultReuseLibFiles.set("Component.js", stringToBuffer("sap.ui.define([], function() {});"));
             reuseLibFiles?.forEach((value, key) => defaultReuseLibFiles.set(key, value));
         }
         const repository = createRepository(defaultReuseLibFiles);
         const resourceWrite = sandbox.stub(ResourceUtil, "writeInProject");
-        sandbox.stub(FsUtil, "readInProject").resolves(appInfoContent);
+        sandbox.stub(FsUtil, "readInProject").resolves(stringToBuffer(appInfoContent));
         const fetchCommand = new FetchPreviewResourcesCommand("reuse.lib1", repository);
         await fetchCommand.execute();
         const processCommand = new ProcessPreviewResourcesCommand(Promise.resolve(credentials), fetchCommand.result);

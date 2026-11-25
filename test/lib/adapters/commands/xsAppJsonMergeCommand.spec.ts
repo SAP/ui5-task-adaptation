@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import XsAppJsonMergeCommand from "../../../../src/adapters/commands/xsAppJsonMergeCommand.js";
 import { XSAPP_JSON_FILENAME } from "../../../../src/util/cf/xsAppJsonUtil.js";
+import { bufferToJson } from "../../../../src/util/commonUtil.js";
 
 
 describe("CFAdapter", () => {
@@ -21,9 +22,9 @@ describe("CFAdapter", () => {
             ]
         };
 
-        const files = new Map<string, string>([[XSAPP_JSON_FILENAME, JSON.stringify(baseXsApp)]]);
-        await new XsAppJsonMergeCommand().execute(files, XSAPP_JSON_FILENAME, JSON.stringify(variantXsApp));
-        const merged = JSON.parse(files.get(XSAPP_JSON_FILENAME)!);
+        const files = new Map<string, Buffer>([[XSAPP_JSON_FILENAME, Buffer.from(JSON.stringify(baseXsApp))]]);
+        await new XsAppJsonMergeCommand().execute(files, XSAPP_JSON_FILENAME, Buffer.from(JSON.stringify(variantXsApp)));
+        const merged = bufferToJson(files.get(XSAPP_JSON_FILENAME)!);
         expect(merged.welcomeFile).to.equal("/comfioritoolstravel/");
         expect(merged.authenticationMethod).to.equal("route");
         expect(merged.routes).to.deep.equal([
@@ -49,14 +50,14 @@ describe("CFAdapter", () => {
             ]
         };
 
-        const files = new Map<string, string>([[XSAPP_JSON_FILENAME, JSON.stringify(baseXsApp)]]);
-        await expect(new XsAppJsonMergeCommand().execute(files, XSAPP_JSON_FILENAME, "{invalidJson}"))
+        const files = new Map<string, Buffer>([[XSAPP_JSON_FILENAME, Buffer.from(JSON.stringify(baseXsApp))]]);
+        await expect(new XsAppJsonMergeCommand().execute(files, XSAPP_JSON_FILENAME, Buffer.from("{invalidJson}")))
             .to.be.rejectedWith("Failed to parse xs-app.json content: Expected property name or '}' in JSON at position 1");
     });
 
     it("does not modify xs-app.json if appVariant is invalid JSON", async () => {
-        const files = new Map<string, string>([[XSAPP_JSON_FILENAME, JSON.stringify({})]]);
-        await expect(new XsAppJsonMergeCommand().execute(files, XSAPP_JSON_FILENAME, "{invalidJson}"))
+        const files = new Map<string, Buffer>([[XSAPP_JSON_FILENAME, Buffer.from(JSON.stringify({}))]]);
+        await expect(new XsAppJsonMergeCommand().execute(files, XSAPP_JSON_FILENAME, Buffer.from("{invalidJson}")))
             .to.be.rejectedWith("Failed to parse xs-app.json content: Expected property name or '}' in JSON at position 1");
     });
 
@@ -74,9 +75,9 @@ describe("CFAdapter", () => {
             authenticationMethod: "route"
         };
 
-        const files = new Map<string, string>([[XSAPP_JSON_FILENAME, JSON.stringify(baseXsApp)]]);
-        await new XsAppJsonMergeCommand().execute(files, XSAPP_JSON_FILENAME, JSON.stringify(variantXsApp));
-        const merged = JSON.parse(files.get(XSAPP_JSON_FILENAME)!);
+        const files = new Map<string, Buffer>([[XSAPP_JSON_FILENAME, Buffer.from(JSON.stringify(baseXsApp))]]);
+        await new XsAppJsonMergeCommand().execute(files, XSAPP_JSON_FILENAME, Buffer.from(JSON.stringify(variantXsApp)));
+        const merged = bufferToJson(files.get(XSAPP_JSON_FILENAME)!);
         expect(merged).to.deep.equal({
             welcomeFile: "/comfioritoolstravel/",
             authenticationMethod: "route",
@@ -102,9 +103,9 @@ describe("CFAdapter", () => {
             ]
         };
 
-        const files = new Map<string, string>([[XSAPP_JSON_FILENAME, JSON.stringify(baseXsApp)]]);
-        await new XsAppJsonMergeCommand().execute(files, XSAPP_JSON_FILENAME, JSON.stringify(variantXsApp));
-        const merged = JSON.parse(files.get(XSAPP_JSON_FILENAME)!);
+        const files = new Map<string, Buffer>([[XSAPP_JSON_FILENAME, Buffer.from(JSON.stringify(baseXsApp))]]);
+        await new XsAppJsonMergeCommand().execute(files, XSAPP_JSON_FILENAME, Buffer.from(JSON.stringify(variantXsApp)));
+        const merged = bufferToJson(files.get(XSAPP_JSON_FILENAME)!);
         expect(merged).to.deep.equal({
             welcomeFile: "/comfioritoolstravel/",
             authenticationMethod: "route",

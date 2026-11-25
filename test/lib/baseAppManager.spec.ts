@@ -7,10 +7,11 @@ import AbapRepository from "../../src/repositories/abapRepository.js";
 import AbapAnnotationManager from "../../src/annotations/abapAnnotationManager.js";
 import AppVariant from "../../src/appVariant.js";
 import BaseApp, { preProcessFiles } from "../../src/baseApp.js";
-import { IProjectOptions } from "../../src/model/types.js";
+import { IProjectOptions, UI5BuilderTools } from "../../src/model/types.js";
 import MockServer from "./testUtilities/mockServer.js";
 import { SinonSandbox } from "sinon";
-import TestUtil from "./testUtilities/testUtil.js";
+import TestUtil, { toBufferMap } from "./testUtilities/testUtil.js";
+import { bufferToJson, bufferToString } from "../../src/util/commonUtil.js";
 import CFAdapter from "../../src/adapters/cfAdapter.js";
 import AbapAdapter from "../../src/adapters/abapAdapter.js";
 import UpdateCloudDevAdaptationCommand from "../../src/adapters/commands/updateCloudDevAdaptationCommand.js";
@@ -20,7 +21,7 @@ describe("BaseAppManager getManifestInfo", () => {
 
     it("should replace . with / from i18n bundleName", () => {
         const manifestJson = TestUtil.getResource("manifest.json");
-        const baseApp = BaseApp.fromFiles(new Map([["manifest.json", manifestJson]]));
+        const baseApp = BaseApp.fromFiles(toBufferMap([["manifest.json", manifestJson]]));
         expect(baseApp.i18nPath).to.be.equal("i18n/i18n");
         expect(baseApp.id).to.be.equal("com.sap.base.app.id");
         expect(baseApp.version).to.be.equal("1.0.0");
@@ -31,7 +32,7 @@ describe("BaseAppManager getManifestInfo", () => {
         manifestJson["sap.app"]["i18n"] = {
             "bundleUrl": "samplePath/i18n/i18n.properties"
         }
-        const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(manifestJson)]]));
+        const baseApp = BaseApp.fromFiles(toBufferMap([["manifest.json", JSON.stringify(manifestJson)]]));
         expect(baseApp.i18nPath).to.be.equal("samplePath/i18n/i18n");
         expect(baseApp.id).to.be.equal("com.sap.base.app.id");
         expect(baseApp.version).to.be.equal("1.0.0");
@@ -42,7 +43,7 @@ describe("BaseAppManager getManifestInfo", () => {
         manifestJson["sap.app"]["i18n"] = {
             "bundleUrl": "samplePath.properties/i18n/i18n.properties"
         }
-        const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(manifestJson)]]));
+        const baseApp = BaseApp.fromFiles(toBufferMap([["manifest.json", JSON.stringify(manifestJson)]]));
         expect(baseApp.i18nPath).to.be.equal("samplePath.properties/i18n/i18n");
         expect(baseApp.id).to.be.equal("com.sap.base.app.id");
         expect(baseApp.version).to.be.equal("1.0.0");
@@ -70,7 +71,7 @@ describe("BaseAppManager getBaseAppManifest", () => {
     afterEach(() => sandbox.restore());
 
     it("should return correct manifest.json from root folder", async () => {
-        const baseApp = BaseApp.fromFiles(new Map([
+        const baseApp = BaseApp.fromFiles(toBufferMap([
             ["subfolder/manifest.json", TestUtil.getResource("manifest-annotation-only.json")],
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
@@ -80,7 +81,7 @@ describe("BaseAppManager getBaseAppManifest", () => {
 
     it("should apply manifest.json changes first, then *.change files", async () => {
         const appVariant = await TestUtil.getAppVariant("ci.settleman.fcadoc.opgs1", options.projectNamespace);
-        const baseApp = BaseApp.fromFiles(new Map([
+        const baseAppFiles = toBufferMap([
             ["manifest.json", JSON.stringify({
                 "_version": "1.12.0",
                 "sap.app": {
@@ -90,9 +91,9 @@ describe("BaseAppManager getBaseAppManifest", () => {
                     }
                 }
             })]
-        ]));
-        const files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
-        const inbouds = JSON.parse(files.get("manifest.json")!)["sap.app"].crossNavigation.inbounds;
+        ]);
+        const files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
+        const inbouds = bufferToJson(files.get("manifest.json")!)["sap.app"].crossNavigation.inbounds;
         expect(Object.keys(inbouds)).to.eql(["customer.ci.settleman.fcadoc.opgs1.InboundID"]);
         expect(inbouds["customer.ci.settleman.fcadoc.opgs1.InboundID"].title).to.eql("ak");
         expect(inbouds["customer.ci.settleman.fcadoc.opgs1.InboundID"].subTitle).to.eql("test");
@@ -100,7 +101,7 @@ describe("BaseAppManager getBaseAppManifest", () => {
 
     it("should throw error in case manifest.json is not in root folder", async () => {
         try {
-            BaseApp.fromFiles(new Map([
+            BaseApp.fromFiles(toBufferMap([
                 ["subfolder/manifest.json", TestUtil.getResource("manifest.json")],
                 ["component-preload.js", TestUtil.getResource("component-preload.js")]
             ]));
@@ -111,7 +112,7 @@ describe("BaseAppManager getBaseAppManifest", () => {
     });
 
     it("should filter files correctly in constructor", () => {
-        const inputFiles = new Map([
+        const inputFiles = toBufferMap([
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["manifest-bundle.zip", "zip content"],
             ["Component-preload.js", "preload content"],
@@ -135,9 +136,9 @@ describe("BaseAppManager getBaseAppManifest", () => {
         ]);
 
         // Verify that Component.js content has been replaced with Component-dbg.js content
-        expect(baseApp.files.get("Component.js")).to.equal("debug content");
-        expect(baseApp.files.get("Controller-dbg.js")).to.equal("debug only content");
-        expect(baseApp.files.get("regular-file.js")).to.equal("regular content");
+        expect(baseApp.files.get("Component.js")?.toString("utf8")).to.equal("debug content");
+        expect(baseApp.files.get("Controller-dbg.js")?.toString("utf8")).to.equal("debug only content");
+        expect(baseApp.files.get("regular-file.js")?.toString("utf8")).to.equal("regular content");
     });
 });
 
@@ -162,26 +163,27 @@ describe("BaseAppManager CF", () => {
 
 
     it("should update base app manifest", async () => {
-        const baseApp = BaseApp.fromFiles(new Map([
+        const baseAppFiles = toBufferMap([
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
-        ]));
+        ]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        let files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
 
-        const actualManifest = JSON.parse(renamedFiles.get("manifest.json")!);
-        const actualCPreload = renamedFiles.get("component-preload.js");
+        const actualManifest = bufferToJson(renamedFiles.get("manifest.json")!);
+        const actualCPreload = renamedFiles.get("component-preload.js")?.toString("utf8");
         expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected-cf.json")));
         expect(actualCPreload).to.eql(TestUtil.getResource("component-preload-expected.js"));
         assertManifestInfo(renamedFiles);
     });
 
     it("should skip base app files", async () => {
-        const baseApp = BaseApp.fromFiles(new Map([
+        const baseAppFiles = toBufferMap([
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["manifest-bundle.zip", ""],
             ["Component-preload.js", ""],
@@ -189,9 +191,10 @@ describe("BaseAppManager CF", () => {
             ["Component-dbg.js", "debug content"],
             ["Component.js", "production content"],
             ["Controller-dbg.js", "debug only content"]
-        ]));
+        ]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        let files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
@@ -217,16 +220,17 @@ describe("BaseAppManager CF", () => {
 
     it("should delete 'sap.cloud' if sapCloudService is not presented in config", async () => {
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        const baseApp = BaseApp.fromFiles(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
+        const baseAppFiles = toBufferMap([["manifest.json", TestUtil.getResource("manifest.json")]]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
         const optionsClone = { ...options, configuration: { ...options.configuration } };
         delete optionsClone.configuration["sapCloudService"];
         const adapter = new CFAdapter(optionsClone.configuration);
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        let files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        const manifest = JSON.parse(renamedFiles.get("manifest.json")!);
+        const manifest = bufferToJson(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.be.undefined;
         assertManifestInfo(renamedFiles);
     });
@@ -235,22 +239,23 @@ describe("BaseAppManager CF", () => {
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
         const baseAppManifest = TestUtil.getResourceJson("manifest.json");
         delete baseAppManifest["sap.cloud"];
-        const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(baseAppManifest)]]));
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        const baseAppFiles = toBufferMap([["manifest.json", JSON.stringify(baseAppManifest)]]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
+        let files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        const manifest = JSON.parse(renamedFiles.get("manifest.json")!);
+        const manifest = bufferToJson(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.eql({ service: "sapCloudService" });
         assertManifestInfo(renamedFiles);
     });
 
     it("should fill change layer", async () => {
         const appVariant = await TestUtil.getAppVariant("appVariant1", options.projectNamespace);
-        const baseApp = BaseApp.fromFiles(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
+        const baseAppFiles = toBufferMap([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const stub = sandbox.stub(RawApplier, "applyChanges")!;
-        await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const layers = stub.getCall(0).args[2].map((change: AppDescriptorChange) => change.getLayer());
         expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
@@ -284,9 +289,9 @@ describe("BaseAppManager CF", () => {
 
     const assertValidation = async (appVariant: AppVariant, options: IProjectOptions, expectedError: string, manifest: any) => {
         try {
-            const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(manifest)]]));
+            const baseAppFiles = toBufferMap([["manifest.json", JSON.stringify(manifest)]]);
             const adapter = new CFAdapter(options.configuration);
-            await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+            await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
             assert.fail(true, false, "Exception not thrown");
         } catch (error: any) {
             expect(error.message).to.equal(expectedError);
@@ -339,25 +344,42 @@ describe("BaseAppManager Abap", () => {
     });
 
     it("should update base app manifest", async () => {
-        const baseApp = BaseApp.fromFiles(new Map([
+        const baseAppFiles = toBufferMap([
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["component-preload.js", TestUtil.getResource("component-preload.js")]
-        ]));
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        ]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
+        const files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        const actualManifest = JSON.parse(renamedFiles.get("manifest.json")!);
-        const actualCPreload = renamedFiles.get("component-preload.js");
-        expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected-abap.json")));
+        const actualCPreload = renamedFiles.get("component-preload.js")?.toString("utf8");
         expect(actualCPreload).to.eql(TestUtil.getResource("component-preload-expected.js"));
-        assertAnnotations(files, 20);
+        expect(files.size).to.eql(14);
+        assertManifestInfo(files);
+    });
+
+    it("should download annotations in the full setup, adapt and post cycle", async () => {
+        const baseAppFiles = toBufferMap([
+            ["manifest.json", TestUtil.getResource("manifest.json")],
+            ["component-preload.js", TestUtil.getResource("component-preload.js")]
+        ]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
+        const { workspace, taskUtil } = await TestUtil.getWorkspace("appVariant1", options.projectNamespace);
+        const ui5BuilderTools = { workspace, taskUtil, projectNamespace: options.projectNamespace } as UI5BuilderTools;
+        await adapter.createSetupCommandChain(appVariant.reference, abapRepository).execute();
+        const adaptedFiles = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
+        const references = new Map([[baseApp.id, appVariant.id]]);
+        const files = await adapter.createPostCommandChain(references, appVariant, ui5BuilderTools).execute(adaptedFiles);
+        const actualManifest = bufferToJson(files.get("manifest.json")!);
+        expect(actualManifest).to.eql(JSON.parse(TestUtil.getResource("manifest-expected-abap.json")));
+        assertAnnotations(files, 18);
         assertManifestInfo(files);
     });
 
     it("should skip base app files", async () => {
-        const baseApp = BaseApp.fromFiles(new Map([
+        const baseAppFiles = toBufferMap([
             ["manifest.json", TestUtil.getResource("manifest.json")],
             ["manifest-bundle.zip", ""],
             ["Component-preload.js", ""],
@@ -365,23 +387,17 @@ describe("BaseAppManager Abap", () => {
             ["Component-dbg.js", "debug content"],
             ["Component.js", "production content"],
             ["Controller-dbg.js", "debug only content"]
-        ]));
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        ]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
+        const files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        assertAnnotations(renamedFiles, 21);
         expect(Array.from(renamedFiles.keys())).to.include.members([
             "manifest.json",
             "Component.js",
-            "Controller-dbg.js",
-            "annotations/annotation_annotationName1.xml",
-            "customer_com_sap_application_variant_id/i18n/annotations/i18n.properties",
-            "customer_com_sap_application_variant_id/i18n/annotations/i18n_en.properties",
-            "customer_com_sap_application_variant_id/i18n/annotations/i18n_de.properties",
-            "customer_com_sap_application_variant_id/i18n/annotations/i18n_fr.properties",
-            "annotations/annotation_annotationName2.xml"
+            "Controller-dbg.js"
         ]);
         expect(renamedFiles.has("manifest-bundle.zip")).to.be.false;
         expect(renamedFiles.has("Component-preload.js")).to.be.false;
@@ -400,39 +416,39 @@ describe("BaseAppManager Abap", () => {
     });
 
     it("should delete 'sap.cloud' if sapCloudService is not presented in config", async () => {
-        const baseApp = BaseApp.fromFiles(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
+        const baseAppFiles = toBufferMap([["manifest.json", TestUtil.getResource("manifest.json")]]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
         const optionsClone = { ...options, configuration: { ...options.configuration } };
         delete optionsClone.configuration["sapCloudService"];
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        const files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        const manifest = JSON.parse(renamedFiles.get("manifest.json")!);
+        const manifest = bufferToJson(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.eql({ service: "com.sap.manifest.default.service", public: true });
-        assertAnnotations(renamedFiles, 19);
         assertManifestInfo(renamedFiles);
     });
 
     it("should create default 'sap.cloud'", async () => {
         const baseAppManifest = JSON.parse(TestUtil.getResource("manifest.json"));
         delete baseAppManifest["sap.cloud"];
-        const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(baseAppManifest)]]));
-        let files = await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        const baseAppFiles = toBufferMap([["manifest.json", JSON.stringify(baseAppManifest)]]);
+        const baseApp = BaseApp.fromFiles(baseAppFiles);
+        const files = await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const renamedFiles = new Map(files);
         const references = new Map([[baseApp.id, appVariant.id]]);
         const command = new RenameFilesCommand(references);
         await command.execute(renamedFiles);
-        const manifest = JSON.parse(renamedFiles.get("manifest.json")!);
+        const manifest = bufferToJson(renamedFiles.get("manifest.json")!);
         expect(manifest["sap.cloud"]).to.be.undefined;
-        assertAnnotations(renamedFiles, 19);
         assertManifestInfo(renamedFiles);
     });
 
     it("should fill change layer", async () => {
-        const baseApp = BaseApp.fromFiles(new Map([["manifest.json", TestUtil.getResource("manifest.json")]]));
+        const baseAppFiles = toBufferMap([["manifest.json", TestUtil.getResource("manifest.json")]]);
         const stub = sandbox.stub(RawApplier, "applyChanges")!;
-        await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+        await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
         const layers = stub.getCall(0).args[2].map((change: AppDescriptorChange) => change.getLayer());
         expect(layers.every((layer: string) => layer === "CUSTOMER_BASE")).to.be.true;
     });
@@ -443,14 +459,14 @@ describe("BaseAppManager Abap", () => {
                 "id": "appId"
             }
         });
-        expect(() => BaseApp.fromFiles(new Map([["manifest.json", manifest]]))).to.throw(
+        expect(() => BaseApp.fromFiles(toBufferMap([["manifest.json", manifest]]))).to.throw(
             "The application id 'appId' must have at least two parts, separated by a period.");
     });
 
     const assertValidation = async (appVariant: AppVariant, expectedError: string, manifest: any) => {
         try {
-            const baseApp = BaseApp.fromFiles(new Map([["manifest.json", JSON.stringify(manifest)]]));
-            await adapter.createAdaptCommandChain(baseApp, appVariant).execute();
+            const baseAppFiles = toBufferMap([["manifest.json", JSON.stringify(manifest)]]);
+            await adapter.createAdaptCommandChain(baseAppFiles, appVariant).execute();
             assert.fail(true, false, "Exception not thrown");
         } catch (error: any) {
             expect(error.message).to.equal(expectedError);
@@ -460,13 +476,13 @@ describe("BaseAppManager Abap", () => {
 });
 
 
-function assertManifestInfo(files: ReadonlyMap<string, string>) {
-    const sapApp = JSON.parse(files.get("manifest.json")!)["sap.app"];
+function assertManifestInfo(files: ReadonlyMap<string, Buffer>) {
+    const sapApp = bufferToJson(files.get("manifest.json")!)["sap.app"];
     expect(sapApp.id).to.eql("customer.com.sap.application.variant.id");
     expect(sapApp.applicationVersion.version).to.eql("1.0.0");
 }
 
-function assertAnnotations(files: ReadonlyMap<string, string>, resourceCountExpected: number) {
+function assertAnnotations(files: ReadonlyMap<string, Buffer>, resourceCountExpected: number) {
     const annotationName1Expected = TestUtil.getResourceXml("annotations/v2/annotation-1-v2-expected/annotationName1-expected.xml");
     const annotationName2Expected = TestUtil.getResourceXml("annotations/v2/annotation-2-v2-expected/annotationName2-expected.xml");
     const name1i18nDf = files.get("customer_com_sap_application_variant_id/i18n/annotations/i18n.properties");
@@ -476,7 +492,7 @@ function assertAnnotations(files: ReadonlyMap<string, string>, resourceCountExpe
     const annotationName1Actual = files.get("annotations/annotation_annotationName1.xml");
     const annotationName2Actual = files.get("annotations/annotation_annotationName2.xml");
     expect(files.size).to.eql(resourceCountExpected);
-    expect(name1i18nDf!.split("\n")).to.have.members([
+    expect(bufferToString(name1i18nDf!).split("\n")).to.have.members([
         "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculateTotalPrice",
         "customer.com.sap.application.variant.id_AIRLINE=Airline",
         "customer.com.sap.application.variant.id_AIRLINE0=Airline",
@@ -487,7 +503,7 @@ function assertAnnotations(files: ReadonlyMap<string, string>, resourceCountExpe
         "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_travel_mduu",
         "customer.com.sap.application.variant.id_CURRENCY0=currency"
     ]);
-    expect(name1i18nEn!.split("\n")).to.have.members([
+    expect(bufferToString(name1i18nEn!).split("\n")).to.have.members([
         "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculateTotalPrice",
         "customer.com.sap.application.variant.id_AIRLINE=Airline",
         "customer.com.sap.application.variant.id_AIRLINE0=Airline",
@@ -498,7 +514,7 @@ function assertAnnotations(files: ReadonlyMap<string, string>, resourceCountExpe
         "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_travel_mduu",
         "customer.com.sap.application.variant.id_CURRENCY0=currency"
     ]);
-    expect(name1i18nDe!.split("\n")).to.have.members([
+    expect(bufferToString(name1i18nDe!).split("\n")).to.have.members([
         "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculateTotalPrice",
         "customer.com.sap.application.variant.id_AIRLINE=Fluglinie",
         "customer.com.sap.application.variant.id_AIRLINE0=Fluglinie",
@@ -509,7 +525,7 @@ function assertAnnotations(files: ReadonlyMap<string, string>, resourceCountExpe
         "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_reise_mduu",
         "customer.com.sap.application.variant.id_CURRENCY0=währung"
     ]);
-    expect(name1i18nFr!.split("\n")).to.have.members([
+    expect(bufferToString(name1i18nFr!).split("\n")).to.have.members([
         "customer.com.sap.application.variant.id_CALCULATETOTALPRICE=calculer le prix total",
         "customer.com.sap.application.variant.id_AIRLINE=Compagnie aérienne",
         "customer.com.sap.application.variant.id_AIRLINE0=Compagnie aérienne",
@@ -520,8 +536,8 @@ function assertAnnotations(files: ReadonlyMap<string, string>, resourceCountExpe
         "customer.com.sap.application.variant.id_CDS_M2_SD_TRAVEL_MDUU=cds_m2_sd_voyager_mduu",
         "customer.com.sap.application.variant.id_CURRENCY0=monnaie"
     ]);
-    expect(annotationName1Actual).to.be.eql(annotationName1Expected);
-    expect(annotationName2Actual).to.be.eql(annotationName2Expected);
+    expect(annotationName1Actual?.toString("utf8")).to.be.eql(annotationName1Expected);
+    expect(annotationName2Actual?.toString("utf8")).to.be.eql(annotationName2Expected);
 }
 
 describe("extractI18nPathFromManifest", () => {
@@ -540,7 +556,7 @@ describe("extractI18nPathFromManifest", () => {
                 }
             }
         });
-        expect(BaseApp.fromFiles(new Map([["manifest.json", manifest]])).i18nPath).to.be.equal(expected);
+        expect(BaseApp.fromFiles(toBufferMap([["manifest.json", manifest]])).i18nPath).to.be.equal(expected);
     }
 });
 
@@ -548,7 +564,7 @@ describe("extractI18nPathFromManifest", () => {
 describe("preProcessFiles", () => {
 
     it("should replace .js file content with -dbg.js content and delete -dbg.js when both exist", () => {
-        const files = new Map([
+        const files = toBufferMap([
             ["Component.js", "production content"],
             ["Component-dbg.js", "debug content"],
             ["regular-file.js", "regular content"]
@@ -556,37 +572,25 @@ describe("preProcessFiles", () => {
 
         const result = preProcessFiles(files);
 
-        expect(result.get("Component.js")).to.equal("debug content");
+        expect(result.get("Component.js")?.toString("utf8")).to.equal("debug content");
         expect(result.has("Component-dbg.js")).to.be.false; // Should be deleted
-        expect(result.get("regular-file.js")).to.equal("regular content");
+        expect(result.get("regular-file.js")?.toString("utf8")).to.equal("regular content");
     });
 
-    it("should not modify .js files when no corresponding -dbg.js exists", () => {
-        const files = new Map([
-            ["Component.js", "production content"],
+    it("should keep -dbg.js file if no corresponding .js exists", () => {
+        const files = toBufferMap([
+            ["Controller-dbg.js", "debug only content"],
             ["regular-file.js", "regular content"]
         ]);
 
         const result = preProcessFiles(files);
 
-        expect(result.get("Component.js")).to.equal("production content");
-        expect(result.get("regular-file.js")).to.equal("regular content");
-    });
-
-    it("should keep -dbg.js files when no corresponding .js exists", () => {
-        const files = new Map([
-            ["Component-dbg.js", "debug content"],
-            ["regular-file.js", "regular content"]
-        ]);
-
-        const result = preProcessFiles(files);
-
-        expect(result.get("Component-dbg.js")).to.equal("debug content");
-        expect(result.get("regular-file.js")).to.equal("regular content");
+        expect(result.get("Controller-dbg.js")?.toString("utf8")).to.equal("debug only content");
+        expect(result.get("regular-file.js")?.toString("utf8")).to.equal("regular content");
     });
 
     it("should handle multiple -dbg.js files correctly", () => {
-        const files = new Map([
+        const files = toBufferMap([
             ["Component.js", "production component"],
             ["Component-dbg.js", "debug component"],
             ["Controller.js", "production controller"],
@@ -597,16 +601,16 @@ describe("preProcessFiles", () => {
 
         const result = preProcessFiles(files);
 
-        expect(result.get("Component.js")).to.equal("debug component");
+        expect(result.get("Component.js")?.toString("utf8")).to.equal("debug component");
         expect(result.has("Component-dbg.js")).to.be.false; // Should be deleted
-        expect(result.get("Controller.js")).to.equal("debug controller");
+        expect(result.get("Controller.js")?.toString("utf8")).to.equal("debug controller");
         expect(result.has("Controller-dbg.js")).to.be.false; // Should be deleted
-        expect(result.get("View-dbg.js")).to.equal("debug view only"); // Kept (no corresponding .js)
-        expect(result.get("regular-file.js")).to.equal("regular content");
+        expect(result.get("View-dbg.js")?.toString("utf8")).to.equal("debug view only"); // Kept (no corresponding .js)
+        expect(result.get("regular-file.js")?.toString("utf8")).to.equal("regular content");
     });
 
     it("should handle nested file paths correctly", () => {
-        const files = new Map([
+        const files = toBufferMap([
             ["folder/Component.js", "production content"],
             ["folder/Component-dbg.js", "debug content"],
             ["folder/subfolder/Controller.js", "production controller"],
@@ -615,14 +619,14 @@ describe("preProcessFiles", () => {
 
         const result = preProcessFiles(files);
 
-        expect(result.get("folder/Component.js")).to.equal("debug content");
+        expect(result.get("folder/Component.js")?.toString("utf8")).to.equal("debug content");
         expect(result.has("folder/Component-dbg.js")).to.be.false; // Should be deleted
-        expect(result.get("folder/subfolder/Controller.js")).to.equal("debug controller");
+        expect(result.get("folder/subfolder/Controller.js")?.toString("utf8")).to.equal("debug controller");
         expect(result.has("folder/subfolder/Controller-dbg.js")).to.be.false; // Should be deleted
     });
 
     it("should remove IGNORE_FILES", () => {
-        const files = new Map([
+        const files = toBufferMap([
             ["manifest.json", "manifest content"],
             ["manifest-bundle.zip", "bundle content"],
             ["Component-preload.js", "preload content"],
@@ -632,15 +636,15 @@ describe("preProcessFiles", () => {
 
         const result = preProcessFiles(files);
 
-        expect(result.get("manifest.json")).to.equal("manifest content");
+        expect(result.get("manifest.json")?.toString("utf8")).to.equal("manifest content");
         expect(result.has("manifest-bundle.zip")).to.be.false; // Should be deleted
         expect(result.has("Component-preload.js")).to.be.false; // Should be deleted
         expect(result.has("sap-ui-cachebuster-info.json")).to.be.false; // Should be deleted
-        expect(result.get("regular-file.js")).to.equal("regular content");
+        expect(result.get("regular-file.js")?.toString("utf8")).to.equal("regular content");
     });
 
     it("should return a new Map and not modify the original", () => {
-        const files = new Map([
+        const files = toBufferMap([
             ["Component.js", "production content"],
             ["Component-dbg.js", "debug content"]
         ]);
@@ -648,17 +652,17 @@ describe("preProcessFiles", () => {
         const result = preProcessFiles(files);
 
         // Original should be unchanged
-        expect(files.get("Component.js")).to.equal("production content");
-        expect(files.get("Component-dbg.js")).to.equal("debug content");
+        expect(files.get("Component.js")?.toString("utf8")).to.equal("production content");
+        expect(files.get("Component-dbg.js")?.toString("utf8")).to.equal("debug content");
         // Result should have the replaced content and deleted -dbg.js
-        expect(result.get("Component.js")).to.equal("debug content");
+        expect(result.get("Component.js")?.toString("utf8")).to.equal("debug content");
         expect(result.has("Component-dbg.js")).to.be.false;
         // Should be different Map instances
         expect(result).to.not.equal(files);
     });
 
     it("should remove -dbg.js.map if corresponding .js file exists", () => {
-        const files = new Map([
+        const files = toBufferMap([
             ["Component.js", "production content"],
             ["Component-dbg.js.map", "debug map content"],
             ["Component-dbg.js", "debug content"],
@@ -673,10 +677,10 @@ describe("preProcessFiles", () => {
         // -dbg.js should be removed if .js exists
         expect(result.has("Component-dbg.js")).to.be.false;
         // .js should have debug content
-        expect(result.get("Component.js")).to.equal("debug content");
+        expect(result.get("Component.js")?.toString("utf8")).to.equal("debug content");
         // regular-file-dbg.js.map should be removed (regular-file.js exists)
         expect(result.has("regular-file-dbg.js.map")).to.be.false;
         // regular-file.js should be untouched
-        expect(result.get("regular-file.js")).to.equal("regular content");
+        expect(result.get("regular-file.js")?.toString("utf8")).to.equal("regular content");
     });
 });

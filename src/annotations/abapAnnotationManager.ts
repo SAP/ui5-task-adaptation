@@ -2,7 +2,6 @@ import DataSourceManager from "./dataSource/dataSourceManager.js";
 import I18nManager from "../i18nManager.js";
 import { IConfiguration } from "../model/types.js";
 import Language from "../model/language.js";
-import ServiceRequestor from "./serviceRequestor.js";
 import { posix as path } from "path";
 import IAnnotationManager from "./annotationManager.js";
 import IRepository from "../repositories/repository.js";
@@ -35,11 +34,10 @@ export default class AbapAnnotationManager implements IAnnotationManager {
         const modelName = I18N_DEFAULT_MODEL_NAME;//`i18n_a9n_${normalisedId}`;
         const i18nPathName = path.join(prefix, I18N_DEFAULT_PATH);
         const i18nManager = new I18nManager(modelName, appVariantId, languages);
-        const serviceRequestor = new ServiceRequestor(this.configuration, this.repository);
 
         const dataSourceManager = new DataSourceManager();
         await dataSourceManager.addDataSources(baseAppManifest["sap.app"]?.dataSources);
-        const annotationFiles = await dataSourceManager.createAnnotationFiles(languages, i18nManager, serviceRequestor);
+        const annotationFiles = await dataSourceManager.createAnnotationFiles(languages, i18nManager, this.repository);
         const i18nFiles = i18nManager.createFiles(i18nPathName);
 
         if (i18nManager.hasTranslations()) {

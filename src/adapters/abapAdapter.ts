@@ -3,21 +3,24 @@ import { AdaptCommandChain, ManifestUpdateCommandChain, PostCommandChain, SetupC
 import { IAppVariantIdHierarchyManifestItem } from "../model/appVariantIdHierarchyItem.js";
 import BaseApp from "../baseApp.js";
 import AppVariant from "../appVariant.js";
-import IAnnotationManager from "../annotations/annotationManager.js";
 import DownloadAnnotationsCommand from "./commands/downloadAnnotationsCommand.js";
 import I18nPropertiesMergeCommand from "./commands/i18nPropertiesMergeCommand.js";
 import { UI5BuilderTools } from "../model/types.js";
 import IRepository from "../repositories/repository.js";
+import IAnnotationManager from "../annotations/annotationManager.js";
+import RenameManifestCommand from "./commands/renameManifestCommand.js";
 
 
 export default class AbapAdapter implements IAdapter {
     constructor(private annotationManager: IAnnotationManager) { }
 
+
     createSetupCommandChain(_appId: string, _repository: IRepository): SetupCommandChain {
         return new SetupCommandChain([]);
     }
 
-    createAdaptCommandChain(baseApp: BaseApp, appVariant: AppVariant): AdaptCommandChain {
+    createAdaptCommandChain(files: ReadonlyMap<string, Buffer>, appVariant: AppVariant): AdaptCommandChain {
+        const baseApp = BaseApp.fromFiles(files);
         const appVariantIdHierarchyItem = {
             appVariantId: baseApp.id,
             version: baseApp.version,
@@ -25,10 +28,9 @@ export default class AbapAdapter implements IAdapter {
         } as IAppVariantIdHierarchyManifestItem;
         const manifestChanges = appVariant.getProcessedManifestChanges();
         return new AdaptCommandChain(baseApp.files, appVariant.getProcessedFiles(), [
-            new ManifestUpdateCommandChain([
-                ...getCommonManifestUpdateCommands(baseApp, appVariant, appVariantIdHierarchyItem),
-            ]),
-            new DownloadAnnotationsCommand(appVariant.id, appVariant.prefix, this.annotationManager),
+            new ManifestUpdateCommandChain(
+                getCommonManifestUpdateCommands(baseApp, appVariant, appVariantIdHierarchyItem)
+            ),
             new I18nPropertiesMergeCommand(baseApp.i18nPath, appVariant.prefix, manifestChanges),
         ]);
     }
@@ -38,12 +40,25 @@ export default class AbapAdapter implements IAdapter {
         adaptationProject: AppVariant,
         ui5BuilderTools: UI5BuilderTools,
     ): PostCommandChain {
-        return new PostCommandChain(
-            getCommonPostCommands(
+        return new PostCommandChain([
+            new DownloadAnnotationsCommand(adaptationProject.id, adaptationProject.prefix, this.annotationManager),
+            ...getCommonPostCommands(
                 references,
                 adaptationProject,
                 ui5BuilderTools,
             )
-        );
+        ]);
+    }
+
+    createManifestPreviewCommandChain(baseApp: BaseApp, appVariant: AppVariant, references: Map<string, string>): ManifestUpdateCommandChain {
+        const appVariantIdHierarchyItem = {
+            appVariantId: baseApp.id,
+            version: baseApp.version,
+            layer: "VENDOR"
+        } as IAppVariantIdHierarchyManifestItem;
+        return new ManifestUpdateCommandChain([
+            ...getCommonManifestUpdateCommands(baseApp, appVariant, appVariantIdHierarchyItem),
+            new RenameManifestCommand(references),
+        ]);
     }
 }

@@ -21,6 +21,7 @@ export const TEXT_EXTENSIONS: ReadonlySet<string> = new Set([
     "ctrl_variant",
     "ctrl_variant_change",
     "ctrl_variant_management_change",
+    "annotation_change",
     "variant",
     "fioriversion",
     "codeChange",
@@ -93,13 +94,18 @@ export default class ResourceUtil {
      * @param excludes An array of glob patterns to exclude from the search.
      * @returns A promise that resolves to a Map of file paths and their contents as Buffer.
      */
-    static byGlob(dir: string, pattern: string, excludes: string[] = []): Promise<Map<string, Buffer>> {
+    static async byGlob(dir: string, pattern: string, excludes: string[] = []): Promise<Map<string, Buffer>> {
         const adapter = resourceFactory.createAdapter({
             fsBasePath: dir,
             virBasePath: "/",
             excludes
         });
-        return adapter.byGlob(pattern).then((resources: ReadonlyArray<Resource>) => this.toFileMap(resources));
+        const resources = await adapter.byGlob(pattern) as ReadonlyArray<Resource>;
+        const files = new Map<string, Buffer>();
+        for (const resource of resources) {
+            files.set(resource.getPath().substring(1), await resource.getBuffer());
+        }
+        return files;
     }
 
 
@@ -151,31 +157,16 @@ export default class ResourceUtil {
     }
 
 
-    static async toFileMap(resources: ReadonlyArray<Resource>, projectNamespace?: string) {
-        const files = new Map<string, string>();
-        const rootFolderLength = projectNamespace ? ResourceUtil.getRootFolder(projectNamespace).length : 0;
+    static async toFileMap(resources: ReadonlyArray<Resource>, projectNamespace?: string): Promise<Map<string, Buffer>> {
+        const files = new Map<string, Buffer>();
+        const rootFolder = projectNamespace ? ResourceUtil.getRootFolder(projectNamespace) : undefined;
         for (const resource of resources) {
-            files.set(resource.getPath().substring(rootFolderLength + 1), await ResourceUtil.getString(resource));
+            const resourcePath = resource.getPath();
+            const filename = rootFolder && resourcePath.startsWith(rootFolder)
+                ? resourcePath.substring(rootFolder.length + 1)
+                : resourcePath.substring(1);
+            files.set(filename, await resource.getBuffer());
         }
         return files;
     }
-
-
-    /**
-     * Decodes the text-extension files of a buffer map to UTF-8 strings.
-     * Binary files (e.g. images, fonts) are dropped — they are expected to
-     * have been written to the workspace separately and are not relevant
-     * to the in-memory text pipeline.
-     */
-    static toTextMap(buffers: ReadonlyMap<string, Buffer>): ReadonlyMap<string, string> {
-        const text = new Map<string, string>();
-        buffers.forEach((buffer, filename) => {
-            if (TEXT_EXTENSIONS.has(path.extname(filename).slice(1))) {
-                text.set(filename, buffer.toString(UTF8));
-            }
-        });
-        return text;
-    }
-
-
 }

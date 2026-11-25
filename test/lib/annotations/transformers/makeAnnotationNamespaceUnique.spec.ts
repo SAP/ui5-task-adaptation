@@ -1,8 +1,8 @@
 import * as sinon from "sinon";
 
+import AbapRepository from "../../../../src/repositories/abapRepository.js";
 import Language from "../../../../src/model/language.js";
 import MakeAnnotationNamespaceUnique from "../../../../src/annotations/transformers/makeAnnotationNamespaceUnique.js";
-import ServiceRequestor from "../../../../src/annotations/serviceRequestor.js";
 import { SinonSandbox } from "sinon";
 import XmlUtil from "../../../../src/util/xmlUtil.js";
 import { expect } from "chai";
@@ -35,7 +35,7 @@ describe("MakeAnnotationNamespaceUnique", () => {
             json: XmlUtil.xmlToJson(metadata),
             uri: "/odata/v2/ManifestConfigurationService/$metadata",
             language: new Language("EN", "en"),
-            serviceRequestor: sandbox.createStubInstance(ServiceRequestor),
+            repository: sandbox.createStubInstance(AbapRepository),
             xml: metadata
         }));
         expect(result).to.eql(metadataV4Xml(

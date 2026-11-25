@@ -3,6 +3,7 @@ import * as chai from "chai";
 import I18nManager, { I18nFileContent, PropertyValue } from "../../src/i18nManager.js";
 
 import Language from "../../src/model/language.js";
+import XmlUtil from "../../src/util/xmlUtil.js";
 
 const { expect } = chai;
 
@@ -38,6 +39,40 @@ describe("I18nFileContent", () => {
 
 
 describe("I18nManager", () => {
+
+    it("should preserve namespace attributes when extracting values from a node missing in another language", async () => {
+        const languages = Language.create(["EN", "DE"]);
+        const manager = new I18nManager("i18n", "test", languages);
+        const english = `<edmx:Edmx><edmx:DataServices><Schema Namespace="Example">
+            <Annotations Target="Example.Shared" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Common.Label" String="Shared"/>
+            </Annotations>
+            <Annotations Target="Example.Optional" xmlns="http://docs.oasis-open.org/odata/ns/edm" xmlns:custom="urn:custom" xml:lang="en" xml:space="preserve">
+                <Annotation Term="Common.Label" String="Agency" Value="Agency Name"/>
+                <Annotation Term="Common.QuickInfo"><String><![CDATA[Details]]></String></Annotation>
+            </Annotations>
+        </Schema></edmx:DataServices></edmx:Edmx>`;
+        const german = `<edmx:Edmx><edmx:DataServices><Schema Namespace="Example">
+            <Annotations Target="Example.Shared" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+                <Annotation Term="Common.Label" String="Gemeinsam"/>
+            </Annotations>
+        </Schema></edmx:DataServices></edmx:Edmx>`;
+        const result = await manager.populateTranslations(new Map([
+            [languages[0], Promise.resolve(XmlUtil.xmlToJson(english))],
+            [languages[1], Promise.resolve(XmlUtil.xmlToJson(german))]
+        ]));
+
+        expect(manager.createFiles("i18n")).to.eql(new Map([
+            ["i18n/i18n.properties", "test_AGENCY=Agency\ntest_AGENCY_NAME=Agency Name\ntest_DETAILS=Details\ntest_SHARED=Shared"],
+            ["i18n/i18n_en.properties", "test_AGENCY=Agency\ntest_AGENCY_NAME=Agency Name\ntest_DETAILS=Details\ntest_SHARED=Shared"],
+            ["i18n/i18n_de.properties", "test_AGENCY=\ntest_AGENCY_NAME=\ntest_DETAILS=\ntest_SHARED=Gemeinsam"]
+        ]));
+        const expected = english.replace('String="Shared"', 'String="{i18n>test_SHARED}"')
+            .replace('String="Agency"', 'String="{i18n>test_AGENCY}"')
+            .replace('Value="Agency Name"', 'Value="{i18n>test_AGENCY_NAME}"')
+            .replace("<![CDATA[Details]]>", "<![CDATA[{i18n>test_DETAILS}]]>");
+        expect(XmlUtil.jsonToXml(await result.json)).to.eql(XmlUtil.jsonToXml(XmlUtil.xmlToJson(expected)));
+    });
 
     describe("when only language in config and it's also a default language", () => {
 

@@ -5,7 +5,7 @@ import { UI5BuilderTools } from "../model/types.js";
 import IRepository from "../repositories/repository.js";
 import AddAppVariantIdHierarchyCommand from "./commands/addAppVariantIdHierarchyCommand.js";
 import ApplyDescriptorChangesCommand from "./commands/applyDescriptorChangesCommand.js";
-import { AdaptCommandChain, IPromiseCommand, ManifestUpdateCommand, PostCommand, PostCommandChain, SetupCommandChain } from "./commands/command.js";
+import { AdaptCommandChain, IPromiseCommand, ManifestUpdateCommand, ManifestUpdateCommandChain, PostCommand, PostCommandChain, SetupCommandChain } from "./commands/command.js";
 import FilterFilesCommand from "./commands/filterFilesCommand.js";
 import OmitDeletedResourcesCommand from "./commands/omitDeletedResourcesCommand.js";
 import RenameFilesCommand from "./commands/renameFilesCommand.js";
@@ -16,12 +16,13 @@ import WriteResourcesCommand from "./commands/writeResourcesCommand.js";
 
 export interface IAdapter {
     createSetupCommandChain(appId: string, repository: IRepository): SetupCommandChain;
-    createAdaptCommandChain(baseApp: BaseApp, appVariant: AppVariant): AdaptCommandChain;
+    createAdaptCommandChain(files: ReadonlyMap<string, Buffer>, appVariant: AppVariant): AdaptCommandChain;
     createPostCommandChain(
         references: Map<string, string>,
         adaptationProject: AppVariant,
         ui5BuilderTools: UI5BuilderTools,
     ): PostCommandChain;
+    createManifestPreviewCommandChain(baseApp: BaseApp, appVariant: AppVariant, references: Map<string, string>): ManifestUpdateCommandChain;
 }
 
 export function getCommonManifestUpdateCommands(baseApp: BaseApp, appVariant: AppVariant, appVariantIdHierarchyItem: IAppVariantIdHierarchyManifestItem): ManifestUpdateCommand[] {
@@ -35,16 +36,23 @@ export function getCommonManifestUpdateCommands(baseApp: BaseApp, appVariant: Ap
     ];
 }
 
+export function getCommonPostBaseAdaptCommands(references: Map<string, string>): PostCommand[] {
+    return [
+        new FilterFilesCommand(),
+        new RenameFilesCommand(references),
+    ];
+}
+
 export function getCommonPostCommands(
     references: Map<string, string>,
     adaptationProject: AppVariant,
     ui5BuilderTools: UI5BuilderTools,
 ): PostCommand[] {
-    const { movedFiles, resources } = adaptationProject;
+    const { resources } = adaptationProject;
+    const movedFiles = adaptationProject.getMovedFiles();
     const { workspace, taskUtil, projectNamespace } = ui5BuilderTools;
     return [
-        new FilterFilesCommand(),
-        new RenameFilesCommand(references),
+        ...getCommonPostBaseAdaptCommands(references),
         new OmitDeletedResourcesCommand(taskUtil, movedFiles, resources, projectNamespace),
         new WriteResourcesCommand(workspace, projectNamespace),
     ];
