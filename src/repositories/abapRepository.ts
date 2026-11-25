@@ -7,6 +7,10 @@ import { unzipZipEntries } from "../util/zipUtil.js";
 import IRepository from "./repository.js";
 import { cached } from "../cache/cacheHolder.js";
 import ICachedResource from "../cache/cachedResource.js";
+import fs from "fs/promises";
+import path from "path";
+import encodeFilename from "filenamify";
+import { createHash } from "node:crypto";
 
 const log = getLogger("@ui5/task-adaptation::AbapRepository");
 
@@ -73,7 +77,22 @@ export default class AbapRepository implements IRepository {
         const response = await provider.get(uri, {
             headers: REQUEST_OPTIONS_XML.headers
         });
+        if (this.configuration.enableDebug && response.data) {
+            await this.writeDebugAnnotation(uri, response.data);
+        }
         return response.data;
+    }
+
+
+    private async writeDebugAnnotation(uri: string, xml: string): Promise<void> {
+        const directory = path.join(process.cwd(), ".adp/debug/annotations");
+        // Keep the request recognizable while distinguishing URLs that sanitize or truncate identically.
+        const name = encodeFilename(uri, { replacement: "_", maxLength: 160 });
+        const hash = createHash("sha256").update(uri).digest("hex").slice(0, 16);
+        const filename = path.join(directory, `${name}-${hash}.xml`);
+        await fs.mkdir(directory, { recursive: true });
+        await fs.writeFile(filename, xml, "utf8");
+        log.verbose(`Saved annotation '${uri}' to '${filename}'`);
     }
 
 

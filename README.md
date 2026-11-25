@@ -33,6 +33,21 @@ For more information, see [Create an Adaptation Project](https://help.sap.com/do
 > [!NOTE]  
 > For SAP S/4HANA (on-premise) systems, a different builder is used.
 
+#### Debugging annotations
+Set `enableDebug: true` in the adaptation task's `configuration` in `ui5.yaml` to save downloaded annotation XML files under `.adp/debug/annotations` in the project root. This is disabled by default.
+
+```yaml
+builder:
+  customTasks:
+    - name: app-variant-bundler-build
+      beforeTask: escapeNonAsciiCharacters
+      configuration:
+        enableDebug: true
+        # Keep your existing connection and language configuration here.
+```
+
+The files contain the original responses before annotation conversion and translation processing, including OData metadata and referenced annotations for every downloaded language. Filenames use the sanitized request URI and a hash to keep different URLs and languages separate. Repeated downloads of the same URI overwrite its debug file. Debug files are separate from the generated application resources.
+
 
 ## Branch Structure
 * `main` (npm `latest`) — The stable version, ready for production use.
