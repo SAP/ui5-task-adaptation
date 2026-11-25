@@ -48,10 +48,21 @@ describe("CacheRepository", () => {
     });
 
     describe("fetch", () => {
+        it("reads the merged hierarchy from cache without calling the wrapped repo", async () => {
+            await CacheHolder.write(cachedResource(REFERENCE, "token0"), toBufferMap([["manifest.json", JSON.stringify({ v: "per-repo" })]]));
+            await CacheHolder.write(CacheHolder.mergedResource(REFERENCE), mergedFiles());
 
-        it("delegates to the wrapped repo for a resource that is not in the merged cache (e.g. reuse lib)", async () => {
+            const [resource] = await repository.getAppVariantIdHierarchy(REFERENCE);
+            const files = await repository.fetch(resource);
+
+            expect(files).to.deep.equal(mergedFiles());
+            expect((delegate.fetch as sinon.SinonStub).called).to.equal(false);
+        });
+
+        it("delegates to the wrapped repo on a cache miss and caches the fetched files", async () => {
             const resource: ICachedResource = cachedResource("some.reuse.lib", "token0");
             const files = await repository.fetch(resource);
+            expect(await repository.fetch(resource)).to.deep.equal(files);
             expect((delegate.fetch as sinon.SinonStub).calledOnceWith(resource)).to.equal(true);
             expect(JSON.parse(files.get("manifest.json")!.toString())["sap.app"].id).to.equal("delegate");
         });
@@ -59,7 +70,7 @@ describe("CacheRepository", () => {
         it("does not use the per-repository cache when fetching the same reference", async () => {
             // A merged fetch must bypass the per-repository cache and use the separate merged tree.
             await CacheHolder.write(cachedResource(REFERENCE, "token0"), toBufferMap([["manifest.json", JSON.stringify({ v: "per-repo" })]]));
-            await repository.fetch(cachedResource(REFERENCE));
+            await repository.fetch(CacheHolder.mergedResource(REFERENCE));
             expect((delegate.fetch as sinon.SinonStub).called).to.equal(true);
         });
     });

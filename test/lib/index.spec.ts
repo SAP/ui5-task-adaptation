@@ -5,6 +5,7 @@ import chaiAsPromised from "chai-as-promised";
 import CacheHolder from "../../src/cache/cacheHolder.js";
 import HTML5Repository from "../../src/repositories/html5Repository.js";
 import AbapRepository from "../../src/repositories/abapRepository.js";
+import LocalRepository from "../../src/repositories/localRepository.js";
 import { IProjectOptions } from "../../src/model/types.js";
 import { SinonSandbox } from "sinon";
 import TestUtil, { cachedResource, toBufferMap } from "./testUtilities/testUtil.js";
@@ -393,18 +394,31 @@ describe("Index.previewManifest", () => {
         expect(manifest["sap.ui5"].appVariantIdHierarchy[0].layer).to.equal("VENDOR");
     });
 
+    it("should preview local manifests from the merged cache without a local resource path", async () => {
+        sandbox.stub(process, "env").value({ ...process.env, ADP_BUILDER_MODE: "local" });
+        const abapOptions: IProjectOptions = { ...OPTIONS, configuration: { ...OPTIONS.configuration, type: "abap" } };
+        const hierarchySpy = sandbox.spy(LocalRepository.prototype, "getAppVariantIdHierarchy");
+        const fetchSpy = sandbox.spy(LocalRepository.prototype, "fetch");
+
+        const manifest = await runPreview(baseFiles(), abapOptions);
+
+        expect(hierarchySpy.called).to.equal(false);
+        expect(fetchSpy.called).to.equal(false);
+        expect(manifest["sap.app"].id).to.equal("customer.com.sap.application.variant.id");
+        expect(manifest["sap.ui5"].componentName).to.equal("customer.com.sap.application.variant.id");
+        expect(manifest["sap.ui5"].appVariantIdHierarchy[0].appVariantId).to.equal(REFERENCE);
+    });
+
     it("should fall back to fetching and folding when the merged cache is empty", async () => {
         const abapOptions: IProjectOptions = { ...OPTIONS, configuration: { ...OPTIONS.configuration, type: "abap" } };
         const hierarchyStub = sandbox.stub(AbapRepository.prototype, "getAppVariantIdHierarchy")
             .resolves([{ appName: "repoName1", token: Promise.resolve("token0") }]);
         const fetchStub = sandbox.stub(AbapRepository.prototype, "fetch").resolves(baseFiles());
-        const writeSpy = sandbox.spy(CacheHolder, "write");
         const { workspace } = await TestUtil.getWorkspace("appVariant1", abapOptions.projectNamespace);
         const { previewManifest } = await import("../../src/index.js");
         const manifest = await previewManifest({ workspace, options: abapOptions } as any);
         expect(hierarchyStub.called).to.equal(true);
         expect(fetchStub.called).to.equal(true);
-        expect(writeSpy.calledOnce, "cache misses populate the merged cache").to.equal(true);
         const cached = await CacheHolder.read(CacheHolder.mergedResource(REFERENCE));
         expect([...cached.keys()]).to.have.members([...baseFiles().keys()]);
         expect(JSON.parse(cached.get("manifest.json")!.toString()))

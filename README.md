@@ -51,7 +51,7 @@ The files contain the original responses before annotation conversion and transl
 
 ## Branch Structure
 * `main` (npm `latest`) — The stable version, ready for production use.
-* `rc` (npm `alpha`) — Alpha prereleases for active development. The code here may be unstable and features are subject to change. Use at your own risk.
+* `rc` (npm `rc`) — Active development. The code here may be unstable and features are subject to change. Use at your own risk.
 
 
 ## How to obtain support
