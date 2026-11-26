@@ -51,7 +51,7 @@
         "crc": "^4.3.2",
         "dotenv": "^16.0.3",
         "filenamify": "^6.0.0",
-        "glob": "^13.0.0",
+        "glob": "^14.0.2",
         "jsdom": "^23.0.1",
         "transliteration": "^2.3.5",
         "xml-js": "^1.6.11"
