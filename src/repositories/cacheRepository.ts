@@ -1,5 +1,5 @@
 import ICachedResource from "../cache/cachedResource.js";
-import CacheHolder from "../cache/cacheHolder.js";
+import CacheHolder, { cached } from "../cache/cacheHolder.js";
 import IRepository from "./repository.js";
 
 
@@ -17,6 +17,7 @@ export default class CacheRepository implements IRepository {
     }
 
 
+    @cached()
     async fetch(resource: ICachedResource): Promise<Map<string, Buffer>> {
         return this.repository.fetch(resource);
     }
