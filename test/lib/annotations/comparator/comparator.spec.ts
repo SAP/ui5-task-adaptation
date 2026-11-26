@@ -1,5 +1,6 @@
-import Comparator from "../../../../src/annotations/comparator/comparator.js";
+import Comparator, { Diff } from "../../../../src/annotations/comparator/comparator.js";
 import DataSourceOData from "../../../../src/annotations/dataSource/dataSourceOData.js";
+import MetadataJsonUtil from "../../../../src/annotations/converter/metadataJsonUtil.js";
 import XmlUtil from "../../../../src/util/xmlUtil.js";
 import { expect } from "chai";
 
@@ -179,6 +180,127 @@ describe("Comparator", () => {
                 <Annotation Term="SAP__common.Heading" String="{ __old: ,  __new: Agency }"/>
                 <Annotation Term="SAP__common.QuickInfo" String="{ __old: ,  __new: Flight Reference Scenario: Agency Name }"/>
             </Annotations>`));
+    });
+
+    it("should preserve xmlns when an Annotations node is missing in another language", () => {
+        const namespace = "http://docs.oasis-open.org/odata/ns/edm";
+        const a = completeXml(`
+            <Annotations Target="SAP__self.DraftUserAccessType/UserAccessRole" xmlns="${namespace}">
+                <Annotation Term="SAP__common.Label" String="label"/>
+            </Annotations>
+            <Annotations Target="SAP__self.TravelAgencyType/Name" xmlns="${namespace}">
+                <Annotation Term="SAP__common.Label" String="Agency Name"/>
+            </Annotations>`);
+        const b = completeXml(`
+            <Annotations Target="SAP__self.DraftUserAccessType/UserAccessRole" xmlns="${namespace}">
+                <Annotation Term="SAP__common.Label" String="titel"/>
+            </Annotations>`);
+
+        const { json, properties } = new Comparator(a, b).compare();
+
+        // A missing node must not turn its namespace declaration into a translation.
+        expect([...properties].map(({ property }) => property)).to.eql(["String", "String"]);
+        /*
+         * Actual XML produced by the buggy comparator (before i18n extraction).
+         * The second xmlns incorrectly contains a Diff instead of the namespace URL:
+         *
+         * <?xml version="1.0" encoding="utf-8"?>
+         * <edmx:Edmx>
+         *     <edmx:DataServices>
+         *         <Schema Namespace="com.sap.gateway.srvd.m2_sd_travel_mduu.v0001" Alias="SAP__self">
+         *             <Annotations Target="SAP__self.DraftUserAccessType/UserAccessRole" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+         *                 <Annotation Term="SAP__common.Label" String="{ __old: label,  __new: titel }"/>
+         *             </Annotations>
+         *             <Annotations Target="SAP__self.TravelAgencyType/Name" xmlns="{ __old: http://docs.oasis-open.org/odata/ns/edm,  __new:  }">
+         *                 <Annotation Term="SAP__common.Label" String="{ __old: Agency Name,  __new:  }"/>
+         *             </Annotations>
+         *         </Schema>
+         *     </edmx:DataServices>
+         * </edmx:Edmx>
+         */
+        expect(XmlUtil.jsonToXml(json)).to.eql(completeXml(`
+            <Annotations Target="SAP__self.DraftUserAccessType/UserAccessRole" xmlns="${namespace}">
+                <Annotation Term="SAP__common.Label" String="{ __old: label,  __new: titel }"/>
+            </Annotations>
+            <Annotations Target="SAP__self.TravelAgencyType/Name" xmlns="${namespace}">
+                <Annotation Term="SAP__common.Label" String="{ __old: Agency Name,  __new:  }"/>
+            </Annotations>`));
+    });
+
+    for (const missingInDefault of [false, true]) {
+        it(`should preserve only namespace attributes and identifiers when a node is missing in the ${missingInDefault ? "default" : "other"} language`, () => {
+            const shared = `
+            <Annotations Target="Example.Shared">
+                <Annotation Term="Common.Label" String="Shared"/>
+            </Annotations>`;
+            const optional = `
+            <Annotations Target="Example.Optional" xmlns="http://docs.oasis-open.org/odata/ns/edm" xmlns:custom="urn:custom">
+                <Annotation Term="UI.FieldGroup" Qualifier="Details" xml:lang="en" xml:space="preserve" xml:base="/annotations">
+                    <Record Type="UI.FieldGroupType">
+                        <PropertyValue Property="Label" String="Agency" Value="Agency Name"/>
+                        <PropertyValue Property="Texts">
+                            <Collection>
+                                <String>First</String>
+                                <String><![CDATA[Second]]></String>
+                            </Collection>
+                        </PropertyValue>
+                        <PropertyValue Property="Value" Path="Agency/Name"/>
+                        <PropertyValue Property="Hidden" Bool="false"/>
+                        <PropertyValue Property="Rank" Int="1"/>
+                        <PropertyValue Property="Importance" EnumMember="UI.ImportanceType/High"/>
+                        <PropertyValue Property="Paths">
+                            <Collection>
+                                <PropertyPath>Name</PropertyPath>
+                                <PropertyPath>Code</PropertyPath>
+                                <Bool>true</Bool>
+                                <Int>2</Int>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+            </Annotations>`;
+            const full = XmlUtil.xmlToJson(completeXml(shared + optional));
+            const missing = XmlUtil.xmlToJson(completeXml(shared));
+            const { properties } = new Comparator(
+                missingInDefault ? missing : full, missingInDefault ? full : missing
+            ).compare();
+
+            expect([...properties].map(({ object, property }) => object[property])).to.eql(
+                [
+                    "Details", "/annotations", "UI.FieldGroupType", "Agency", "Agency Name", "First", "Second",
+                    "Agency/Name", "false", "1", "UI.ImportanceType/High", "Name", "Code", "true", "2"
+                ].map(value => missingInDefault ? new Diff("", value) : new Diff(value, ""))
+            );
+            // Namespace attributes must survive in the copied node too. Other
+            // attributes and element content retain their existing clearing behavior.
+            for (const input of [full, missing]) {
+                const group = MetadataJsonUtil.getAnnotations(input)[1];
+                expect(group._attributes).to.eql({
+                    Target: "Example.Optional",
+                    xmlns: "http://docs.oasis-open.org/odata/ns/edm",
+                    "xmlns:custom": "urn:custom"
+                });
+                const annotation = group.Annotation[0];
+                expect(annotation._attributes).to.include({
+                    Term: "UI.FieldGroup", "xml:lang": "en", "xml:space": "preserve"
+                });
+                expect(annotation.Record.PropertyValue.map((item: any) => item._attributes.Property)).to.eql([
+                    "Label", "Texts", "Value", "Hidden", "Rank", "Importance", "Paths"
+                ]);
+            }
+        });
+    }
+
+    it("should translate Value attributes when no String attribute is present", () => {
+        const a = completeXml(`
+            <Annotations Target="Example.Entity" xmlns="urn:default">
+                <Annotation Term="Common.Label" Value="Agency"/>
+            </Annotations>`);
+        const b = a.replace("Agency", "Agentur");
+        const { json, properties } = new Comparator(a, b).compare();
+
+        expect([...properties].map(({ property }) => property)).to.eql(["Value"]);
+        expect(XmlUtil.jsonToXml(json)).to.eql(a.replace("Agency", new Diff("Agency", "Agentur").toString()));
     });
 
     // Test 05

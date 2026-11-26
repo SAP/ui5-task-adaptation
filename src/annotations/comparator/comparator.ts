@@ -191,9 +191,8 @@ class Includer {
      * @param target an array which might miss the item
      * @param property the node name needed to decide how to include the missing
      * item in array
-     * @param shouldClear if the item is missing and it's not Label or QuickInfo
-     * or Heading, we clear all the properties except Ids, so in i18n.properties
-     * they will have empty values. Because we don't know what should be there.
+     * @param shouldClear clear missing values except identifiers and namespace
+     * attributes. Label, QuickInfo and Heading may supply fallback text.
      */
     constructor(target: any[], property: string, shouldClear: boolean = true) {
         this.shouldClear = shouldClear;
@@ -214,9 +213,8 @@ class Includer {
      * @param index here to put it in the array
      */
     include(source: any[], index: number) {
-        // Insert node with empty value (see test 02) if missing in default
-        // language or default language value if missing in other language
-        // (see test 03).
+        // Preserve the missing node's identifiers and namespace attributes,
+        // clearing other values in either language (see tests 02 and 03).
         const clone = Includer.cloneAndClear(source[index], this.shouldClear);
         insertInArray(this.target, index, clone);
         // Some annotations like Label, QuickInfo or Heading are
@@ -228,18 +226,14 @@ class Includer {
     }
 
     /**
-     * if the item is missing in default language, and it's not Label or
-     * QuickInfo or Heading, we clear all the properties except Ids, so in
-     * i18n.properties they will have empty values. Because we don't know what
-     * should be there. But if the item is missing in language other than
-     * default, we include the copy of item from default language and not
-     * clearing them (see test 02, 04).
+     * Copy a missing item and clear its values, preserving identifiers,
+     * namespace declarations, xml:lang and xml:space.
      */
     private static cloneAndClear(obj: any, shouldClear: boolean = true) {
         const clone = structuredClone(obj);
         if (shouldClear) {
             traverse(clone, [], (json: any, key: string | number) => {
-                if (typeof key !== "string" || !simpleIdentifiersReversed.has(key)) {
+                if ( !isNamespaceAttribute(key) && !simpleIdentifiersReversed.has(key)) {
                     json[key] = "";
                 }
             });
@@ -321,3 +315,8 @@ const simpleIdentifiers = new Identifiers([
 
 
 const simpleIdentifiersReversed = new Identifiers([...simpleIdentifiers].map(([name, idProperty]) => [idProperty, name]));
+
+function isNamespaceAttribute(property: string | number): boolean {
+    return typeof property === "string" &&
+        (property === "xmlns" || property.startsWith("xmlns:") || property === "xml:lang" || property === "xml:space");
+}
