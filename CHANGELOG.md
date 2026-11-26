@@ -5,22 +5,6 @@ This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html
 A list of unreleased changes can be found [here](https://github.com/SAP/ui5-task-adaptation/compare/v1.6.0...HEAD).
 
 <a name="v1.7.1"></a>
-## [1.8.0](https://github.com/SAP/ui5-task-adaptation/compare/v1.7.0...v1.8.0) (2026-11-26)
-
-
-### Features
-
-* Release 1.6.4 ([7bd7c5c](https://github.com/SAP/ui5-task-adaptation/commit/7bd7c5ce8c3009f3fb0aa28bd0aa4bc95b4add83))
-
-
-### Bug Fixes
-
-* npm audit ([3894392](https://github.com/SAP/ui5-task-adaptation/commit/389439249df4f4e8a30cbe5191e742f4129bb83c))
-* npm audit ([6147662](https://github.com/SAP/ui5-task-adaptation/commit/6147662c4dad4f2c6ee807f050158aad14a3139a))
-* Release 1.6.4 ([cb8b5cd](https://github.com/SAP/ui5-task-adaptation/commit/cb8b5cdd4458dffbf9c281084ecf4a374fe1f2cd))
-* Release 1.6.4 ([7ee3880](https://github.com/SAP/ui5-task-adaptation/commit/7ee3880a543d1a008a2be1f6c9394f5626226b20))
-* Release 1.6.4 ([e9efeb3](https://github.com/SAP/ui5-task-adaptation/commit/e9efeb39c3e3d2d6d2bc3807ab80d55d379a9f98))
-
 ## [v1.7.1] - 2026-11-25
 ### Fixed
 - xmlns attribute was considered translation when xml node is missing
